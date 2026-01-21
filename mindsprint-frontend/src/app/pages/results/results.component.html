@@ -1,0 +1,44 @@
+<div class="min-h-screen p-4 py-6">
+  <div class="max-w-4xl mx-auto">
+    <!-- Celebration Header -->
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-4">🎉</div>
+      <h1 class="text-3xl md:text-4xl font-bold text-primary mb-2">
+        Awesome Job!
+      </h1>
+      <p class="text-lg text-gray-600">You've completed all assessments!</p>
+    </div>
+    
+    <!-- XP Summary -->
+    <div class="bg-gradient-to-r from-primary to-accent text-white rounded-lg p-6 shadow-lg mb-8 text-center">
+      <div class="text-5xl font-bold mb-2">{{ totalXP }} XP</div>
+      <div class="text-lg">Total Experience Points Earned!</div>
+    </div>
+    
+    <!-- Parent Report -->
+    <div class="mb-8">
+      <app-parent-report 
+        [studentName]="studentName"
+        [results]="results">
+      </app-parent-report>
+    </div>
+    
+    <!-- Avatar Selector -->
+    <div class="mb-8">
+      <app-avatar-selector></app-avatar-selector>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-col md:flex-row gap-4">
+      <button 
+        (click)="startOver()"
+        class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200">
+        🔄 Start New Assessment
+      </button>
+      <button 
+        class="flex-1 bg-accent hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200">
+        📧 Email Results to Parent
+      </button>
+    </div>
+  </div>
+</div>
