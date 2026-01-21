@@ -1,0 +1,33 @@
+<div class="question-card bg-white rounded-lg shadow-lg p-6 md:p-8">
+  <div class="mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <span class="text-sm font-semibold text-gray-600">Question {{ questionNumber }} of {{ totalQuestions }}</span>
+      <span class="text-sm font-semibold text-primary">{{ points }} points</span>
+    </div>
+    
+    <h2 class="text-xl md:text-2xl font-bold text-text mb-6">
+      {{ question }}
+    </h2>
+
+    <div class="space-y-3">
+      @for (option of options; track option.id) {
+        <button
+          (click)="selectOption(option.id)"
+          [class.ring-4]="selectedOption === option.id"
+          [class.ring-primary]="selectedOption === option.id"
+          [class.bg-blue-50]="selectedOption === option.id"
+          class="w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all duration-200">
+          <span class="font-medium">{{ option.text }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <button
+    [disabled]="selectedOption === null"
+    [class.opacity-50]="selectedOption === null"
+    [class.cursor-not-allowed]="selectedOption === null"
+    class="w-full bg-accent hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors duration-200">
+    Submit Answer
+  </button>
+</div>
