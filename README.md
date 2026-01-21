@@ -1,125 +1,124 @@
 # MindSprint
 
-A gamified skill assessment app for Grades 1-2 students, built with Angular, Tailwind CSS, and a Node.js backend (coming soon).
+MindSprint is a gamified skill assessment app for kids, built with Angular and Tailwind CSS. It provides an engaging and interactive way for children to test their knowledge in Math, English, and Science.
 
-## 🎮 Features
+## 🎨 Design
 
-- **Interactive Assessments**: Math, English, and Science assessments with engaging questions
-- **Gamification**: XP system, levels, and progress tracking
-- **Mobile-First Design**: Responsive layout optimized for tablets and mobile devices
-- **Custom Components**:
-  - AvatarSelector - Choose fun avatars
-  - QuestionCard - Interactive multiple-choice questions
-  - TimerBar - Visual countdown timer
-  - XPProgress - Level and XP tracking
-  - ParentReport - Comprehensive progress reports
+### Color Scheme
+- **Primary**: #4A90E2 (Blue) - Used for main UI elements and buttons
+- **Accent**: #F5A623 (Orange) - Used for highlights and CTAs
+- **Background**: #F9FAFB (Light Gray) - Used for app background
+- **Text**: #333333 (Dark Gray) - Used for text content
 
-## 🎨 Design System
+### Mobile-First Layout
+The app is designed with a mobile-first approach, ensuring excellent user experience on smartphones and tablets while scaling beautifully to larger screens.
 
-- **Primary Color**: #4A90E2 (Blue)
-- **Accent Color**: #F5A623 (Orange)
-- **Background**: #F9FAFB (Light Gray)
-- **Text**: #333333 (Dark Gray)
+## 📱 Features
 
-## 📁 Project Structure
+### Pages
+- **Welcome Page** (`/welcome`) - Main landing page with avatar selection and assessment options
+- **Math Assessment** (`/assessment/math`) - Math skill evaluation
+- **English Assessment** (`/assessment/english`) - English language assessment
+- **Science Assessment** (`/assessment/science`) - Science knowledge test
+- **Results Page** (`/results`) - Comprehensive results display with achievements
 
-```
-MindSprint/
-├── mindsprint-frontend/          # Angular frontend application
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── pages/            # Page components
-│   │   │   │   ├── welcome/
-│   │   │   │   ├── assessment-math/
-│   │   │   │   ├── assessment-english/
-│   │   │   │   ├── assessment-science/
-│   │   │   │   └── results/
-│   │   │   ├── components/       # Reusable components
-│   │   │   │   ├── avatar-selector/
-│   │   │   │   ├── question-card/
-│   │   │   │   ├── timer-bar/
-│   │   │   │   ├── xp-progress/
-│   │   │   │   └── parent-report/
-│   │   │   ├── app.routes.ts     # Routing configuration
-│   │   │   └── app.ts            # Root component
-│   │   └── styles.css            # Global styles with Tailwind
-│   ├── tailwind.config.js        # Tailwind configuration
-│   └── package.json
-└── README.md
-```
+### Components
+- **AvatarSelector** - Allows kids to choose their character avatar
+- **QuestionCard** - Interactive question display with multiple choice options
+- **TimerBar** - Visual countdown timer for each question
+- **XPProgress** - Experience points progress bar showing level and XP
+- **ParentReport** - Modal dialog with detailed progress reports for parents
 
-## 🚀 Getting Started
+## 🚀 Tech Stack
 
-### Prerequisites
+### Frontend
+- **Angular 21.x** - Modern web application framework
+- **Tailwind CSS 3.x** - Utility-first CSS framework
+- **TypeScript** - Type-safe development
+- **Phaser.js** - Game framework (ready for integration)
 
-- Node.js 20.x or higher
-- npm 10.x or higher
+### Backend (Ready for Integration)
+- **Node.js + Express** - Backend API (to be implemented)
+- **Supabase** - Database and authentication (to be configured)
 
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/sjainlabs/MindSprint.git
-   cd MindSprint
-   ```
-
-2. Install dependencies:
-   ```bash
-   cd mindsprint-frontend
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-
-4. Open your browser and navigate to `http://localhost:4200`
-
-### Build for Production
+## 📦 Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Build for production
 npm run build
 ```
 
-The build artifacts will be stored in the `dist/` directory.
+## 🎮 Usage
 
-## 🗺️ Routes
+1. Open the app and select your avatar
+2. Choose an assessment (Math, English, or Science)
+3. Answer questions within the time limit
+4. View your results and achievements
+5. Parents can check detailed progress reports
 
-- `/welcome` - Welcome page with app introduction
-- `/assessment/math` - Math assessment
-- `/assessment/english` - English assessment
-- `/assessment/science` - Science assessment
-- `/results` - Results page with parent report
+## 🏗️ Project Structure
 
-## 🛠️ Technology Stack
+```
+src/
+├── app/
+│   ├── components/          # Reusable UI components
+│   │   ├── avatar-selector/
+│   │   ├── question-card/
+│   │   ├── timer-bar/
+│   │   ├── xp-progress/
+│   │   └── parent-report/
+│   ├── pages/              # Route pages
+│   │   ├── welcome/
+│   │   ├── assessment-math/
+│   │   ├── assessment-english/
+│   │   ├── assessment-science/
+│   │   └── results/
+│   ├── app.routes.ts       # Application routing
+│   └── app.ts              # Root component
+├── styles.css              # Global styles with Tailwind
+└── index.html              # Main HTML file
+```
 
-- **Frontend Framework**: Angular 21.x (Standalone Components)
-- **Styling**: Tailwind CSS 3.x
-- **Language**: TypeScript
-- **Build Tool**: Angular CLI with esbuild
-- **Package Manager**: npm
+## 🎯 Gamification Features
 
-## 📱 Mobile-First Approach
+- **XP System**: Earn experience points for completing assessments
+- **Level Progression**: Progress through levels as you earn XP
+- **Achievements**: Unlock badges for various accomplishments
+- **Avatar System**: Personalize your learning experience
+- **Visual Feedback**: Engaging animations and progress indicators
 
-The application is designed with a mobile-first approach using Tailwind's responsive utilities:
-- Base styles target mobile devices
-- `md:` breakpoint (768px+) for tablet and desktop enhancements
-- Optimized touch targets and spacing for young learners
+## 📊 Parent Dashboard
 
-## 🎯 Future Enhancements
+Parents can access detailed reports including:
+- Overall progress across all subjects
+- Recent activity and completion history
+- Strengths and areas for improvement
+- Performance trends over time
 
-- Backend API with Node.js + Express
-- Supabase integration for authentication and data persistence
-- Phaser.js game integration
-- Real-time progress tracking
-- Parent dashboard
-- Multiple student profiles
+## 🔮 Future Enhancements
 
-## 📄 License
+- [ ] Backend API integration with Node.js/Express
+- [ ] Supabase database setup for user data persistence
+- [ ] Phaser.js mini-games integration
+- [ ] Real-time multiplayer assessments
+- [ ] Advanced analytics and reporting
+- [ ] Adaptive difficulty based on performance
+- [ ] More subject areas and question types
 
-MIT
+## 📝 License
 
-## 👥 Contributors
+MIT License - feel free to use this project for educational purposes.
 
-MindSprint Team
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+Built with ❤️ for young learners everywhere.

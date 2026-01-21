@@ -1,0 +1,12 @@
+<div class="xp-progress">
+  <div class="flex justify-between items-center mb-2">
+    <span class="text-sm font-semibold text-text">Level {{ level }}</span>
+    <span class="text-sm text-gray-600">{{ currentXP }} / {{ nextLevelXP }} XP</span>
+  </div>
+  <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+    <div 
+      class="bg-gradient-to-r from-primary to-accent h-full rounded-full transition-all duration-500 ease-out"
+      [style.width.%]="progressPercentage">
+    </div>
+  </div>
+</div>
