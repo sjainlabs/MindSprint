@@ -1,0 +1,14 @@
+<div class="avatar-selector">
+  <h3 class="text-lg font-semibold mb-4 text-text">Choose Your Avatar</h3>
+  <div class="grid grid-cols-4 gap-3 md:gap-4">
+    @for (avatar of avatars; track avatar.id) {
+      <button
+        (click)="selectAvatar(avatar.id)"
+        [class.ring-4]="selectedAvatar === avatar.id"
+        [class.ring-accent]="selectedAvatar === avatar.id"
+        class="aspect-square rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 text-3xl md:text-4xl flex items-center justify-center border-2 border-gray-200">
+        {{ avatar.emoji }}
+      </button>
+    }
+  </div>
+</div>

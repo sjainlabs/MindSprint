@@ -1,0 +1,16 @@
+<div class="timer-bar mb-4">
+  <div class="flex justify-between items-center mb-2">
+    <span class="text-sm font-semibold text-text">Time Remaining</span>
+    <span class="text-sm font-bold" [class.text-red-600]="timeLeft < 10" [class.text-text]="timeLeft >= 10">
+      {{ timeLeft }}s
+    </span>
+  </div>
+  <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+    <div 
+      [class.bg-primary]="timeLeft >= 10"
+      [class.bg-red-500]="timeLeft < 10"
+      class="h-full rounded-full transition-all duration-1000 ease-linear"
+      [style.width.%]="progressPercentage">
+    </div>
+  </div>
+</div>

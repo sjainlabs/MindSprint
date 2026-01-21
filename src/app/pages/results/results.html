@@ -1,0 +1,105 @@
+<div class="min-h-screen px-4 py-6 md:py-8">
+  <div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-primary mb-2">🎉 Assessment Complete!</h1>
+      <p class="text-gray-600">Great job! Here are your results.</p>
+    </div>
+
+    <!-- Overall Score -->
+    <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-6">
+      <div class="text-center mb-6">
+        <div class="text-6xl md:text-7xl font-bold text-primary mb-2">85%</div>
+        <p class="text-xl text-gray-600">Overall Score</p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="text-center">
+          <div class="text-3xl font-bold text-accent">+250</div>
+          <p class="text-sm text-gray-600">XP Earned</p>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-accent">8/10</div>
+          <p class="text-sm text-gray-600">Correct</p>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-accent">⭐⭐⭐</div>
+          <p class="text-sm text-gray-600">Stars</p>
+        </div>
+      </div>
+
+      <!-- Updated XP Progress -->
+      <app-xp-progress class="block"></app-xp-progress>
+    </div>
+
+    <!-- Subject Breakdown -->
+    <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-6">
+      <h2 class="text-xl font-bold text-text mb-4">Subject Breakdown</h2>
+      <div class="space-y-4">
+        <div>
+          <div class="flex justify-between mb-2">
+            <span class="font-semibold text-text">🧮 Math</span>
+            <span class="text-primary font-bold">90%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-primary h-full rounded-full" style="width: 90%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-2">
+            <span class="font-semibold text-text">📚 English</span>
+            <span class="text-primary font-bold">75%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-primary h-full rounded-full" style="width: 75%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-2">
+            <span class="font-semibold text-text">🔬 Science</span>
+            <span class="text-primary font-bold">88%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-primary h-full rounded-full" style="width: 88%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Achievements -->
+    <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-6">
+      <h2 class="text-xl font-bold text-text mb-4">New Achievements! 🏆</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center p-4 bg-background rounded-lg">
+          <div class="text-4xl mb-2">🎯</div>
+          <p class="text-sm font-semibold">First Try</p>
+        </div>
+        <div class="text-center p-4 bg-background rounded-lg">
+          <div class="text-4xl mb-2">⚡</div>
+          <p class="text-sm font-semibold">Speed Demon</p>
+        </div>
+        <div class="text-center p-4 bg-background rounded-lg">
+          <div class="text-4xl mb-2">🧠</div>
+          <p class="text-sm font-semibold">Math Whiz</p>
+        </div>
+        <div class="text-center p-4 bg-background rounded-lg">
+          <div class="text-4xl mb-2">🔥</div>
+          <p class="text-sm font-semibold">5 Day Streak</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-3">
+      <button 
+        routerLink="/welcome"
+        class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition-colors duration-200">
+        Continue Learning
+      </button>
+      <button 
+        class="w-full bg-white hover:bg-gray-50 text-primary border-2 border-primary font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors duration-200">
+        Share Results
+      </button>
+    </div>
+  </div>
+</div>

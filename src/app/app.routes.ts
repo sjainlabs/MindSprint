@@ -1,0 +1,15 @@
+import { Routes } from '@angular/router';
+import { Welcome } from './pages/welcome/welcome';
+import { AssessmentMath } from './pages/assessment-math/assessment-math';
+import { AssessmentEnglish } from './pages/assessment-english/assessment-english';
+import { AssessmentScience } from './pages/assessment-science/assessment-science';
+import { Results } from './pages/results/results';
+
+export const routes: Routes = [
+  { path: '', redirectTo: '/welcome', pathMatch: 'full' },
+  { path: 'welcome', component: Welcome },
+  { path: 'assessment/math', component: AssessmentMath },
+  { path: 'assessment/english', component: AssessmentEnglish },
+  { path: 'assessment/science', component: AssessmentScience },
+  { path: 'results', component: Results },
+];
