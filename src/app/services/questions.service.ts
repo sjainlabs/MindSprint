@@ -382,14 +382,14 @@ export class QuestionsService {
   ];
 
   getMathQuestions(): Question[] {
-    return this.mathQuestions;
+    return [...this.mathQuestions];
   }
 
   getEnglishQuestions(): Question[] {
-    return this.englishQuestions;
+    return [...this.englishQuestions];
   }
 
   getScienceQuestions(): Question[] {
-    return this.scienceQuestions;
+    return [...this.scienceQuestions];
   }
 }

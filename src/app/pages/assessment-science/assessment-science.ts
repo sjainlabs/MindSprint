@@ -31,7 +31,7 @@ export class AssessmentScience implements OnInit {
   }
 
   loadQuestion() {
-    if (this.currentQuestionIndex < this.questions.length) {
+    if (this.currentQuestionIndex >= 0 && this.currentQuestionIndex < this.questions.length) {
       this.currentQuestion = this.questions[this.currentQuestionIndex];
     }
   }
