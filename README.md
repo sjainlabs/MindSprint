@@ -38,10 +38,35 @@ The app is designed with a mobile-first approach, ensuring excellent user experi
 - **Phaser.js** - Game framework (ready for integration)
 
 ### Backend (Ready for Integration)
-- **Node.js + Express** - Backend API (to be implemented)
-- **Supabase** - Database and authentication (to be configured)
+- **Recommendation**: Create a separate backend repository for better separation of concerns
+- **Suggested Tech Stack**:
+  - **Node.js + Express** - RESTful API server
+  - **Supabase** - Database, authentication, and real-time features
+  - **TypeScript** - Type-safe backend development
+  
+**Why Separate Repository?**
+- Independent deployment cycles for frontend and backend
+- Easier to scale and maintain separately
+- Frontend can be deployed to GitHub Pages (static hosting)
+- Backend can be deployed to services like Vercel, Railway, or Render
+- Better security: No API keys exposed in frontend repository
 
-## 📦 Installation
+**Suggested Repository Structure** (for new backend repo):
+```
+mindsprint-backend/
+├── src/
+│   ├── routes/          # API endpoints
+│   ├── controllers/     # Business logic
+│   ├── models/          # Data models
+│   ├── middleware/      # Auth, validation
+│   └── config/          # Configuration
+├── tests/               # Unit and integration tests
+└── package.json
+```
+
+## 📦 Installation & Deployment
+
+### Local Development
 
 ```bash
 # Install dependencies
@@ -53,6 +78,18 @@ npm start
 # Build for production
 npm run build
 ```
+
+### GitHub Pages Deployment
+
+This app is configured to automatically deploy to GitHub Pages when you push to the `main` branch.
+
+**Setup Steps:**
+1. Ensure GitHub Pages is enabled in your repository settings
+2. Set the source to "GitHub Actions"
+3. Push to the `main` branch to trigger deployment
+4. Your app will be available at: `https://sjainlabs.github.io/MindSprint/`
+
+The deployment workflow is configured in `.github/workflows/deploy-pages.yml`.
 
 ## 🎮 Usage
 
@@ -85,6 +122,8 @@ src/
 └── index.html              # Main HTML file
 ```
 
+**Note:** The repository previously had a duplicate `mindsprint-frontend/` folder which has been removed to maintain a clean structure.
+
 ## 🎯 Gamification Features
 
 - **XP System**: Earn experience points for completing assessments
@@ -103,6 +142,7 @@ Parents can access detailed reports including:
 
 ## 🔮 Future Enhancements
 
+- [ ] Create separate backend repository (recommended approach)
 - [ ] Backend API integration with Node.js/Express
 - [ ] Supabase database setup for user data persistence
 - [ ] Phaser.js mini-games integration
