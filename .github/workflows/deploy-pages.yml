@@ -1,5 +1,4 @@
-# GitHub Actions workflow to build the project and deploy to GitHub Pages
-# Adjust `node-version`, `run` commands, and `path` if your build uses different tooling or output folder.
+# Build and deploy to GitHub Pages — handles Angular's nested `dist/<app-name>` output.
 name: Build and Deploy to GitHub Pages
 
 on:
@@ -30,10 +29,38 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Prepare publish directory (flatten Angular dist if needed)
+        run: |
+          set -e
+          mkdir -p publish
+          echo "Contents of dist:"
+          ls -la dist || true
+          # If dist contains a single nested directory (common for Angular), copy its contents
+          NESTED_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1 || true)
+          if [ -n "$NESTED_DIR" ]; then
+            echo "Found nested dist directory: $NESTED_DIR"
+            cp -a "$NESTED_DIR/." publish/
+          else
+            echo "No nested dist directory; copying dist contents"
+            cp -a dist/. publish/ || true
+          fi
+          echo "Contents of publish:"
+          ls -la publish || true
+          if [ -f publish/index.html ]; then
+            echo "index.html found in publish"
+          else
+            echo "::warning::index.html not found in publish — Pages may render README.md or fallback content"
+          fi
+
+      - name: Disable Jekyll so README.md won't be served instead of site
+        run: |
+          touch publish/.nojekyll
+          echo ".nojekyll created"
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: ./dist
+          path: ./publish
 
   deploy:
     needs: build
