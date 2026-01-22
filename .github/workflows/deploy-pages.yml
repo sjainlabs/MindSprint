@@ -1,4 +1,3 @@
-# Build and deploy to GitHub Pages — handles Angular's nested `dist/<app-name>` output.
 name: Build and Deploy to GitHub Pages
 
 on:
