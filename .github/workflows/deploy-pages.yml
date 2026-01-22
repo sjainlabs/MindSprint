@@ -25,30 +25,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build for GitHub Pages
+        run: npm run build -- --base-href /MindSprint/
 
-      - name: Prepare publish directory (flatten Angular dist if needed)
+      - name: Prepare publish directory
         run: |
           set -e
           mkdir -p publish
           echo "Contents of dist:"
           ls -la dist || true
-          # If dist contains a single nested directory (common for Angular), copy its contents
-          NESTED_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1 || true)
-          if [ -n "$NESTED_DIR" ]; then
-            echo "Found nested dist directory: $NESTED_DIR"
-            cp -a "$NESTED_DIR/." publish/
+          # Angular outputs to dist/mindsprint-app/browser
+          if [ -d "dist/mindsprint-app/browser" ]; then
+            echo "Found Angular browser directory"
+            cp -a dist/mindsprint-app/browser/. publish/
           else
-            echo "No nested dist directory; copying dist contents"
-            cp -a dist/. publish/ || true
+            echo "::error::Expected dist/mindsprint-app/browser directory not found"
+            exit 1
           fi
           echo "Contents of publish:"
           ls -la publish || true
           if [ -f publish/index.html ]; then
             echo "index.html found in publish"
           else
-            echo "::warning::index.html not found in publish — Pages may render README.md or fallback content"
+            echo "::error::index.html not found in publish"
+            exit 1
           fi
 
       - name: Disable Jekyll so README.md won't be served instead of site
@@ -57,16 +57,20 @@ jobs:
           echo ".nojekyll created"
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./publish
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       pages: write
       id-token: write
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+        id: deployment
+        uses: actions/deploy-pages@v4
