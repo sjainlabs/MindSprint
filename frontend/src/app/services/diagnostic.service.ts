@@ -50,6 +50,8 @@ export interface DiagnosticResult {
     submittedAnswer: number | null;
     secondsSpent: number;
   }>;
+  weakAreas: ('addition' | 'subtraction' | 'multiplication' | 'division')[];
+  strongAreas: ('addition' | 'subtraction' | 'multiplication' | 'division')[];
 }
 
 @Injectable({
