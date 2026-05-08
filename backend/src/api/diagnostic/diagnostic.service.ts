@@ -16,6 +16,9 @@ const TEST_DURATION_TARGET_SECONDS = 600;
 // Scoring intentionally prioritizes correctness while still rewarding steady pace.
 const ACCURACY_WEIGHT = 0.8;
 const SPEED_WEIGHT = 0.2;
+// Accuracy thresholds for level determination and weak/strong area classification.
+const ADVANCED_ACCURACY_THRESHOLD = 85;
+const BEGINNER_ACCURACY_THRESHOLD = 60;
 
 // Phase 1 stores generated tests in memory for simplicity.
 const inMemoryTests = new Map<string, DiagnosticQuestion[]>();
@@ -106,11 +109,11 @@ export const createDiagnosticTest = (): DiagnosticTest => {
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 export const mapScoreToLevel = (accuracy: number): LearningLevel => {
-  if (accuracy < 60) {
+  if (accuracy < BEGINNER_ACCURACY_THRESHOLD) {
     return 'Beginner';
   }
 
-  if (accuracy <= 85) {
+  if (accuracy <= ADVANCED_ACCURACY_THRESHOLD) {
     return 'Intermediate';
   }
 
@@ -181,7 +184,7 @@ export const scoreDiagnosticSubmission = (submission: DiagnosticSubmission): Dia
     }
     const operationCorrect = operationResults.filter((r) => r.isCorrect).length;
     const operationAccuracy = (operationCorrect / operationResults.length) * 100;
-    if (operationAccuracy < 60) {
+    if (operationAccuracy < BEGINNER_ACCURACY_THRESHOLD) {
       weakAreas.push(operation);
     } else {
       strongAreas.push(operation);
