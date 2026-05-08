@@ -1,0 +1,40 @@
+{
+  "diagnostic": {
+    "questionCount": 20,
+    "perOperation": 5,
+    "operations": {
+      "addition": { "min": 0, "max": 30 },
+      "subtraction": { "min": 0, "max": 30 },
+      "multiplication": { "min": 1, "max": 12 },
+      "division": { "min": 1, "max": 12 }
+    }
+  },
+  "practice": {
+    "questionCount": 10,
+    "levels": {
+      "Beginner": {
+        "rules": [
+          { "operation": "addition", "min": 0, "max": 9 },
+          { "operation": "subtraction", "min": 0, "max": 9 },
+          { "operation": "multiplication", "min": 1, "max": 9 },
+          { "operation": "division", "min": 1, "max": 9 }
+        ]
+      },
+      "Intermediate": {
+        "rules": [
+          { "operation": "addition", "min": 10, "max": 99 },
+          { "operation": "subtraction", "min": 10, "max": 99 },
+          { "operation": "multiplication", "min": 10, "max": 99 },
+          { "operation": "division", "min": 10, "max": 99 }
+        ]
+      },
+      "Advanced": {
+        "rules": [
+          { "operation": "addition", "min": 100, "max": 999 },
+          { "operation": "subtraction", "min": 100, "max": 999 },
+          { "operation": "multiplication", "min": 10, "max": 99 }
+        ]
+      }
+    }
+  }
+}

@@ -4,6 +4,8 @@ import { AssessmentMath } from './pages/assessment-math/assessment-math';
 import { AssessmentEnglish } from './pages/assessment-english/assessment-english';
 import { AssessmentScience } from './pages/assessment-science/assessment-science';
 import { Results } from './pages/results/results';
+import { DiagnosticTestComponent } from './components/diagnostic-test/diagnostic-test';
+import { WorksheetPageComponent } from './components/worksheet-page/worksheet-page';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/welcome', pathMatch: 'full' },
@@ -12,4 +14,6 @@ export const routes: Routes = [
   { path: 'assessment/english', component: AssessmentEnglish },
   { path: 'assessment/science', component: AssessmentScience },
   { path: 'results', component: Results },
+  { path: 'diagnostic', component: DiagnosticTestComponent },
+  { path: 'worksheet', component: WorksheetPageComponent },
 ];

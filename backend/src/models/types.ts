@@ -1,0 +1,77 @@
+export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
+
+export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
+export interface DiagnosticQuestion {
+  id: string;
+  operation: MathOperation;
+  prompt: string;
+  operandA: number;
+  operandB: number;
+  answer: number;
+}
+
+export interface DiagnosticQuestionView {
+  id: string;
+  operation: MathOperation;
+  prompt: string;
+}
+
+export interface DiagnosticTest {
+  testId: string;
+  questions: DiagnosticQuestionView[];
+  createdAt: string;
+}
+
+export interface DiagnosticSubmissionResponse {
+  questionId: string;
+  answer: number;
+  secondsSpent: number;
+}
+
+export interface DiagnosticSubmission {
+  testId: string;
+  startedAt: string;
+  completedAt: string;
+  responses: DiagnosticSubmissionResponse[];
+}
+
+export interface ScoreBreakdown {
+  totalQuestions: number;
+  attempted: number;
+  correct: number;
+  incorrect: number;
+  unanswered: number;
+  totalDurationSeconds: number;
+  averageSecondsPerQuestion: number;
+  accuracyScore: number;
+  speedScore: number;
+  finalScore: number;
+}
+
+export interface DiagnosticResult {
+  level: LearningLevel;
+  score: ScoreBreakdown;
+  questionResults: Array<{
+    questionId: string;
+    isCorrect: boolean;
+    expectedAnswer: number;
+    submittedAnswer: number | null;
+    secondsSpent: number;
+  }>;
+}
+
+export interface WorksheetQuestion {
+  id: string;
+  operation: MathOperation;
+  prompt: string;
+}
+
+export interface Worksheet {
+  worksheetId: string;
+  level: LearningLevel;
+  title: string;
+  instructions: string;
+  generatedAt: string;
+  questions: WorksheetQuestion[];
+}

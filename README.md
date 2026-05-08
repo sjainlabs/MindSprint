@@ -37,32 +37,13 @@ The app is designed with a mobile-first approach, ensuring excellent user experi
 - **TypeScript** - Type-safe development
 - **Phaser.js** - Game framework (ready for integration)
 
-### Backend (Ready for Integration)
-- **Recommendation**: Create a separate backend repository for better separation of concerns
-- **Suggested Tech Stack**:
-  - **Node.js + Express** - RESTful API server
-  - **Supabase** - Database, authentication, and real-time features
-  - **TypeScript** - Type-safe backend development
-  
-**Why Separate Repository?**
-- Independent deployment cycles for frontend and backend
-- Easier to scale and maintain separately
-- Frontend can be deployed to GitHub Pages (static hosting)
-- Backend can be deployed to services like Vercel, Railway, or Render
-- Better security: No API keys exposed in frontend repository
-
-**Suggested Repository Structure** (for new backend repo):
-```
-mindsprint-backend/
-├── src/
-│   ├── routes/          # API endpoints
-│   ├── controllers/     # Business logic
-│   ├── models/          # Data models
-│   ├── middleware/      # Auth, validation
-│   └── config/          # Configuration
-├── tests/               # Unit and integration tests
-└── package.json
-```
+### Backend (Phase 1 MVP)
+- **Node.js + Express + SQLite** backend scaffold now lives in `/backend`
+- JSON-driven syllabus/templates are in `backend/src/utils`
+- Diagnostic + worksheet APIs:
+  - `GET /api/diagnostic/start`
+  - `POST /api/diagnostic/submit`
+  - `POST /api/practice/worksheet`
 
 ## 📦 Installation & Deployment
 
@@ -74,6 +55,11 @@ npm install
 
 # Start development server
 npm start
+
+# (Optional) Start backend API server
+cd backend
+npm install
+npm run start
 
 # Build for production
 npm run build
