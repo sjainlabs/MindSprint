@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import sqlite3 from 'sqlite3';
 import { open, type Database } from 'sqlite';
 
@@ -7,7 +8,7 @@ let databasePromise: Promise<Database<sqlite3.Database, sqlite3.Statement>> | nu
 
 export const getDatabase = async (): Promise<Database<sqlite3.Database, sqlite3.Statement>> => {
   if (!databasePromise) {
-    const dbFolder = path.join(process.cwd(), 'backend', 'src', 'db');
+    const dbFolder = path.dirname(fileURLToPath(import.meta.url));
     await mkdir(dbFolder, { recursive: true });
     const dbPath = path.join(dbFolder, 'mindsprint.sqlite');
 
