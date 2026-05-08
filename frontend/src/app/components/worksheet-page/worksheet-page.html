@@ -1,0 +1,54 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-3xl mx-auto bg-white rounded-xl shadow p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-primary">Practice Worksheet</h1>
+      <a routerLink="/diagnostic" class="text-sm text-primary underline">Back to Diagnostic</a>
+    </div>
+
+    @if (loading) {
+      <p class="text-gray-600">Generating worksheet…</p>
+    }
+
+    @if (errorMessage) {
+      <p class="text-red-600">{{ errorMessage }}</p>
+    }
+
+    @if (worksheet) {
+      <div class="mb-5">
+        <h2 class="text-xl font-semibold">{{ worksheet.title }}</h2>
+        <p class="text-sm text-gray-500">Level: {{ worksheet.level }}</p>
+        <p class="mt-2">{{ worksheet.instructions }}</p>
+      </div>
+
+      <ol class="list-decimal list-inside space-y-2 mb-6">
+        @for (question of worksheet.questions; track question.id) {
+          <li class="p-2 border rounded-md">{{ question.prompt }}</li>
+        }
+      </ol>
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="border border-gray-300 px-3 py-2 rounded-lg"
+          (click)="regenerate('Beginner')"
+        >
+          Beginner
+        </button>
+        <button
+          type="button"
+          class="border border-gray-300 px-3 py-2 rounded-lg"
+          (click)="regenerate('Intermediate')"
+        >
+          Intermediate
+        </button>
+        <button
+          type="button"
+          class="border border-gray-300 px-3 py-2 rounded-lg"
+          (click)="regenerate('Advanced')"
+        >
+          Advanced
+        </button>
+      </div>
+    }
+  </div>
+</div>

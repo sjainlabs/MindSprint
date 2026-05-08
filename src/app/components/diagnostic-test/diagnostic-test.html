@@ -1,0 +1,67 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-3xl mx-auto bg-white rounded-xl shadow p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-primary">Math Diagnostic Test</h1>
+      <a routerLink="/welcome" class="text-sm text-primary underline">Back</a>
+    </div>
+
+    @if (loading) {
+      <p class="text-gray-600">Loading 20-question diagnostic test…</p>
+    }
+
+    @if (errorMessage) {
+      <p class="text-red-600 mb-4">{{ errorMessage }}</p>
+    }
+
+    @if (!loading && questions.length > 0 && !result) {
+      <p class="text-gray-600 mb-4">Answer all questions you can. Accuracy and speed both affect your score.</p>
+
+      <div class="space-y-4 mb-6">
+        @for (question of questions; track question.id; let index = $index) {
+          <div class="border rounded-lg p-4">
+            <label class="block font-medium mb-2">{{ index + 1 }}. {{ question.prompt }}</label>
+            <input
+              type="number"
+              class="w-full border rounded-md px-3 py-2"
+              [name]="question.id"
+              [(ngModel)]="answers[question.id]"
+              placeholder="Enter your answer"
+            />
+          </div>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="bg-primary text-white font-semibold px-5 py-3 rounded-lg disabled:opacity-60"
+        [disabled]="submitting"
+        (click)="submitTest()"
+      >
+        {{ submitting ? 'Submitting...' : 'Submit Diagnostic' }}
+      </button>
+    }
+
+    @if (result) {
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-3">
+        <h2 class="text-xl font-semibold">Your Result: {{ result.level }}</h2>
+        <p><strong>Final Score:</strong> {{ result.score.finalScore }}/100</p>
+        <p><strong>Accuracy:</strong> {{ result.score.accuracyScore }}%</p>
+        <p><strong>Speed:</strong> {{ result.score.speedScore }}%</p>
+        <p><strong>Correct:</strong> {{ result.score.correct }} / {{ result.score.totalQuestions }}</p>
+
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button
+            type="button"
+            class="bg-accent text-white font-semibold px-4 py-2 rounded-lg"
+            (click)="goToWorksheet()"
+          >
+            Generate Practice Worksheet
+          </button>
+          <button type="button" class="border border-gray-300 px-4 py-2 rounded-lg" (click)="startTest()">
+            Start New Diagnostic
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

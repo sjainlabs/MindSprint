@@ -1,0 +1,8 @@
+{
+  "worksheetTitle": "Personalized Practice Worksheet",
+  "instructions": {
+    "Beginner": "Solve each 1-digit problem carefully.",
+    "Intermediate": "Solve each 2-digit problem. Show your work.",
+    "Advanced": "Solve each challenge problem: 2-digit × 2-digit and 3-digit addition/subtraction."
+  }
+}
