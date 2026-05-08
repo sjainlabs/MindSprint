@@ -1,8 +1,13 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { generateWorksheet } from './practice.controller';
-import { createRateLimiter } from '../../utils/rate-limit';
 
 export const practiceRouter = Router();
-const worksheetRateLimiter = createRateLimiter({ windowMs: 60_000, maxRequests: 30 });
+const worksheetRateLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 practiceRouter.post('/worksheet', worksheetRateLimiter, generateWorksheet);
