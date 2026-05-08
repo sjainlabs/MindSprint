@@ -11,10 +11,13 @@ import {
   type ScoreBreakdown,
 } from '../../models/types';
 
+// Phase 1 MVP target: a child should ideally complete discovery in ~10 minutes.
 const TEST_DURATION_TARGET_SECONDS = 600;
+// Scoring intentionally prioritizes correctness while still rewarding steady pace.
 const ACCURACY_WEIGHT = 0.8;
 const SPEED_WEIGHT = 0.2;
 
+// Phase 1 stores generated tests in memory for simplicity.
 const inMemoryTests = new Map<string, DiagnosticQuestion[]>();
 
 type OperationConfig = { min: number; max: number };
@@ -146,7 +149,10 @@ export const scoreDiagnosticSubmission = (submission: DiagnosticSubmission): Dia
 
   const startedAt = new Date(submission.startedAt).getTime();
   const completedAt = new Date(submission.completedAt).getTime();
-  const rawDuration = Number.isNaN(startedAt) || Number.isNaN(completedAt) ? 0 : Math.max(0, completedAt - startedAt);
+  if (Number.isNaN(startedAt) || Number.isNaN(completedAt)) {
+    throw new Error('Invalid submission timestamps.');
+  }
+  const rawDuration = Math.max(0, completedAt - startedAt);
   const totalDurationSeconds = Math.round(rawDuration / 1000);
 
   const accuracyScore = Math.round((correct / questions.length) * 100);
@@ -168,7 +174,7 @@ export const scoreDiagnosticSubmission = (submission: DiagnosticSubmission): Dia
     incorrect,
     unanswered,
     totalDurationSeconds,
-    averageSecondsPerQuestion: Number((totalDurationSeconds / questions.length).toFixed(2)),
+    averageSecondsPerQuestion: Math.round((totalDurationSeconds / questions.length) * 100) / 100,
     accuracyScore,
     speedScore,
     finalScore,
