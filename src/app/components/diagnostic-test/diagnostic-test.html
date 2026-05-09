@@ -13,54 +13,51 @@
       <p class="text-red-600 mb-4">{{ errorMessage }}</p>
     }
 
-    @if (!loading && questions.length > 0 && !result) {
+    @if (!loading && questions.length > 0) {
       <p class="text-gray-600 mb-4">Answer all questions you can. Accuracy and speed both affect your score.</p>
+      <p class="text-gray-600 mb-4">
+        Question {{ currentQuestionIndex + 1 }} of {{ questions.length }} · Answered {{ answeredCount }}
+      </p>
 
-      <div class="space-y-4 mb-6">
-        @for (question of questions; track question.id; let index = $index) {
-          <div class="border rounded-lg p-4">
-            <label class="block font-medium mb-2">{{ index + 1 }}. {{ question.prompt }}</label>
-            <input
-              type="number"
-              class="w-full border rounded-md px-3 py-2"
-              [name]="question.id"
-              [(ngModel)]="answers[question.id]"
-              placeholder="Enter your answer"
-            />
-          </div>
-        }
-      </div>
-
-      <button
-        type="button"
-        class="bg-primary text-white font-semibold px-5 py-3 rounded-lg disabled:opacity-60"
-        [disabled]="submitting"
-        (click)="submitTest()"
-      >
-        {{ submitting ? 'Submitting...' : 'Submit Diagnostic' }}
-      </button>
-    }
-
-    @if (result) {
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-3">
-        <h2 class="text-xl font-semibold">Your Result: {{ result.level }}</h2>
-        <p><strong>Final Score:</strong> {{ result.score.finalScore }}/100</p>
-        <p><strong>Accuracy:</strong> {{ result.score.accuracyScore }}%</p>
-        <p><strong>Speed:</strong> {{ result.score.speedScore }}%</p>
-        <p><strong>Correct:</strong> {{ result.score.correct }} / {{ result.score.totalQuestions }}</p>
-
-        <div class="flex flex-wrap gap-3 pt-2">
-          <button
-            type="button"
-            class="bg-accent text-white font-semibold px-4 py-2 rounded-lg"
-            (click)="goToWorksheet()"
-          >
-            Generate Practice Worksheet
-          </button>
-          <button type="button" class="border border-gray-300 px-4 py-2 rounded-lg" (click)="startTest()">
-            Start New Diagnostic
-          </button>
+      @if (currentQuestion; as question) {
+        <div class="border rounded-lg p-4 mb-6">
+          <label class="block font-medium mb-2">{{ currentQuestionIndex + 1 }}. {{ question.prompt }}</label>
+          <input
+            type="number"
+            class="w-full border rounded-md px-3 py-2"
+            [name]="question.id"
+            [ngModel]="answers[currentQuestionIndex]"
+            (ngModelChange)="setCurrentAnswer($event)"
+            placeholder="Enter your answer"
+          />
         </div>
+      }
+
+      <div class="flex flex-wrap gap-3">
+        <button
+          type="button"
+          class="border border-gray-300 px-4 py-2 rounded-lg disabled:opacity-60"
+          [disabled]="currentQuestionIndex === 0 || submitting"
+          (click)="goToPreviousQuestion()"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="border border-gray-300 px-4 py-2 rounded-lg disabled:opacity-60"
+          [disabled]="currentQuestionIndex === questions.length - 1 || submitting"
+          (click)="goToNextQuestion()"
+        >
+          Next
+        </button>
+        <button
+          type="button"
+          class="bg-primary text-white font-semibold px-5 py-3 rounded-lg disabled:opacity-60"
+          [disabled]="submitting"
+          (click)="submitTest()"
+        >
+          {{ submitting ? 'Submitting...' : 'Submit Diagnostic' }}
+        </button>
       </div>
     }
   </div>
