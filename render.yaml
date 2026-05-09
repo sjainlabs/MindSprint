@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: mindsprint-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: FRONTEND_ORIGIN
+        sync: false   # set this in the Render dashboard to your frontend URL
