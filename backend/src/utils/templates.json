@@ -4,5 +4,16 @@
     "Beginner": "Solve each 1-digit problem carefully.",
     "Intermediate": "Solve each 2-digit problem. Show your work.",
     "Advanced": "Solve each challenge problem: 2-digit × 2-digit and 3-digit addition/subtraction."
-  }
+  },
+  "beginner_add": "{a} + {b} = ?",
+  "beginner_sub": "{a} - {b} = ?",
+  "beginner_mul": "{a} × {b} = ?",
+  "beginner_div": "{a} ÷ {b} = ?",
+  "intermediate_add": "{a} + {b} = ?",
+  "intermediate_sub": "{a} - {b} = ?",
+  "intermediate_mul": "{a} × {b} = ?",
+  "intermediate_div": "{a} ÷ {b} = ?",
+  "advanced_mul_2digit": "{a} × {b} = ?",
+  "advanced_add_3digit": "{a} + {b} = ?",
+  "advanced_sub_3digit": "{a} - {b} = ?"
 }
