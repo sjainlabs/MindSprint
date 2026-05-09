@@ -7,6 +7,7 @@ export interface WorksheetQuestion {
   id: string;
   operation: 'addition' | 'subtraction' | 'multiplication' | 'division';
   prompt: string;
+  answer: number;
 }
 
 export interface Worksheet {
