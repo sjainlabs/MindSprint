@@ -16,6 +16,7 @@ import {
   styleUrl: './diagnostic-test.css',
 })
 export class DiagnosticTestComponent implements OnInit {
+  private static readonly QUESTION_LIMIT = 20;
   testId = '';
   questions: DiagnosticQuestion[] = [];
   answers: Array<number | null> = [];
@@ -24,6 +25,7 @@ export class DiagnosticTestComponent implements OnInit {
   submitting = false;
   errorMessage = '';
   private startedAt = '';
+  private startedAtMs = 0;
   private completedAt = '';
 
   constructor(
@@ -43,13 +45,15 @@ export class DiagnosticTestComponent implements OnInit {
     this.answers = [];
     this.currentQuestionIndex = 0;
     this.startedAt = '';
+    this.startedAtMs = 0;
     this.completedAt = '';
 
     this.diagnosticService.startDiagnostic().subscribe({
       next: (test) => {
         this.testId = test.testId;
-        this.questions = test.questions.slice(0, 20);
-        this.startedAt = new Date().toISOString();
+        this.questions = test.questions.slice(0, DiagnosticTestComponent.QUESTION_LIMIT);
+        this.startedAtMs = Date.now();
+        this.startedAt = new Date(this.startedAtMs).toISOString();
         this.answers = this.questions.map(() => null);
         this.loading = false;
       },
@@ -71,7 +75,7 @@ export class DiagnosticTestComponent implements OnInit {
 
     const elapsedSeconds = Math.max(
       1,
-      Math.round((Date.parse(this.completedAt) - Date.parse(this.startedAt)) / 1000),
+      Math.round((Date.parse(this.completedAt) - this.startedAtMs) / 1000),
     );
     const averageSeconds = Math.max(1, Math.round(elapsedSeconds / this.questions.length));
 
