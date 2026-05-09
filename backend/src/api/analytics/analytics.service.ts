@@ -87,6 +87,7 @@ export const buildAnalyticsEvents = (
 
     const correct = questionResults.filter((questionResult) => questionResult.isCorrect).length;
     const accuracy = Math.round((correct / questionResults.length) * 100);
+    // Until per-question timing is captured, apportion worksheet duration across attempted questions.
     const durationSeconds = round((result.totalDurationSeconds / Math.max(result.attempted, 1)) * questionResults.length);
 
     events.push({

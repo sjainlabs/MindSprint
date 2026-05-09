@@ -116,9 +116,9 @@ export class WorksheetPageComponent implements OnInit {
       return [] as Array<{ operation: MathOperation; mastery: number }>;
     }
 
-    return (Object.entries(profile.masteryLevels) as Array<[MathOperation, number]>).sort((left, right) => right[1] - left[1]).map(
-      ([operation, mastery]) => ({ operation, mastery }),
-    );
+    return (Object.entries(profile.masteryLevels) as Array<[MathOperation, number]>)
+      .sort(([, leftMastery], [, rightMastery]) => rightMastery - leftMastery)
+      .map(([operation, mastery]) => ({ operation, mastery }));
   });
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);

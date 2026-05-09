@@ -9,6 +9,8 @@ import {
 const OPERATIONS: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
 const DEFAULT_MASTERY_LEVEL = 50;
 const MAX_LEVEL = 50;
+const NEVER_UPDATED_TIMESTAMP = new Date(0).toISOString();
+const NEVER_UPDATED_DATE_KEY = NEVER_UPDATED_TIMESTAMP.slice(0, 10);
 
 type ProfileRow = {
   student_id: string;
@@ -52,7 +54,7 @@ export const createDefaultStudentProfile = (studentId: string): StudentProfile =
   streak: 0,
   badges: [],
   learningPathLevel: 1,
-  updatedAt: new Date(0).toISOString(),
+  updatedAt: NEVER_UPDATED_TIMESTAMP,
 });
 
 const fromRow = (row: ProfileRow): StudentProfile => ({
@@ -123,7 +125,7 @@ const updateStreak = (currentStreak: number, updatedAt: string, submittedAt: str
   const previousDateKey = toDateKey(updatedAt);
   const currentDateKey = toDateKey(submittedAt);
 
-  if (previousDateKey === '1970-01-01') {
+  if (previousDateKey === NEVER_UPDATED_DATE_KEY) {
     return 1;
   }
 
