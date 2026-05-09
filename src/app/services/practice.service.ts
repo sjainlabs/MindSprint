@@ -34,8 +34,4 @@ export class PracticeService {
   getPractice(level: LearningLevel): Observable<Worksheet> {
     return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
   }
-
-  getWorksheet(level: LearningLevel): Observable<Worksheet> {
-    return this.getPractice(level);
-  }
 }

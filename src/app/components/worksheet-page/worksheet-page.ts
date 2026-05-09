@@ -56,7 +56,10 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   get accuracyPercentage(): number | null {
-    if (!this.hasCheckedAnswers || this.checkedCount === 0) {
+    if (!this.hasCheckedAnswers) {
+      return null;
+    }
+    if (this.checkedCount === 0) {
       return null;
     }
     return Math.round((this.correctCount / this.checkedCount) * 100);
