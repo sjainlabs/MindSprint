@@ -8,8 +8,12 @@ export const app = express();
 const allowedOrigins = [
   'http://localhost:4200',
   'http://127.0.0.1:4200',
-  ...(process.env['FRONTEND_ORIGIN'] ? [process.env['FRONTEND_ORIGIN']] : []),
 ];
+
+const frontendOrigin = process.env['FRONTEND_ORIGIN'];
+if (frontendOrigin && /^https?:\/\/.+/.test(frontendOrigin)) {
+  allowedOrigins.push(frontendOrigin);
+}
 
 app.use(
   cors({
@@ -22,7 +26,7 @@ app.use(
       }
     },
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
 app.use(express.json());
