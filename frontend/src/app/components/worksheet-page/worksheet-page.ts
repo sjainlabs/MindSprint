@@ -89,7 +89,8 @@ export class WorksheetPageComponent implements OnInit {
           ...worksheet,
           questions: worksheet.questions.slice(0, 10),
         };
-        this.answers = Object.fromEntries(this.worksheet.questions.map((question) => [question.id, null]));
+        this.answers = Object.fromEntries(
+          this.worksheet.questions.map((question) => [question.id, null]));
         this.loading = false;
       },
       error: () => {
