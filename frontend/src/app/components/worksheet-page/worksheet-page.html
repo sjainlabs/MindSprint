@@ -7,14 +7,13 @@
 
     @if (loading) {
       <p class="text-gray-600">Generating worksheets…</p>
-      <p>Test {{worksheet.title}} </p>
     }
 
     @if (errorMessage) {
       <p class="text-red-600">{{ errorMessage }}</p>
     }
 
-<!--    @if (worksheet !== null) {-->
+    @if (worksheet !== null) {
       <div class="mb-5">
         <h2 class="text-xl font-semibold">{{ worksheet.title }}</h2>
         <p class="text-sm text-gray-500">Level: {{ worksheet.level }}</p>
@@ -68,6 +67,6 @@
           Advanced
         </button>
       </div>
-<!--    }-->
+    }
   </div>
 </div>
