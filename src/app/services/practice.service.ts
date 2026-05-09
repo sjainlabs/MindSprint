@@ -21,7 +21,7 @@ export interface Worksheet {
 
 export interface WorksheetAnswerInput {
   questionId: string;
-  answer: number;
+  answer: number | null;
 }
 
 export interface WorksheetSubmission {
