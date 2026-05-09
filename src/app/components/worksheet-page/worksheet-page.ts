@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PracticeService, type Worksheet } from '../../services/practice.service';
 import { type LearningLevel } from '../../services/diagnostic.service';
 
@@ -13,6 +14,8 @@ import { type LearningLevel } from '../../services/diagnostic.service';
   styleUrl: './worksheet-page.css',
 })
 export class WorksheetPageComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly promptSuffix = '= ?';
   worksheet: Worksheet | null = null;
   answers: Record<string, number | null> = {};
   currentLevel: LearningLevel = 'Beginner';
@@ -26,10 +29,12 @@ export class WorksheetPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      const level = this.resolveLevel(params.get('level'));
-      this.loadWorksheet(level);
-    });
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const level = this.resolveLevel(params.get('level'));
+        this.loadWorksheet(level);
+      });
   }
 
   regenerate(level: LearningLevel): void {
@@ -95,7 +100,7 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   private solvePrompt(prompt: string): number {
-    const expression = prompt.replace('= ?', '').trim();
+    const expression = prompt.replace(this.promptSuffix, '').trim();
     const tokens = expression.split(' ');
     if (tokens.length !== 3) {
       return Number.NaN;
