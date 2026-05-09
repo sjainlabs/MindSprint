@@ -61,7 +61,7 @@ export class DiagnosticTestComponent implements OnInit {
       .map((question, index) => ({
         questionId: question.id,
         answer: this.answers[index],
-        secondsSpent: Math.max(1, this.secondsSpentPerQuestion[index]),
+        secondsSpent: this.secondsSpentPerQuestion[index] ?? 0,
       }))
       .filter((r): r is DiagnosticSubmissionResponse => r.answer !== null);
 
@@ -120,7 +120,7 @@ export class DiagnosticTestComponent implements OnInit {
   }
 
   private recordTimeForCurrentQuestion(): void {
-    const elapsed = Math.max(1, Math.round((Date.now() - this.questionStartTime) / 1000));
+    const elapsed = Math.max(0, Math.round((Date.now() - this.questionStartTime) / 1000));
     this.secondsSpentPerQuestion[this.currentQuestionIndex] =
       (this.secondsSpentPerQuestion[this.currentQuestionIndex] ?? 0) + elapsed;
     this.questionStartTime = Date.now();
