@@ -49,11 +49,12 @@ export class WorksheetPageComponent implements OnInit {
       .map((question) => {
         const answer = this.answers[question.id];
 
-        if (answer === null) {
+        if (answer == null) {
           return null;
         }
 
-        return answer === this.solvePrompt(question.prompt);
+        const expectedAnswer = this.solvePrompt(question.prompt);
+        return Number.isFinite(expectedAnswer) ? answer === expectedAnswer : null;
       })
       .filter((result): result is boolean => result !== null);
 
@@ -96,9 +97,16 @@ export class WorksheetPageComponent implements OnInit {
   private solvePrompt(prompt: string): number {
     const expression = prompt.replace('= ?', '').trim();
     const tokens = expression.split(' ');
+    if (tokens.length !== 3) {
+      return Number.NaN;
+    }
+
     const leftOperand = Number(tokens[0]);
     const operator = tokens[1];
     const rightOperand = Number(tokens[2]);
+    if (!Number.isFinite(leftOperand) || !Number.isFinite(rightOperand)) {
+      return Number.NaN;
+    }
 
     if (operator === '+') {
       return leftOperand + rightOperand;
@@ -112,6 +120,10 @@ export class WorksheetPageComponent implements OnInit {
       return leftOperand * rightOperand;
     }
 
-    return rightOperand === 0 ? 0 : leftOperand / rightOperand;
+    if (operator === '÷') {
+      return rightOperand === 0 ? Number.NaN : leftOperand / rightOperand;
+    }
+
+    return Number.NaN;
   }
 }
