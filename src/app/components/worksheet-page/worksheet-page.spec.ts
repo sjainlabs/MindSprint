@@ -11,10 +11,11 @@ describe('WorksheetPageComponent', () => {
     title: 'Practice Worksheet',
     instructions: 'Solve all questions.',
     generatedAt: new Date().toISOString(),
-    questions: Array.from({ length: 12 }, (_, index) => ({
+    questions: Array.from({ length: 10 }, (_, index) => ({
       id: `q-${index + 1}`,
       operation: 'addition',
       prompt: `${index + 1} + 1 = ?`,
+      answer: index + 2,
     })),
   };
 
@@ -31,7 +32,9 @@ describe('WorksheetPageComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            paramMap: of(convertToParamMap({ level: 'Intermediate' })),
+            snapshot: {
+              paramMap: convertToParamMap({ level: 'Intermediate' }),
+            },
           },
         },
       ],

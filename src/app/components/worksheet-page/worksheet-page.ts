@@ -62,6 +62,12 @@ export class WorksheetPageComponent implements OnInit {
 
     this.practiceService.getPractice(<"Beginner" | "Intermediate" | "Advanced">level).subscribe({
       next: (data) => {
+        if (!data || !data.questions) {
+          this.errorMessage = 'Received an empty or invalid worksheet response.';
+          this.loading = false;
+          return;
+        }
+
         this.worksheet = {
           worksheetId: data.worksheetId,
           title: `${level} Practice Worksheet`,
