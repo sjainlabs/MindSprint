@@ -7,6 +7,7 @@ export interface WorksheetQuestion {
   id: string;
   operation: 'addition' | 'subtraction' | 'multiplication' | 'division';
   prompt: string;
+  answer: number;
 }
 
 export interface Worksheet {
@@ -16,6 +17,36 @@ export interface Worksheet {
   instructions: string;
   generatedAt: string;
   questions: WorksheetQuestion[];
+}
+
+export interface WorksheetAnswerInput {
+  questionId: string;
+  answer: number;
+}
+
+export interface WorksheetSubmission {
+  worksheetId: string;
+  level: LearningLevel;
+  submittedAt: string;
+  answers: WorksheetAnswerInput[];
+}
+
+export interface WorksheetQuestionResult {
+  questionId: string;
+  expectedAnswer: number;
+  submittedAnswer: number | null;
+  isCorrect: boolean;
+}
+
+export interface WorksheetResult {
+  worksheetId: string;
+  level: LearningLevel;
+  totalQuestions: number;
+  attempted: number;
+  correct: number;
+  incorrect: number;
+  accuracy: number;
+  questionResults: WorksheetQuestionResult[];
 }
 
 @Injectable({
@@ -33,5 +64,9 @@ export class PracticeService {
 
   getPractice(level: LearningLevel): Observable<Worksheet> {
     return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
+  }
+
+  submitWorksheet(payload: WorksheetSubmission): Observable<WorksheetResult> {
+    return this.http.post<WorksheetResult>(`${this.baseUrl}/submit`, payload);
   }
 }
