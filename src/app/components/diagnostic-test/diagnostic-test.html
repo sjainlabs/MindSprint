@@ -13,51 +13,68 @@
       <p class="text-red-600 mb-4">{{ errorMessage }}</p>
     }
 
-    @if (!loading && questions.length > 0 && !result) {
+    @if (!loading && currentQuestion) {
       <p class="text-gray-600 mb-4">Answer all questions you can. Accuracy and speed both affect your score.</p>
 
-      <div class="space-y-4 mb-6">
-        @for (question of questions; track question.id; let index = $index) {
-          <div class="border rounded-lg p-4">
-            <label class="block font-medium mb-2">{{ index + 1 }}. {{ question.prompt }}</label>
-            <input
-              type="number"
-              class="w-full border rounded-md px-3 py-2"
-              [name]="question.id"
-              [(ngModel)]="answers[question.id]"
-              placeholder="Enter your answer"
-            />
-          </div>
-        }
+      <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+        <p>Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</p>
+        <p>{{ answeredCount }} answered</p>
       </div>
 
-      <button
-        type="button"
-        class="bg-primary text-white font-semibold px-5 py-3 rounded-lg disabled:opacity-60"
-        [disabled]="submitting"
-        (click)="submitTest()"
-      >
-        {{ submitting ? 'Submitting...' : 'Submit Diagnostic' }}
-      </button>
-    }
+      <div class="border rounded-lg p-4 mb-6">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+          {{ currentQuestion.operation }}
+        </p>
+        <label class="block font-medium mb-2" for="diagnostic-answer">
+          {{ currentQuestionIndex + 1 }}. {{ currentQuestion.prompt }}
+        </label>
+        <input
+          id="diagnostic-answer"
+          type="number"
+          class="w-full border rounded-md px-3 py-2"
+          [name]="currentQuestion.id"
+          [value]="answers[currentQuestionIndex] ?? ''"
+          (input)="updateAnswer($any($event.target).value)"
+          placeholder="Enter your answer"
+        />
+      </div>
 
-    @if (result) {
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-3">
-        <h2 class="text-xl font-semibold">Your Result: {{ result.level }}</h2>
-        <p><strong>Final Score:</strong> {{ result.score.finalScore }}/100</p>
-        <p><strong>Accuracy:</strong> {{ result.score.accuracyScore }}%</p>
-        <p><strong>Speed:</strong> {{ result.score.speedScore }}%</p>
-        <p><strong>Correct:</strong> {{ result.score.correct }} / {{ result.score.totalQuestions }}</p>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          class="border border-gray-300 px-4 py-2 rounded-lg disabled:opacity-60"
+          [disabled]="currentQuestionIndex === 0 || submitting"
+          (click)="previousQuestion()"
+        >
+          Previous
+        </button>
 
-        <div class="flex flex-wrap gap-3 pt-2">
+        <div class="flex flex-wrap gap-3">
+          @if (!isLastQuestion) {
+            <button
+              type="button"
+              class="bg-primary text-white font-semibold px-5 py-3 rounded-lg"
+              [disabled]="submitting"
+              (click)="nextQuestion()"
+            >
+              Next Question
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="bg-primary text-white font-semibold px-5 py-3 rounded-lg disabled:opacity-60"
+              [disabled]="submitting"
+              (click)="submitTest()"
+            >
+              {{ submitting ? 'Submitting...' : 'Submit Diagnostic' }}
+            </button>
+          }
           <button
             type="button"
-            class="bg-accent text-white font-semibold px-4 py-2 rounded-lg"
-            (click)="goToWorksheet()"
+            class="border border-gray-300 px-4 py-2 rounded-lg"
+            [disabled]="loading || submitting"
+            (click)="startTest()"
           >
-            Generate Practice Worksheet
-          </button>
-          <button type="button" class="border border-gray-300 px-4 py-2 rounded-lg" (click)="startTest()">
             Start New Diagnostic
           </button>
         </div>
