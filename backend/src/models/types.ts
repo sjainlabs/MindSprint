@@ -79,6 +79,37 @@ export interface WorksheetQuestion {
   id: string;
   operation: MathOperation;
   prompt: string;
+  answer: number;
+}
+
+export interface WorksheetAnswerInput {
+  questionId: string;
+  answer: number;
+}
+
+export interface WorksheetSubmission {
+  worksheetId: string;
+  level: LearningLevel;
+  submittedAt: string;
+  answers: WorksheetAnswerInput[];
+}
+
+export interface WorksheetQuestionResult {
+  questionId: string;
+  expectedAnswer: number;
+  submittedAnswer: number | null;
+  isCorrect: boolean;
+}
+
+export interface WorksheetResult {
+  worksheetId: string;
+  level: LearningLevel;
+  totalQuestions: number;
+  attempted: number;
+  correct: number;
+  incorrect: number;
+  accuracy: number;
+  questionResults: WorksheetQuestionResult[];
 }
 
 export interface Worksheet {

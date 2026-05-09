@@ -2,7 +2,7 @@ import {CommonModule} from '@angular/common';
 import {Component, OnInit} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
-import {PracticeService} from '../../services/practice.service';
+import {PracticeService, type WorksheetResult} from '../../services/practice.service';
 
 @Component({
   selector: 'app-worksheet-page',
@@ -22,6 +22,10 @@ export class WorksheetPageComponent implements OnInit {
   checkedAnswers: Record<string, boolean> = {};
   hasCheckedAnswers = false;
   accuracyPercentage: number | null = null;
+
+  submitting = false;
+  submitError = '';
+  result: WorksheetResult | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -49,10 +53,17 @@ export class WorksheetPageComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     this.worksheet = null;
+    this.result = null;
+    this.hasCheckedAnswers = false;
+    this.checkedAnswers = {};
+    this.accuracyPercentage = null;
+    this.answers = {};
+    this.submitError = '';
 
     this.practiceService.getPractice(<"Beginner" | "Intermediate" | "Advanced">level).subscribe({
       next: (data) => {
         this.worksheet = {
+          worksheetId: data.worksheetId,
           title: `${level} Practice Worksheet`,
           level,
           instructions: 'Solve the following questions.',
@@ -90,6 +101,43 @@ export class WorksheetPageComponent implements OnInit {
     }
 
     this.accuracyPercentage = Math.round((correct / this.worksheet.questions.length) * 100);
+  }
+
+  submitWorksheet() {
+    if (!this.worksheet || this.submitting) return;
+
+    this.submitting = true;
+    this.submitError = '';
+
+    const payload = {
+      worksheetId: this.worksheet.worksheetId,
+      level: this.currentLevel,
+      submittedAt: new Date().toISOString(),
+      answers: Object.entries(this.answers)
+          .filter(([, ans]) => ans !== undefined && ans !== null)
+          .map(([id, ans]) => ({
+            questionId: id,
+            answer: ans,
+          })),
+    };
+
+    this.practiceService.submitWorksheet(payload).subscribe({
+      next: (res) => {
+        this.result = res;
+        this.accuracyPercentage = res.accuracy;
+        this.hasCheckedAnswers = true;
+        this.checkedAnswers = {};
+        for (const qr of res.questionResults) {
+          this.checkedAnswers[qr.questionId] = qr.isCorrect;
+        }
+        this.submitting = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.submitError = 'Failed to submit worksheet. Please try again.';
+        this.submitting = false;
+      },
+    });
   }
 
   regenerate(level: 'Beginner' | 'Intermediate' | 'Advanced') {

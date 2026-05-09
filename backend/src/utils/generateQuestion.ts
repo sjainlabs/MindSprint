@@ -47,7 +47,7 @@ const buildQuestion = (operation: MathOperation, rule: Rule, level: LearningLeve
   if (operation === 'division') {
     const divisor = Math.max(1, operandB);
     const answer = baseRandomInt(rule.min, rule.max);
-    return { id, operation, prompt: `${divisor * answer} ÷ ${divisor} = ?` };
+    return { id, operation, prompt: `${divisor * answer} ÷ ${divisor} = ?`, answer };
   }
 
   const operator =
@@ -57,7 +57,14 @@ const buildQuestion = (operation: MathOperation, rule: Rule, level: LearningLeve
         ? '-'
         : '×';
 
-  return { id, operation, prompt: `${operandA} ${operator} ${operandB} = ?` };
+  const answer =
+    operation === 'addition'
+      ? operandA + operandB
+      : operation === 'subtraction'
+        ? operandA - operandB
+        : operandA * operandB;
+
+  return { id, operation, prompt: `${operandA} ${operator} ${operandB} = ?`, answer };
 };
 
 /**
