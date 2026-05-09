@@ -18,6 +18,8 @@ export class WorksheetPageComponent implements OnInit {
   private readonly promptSuffix = '= ?';
   worksheet: Worksheet | null = null;
   answers: Record<string, number | null> = {};
+  checkedAnswers: Record<string, boolean | null> = {};
+  hasCheckedAnswers = false;
   currentLevel: LearningLevel = 'Beginner';
   loading = false;
   errorMessage = '';
@@ -45,30 +47,40 @@ export class WorksheetPageComponent implements OnInit {
     return Object.values(this.answers).filter((answer) => answer !== null).length;
   }
 
+  get checkedCount(): number {
+    return Object.values(this.checkedAnswers).filter((result) => result !== null).length;
+  }
+
+  get correctCount(): number {
+    return Object.values(this.checkedAnswers).filter((result) => result === true).length;
+  }
+
   get accuracyPercentage(): number | null {
+    if (!this.hasCheckedAnswers) {
+      return null;
+    }
+    if (this.checkedCount === 0) {
+      return null;
+    }
+    return Math.round((this.correctCount / this.checkedCount) * 100);
+  }
+
+  checkAnswers(): void {
     if (!this.worksheet) {
-      return null;
+      return;
     }
 
-    const scoredQuestions = this.worksheet.questions
-      .map((question) => {
+    this.checkedAnswers = Object.fromEntries(
+      this.worksheet.questions.map((question) => {
         const answer = this.answers[question.id];
-
         if (answer == null) {
-          return null;
+          return [question.id, null];
         }
-
         const expectedAnswer = this.solvePrompt(question.prompt);
-        return Number.isFinite(expectedAnswer) ? answer === expectedAnswer : null;
-      })
-      .filter((result): result is boolean => result !== null);
-
-    if (!scoredQuestions.length) {
-      return null;
-    }
-
-    const correct = scoredQuestions.filter(Boolean).length;
-    return Math.round((correct / scoredQuestions.length) * 100);
+        return [question.id, Number.isFinite(expectedAnswer) ? answer === expectedAnswer : null];
+      }),
+    );
+    this.hasCheckedAnswers = true;
   }
 
   private resolveLevel(levelParam: string | null): LearningLevel {
@@ -83,13 +95,17 @@ export class WorksheetPageComponent implements OnInit {
     this.errorMessage = '';
     this.worksheet = null;
 
-    this.practiceService.getWorksheet(level).subscribe({
+    this.practiceService.getPractice(level).subscribe({
       next: (worksheet) => {
         this.worksheet = {
           ...worksheet,
           questions: worksheet.questions.slice(0, 10),
         };
         this.answers = Object.fromEntries(this.worksheet.questions.map((question) => [question.id, null]));
+        this.checkedAnswers = Object.fromEntries(
+          this.worksheet.questions.map((question) => [question.id, null]),
+        );
+        this.hasCheckedAnswers = false;
         this.loading = false;
       },
       error: () => {

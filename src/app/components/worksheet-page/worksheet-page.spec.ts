@@ -19,7 +19,7 @@ describe('WorksheetPageComponent', () => {
   };
 
   const practiceServiceMock = {
-    getWorksheet: vi.fn(() => of(worksheet)),
+    getPractice: vi.fn(() => of(worksheet)),
   };
 
   beforeEach(async () => {
@@ -42,7 +42,7 @@ describe('WorksheetPageComponent', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
 
-    expect(practiceServiceMock.getWorksheet).toHaveBeenCalledWith('Intermediate');
+    expect(practiceServiceMock.getPractice).toHaveBeenCalledWith('Intermediate');
   });
 
   it('renders 10 questions with answer inputs', () => {

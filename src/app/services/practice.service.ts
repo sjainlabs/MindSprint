@@ -31,7 +31,7 @@ export class PracticeService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getWorksheet(level: LearningLevel): Observable<Worksheet> {
+  getPractice(level: LearningLevel): Observable<Worksheet> {
     return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
   }
 }
