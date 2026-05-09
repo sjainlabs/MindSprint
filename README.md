@@ -43,6 +43,7 @@ The app is designed with a mobile-first approach, ensuring excellent user experi
 - Diagnostic + worksheet APIs:
   - `GET /api/diagnostic/start`
   - `POST /api/diagnostic/submit`
+  - `GET /api/practice/:level`
   - `POST /api/practice/worksheet`
 
 ## 📦 Installation & Deployment

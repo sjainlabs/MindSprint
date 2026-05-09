@@ -22,15 +22,16 @@ export interface Worksheet {
   providedIn: 'root',
 })
 export class PracticeService {
+  private readonly isLocalhost =
+    typeof window !== 'undefined' &&
+    ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
   private readonly apiRoot =
-    typeof window !== 'undefined' && window.location.hostname === 'localhost'
-      ? 'http://localhost:3001/api'
-      : '/api';
+    this.isLocalhost ? 'http://localhost:3001/api' : '/api';
   private readonly baseUrl = `${this.apiRoot}/practice`;
 
   constructor(private readonly http: HttpClient) {}
 
-  generateWorksheet(level: LearningLevel): Observable<Worksheet> {
-    return this.http.post<Worksheet>(`${this.baseUrl}/worksheet`, { level });
+  getWorksheet(level: LearningLevel): Observable<Worksheet> {
+    return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
   }
 }
