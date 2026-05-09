@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { generateWorksheet } from './practice.controller';
+import { generateWorksheet, getPracticeQuestions } from './practice.controller';
 
 export const practiceRouter = Router();
 const worksheetRateLimiter = rateLimit({
@@ -10,4 +10,5 @@ const worksheetRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+practiceRouter.get('/:level', worksheetRateLimiter, getPracticeQuestions);
 practiceRouter.post('/worksheet', worksheetRateLimiter, generateWorksheet);
