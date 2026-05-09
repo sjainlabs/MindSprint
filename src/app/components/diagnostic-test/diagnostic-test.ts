@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
   type DiagnosticQuestion,
-  type DiagnosticResult,
   DiagnosticService,
   type DiagnosticSubmissionResponse,
 } from '../../services/diagnostic.service';
@@ -19,12 +18,13 @@ import {
 export class DiagnosticTestComponent implements OnInit {
   testId = '';
   questions: DiagnosticQuestion[] = [];
-  answers: Record<string, number | null> = {};
+  answers: Array<number | null> = [];
+  currentQuestionIndex = 0;
   loading = false;
   submitting = false;
   errorMessage = '';
-  result: DiagnosticResult | null = null;
   private startedAt = '';
+  private completedAt = '';
 
   constructor(
     private readonly diagnosticService: DiagnosticService,
@@ -38,14 +38,16 @@ export class DiagnosticTestComponent implements OnInit {
   startTest(): void {
     this.loading = true;
     this.errorMessage = '';
-    this.result = null;
+    this.submitting = false;
 
     this.diagnosticService.startDiagnostic().subscribe({
       next: (test) => {
         this.testId = test.testId;
-        this.questions = test.questions;
+        this.questions = test.questions.slice(0, 20);
+        this.currentQuestionIndex = 0;
         this.startedAt = new Date().toISOString();
-        this.answers = Object.fromEntries(this.questions.map((question) => [question.id, null]));
+        this.completedAt = '';
+        this.answers = Array.from({ length: this.questions.length }, () => null);
         this.loading = false;
       },
       error: () => {
@@ -56,20 +58,24 @@ export class DiagnosticTestComponent implements OnInit {
   }
 
   submitTest(): void {
-    if (!this.testId || this.submitting) {
+    if (!this.testId || this.submitting || this.questions.length === 0) {
       return;
     }
 
     this.submitting = true;
     this.errorMessage = '';
+    this.completedAt = new Date().toISOString();
 
-    const elapsedSeconds = Math.max(1, Math.round((Date.now() - Date.parse(this.startedAt)) / 1000));
+    const elapsedSeconds = Math.max(
+      1,
+      Math.round((Date.parse(this.completedAt) - Date.parse(this.startedAt)) / 1000),
+    );
     const averageSeconds = Math.max(1, Math.round(elapsedSeconds / this.questions.length));
 
     const responses: DiagnosticSubmissionResponse[] = this.questions
-      .map((question) => ({
+      .map((question, index) => ({
         questionId: question.id,
-        answer: this.answers[question.id],
+        answer: this.answers[index],
       }))
       .filter((response): response is { questionId: string; answer: number } => response.answer !== null)
       .map((response) => ({ ...response, secondsSpent: averageSeconds }));
@@ -78,13 +84,13 @@ export class DiagnosticTestComponent implements OnInit {
       .submitDiagnostic({
         testId: this.testId,
         startedAt: this.startedAt,
-        completedAt: new Date().toISOString(),
+        completedAt: this.completedAt,
         responses,
       })
       .subscribe({
         next: (result) => {
-          this.result = result;
           this.submitting = false;
+          void this.router.navigate(['/worksheet', result.level]);
         },
         error: () => {
           this.submitting = false;
@@ -93,11 +99,37 @@ export class DiagnosticTestComponent implements OnInit {
       });
   }
 
-  goToWorksheet(): void {
-    if (!this.result) {
+  goToPreviousQuestion(): void {
+    if (this.currentQuestionIndex === 0) {
       return;
     }
 
-    this.router.navigate(['/worksheet', this.result.level]);
+    this.currentQuestionIndex -= 1;
+  }
+
+  goToNextQuestion(): void {
+    if (this.currentQuestionIndex >= this.questions.length - 1) {
+      return;
+    }
+
+    this.currentQuestionIndex += 1;
+  }
+
+  setCurrentAnswer(value: string | number | null): void {
+    if (value === '' || value === null || value === undefined) {
+      this.answers[this.currentQuestionIndex] = null;
+      return;
+    }
+
+    const parsedValue = Number(value);
+    this.answers[this.currentQuestionIndex] = Number.isFinite(parsedValue) ? parsedValue : null;
+  }
+
+  get currentQuestion(): DiagnosticQuestion | null {
+    return this.questions[this.currentQuestionIndex] ?? null;
+  }
+
+  get answeredCount(): number {
+    return this.answers.filter((answer) => answer !== null).length;
   }
 }
