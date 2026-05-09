@@ -2,6 +2,18 @@ export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'div
 
 export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
+export interface DifficultyRange {
+  min: number;
+  max: number;
+}
+
+export interface LevelModel {
+  name: LearningLevel;
+  difficultyRange: DifficultyRange;
+  operationsAllowed: MathOperation[];
+  templateIds: string[];
+}
+
 export interface DiagnosticQuestion {
   id: string;
   operation: MathOperation;
