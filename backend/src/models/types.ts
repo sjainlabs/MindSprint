@@ -59,6 +59,8 @@ export interface DiagnosticResult {
     submittedAnswer: number | null;
     secondsSpent: number;
   }>;
+  weakAreas: MathOperation[];
+  strongAreas: MathOperation[];
 }
 
 export interface WorksheetQuestion {

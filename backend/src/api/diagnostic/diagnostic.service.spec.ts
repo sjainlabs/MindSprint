@@ -22,7 +22,7 @@ describe('diagnostic.service', () => {
     expect(operationCounts.division).toBe(5);
   });
 
-  it('scores unanswered submissions and maps level from final score', () => {
+  it('scores unanswered submissions and maps level from accuracy', () => {
     const test = createDiagnosticTest();
     const now = new Date().toISOString();
 
@@ -40,12 +40,16 @@ describe('diagnostic.service', () => {
     expect(result.score.speedScore).toBe(100);
     expect(result.score.finalScore).toBe(20);
     expect(result.level).toBe('Beginner');
+    expect(result.weakAreas).toEqual(['addition', 'subtraction', 'multiplication', 'division']);
+    expect(result.strongAreas).toEqual([]);
   });
 
-  it('maps score to expected levels', () => {
-    expect(mapScoreToLevel(49)).toBe('Beginner');
-    expect(mapScoreToLevel(50)).toBe('Intermediate');
-    expect(mapScoreToLevel(79)).toBe('Intermediate');
-    expect(mapScoreToLevel(80)).toBe('Advanced');
+  it('maps accuracy to expected levels', () => {
+    expect(mapScoreToLevel(0)).toBe('Beginner');
+    expect(mapScoreToLevel(59)).toBe('Beginner');
+    expect(mapScoreToLevel(60)).toBe('Intermediate');
+    expect(mapScoreToLevel(85)).toBe('Intermediate');
+    expect(mapScoreToLevel(86)).toBe('Advanced');
+    expect(mapScoreToLevel(100)).toBe('Advanced');
   });
 });

@@ -16,6 +16,9 @@ const TEST_DURATION_TARGET_SECONDS = 600;
 // Scoring intentionally prioritizes correctness while still rewarding steady pace.
 const ACCURACY_WEIGHT = 0.8;
 const SPEED_WEIGHT = 0.2;
+// Accuracy thresholds for level determination and weak/strong area classification.
+const ADVANCED_ACCURACY_THRESHOLD = 85;
+const BEGINNER_ACCURACY_THRESHOLD = 60;
 
 // Phase 1 stores generated tests in memory for simplicity.
 const inMemoryTests = new Map<string, DiagnosticQuestion[]>();
@@ -105,12 +108,12 @@ export const createDiagnosticTest = (): DiagnosticTest => {
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
-export const mapScoreToLevel = (score: number): LearningLevel => {
-  if (score < 50) {
+export const mapScoreToLevel = (accuracy: number): LearningLevel => {
+  if (accuracy < BEGINNER_ACCURACY_THRESHOLD) {
     return 'Beginner';
   }
 
-  if (score < 80) {
+  if (accuracy <= ADVANCED_ACCURACY_THRESHOLD) {
     return 'Intermediate';
   }
 
@@ -165,7 +168,28 @@ export const scoreDiagnosticSubmission = (submission: DiagnosticSubmission): Dia
   );
 
   const finalScore = Math.round(accuracyScore * ACCURACY_WEIGHT + speedScore * SPEED_WEIGHT);
-  const level = mapScoreToLevel(finalScore);
+  const level = mapScoreToLevel(accuracyScore);
+
+  const operations: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
+  const weakAreas: MathOperation[] = [];
+  const strongAreas: MathOperation[] = [];
+
+  for (const operation of operations) {
+    const operationResults = questionResults.filter((r) => {
+      const question = questions.find((q) => q.id === r.questionId);
+      return question?.operation === operation;
+    });
+    if (operationResults.length === 0) {
+      continue;
+    }
+    const operationCorrect = operationResults.filter((r) => r.isCorrect).length;
+    const operationAccuracy = (operationCorrect / operationResults.length) * 100;
+    if (operationAccuracy < BEGINNER_ACCURACY_THRESHOLD) {
+      weakAreas.push(operation);
+    } else {
+      strongAreas.push(operation);
+    }
+  }
 
   const score: ScoreBreakdown = {
     totalQuestions: questions.length,
@@ -184,5 +208,7 @@ export const scoreDiagnosticSubmission = (submission: DiagnosticSubmission): Dia
     level,
     score,
     questionResults,
+    weakAreas,
+    strongAreas,
   };
 };
