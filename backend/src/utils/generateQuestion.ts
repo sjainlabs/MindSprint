@@ -12,6 +12,8 @@ import {
 
 type Rule = { operation: MathOperation; min: number; max: number };
 type DiagnosticRule = { min: number; max: number };
+const generateId = (prefix: string): string =>
+  `${prefix}-${Date.now()}-${baseRandomInt(0, 9999).toString().padStart(4, '0')}`;
 
 const getPracticeRules = (level: LearningLevel): Rule[] => {
   const levelConfig = syllabus.practice.levels[level];
@@ -34,7 +36,7 @@ const getRuleForOperation = (level: LearningLevel, operation: MathOperation): Ru
 };
 
 const buildQuestion = (operation: MathOperation, rule: Rule, level: LearningLevel): WorksheetQuestion => {
-  const id = `${level.toLowerCase()}-${operation}-${Date.now()}-${baseRandomInt(0, 9999)}`;
+  const id = generateId(`${level.toLowerCase()}-${operation}`);
   let operandA = baseRandomInt(rule.min, rule.max);
   let operandB = baseRandomInt(rule.min, rule.max);
 
@@ -43,9 +45,9 @@ const buildQuestion = (operation: MathOperation, rule: Rule, level: LearningLeve
   }
 
   if (operation === 'division') {
-    operandB = Math.max(1, operandB);
-    const quotient = baseRandomInt(rule.min, rule.max);
-    return { id, operation, prompt: `${operandB * quotient} ÷ ${operandB} = ?` };
+    const divisor = Math.max(1, operandB);
+    const answer = baseRandomInt(rule.min, rule.max);
+    return { id, operation, prompt: `${divisor * answer} ÷ ${divisor} = ?` };
   }
 
   const operator =
@@ -126,15 +128,15 @@ const generateDiagnosticQuestion = (
         answer: operandA * operandB,
       };
     case 'division': {
-      operandB = Math.max(1, operandB);
+      const divisor = Math.max(1, operandB);
       const answer = baseRandomInt(config.min, config.max);
-      const dividend = operandB * answer;
+      const dividend = divisor * answer;
       return {
         id: `${operation}-${index}`,
         operation,
-        prompt: `${dividend} ÷ ${operandB} = ?`,
+        prompt: `${dividend} ÷ ${divisor} = ?`,
         operandA: dividend,
-        operandB,
+        operandB: divisor,
         answer,
       };
     }
@@ -155,14 +157,14 @@ export const generateDiagnosticSet = (): DiagnosticTest => {
 
   const selected = shuffle(allQuestions).slice(0, syllabus.diagnostic.questionCount);
   return {
-    testId: `diag-${Date.now()}-${baseRandomInt(0, 9999)}`,
+    testId: generateId('diag'),
     createdAt: new Date().toISOString(),
     questions: selected.map(({ id, operation, prompt }) => ({ id, operation, prompt })),
   };
 };
 
 export const generateWorksheet = (level: LearningLevel): Worksheet => ({
-  worksheetId: `ws-${Date.now()}-${baseRandomInt(0, 9999)}`,
+  worksheetId: generateId('ws'),
   level,
   title: templates.worksheetTitle,
   instructions: templates.instructions[level],

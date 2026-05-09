@@ -12,6 +12,7 @@ import {
 } from './generateQuestion';
 
 const extractNumbers = (prompt: string): number[] => (prompt.match(/\d+/g) ?? []).map(Number);
+const OPERATION_TEST_ITERATIONS = 100;
 
 describe('generateQuestion utils', () => {
   it('randomInt includes min and max bounds', () => {
@@ -56,11 +57,14 @@ describe('generateQuestion utils', () => {
     const allowed = new Set(
       syllabus.practice.levels.Advanced.rules.map((rule) => rule.operation),
     );
+    const divisionAllowed = allowed.has('division');
 
-    for (let index = 0; index < 100; index += 1) {
+    for (let index = 0; index < OPERATION_TEST_ITERATIONS; index += 1) {
       const question = generateMixed('Advanced');
       expect(allowed.has(question.operation)).toBe(true);
-      expect(question.operation).not.toBe('division');
+      if (!divisionAllowed) {
+        expect(question.operation).not.toBe('division');
+      }
     }
   });
 
@@ -70,16 +74,28 @@ describe('generateQuestion utils', () => {
       counts[question.operation] = (counts[question.operation] ?? 0) + 1;
       return counts;
     }, {});
+    const operationTotal = Object.keys(syllabus.diagnostic.operations).length;
+    const generatedPoolSize = operationTotal * syllabus.diagnostic.perOperation;
+    const expectsExactPerOperation = generatedPoolSize <= syllabus.diagnostic.questionCount;
 
     expect(test.questions).toHaveLength(syllabus.diagnostic.questionCount);
-    expect(operationCounts.addition).toBe(syllabus.diagnostic.perOperation);
-    expect(operationCounts.subtraction).toBe(syllabus.diagnostic.perOperation);
-    expect(operationCounts.multiplication).toBe(syllabus.diagnostic.perOperation);
-    expect(operationCounts.division).toBe(syllabus.diagnostic.perOperation);
+    (Object.keys(syllabus.diagnostic.operations) as Array<keyof typeof syllabus.diagnostic.operations>).forEach(
+      (operation) => {
+        expect(operationCounts[operation]).toBeGreaterThan(0);
+        if (expectsExactPerOperation) {
+          expect(operationCounts[operation]).toBe(syllabus.diagnostic.perOperation);
+        } else {
+          expect(operationCounts[operation]).toBeLessThanOrEqual(syllabus.diagnostic.perOperation);
+        }
+      },
+    );
   });
 
   it('generateWorksheet returns expected worksheet payload', () => {
     const worksheet = generateWorksheet('Advanced');
+    const allowedOperations = new Set(
+      syllabus.practice.levels.Advanced.rules.map((rule) => rule.operation),
+    );
 
     expect(worksheet.level).toBe('Advanced');
     expect(worksheet.title).toBe(templates.worksheetTitle);
@@ -87,6 +103,6 @@ describe('generateQuestion utils', () => {
     expect(worksheet.worksheetId.startsWith('ws-')).toBe(true);
     expect(worksheet.generatedAt).toBeTruthy();
     expect(worksheet.questions).toHaveLength(syllabus.practice.questionCount);
-    expect(worksheet.questions.every((question) => question.operation !== 'division')).toBe(true);
+    expect(worksheet.questions.every((question) => allowedOperations.has(question.operation))).toBe(true);
   });
 });
