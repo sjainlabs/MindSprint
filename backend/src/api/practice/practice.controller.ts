@@ -1,9 +1,23 @@
 import { type Request, type Response } from 'express';
 import { getDatabase } from '../../db/database';
 import { type LearningLevel, type WorksheetSubmission, type WorksheetResult } from '../../models/types';
+import { recordAnalyticsEvents, buildAnalyticsEvents } from '../analytics/analytics.service';
+import { updateStudentProfileAfterWorksheet } from '../students/student-profile.service';
 import { createWorksheet } from './practice.service';
 
 const VALID_LEVELS: LearningLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
+const DEFAULT_STUDENT_ID = 'student-demo';
+
+const calculateDurationSeconds = (startedAt: string | undefined, submittedAt: string): number => {
+  const submittedTime = new Date(submittedAt).getTime();
+  const startedTime = startedAt ? new Date(startedAt).getTime() : Number.NaN;
+
+  if (Number.isNaN(submittedTime) || Number.isNaN(startedTime)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.round((submittedTime - startedTime) / 1000));
+};
 
 export const getPracticeQuestions = (request: Request, response: Response): void => {
   const { level } = request.params;
@@ -18,7 +32,6 @@ export const getPracticeQuestions = (request: Request, response: Response): void
   try {
     const worksheet = createWorksheet(level as LearningLevel);
 
-    // Persist worksheet asynchronously so the submit endpoint can look it up
     void (async () => {
       try {
         const db = await getDatabase();
@@ -61,9 +74,9 @@ export const generateWorksheet = async (request: Request, response: Response): P
 export const submitWorksheet = async (request: Request, response: Response): Promise<void> => {
   try {
     const submission = request.body as WorksheetSubmission;
-    const { worksheetId, level, answers } = submission;
+    const { worksheetId, level, answers, submittedAt } = submission;
 
-    if (!worksheetId || !level || !Array.isArray(answers)) {
+    if (!worksheetId || !level || !submittedAt || !Array.isArray(answers)) {
       response.status(400).json({ message: 'Invalid submission payload.' });
       return;
     }
@@ -79,22 +92,29 @@ export const submitWorksheet = async (request: Request, response: Response): Pro
       return;
     }
 
-    const worksheet = JSON.parse(row.payload) as { questions: Array<{ id: string; answer: number }> };
-    const answerMap = new Map(answers.map((a) => [a.questionId, a.answer]));
+    const worksheet = JSON.parse(row.payload) as {
+      questions: Array<{ id: string; answer: number; operation: 'addition' | 'subtraction' | 'multiplication' | 'division' }>;
+    };
+    const answerMap = new Map(answers.map((answer) => [answer.questionId, answer.answer]));
 
     let correct = 0;
     let attempted = 0;
 
-    const questionResults = worksheet.questions.map((q) => {
-      const submittedAnswer = answerMap.has(q.id) ? answerMap.get(q.id)! : null;
-      const isCorrect = submittedAnswer !== null && Number(submittedAnswer) === q.answer;
+    const questionResults = worksheet.questions.map((question) => {
+      const submittedAnswer = answerMap.has(question.id) ? answerMap.get(question.id)! : null;
+      const isCorrect = submittedAnswer !== null && Number(submittedAnswer) === question.answer;
 
-      if (submittedAnswer !== null) attempted++;
-      if (isCorrect) correct++;
+      if (submittedAnswer !== null) {
+        attempted += 1;
+      }
+      if (isCorrect) {
+        correct += 1;
+      }
 
       return {
-        questionId: q.id,
-        expectedAnswer: q.answer,
+        questionId: question.id,
+        operation: question.operation,
+        expectedAnswer: question.answer,
         submittedAnswer,
         isCorrect,
       };
@@ -103,17 +123,25 @@ export const submitWorksheet = async (request: Request, response: Response): Pro
     const totalQuestions = worksheet.questions.length;
     const incorrect = attempted - correct;
     const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+    const studentId = submission.studentId ?? DEFAULT_STUDENT_ID;
+    const totalDurationSeconds = calculateDurationSeconds(submission.startedAt, submittedAt);
 
     const result: WorksheetResult = {
       worksheetId,
+      studentId,
       level,
       totalQuestions,
       attempted,
       correct,
       incorrect,
       accuracy,
+      totalDurationSeconds,
       questionResults,
     };
+
+    const updatedProfile = await updateStudentProfileAfterWorksheet(studentId, result, submittedAt);
+    const analyticsEvents = buildAnalyticsEvents(studentId, result, updatedProfile, submittedAt);
+    await recordAnalyticsEvents(analyticsEvents);
 
     response.json(result);
   } catch (error) {

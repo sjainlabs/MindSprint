@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { type LearningLevel } from './diagnostic.service';
+import { type MathOperation } from './student-intelligence.service';
 
 export interface WorksheetQuestion {
   id: string;
-  operation: 'addition' | 'subtraction' | 'multiplication' | 'division';
+  operation: MathOperation;
   prompt: string;
   answer: number;
 }
@@ -26,13 +27,16 @@ export interface WorksheetAnswerInput {
 
 export interface WorksheetSubmission {
   worksheetId: string;
+  studentId?: string;
   level: LearningLevel;
+  startedAt?: string;
   submittedAt: string;
   answers: WorksheetAnswerInput[];
 }
 
 export interface WorksheetQuestionResult {
   questionId: string;
+  operation: MathOperation;
   expectedAnswer: number;
   submittedAnswer: number | null;
   isCorrect: boolean;
@@ -40,12 +44,14 @@ export interface WorksheetQuestionResult {
 
 export interface WorksheetResult {
   worksheetId: string;
+  studentId?: string;
   level: LearningLevel;
   totalQuestions: number;
   attempted: number;
   correct: number;
   incorrect: number;
   accuracy: number;
+  totalDurationSeconds: number;
   questionResults: WorksheetQuestionResult[];
 }
 
@@ -54,10 +60,8 @@ export interface WorksheetResult {
 })
 export class PracticeService {
   private readonly isLocalhost =
-    typeof window !== 'undefined' &&
-    ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
-  private readonly apiRoot =
-    this.isLocalhost ? 'http://localhost:3001/api' : '/api';
+    typeof window !== 'undefined' && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+  private readonly apiRoot = this.isLocalhost ? 'http://localhost:3001/api' : '/api';
   private readonly baseUrl = `${this.apiRoot}/practice`;
 
   constructor(private readonly http: HttpClient) {}
