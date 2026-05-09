@@ -9,8 +9,8 @@ import { DiagnosticTestComponent } from './components/diagnostic-test/diagnostic
 import { WorksheetPageComponent } from './components/worksheet-page/worksheet-page';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/welcome', pathMatch: 'full' },
-  { path: 'welcome', component: Welcome },
+  { path: '', component: Welcome },
+  { path: 'welcome', redirectTo: '/', pathMatch: 'full' },
   { path: 'assessment/math', component: AssessmentMath },
   { path: 'assessment/english', component: AssessmentEnglish },
   { path: 'assessment/science', component: AssessmentScience },

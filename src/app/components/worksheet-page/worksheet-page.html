@@ -20,7 +20,7 @@
         <p class="mt-2">{{ worksheet.instructions }}</p>
         <p class="mt-2 text-sm text-gray-600">
           Attempted: {{ attemptedCount }}/{{ worksheet.questions.length }}
-          @if (accuracyPercentage !== null) {
+          @if (hasCheckedAnswers && accuracyPercentage !== null) {
             • Accuracy: {{ accuracyPercentage }}%
           }
         </p>
@@ -28,7 +28,13 @@
 
       <ol class="space-y-3 mb-6">
         @for (question of worksheet.questions; track question.id) {
-          <li class="p-3 border rounded-md">
+          <li
+            class="p-3 border rounded-md"
+            [class.border-green-500]="hasCheckedAnswers && checkedAnswers[question.id] === true"
+            [class.bg-green-50]="hasCheckedAnswers && checkedAnswers[question.id] === true"
+            [class.border-red-500]="hasCheckedAnswers && checkedAnswers[question.id] === false"
+            [class.bg-red-50]="hasCheckedAnswers && checkedAnswers[question.id] === false"
+          >
             <label class="block font-medium mb-2" [for]="question.id">{{ question.prompt }}</label>
             <input
               class="w-full border border-gray-300 rounded-md px-3 py-2"
@@ -37,11 +43,25 @@
               [name]="question.id"
               [(ngModel)]="answers[question.id]"
             />
+            @if (hasCheckedAnswers && checkedAnswers[question.id] === true) {
+              <p class="text-sm text-green-700 mt-2">Correct</p>
+            }
+            @if (hasCheckedAnswers && checkedAnswers[question.id] === false) {
+              <p class="text-sm text-red-700 mt-2">Incorrect</p>
+            }
           </li>
         }
       </ol>
 
       <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="bg-primary text-white px-4 py-2 rounded-lg disabled:opacity-60"
+          (click)="checkAnswers()"
+          [disabled]="loading || attemptedCount === 0"
+        >
+          Check Answers
+        </button>
         <button
           type="button"
           class="border border-gray-300 px-3 py-2 rounded-lg"

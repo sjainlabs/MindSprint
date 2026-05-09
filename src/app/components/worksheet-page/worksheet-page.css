@@ -1,3 +1,12 @@
 :host {
   display: block;
 }
+
+input[type='number'] {
+  outline: none;
+}
+
+input[type='number']:focus {
+  border-color: rgb(59 130 246);
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.2);
+}

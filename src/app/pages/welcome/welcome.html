@@ -1,59 +1,22 @@
-<div class="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-  <div class="max-w-md w-full text-center">
-    <!-- Logo/Title -->
-    <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">
-      MindSprint
-    </h1>
-    <p class="text-lg md:text-xl text-gray-600 mb-8">
-      Gamified Skill Assessment for Kids
-    </p>
-
-    <!-- Avatar Selector -->
-    <app-avatar-selector class="mb-8 block"></app-avatar-selector>
-
-    <!-- XP Progress -->
-    <app-xp-progress class="mb-8 block"></app-xp-progress>
-
-    <!-- Assessment Cards -->
-    <div class="space-y-4 mb-8">
-      <button 
-        routerLink="/assessment/math"
-        class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition-colors duration-200 flex items-center justify-between">
-        <span class="text-lg">🧮 Math Assessment</span>
-        <span class="text-2xl">→</span>
-      </button>
-      
-      <button 
-        routerLink="/assessment/english"
-        class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition-colors duration-200 flex items-center justify-between">
-        <span class="text-lg">📚 English Assessment</span>
-        <span class="text-2xl">→</span>
-      </button>
-      
-      <button 
-        routerLink="/assessment/science"
-        class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition-colors duration-200 flex items-center justify-between">
-        <span class="text-lg">🔬 Science Assessment</span>
-        <span class="text-2xl">→</span>
-      </button>
+<section class="home-page">
+  <div class="hero-shell">
+    <div class="hero-content">
+      <p class="eyebrow">Welcome to</p>
+      <h1>MindSprint</h1>
+      <p class="subtitle">Fast Math. Smart Kids.</p>
+      <p class="description">
+        Build speed and confidence with a quick diagnostic, then practice the right worksheet level.
+      </p>
+      <div class="actions">
+        <a routerLink="/diagnostic" class="btn btn-primary">Start Diagnostic</a>
+        <a routerLink="/worksheet/Beginner" class="btn btn-secondary">Practice Worksheets</a>
+      </div>
     </div>
-
-    <!-- View Results Button -->
-    <button 
-      routerLink="/results"
-      class="w-full bg-accent hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors duration-200">
-      View My Results
-    </button>
-    <button
-      routerLink="/diagnostic"
-      class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors duration-200"
-    >
-      Start Phase 1 Math Diagnostic MVP
-    </button>
-
-    <!-- Parent Report Link -->
-    <div class="mt-8">
-      <app-parent-report></app-parent-report>
+    <div class="hero-art" aria-hidden="true">
+      <div class="card">➕</div>
+      <div class="card">✖️</div>
+      <div class="card">➗</div>
+      <div class="card">➖</div>
     </div>
   </div>
-</div>
+</section>
