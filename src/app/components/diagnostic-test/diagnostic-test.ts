@@ -20,11 +20,11 @@ export class DiagnosticTestComponent implements OnInit {
   questions: DiagnosticQuestion[] = [];
   answers: Array<number | null> = [];
   currentQuestionIndex = 0;
-  loading = false;
   submitting = false;
   errorMessage = '';
   private startedAt = '';
-  private completedAt = '';
+  private secondsSpentPerQuestion: number[] = [];
+  private questionStartTime = Date.now();
 
   constructor(
     private readonly diagnosticService: DiagnosticService,
@@ -32,29 +32,18 @@ export class DiagnosticTestComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.startTest();
-  }
-
-  startTest(): void {
-    this.loading = true;
-    this.errorMessage = '';
-    this.submitting = false;
-
-    this.diagnosticService.startDiagnostic().subscribe({
-      next: (test) => {
-        this.testId = test.testId;
-        this.questions = test.questions.slice(0, 20);
-        this.currentQuestionIndex = 0;
-        this.startedAt = new Date().toISOString();
-        this.completedAt = '';
-        this.answers = Array.from({ length: this.questions.length }, () => null);
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.errorMessage = 'Unable to load diagnostic test. Please try again.';
-      },
-    });
+    const test = this.diagnosticService.currentTest;
+    const startedAt = this.diagnosticService.startedAt;
+    if (!test || !startedAt) {
+      void this.router.navigate(['/diagnostic']);
+      return;
+    }
+    this.testId = test.testId;
+    this.questions = test.questions.slice(0, 20);
+    this.startedAt = startedAt.toISOString();
+    this.answers = Array.from({ length: this.questions.length }, () => null);
+    this.secondsSpentPerQuestion = Array.from({ length: this.questions.length }, () => 0);
+    this.questionStartTime = Date.now();
   }
 
   submitTest(): void {
@@ -62,35 +51,32 @@ export class DiagnosticTestComponent implements OnInit {
       return;
     }
 
+    this.recordTimeForCurrentQuestion();
     this.submitting = true;
     this.errorMessage = '';
-    this.completedAt = new Date().toISOString();
 
-    const elapsedSeconds = Math.max(
-      1,
-      Math.round((Date.parse(this.completedAt) - Date.parse(this.startedAt)) / 1000),
-    );
-    const averageSeconds = Math.max(1, Math.round(elapsedSeconds / this.questions.length));
+    const completedAt = new Date().toISOString();
 
     const responses: DiagnosticSubmissionResponse[] = this.questions
       .map((question, index) => ({
         questionId: question.id,
         answer: this.answers[index],
+        secondsSpent: this.secondsSpentPerQuestion[index] ?? 0,
       }))
-      .filter((response): response is { questionId: string; answer: number } => response.answer !== null)
-      .map((response) => ({ ...response, secondsSpent: averageSeconds }));
+      .filter((r): r is DiagnosticSubmissionResponse => r.answer !== null);
 
     this.diagnosticService
       .submitDiagnostic({
         testId: this.testId,
         startedAt: this.startedAt,
-        completedAt: this.completedAt,
+        completedAt,
         responses,
       })
       .subscribe({
         next: (result) => {
+          this.diagnosticService.lastResult = result;
           this.submitting = false;
-          void this.router.navigate(['/worksheet', result.level]);
+          void this.router.navigate(['/results']);
         },
         error: () => {
           this.submitting = false;
@@ -103,7 +89,7 @@ export class DiagnosticTestComponent implements OnInit {
     if (this.currentQuestionIndex === 0) {
       return;
     }
-
+    this.recordTimeForCurrentQuestion();
     this.currentQuestionIndex -= 1;
   }
 
@@ -111,7 +97,7 @@ export class DiagnosticTestComponent implements OnInit {
     if (this.currentQuestionIndex >= this.questions.length - 1) {
       return;
     }
-
+    this.recordTimeForCurrentQuestion();
     this.currentQuestionIndex += 1;
   }
 
@@ -131,5 +117,12 @@ export class DiagnosticTestComponent implements OnInit {
 
   get answeredCount(): number {
     return this.answers.filter((answer) => answer !== null).length;
+  }
+
+  private recordTimeForCurrentQuestion(): void {
+    const elapsed = Math.max(0, Math.round((Date.now() - this.questionStartTime) / 1000));
+    this.secondsSpentPerQuestion[this.currentQuestionIndex] =
+      (this.secondsSpentPerQuestion[this.currentQuestionIndex] ?? 0) + elapsed;
+    this.questionStartTime = Date.now();
   }
 }
