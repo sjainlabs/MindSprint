@@ -102,7 +102,7 @@ export const submitWorksheet = async (request: Request, response: Response): Pro
 
     const totalQuestions = worksheet.questions.length;
     const incorrect = attempted - correct;
-    const accuracy = attempted > 0 ? Math.round((correct / totalQuestions) * 100) : 0;
+    const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
 
     const result: WorksheetResult = {
       worksheetId,

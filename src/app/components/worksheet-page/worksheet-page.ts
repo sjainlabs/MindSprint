@@ -113,10 +113,12 @@ export class WorksheetPageComponent implements OnInit {
       worksheetId: this.worksheet.worksheetId,
       level: this.currentLevel,
       submittedAt: new Date().toISOString(),
-      answers: Object.entries(this.answers).map(([id, ans]) => ({
-        questionId: id,
-        answer: ans,
-      })),
+      answers: Object.entries(this.answers)
+          .filter(([, ans]) => ans !== undefined && ans !== null)
+          .map(([id, ans]) => ({
+            questionId: id,
+            answer: ans,
+          })),
     };
 
     this.practiceService.submitWorksheet(payload).subscribe({
