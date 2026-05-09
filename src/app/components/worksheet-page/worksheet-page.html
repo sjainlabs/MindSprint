@@ -1,153 +1,290 @@
 <div class="min-h-screen bg-gray-50 py-8 px-4">
-  <div class="max-w-3xl mx-auto bg-white rounded-xl shadow p-6">
-
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-primary">Practice Worksheet</h1>
-      <a routerLink="/diagnostic" class="text-sm text-primary underline">Back to Diagnostic</a>
-    </div>
-
-    <!-- Spinner -->
-    @if (loading()) {
-      <div class="flex justify-center py-10">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+  <div class="max-w-5xl mx-auto space-y-6">
+    <div class="bg-white rounded-xl shadow p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-primary">Practice Worksheet</h1>
+        <a routerLink="/diagnostic" class="text-sm text-primary underline">Back to Diagnostic</a>
       </div>
-    }
 
-    <!-- Error -->
-    @if (errorMessage()) {
-      <p class="text-red-600">{{ errorMessage() }}</p>
-    }
-
-    <!-- MAIN WORKSHEET UI (SAFE ZONE) -->
-    @if (ready()) {
-
-      <!-- Worksheet Header -->
-      <div class="mb-5">
-        <h2 class="text-xl font-semibold">{{ worksheet().title }}</h2>
-        <p class="text-sm text-gray-500">Level: {{ worksheet().level }}</p>
-        <p class="mt-2">{{ worksheet().instructions }}</p>
-
-        <p class="mt-2 text-sm text-gray-600">
-          Attempted: {{ attemptedCount() }}/{{ worksheet().questions.length }}
-          @if (accuracyPercentage() !== null) {
-            • Accuracy: {{ accuracyPercentage() }}%
-          }
-        </p>
-      </div>
-      <!-- Results Summary -->
-      @if (result() !== null) {
-        <div class="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 class="text-lg font-semibold text-blue-800 mb-2">Results</h3>
-
-          <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-            <div class="bg-white rounded p-2 text-center shadow-sm">
-              <p class="text-gray-500">Total</p>
-              <p class="text-xl font-bold">{{ result()!.totalQuestions }}</p>
-            </div>
-
-            <div class="bg-white rounded p-2 text-center shadow-sm">
-              <p class="text-gray-500">Attempted</p>
-              <p class="text-xl font-bold">{{ result()!.attempted }}</p>
-            </div>
-
-            <div class="bg-white rounded p-2 text-center shadow-sm">
-              <p class="text-green-600">Correct</p>
-              <p class="text-xl font-bold text-green-700">{{ result()!.correct }}</p>
-            </div>
-
-            <div class="bg-white rounded p-2 text-center shadow-sm">
-              <p class="text-red-500">Incorrect</p>
-              <p class="text-xl font-bold text-red-600">{{ result()!.incorrect }}</p>
-            </div>
-          </div>
-
-          <p class="mt-3 text-center font-semibold text-blue-700">
-            Accuracy: {{ result()!.accuracy }}%
-          </p>
+      @if (loading()) {
+        <div class="flex justify-center py-10">
+          <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
         </div>
       }
 
-      <!-- Questions -->
-      <ol class="space-y-3 mb-6">
-        @for (question of worksheet().questions; track question.id) {
-          <li
-            class="p-3 border rounded-md"
-            [class.border-green-400]="hasCheckedAnswers() && checkedAnswers()[question.id] === true"
-            [class.bg-green-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === true"
-            [class.border-red-400]="hasCheckedAnswers() && checkedAnswers()[question.id] === false"
-            [class.bg-red-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === false"
-          >
-            <label class="block font-medium mb-2" [for]="question.id">
-              {{ question.prompt }}
-            </label>
-
-            <input
-              class="w-full border border-gray-300 rounded-md px-3 py-2"
-              type="number"
-              [id]="question.id"
-              [name]="question.id"
-              [(ngModel)]="answers()[question.id]"
-              (ngModelChange)="updateAnswer(question.id, $event)"
-              [disabled]="result() !== null"
-            />
-
-            @if (hasCheckedAnswers() && checkedAnswers()[question.id] === true) {
-              <p class="mt-1 text-sm text-green-700 font-medium">✓ Correct</p>
-            }
-
-            @if (hasCheckedAnswers() && checkedAnswers()[question.id] === false) {
-              <p class="mt-1 text-sm text-red-600 font-medium">
-                ✗ Incorrect – correct answer: {{ question.answer }}
-              </p>
-            }
-          </li>
-        }
-      </ol>
-
-      <!-- Submit Error -->
-      @if (submitError()) {
-        <p class="mb-3 text-sm text-red-600">{{ submitError() }}</p>
+      @if (errorMessage()) {
+        <p class="text-red-600">{{ errorMessage() }}</p>
       }
 
-      <!-- Buttons -->
-      <div class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          class="border border-gray-300 px-3 py-2 rounded-lg"
-          (click)="regenerate('Beginner')"
-          [disabled]="loading() || currentLevel() === 'Beginner'"
-        >
-          Beginner
-        </button>
+      @if (ready()) {
+        @if (worksheet(); as activeWorksheet) {
+        <div class="mb-5">
+          <h2 class="text-xl font-semibold">{{ activeWorksheet.title }}</h2>
+          <p class="text-sm text-gray-500">Level: {{ activeWorksheet.level }}</p>
+          <p class="mt-2">{{ activeWorksheet.instructions }}</p>
 
-        <button
-          type="button"
-          class="border border-gray-300 px-3 py-2 rounded-lg"
-          (click)="regenerate('Intermediate')"
-          [disabled]="loading() || currentLevel() === 'Intermediate'"
-        >
-          Intermediate
-        </button>
+          <p class="mt-2 text-sm text-gray-600">
+            Attempted: {{ attemptedCount() }}/{{ activeWorksheet.questions.length }}
+            @if (accuracyPercentage() !== null) {
+              • Accuracy: {{ accuracyPercentage() }}%
+            }
+          </p>
+        </div>
 
-        <button
-          type="button"
-          class="border border-gray-300 px-3 py-2 rounded-lg"
-          (click)="regenerate('Advanced')"
-          [disabled]="loading() || currentLevel() === 'Advanced'"
-        >
-          Advanced
-        </button>
+        @if (result() !== null) {
+          <div class="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 class="text-lg font-semibold text-blue-800 mb-2">Results</h3>
 
-        <button
-          type="button"
-          class="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
-          (click)="submitWorksheet()"
-          [disabled]="loading() || submitting() || result() !== null"
-        >
-          {{ submitting() ? 'Submitting…' : 'Submit Worksheet' }}
-        </button>
-      </div>
-    }
+            <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
+              <div class="bg-white rounded p-2 text-center shadow-sm">
+                <p class="text-gray-500">Total</p>
+                <p class="text-xl font-bold">{{ result()!.totalQuestions }}</p>
+              </div>
+              <div class="bg-white rounded p-2 text-center shadow-sm">
+                <p class="text-gray-500">Attempted</p>
+                <p class="text-xl font-bold">{{ result()!.attempted }}</p>
+              </div>
+              <div class="bg-white rounded p-2 text-center shadow-sm">
+                <p class="text-green-600">Correct</p>
+                <p class="text-xl font-bold text-green-700">{{ result()!.correct }}</p>
+              </div>
+              <div class="bg-white rounded p-2 text-center shadow-sm">
+                <p class="text-red-500">Incorrect</p>
+                <p class="text-xl font-bold text-red-600">{{ result()!.incorrect }}</p>
+              </div>
+              <div class="bg-white rounded p-2 text-center shadow-sm">
+                <p class="text-gray-500">Time</p>
+                <p class="text-xl font-bold">{{ result()!.totalDurationSeconds }}s</p>
+              </div>
+            </div>
+
+            <p class="mt-3 text-center font-semibold text-blue-700">Accuracy: {{ result()!.accuracy }}%</p>
+          </div>
+        }
+
+        <ol class="space-y-3 mb-6">
+          @for (question of activeWorksheet.questions; track question.id) {
+            <li
+              class="p-3 border rounded-md"
+              [class.border-green-400]="hasCheckedAnswers() && checkedAnswers()[question.id] === true"
+              [class.bg-green-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === true"
+              [class.border-red-400]="hasCheckedAnswers() && checkedAnswers()[question.id] === false"
+              [class.bg-red-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === false"
+            >
+              <label class="block font-medium mb-2" [for]="question.id">
+                {{ question.prompt }}
+              </label>
+
+              <input
+                class="w-full border border-gray-300 rounded-md px-3 py-2"
+                type="number"
+                [id]="question.id"
+                [name]="question.id"
+                [(ngModel)]="answers()[question.id]"
+                (ngModelChange)="updateAnswer(question.id, $event)"
+                [disabled]="result() !== null"
+              />
+
+              @if (hasCheckedAnswers() && checkedAnswers()[question.id] === true) {
+                <p class="mt-1 text-sm text-green-700 font-medium">✓ Correct</p>
+              }
+
+              @if (hasCheckedAnswers() && checkedAnswers()[question.id] === false) {
+                <p class="mt-1 text-sm text-red-600 font-medium">
+                  ✗ Incorrect – correct answer: {{ question.answer }}
+                </p>
+              }
+            </li>
+          }
+        </ol>
+
+        @if (submitError()) {
+          <p class="mb-3 text-sm text-red-600">{{ submitError() }}</p>
+        }
+
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="border border-gray-300 px-3 py-2 rounded-lg"
+            (click)="regenerate('Beginner')"
+            [disabled]="loading() || currentLevel() === 'Beginner'"
+          >
+            Beginner
+          </button>
+          <button
+            type="button"
+            class="border border-gray-300 px-3 py-2 rounded-lg"
+            (click)="regenerate('Intermediate')"
+            [disabled]="loading() || currentLevel() === 'Intermediate'"
+          >
+            Intermediate
+          </button>
+          <button
+            type="button"
+            class="border border-gray-300 px-3 py-2 rounded-lg"
+            (click)="regenerate('Advanced')"
+            [disabled]="loading() || currentLevel() === 'Advanced'"
+          >
+            Advanced
+          </button>
+          <button
+            type="button"
+            class="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+            (click)="submitWorksheet()"
+            [disabled]="loading() || submitting() || result() !== null"
+          >
+            {{ submitting() ? 'Submitting…' : 'Submit Worksheet' }}
+          </button>
+        </div>
+        }
+      }
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <section class="bg-white rounded-xl shadow p-6 lg:col-span-1">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-text">Student Profile</h2>
+          @if (intelligenceLoading()) {
+            <span class="text-xs text-gray-400">Updating…</span>
+          }
+        </div>
+
+        @if (studentProfile(); as profile) {
+          <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+            <div class="rounded-lg bg-blue-50 p-3">
+              <p class="text-gray-500">Level</p>
+              <p class="text-xl font-bold text-primary">{{ profile.level }}</p>
+            </div>
+            <div class="rounded-lg bg-amber-50 p-3">
+              <p class="text-gray-500">XP</p>
+              <p class="text-xl font-bold text-amber-600">{{ profile.xp }}</p>
+            </div>
+            <div class="rounded-lg bg-emerald-50 p-3">
+              <p class="text-gray-500">Streak</p>
+              <p class="text-xl font-bold text-emerald-600">{{ profile.streak }}</p>
+            </div>
+            <div class="rounded-lg bg-purple-50 p-3">
+              <p class="text-gray-500">Path</p>
+              <p class="text-xl font-bold text-purple-600">{{ profile.learningPathLevel }}</p>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold mb-2">Mastery by operation</h3>
+            <div class="space-y-2">
+              @for (entry of masteryEntries(); track entry.operation) {
+                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                  <span class="capitalize">{{ entry.operation }}</span>
+                  <span class="font-semibold">{{ entry.mastery }}%</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold mb-2">Badges</h3>
+            <div class="flex flex-wrap gap-2">
+              @if (profile.badges.length === 0) {
+                <span class="text-sm text-gray-500">Earn badges by completing worksheets accurately.</span>
+              }
+              @for (badge of profile.badges; track badge) {
+                <span class="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">{{ badge }}</span>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-500">Student profile will appear after the first worksheet submission.</p>
+        }
+      </section>
+
+      <section class="bg-white rounded-xl shadow p-6 lg:col-span-1">
+        <h2 class="text-lg font-semibold text-text mb-4">Analytics</h2>
+        @if (studentAnalytics(); as analytics) {
+          <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+            <div class="rounded-lg bg-slate-50 p-3">
+              <p class="text-gray-500">Worksheets</p>
+              <p class="text-xl font-bold text-slate-700">{{ analytics.totalWorksheets }}</p>
+            </div>
+            <div class="rounded-lg bg-cyan-50 p-3">
+              <p class="text-gray-500">Avg. Time</p>
+              <p class="text-xl font-bold text-cyan-700">{{ analytics.averageTimePerWorksheet }}s</p>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold mb-2">Recent accuracy</h3>
+            <div class="space-y-2">
+              @if (accuracyTrend().length === 0) {
+                <p class="text-sm text-gray-500">Complete a worksheet to start tracking trends.</p>
+              }
+              @for (point of accuracyTrend(); track point.worksheetId) {
+                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                  <span>{{ point.createdAt | date:'MMM d, h:mm a' }}</span>
+                  <span class="font-semibold">{{ point.accuracy }}%</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold mb-2">Recommended next steps</h3>
+            <ul class="space-y-2 text-sm text-gray-700 list-disc list-inside">
+              @for (step of analytics.recommendedNextSteps; track step) {
+                <li>{{ step }}</li>
+              }
+            </ul>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-500">Analytics will populate after worksheet activity is recorded.</p>
+        }
+      </section>
+
+      <section class="bg-white rounded-xl shadow p-6 lg:col-span-1">
+        <h2 class="text-lg font-semibold text-text mb-4">Adaptive Recommendation</h2>
+
+        @if (recommendation(); as nextWorksheet) {
+          <div class="space-y-4">
+            <div class="rounded-lg bg-indigo-50 p-4">
+              <p class="text-sm text-gray-500">Recommended level</p>
+              <p class="text-2xl font-bold text-indigo-700">{{ nextWorksheet.recommendedLevel }}</p>
+              <p class="text-sm text-gray-600 mt-1">Target difficulty: {{ nextWorksheet.targetDifficulty }}/100</p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold mb-2">Focus operations</h3>
+              <div class="flex flex-wrap gap-2">
+                @for (operation of nextWorksheet.focusOperations; track operation) {
+                  <span class="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-semibold capitalize">{{ operation }}</span>
+                }
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold mb-2">Why this worksheet?</h3>
+              <ul class="space-y-2 text-sm text-gray-700 list-disc list-inside">
+                @for (reason of nextWorksheet.rationale; track reason) {
+                  <li>{{ reason }}</li>
+                }
+              </ul>
+            </div>
+
+            <button
+              type="button"
+              class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              (click)="applyRecommendation()"
+              [disabled]="loading()"
+            >
+              Open Recommended Worksheet
+            </button>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-500">Submit the worksheet to generate an adaptive next-step recommendation.</p>
+        }
+
+        @if (intelligenceError()) {
+          <p class="mt-4 text-sm text-red-600">{{ intelligenceError() }}</p>
+        }
+      </section>
+    </div>
   </div>
 </div>

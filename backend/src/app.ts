@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import { adaptiveRouter } from './api/adaptive/adaptive.routes';
+import { analyticsRouter } from './api/analytics/analytics.routes';
 import { diagnosticRouter } from './api/diagnostic/diagnostic.routes';
 import { practiceRouter } from './api/practice/practice.routes';
+import { studentProfileRouter } from './api/students/student-profile.routes';
 
 export const app = express();
 
@@ -18,7 +21,6 @@ if (frontendOrigin && /^https?:\/\/.+/.test(frontendOrigin)) {
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. server-to-server, curl)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -37,3 +39,6 @@ app.get('/api/health', (_request, response) => {
 
 app.use('/api/diagnostic', diagnosticRouter);
 app.use('/api/practice', practiceRouter);
+app.use('/api/students', studentProfileRouter);
+app.use('/api/adaptive', adaptiveRouter);
+app.use('/api/analytics', analyticsRouter);

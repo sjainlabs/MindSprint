@@ -89,13 +89,16 @@ export interface WorksheetAnswerInput {
 
 export interface WorksheetSubmission {
   worksheetId: string;
+  studentId?: string;
   level: LearningLevel;
+  startedAt?: string;
   submittedAt: string;
   answers: WorksheetAnswerInput[];
 }
 
 export interface WorksheetQuestionResult {
   questionId: string;
+  operation: MathOperation;
   expectedAnswer: number;
   submittedAnswer: number | null;
   isCorrect: boolean;
@@ -103,12 +106,14 @@ export interface WorksheetQuestionResult {
 
 export interface WorksheetResult {
   worksheetId: string;
+  studentId?: string;
   level: LearningLevel;
   totalQuestions: number;
   attempted: number;
   correct: number;
   incorrect: number;
   accuracy: number;
+  totalDurationSeconds: number;
   questionResults: WorksheetQuestionResult[];
 }
 
@@ -119,4 +124,76 @@ export interface Worksheet {
   instructions: string;
   generatedAt: string;
   questions: WorksheetQuestion[];
+}
+
+export type OperationMasteryMap = Record<MathOperation, number>;
+
+export interface StudentProfile {
+  studentId: string;
+  masteryLevels: OperationMasteryMap;
+  xp: number;
+  level: number;
+  streak: number;
+  badges: string[];
+  learningPathLevel: number;
+  updatedAt: string;
+}
+
+export interface AdaptiveState {
+  studentId: string;
+  currentLevel: LearningLevel;
+  recentAccuracy: number;
+  operationAccuracy: Partial<Record<MathOperation, number>>;
+  weakOperations: MathOperation[];
+  profile: StudentProfile;
+}
+
+export interface DifficultyScore {
+  overallScore: number;
+  operationScores: Record<MathOperation, number>;
+  weakOperationWeight: number;
+  recommendedLevel: LearningLevel;
+}
+
+export interface WorksheetRecommendation {
+  studentId: string;
+  targetDifficulty: number;
+  recommendedLevel: LearningLevel;
+  focusOperations: MathOperation[];
+  rationale: string[];
+  difficultyScore: DifficultyScore;
+}
+
+export interface AnalyticsEvent {
+  eventId: string;
+  studentId: string;
+  worksheetId: string;
+  eventType: 'worksheet_completed';
+  operation: MathOperation | 'overall';
+  accuracy: number;
+  durationSeconds: number;
+  masteryAfter: number;
+  createdAt: string;
+  payload: Record<string, unknown>;
+}
+
+export interface SkillBreakdown {
+  operation: MathOperation;
+  mastery: number;
+  averageAccuracy: number;
+  attempts: number;
+  totalTimeSeconds: number;
+}
+
+export interface StudentAnalytics {
+  studentId: string;
+  accuracyOverTime: Array<{
+    worksheetId: string;
+    accuracy: number;
+    createdAt: string;
+  }>;
+  operationMastery: SkillBreakdown[];
+  averageTimePerWorksheet: number;
+  totalWorksheets: number;
+  recommendedNextSteps: string[];
 }
