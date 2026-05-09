@@ -1,0 +1,26 @@
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+  <div class="max-w-lg w-full bg-white rounded-xl shadow p-8 text-center">
+    <h1 class="text-3xl font-bold text-primary mb-4">Math Diagnostic</h1>
+    <p class="text-gray-600 mb-2">
+      Answer up to 20 questions covering addition, subtraction, multiplication, and division.
+    </p>
+    <p class="text-gray-500 text-sm mb-8">
+      Both accuracy and speed affect your result. Answer as many as you can.
+    </p>
+
+    @if (errorMessage) {
+      <p class="text-red-600 mb-4">{{ errorMessage }}</p>
+    }
+
+    <button
+      type="button"
+      class="w-full bg-primary text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-60"
+      [disabled]="loading"
+      (click)="startDiagnostic()"
+    >
+      {{ loading ? 'Loading…' : 'Start Diagnostic' }}
+    </button>
+
+    <a routerLink="/welcome" class="block mt-4 text-sm text-primary underline">Back to Home</a>
+  </div>
+</div>

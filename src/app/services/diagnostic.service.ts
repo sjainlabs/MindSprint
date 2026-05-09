@@ -64,6 +64,11 @@ export class DiagnosticService {
       : '/api';
   private readonly baseUrl = `${this.apiRoot}/diagnostic`;
 
+  /** State shared between the start, test, and results pages. */
+  currentTest: DiagnosticTest | null = null;
+  startedAt: Date | null = null;
+  lastResult: DiagnosticResult | null = null;
+
   constructor(private readonly http: HttpClient) {}
 
   startDiagnostic(): Observable<DiagnosticTest> {
