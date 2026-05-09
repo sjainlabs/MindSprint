@@ -15,5 +15,6 @@ export const routes: Routes = [
   { path: 'assessment/science', component: AssessmentScience },
   { path: 'results', component: Results },
   { path: 'diagnostic', component: DiagnosticTestComponent },
-  { path: 'worksheet', component: WorksheetPageComponent },
+  { path: 'worksheet', redirectTo: '/worksheet/Beginner', pathMatch: 'full' },
+  { path: 'worksheet/:level', component: WorksheetPageComponent },
 ];

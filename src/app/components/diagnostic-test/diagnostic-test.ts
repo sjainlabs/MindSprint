@@ -98,6 +98,6 @@ export class DiagnosticTestComponent implements OnInit {
       return;
     }
 
-    this.router.navigate(['/worksheet'], { queryParams: { level: this.result.level } });
+    this.router.navigate(['/worksheet', this.result.level]);
   }
 }
