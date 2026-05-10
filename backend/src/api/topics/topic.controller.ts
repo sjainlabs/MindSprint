@@ -1,5 +1,12 @@
 import { type Request, type Response } from 'express';
-import { getTopicDifficultyMapping, getTopicTaxonomy, getTopicsByGrade, buildPersonalizedLearningPath } from './topic.service';
+import {
+  buildExplorationRecommendation,
+  buildPersonalizedLearningPath,
+  buildTopicBrowser,
+  getTopicDifficultyMapping,
+  getTopicTaxonomy,
+  getTopicsByGrade,
+} from './topic.service';
 import { getStudentProfile } from '../students/student-profile.service';
 
 const parseGrade = (value: unknown): number | null => {
@@ -44,6 +51,34 @@ export const readPersonalizedPath = async (request: Request, response: Response)
   } catch (error) {
     response.status(500).json({
       message: error instanceof Error ? error.message : 'Unable to build personalized path.',
+    });
+  }
+};
+
+export const readTopicBrowser = async (request: Request, response: Response): Promise<void> => {
+  try {
+    const studentId = (request.query['studentId'] as string | undefined)?.trim() || 'student-demo';
+    const profile = await getStudentProfile(studentId);
+    response.json({
+      studentId,
+      browseTopics: buildTopicBrowser(profile),
+    });
+  } catch (error) {
+    response.status(500).json({
+      message: error instanceof Error ? error.message : 'Unable to load topic browser.',
+    });
+  }
+};
+
+export const readExplorationRecommendation = async (request: Request, response: Response): Promise<void> => {
+  try {
+    const studentId = (request.query['studentId'] as string | undefined)?.trim() || 'student-demo';
+    const requestedTopicId = (request.query['topicId'] as string | undefined)?.trim() || 'foundation';
+    const profile = await getStudentProfile(studentId);
+    response.json(buildExplorationRecommendation(profile, requestedTopicId));
+  } catch (error) {
+    response.status(500).json({
+      message: error instanceof Error ? error.message : 'Unable to load exploration recommendation.',
     });
   }
 };

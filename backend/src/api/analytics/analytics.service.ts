@@ -1,6 +1,7 @@
 import { getDatabase } from '../../db/database';
 import {
   type AnalyticsEvent,
+  type GameMode,
   type MathOperation,
   type SkillBreakdown,
   type StudentAnalytics,
@@ -174,7 +175,28 @@ export const getStudentAnalytics = async (studentId: string): Promise<StudentAna
     [studentId],
   );
   const events = rows.map(toAnalyticsEvent);
+  const gameRows = await db.all<Array<{
+    mode: string;
+    score: number;
+    accuracy: number;
+  }>>(
+    `SELECT mode, score, accuracy
+     FROM game_records
+     WHERE student_id = ?`,
+    [studentId],
+  );
   const overallEvents = events.filter((event) => event.operation === 'overall');
+  const gameByMode = [...new Set(gameRows.map((row) => row.mode))]
+    .map((mode) => {
+      const modeRows = gameRows.filter((row) => row.mode === mode);
+      return {
+        mode: mode as GameMode,
+        sessions: modeRows.length,
+        averageScore: modeRows.length ? round(modeRows.reduce((sum, row) => sum + row.score, 0) / modeRows.length) : 0,
+        averageAccuracy: modeRows.length ? round(modeRows.reduce((sum, row) => sum + row.accuracy, 0) / modeRows.length) : 0,
+      };
+    })
+    .sort((left, right) => right.sessions - left.sessions);
 
   const operationMastery = OPERATIONS.map<SkillBreakdown>((operation) => {
     const operationEvents = events.filter((event) => event.operation === operation);
@@ -221,6 +243,12 @@ export const getStudentAnalytics = async (studentId: string): Promise<StudentAna
     averageTimePerWorksheet: overallEvents.length
       ? round(overallEvents.reduce((sum, event) => sum + event.durationSeconds, 0) / overallEvents.length)
       : 0,
+    gameAnalytics: {
+      totalSessions: gameRows.length,
+      averageScore: gameRows.length ? round(gameRows.reduce((sum, row) => sum + row.score, 0) / gameRows.length) : 0,
+      averageAccuracy: gameRows.length ? round(gameRows.reduce((sum, row) => sum + row.accuracy, 0) / gameRows.length) : 0,
+      byMode: gameByMode,
+    },
     totalWorksheets: overallEvents.length,
     recommendedNextSteps: buildRecommendedNextSteps(profile, operationMastery),
   };

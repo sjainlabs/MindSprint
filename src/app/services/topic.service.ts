@@ -7,6 +7,12 @@ export interface SubtopicModel {
   id: string;
   name: string;
   difficulty: { min: number; max: number };
+  conceptualTags?: string[];
+  cognitiveComplexity?: string;
+  integrationSkills?: string[];
+  realWorldCategories?: string[];
+  stemCategories?: string[];
+  aiDifficultyScore?: number;
 }
 
 export interface TopicModel {
@@ -26,6 +32,29 @@ export interface TopicTaxonomyResponse {
     minDifficulty: number;
     maxDifficulty: number;
   }>;
+}
+
+export interface TopicBrowserResponse {
+  studentId: string;
+  browseTopics: Array<{
+    id: string;
+    title: string;
+    sourceTopicId: string;
+    subtopics: string[];
+    difficultyTiers: Array<{ name: string; min: number; max: number }>;
+    prerequisites: string[];
+    masteryPercentage: number;
+    recommendedNextSteps: string[];
+  }>;
+}
+
+export interface ExplorationRecommendation {
+  studentId: string;
+  requestedTopicId: string;
+  recommendedTopicId: string;
+  recommendedTopicName: string;
+  recommendedDifficulty: number;
+  message: string;
 }
 
 @Injectable({
@@ -49,6 +78,18 @@ export class TopicService {
   getPersonalizedPath(studentId: string): Observable<{ studentId: string; personalizedPath: TopicModel[] }> {
     return this.http.get<{ studentId: string; personalizedPath: TopicModel[] }>(
       `${this.apiRoot}/topics/personalized-path?studentId=${encodeURIComponent(studentId)}`,
+    );
+  }
+
+  getTopicBrowser(studentId: string): Observable<TopicBrowserResponse> {
+    return this.http.get<TopicBrowserResponse>(
+      `${this.apiRoot}/topics/browser?studentId=${encodeURIComponent(studentId)}`,
+    );
+  }
+
+  getExplorationRecommendation(studentId: string, topicId: string): Observable<ExplorationRecommendation> {
+    return this.http.get<ExplorationRecommendation>(
+      `${this.apiRoot}/topics/explore?studentId=${encodeURIComponent(studentId)}&topicId=${encodeURIComponent(topicId)}`,
     );
   }
 }

@@ -1,12 +1,14 @@
+import { getDatabase } from '../../db/database';
 import { generateQuestion } from '../../utils/generateQuestion';
 import { randomInt, shuffle } from '../../utils/random';
 import {
+  type GameMode,
   type GameChallenge,
   type LearningLevel,
   type MathOperation,
   type StudentProfile,
 } from '../../models/types';
-import { getStudentProfile } from '../students/student-profile.service';
+import { getStudentProfile, updateStudentProfileFromGame } from '../students/student-profile.service';
 
 const OPERATIONS: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
 const DAILY_QUEST_CONFIG = {
@@ -68,6 +70,7 @@ const pickOperation = (profile: StudentProfile): MathOperation => {
 
 export const getGameChallenge = async (input: {
   studentId: string;
+  mode?: GameMode;
   difficulty?: number;
   streak?: number;
   completedDailyQuestCount?: number;
@@ -85,6 +88,33 @@ export const getGameChallenge = async (input: {
   const streakBonus = challengeStreak >= 3 ? 10 : 0;
   const xp = 15 + Math.round(difficulty / 6);
   const badge = difficulty >= 90 ? 'Mythic Challenger' : difficulty >= 75 ? 'Rising Hero' : undefined;
+  const mode = input.mode ?? (difficulty >= 85 ? 'boss-battle' : difficulty >= 65 ? 'ai-puzzle' : challengeStreak >= 3 ? 'falling-numbers' : 'abacus-flash');
+
+  const abacusPayload = {
+    flashSequence: Array.from({ length: Math.max(3, Math.round(difficulty / 20)) }, () => randomInt(1, 20)),
+    speedMs: Math.max(450, 1500 - difficulty * 10),
+    mixedOperations: shuffle(OPERATIONS).slice(0, Math.max(2, Math.round(difficulty / 35))),
+  };
+
+  const fallingPayload = {
+    target: randomInt(10, 60),
+    stream: Array.from({ length: 10 }, () => randomInt(1, 30)),
+    combosEnabled: true,
+    powerUps: ['freeze-time', 'double-xp', 'shield'],
+  };
+
+  const bossPayload = {
+    bossName: challengeStreak >= 8 ? 'Algebra Hydra' : 'Fractions Fortress',
+    bossHp: bossBattleUnlocked ? 100 + Math.round(difficulty * 1.2) : 0,
+    specialAttacks: ['fractions-storm', 'algebra-blast', 'graph-shock'],
+    timedRounds: 3,
+  };
+
+  const puzzlePayload = {
+    puzzleTypes: ['logic', 'patterns', 'geometry-visual', 'function-graph'],
+    dynamicSeed: `${Date.now()}-${randomInt(100, 999)}`,
+    complexity: difficulty >= 80 ? 'expert' : difficulty >= 60 ? 'advanced' : 'core',
+  };
 
   return {
     challengeId: `challenge-${Date.now()}-${randomInt(1000, 9999)}`,
@@ -122,5 +152,50 @@ export const getGameChallenge = async (input: {
       badges: profile.badges,
       level: profile.level,
     },
+    mode,
+    gamePayload: mode === 'abacus-flash'
+      ? abacusPayload
+      : mode === 'falling-numbers'
+        ? fallingPayload
+        : mode === 'boss-battle'
+          ? bossPayload
+          : puzzlePayload,
   };
+};
+
+export const submitGameResult = async (input: {
+  studentId: string;
+  mode: GameMode;
+  score: number;
+  accuracy: number;
+  streak: number;
+}): Promise<{ saved: boolean; xpEarned: number }> => {
+  const xpEarned = Math.max(5, Math.round(input.score * 0.25 + input.accuracy * 0.4));
+  const badge = input.score >= 95 ? 'Arcade Legend' : input.accuracy >= 90 ? 'Precision Hero' : undefined;
+
+  await updateStudentProfileFromGame({
+    studentId: input.studentId,
+    xpEarned,
+    streakDelta: input.streak > 0 ? 1 : 0,
+    badge,
+    unlockedMode: input.mode,
+  });
+
+  const db = await getDatabase();
+  await db.run(
+    `INSERT INTO game_records (student_id, mode, score, accuracy, streak, xp_earned, payload, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      input.studentId,
+      input.mode,
+      input.score,
+      input.accuracy,
+      input.streak,
+      xpEarned,
+      JSON.stringify({ mode: input.mode, score: input.score, accuracy: input.accuracy, streak: input.streak }),
+      new Date().toISOString(),
+    ],
+  );
+
+  return { saved: true, xpEarned };
 };

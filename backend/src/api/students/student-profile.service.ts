@@ -1,7 +1,10 @@
 import { getDatabase } from '../../db/database';
 import {
+  type ConfidenceLevel,
+  type GameMode,
   type GradeLevel,
   type MathOperation,
+  type OnboardingGoal,
   type OperationMasteryMap,
   type StudentProfile,
   type WorksheetResult,
@@ -26,6 +29,17 @@ type ProfileRow = {
   level: number;
   streak: number;
   badges_json: string;
+  power_ups_json?: string;
+  milestones_json?: string;
+  unlocked_game_modes_json?: string;
+  goals_json?: string;
+  confidence_level?: string;
+  onboarding_completed?: number;
+  avatar?: string | null;
+  math_world?: string | null;
+  daily_quests_completed?: number;
+  weekly_tournament_points?: number;
+  unlocked_through_grade?: number | null;
   learning_path_level: number;
   updated_at: string;
 };
@@ -69,6 +83,18 @@ export const createDefaultStudentProfile = (studentId: string): StudentProfile =
   level: 1,
   streak: 0,
   badges: [],
+  powerUps: [],
+  dailyQuestsCompleted: 0,
+  weeklyTournamentPoints: 0,
+  milestones: [],
+  unlockedGameModes: ['abacus-flash'],
+  onboardingCompleted: false,
+  avatar: 'Nova',
+  mathWorld: 'Number Forest',
+  goals: ['explore'],
+  confidenceLevel: 'medium',
+  diagnosticHistoryCount: 0,
+  unlockedThroughGrade: 3,
   learningPathLevel: 1,
   updatedAt: NEVER_UPDATED_TIMESTAMP,
 });
@@ -85,6 +111,19 @@ const fromRow = (row: ProfileRow): StudentProfile => ({
   level: row.level,
   streak: row.streak,
   badges: JSON.parse(row.badges_json) as string[],
+  powerUps: row.power_ups_json ? (JSON.parse(row.power_ups_json) as string[]) : [],
+  dailyQuestsCompleted: row.daily_quests_completed ?? 0,
+  weeklyTournamentPoints: row.weekly_tournament_points ?? 0,
+  milestones: row.milestones_json ? (JSON.parse(row.milestones_json) as string[]) : [],
+  unlockedGameModes: row.unlocked_game_modes_json
+    ? (JSON.parse(row.unlocked_game_modes_json) as GameMode[])
+    : ['abacus-flash'],
+  onboardingCompleted: (row.onboarding_completed ?? 0) === 1,
+  avatar: row.avatar ?? 'Nova',
+  mathWorld: row.math_world ?? 'Number Forest',
+  goals: row.goals_json ? (JSON.parse(row.goals_json) as OnboardingGoal[]) : ['explore'],
+  confidenceLevel: (row.confidence_level as ConfidenceLevel | undefined) ?? 'medium',
+  unlockedThroughGrade: (row.unlocked_through_grade ?? row.grade ?? 3) as GradeLevel,
   learningPathLevel: row.learning_path_level,
   updatedAt: row.updated_at,
 });
@@ -272,6 +311,8 @@ export const getStudentProfile = async (studentId: string): Promise<StudentProfi
   const db = await getDatabase();
   const row = await db.get<ProfileRow>(
     `SELECT student_id, age, grade, mastery_json, topic_mastery_json, xp, level, streak, badges_json, learning_path_level, updated_at
+      , power_ups_json, milestones_json, unlocked_game_modes_json, goals_json, confidence_level
+      , onboarding_completed, avatar, math_world, daily_quests_completed, weekly_tournament_points, unlocked_through_grade
      FROM student_profiles WHERE student_id = ?`,
     [studentId],
   );
@@ -289,8 +330,11 @@ export const saveStudentProfile = async (profile: StudentProfile): Promise<void>
   const db = await getDatabase();
   await db.run(
     `INSERT INTO student_profiles (
-      student_id, age, grade, mastery_json, topic_mastery_json, xp, level, streak, badges_json, learning_path_level, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      student_id, age, grade, mastery_json, topic_mastery_json, xp, level, streak, badges_json,
+      power_ups_json, milestones_json, unlocked_game_modes_json, goals_json, confidence_level,
+      onboarding_completed, avatar, math_world, daily_quests_completed, weekly_tournament_points,
+      unlocked_through_grade, learning_path_level, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(student_id) DO UPDATE SET
       age = excluded.age,
       grade = excluded.grade,
@@ -300,6 +344,17 @@ export const saveStudentProfile = async (profile: StudentProfile): Promise<void>
       level = excluded.level,
       streak = excluded.streak,
       badges_json = excluded.badges_json,
+      power_ups_json = excluded.power_ups_json,
+      milestones_json = excluded.milestones_json,
+      unlocked_game_modes_json = excluded.unlocked_game_modes_json,
+      goals_json = excluded.goals_json,
+      confidence_level = excluded.confidence_level,
+      onboarding_completed = excluded.onboarding_completed,
+      avatar = excluded.avatar,
+      math_world = excluded.math_world,
+      daily_quests_completed = excluded.daily_quests_completed,
+      weekly_tournament_points = excluded.weekly_tournament_points,
+      unlocked_through_grade = excluded.unlocked_through_grade,
       learning_path_level = excluded.learning_path_level,
       updated_at = excluded.updated_at`,
     [
@@ -312,6 +367,17 @@ export const saveStudentProfile = async (profile: StudentProfile): Promise<void>
       profile.level,
       profile.streak,
       JSON.stringify(profile.badges),
+      JSON.stringify(profile.powerUps ?? []),
+      JSON.stringify(profile.milestones ?? []),
+      JSON.stringify(profile.unlockedGameModes ?? ['abacus-flash']),
+      JSON.stringify(profile.goals ?? ['explore']),
+      profile.confidenceLevel ?? 'medium',
+      profile.onboardingCompleted ? 1 : 0,
+      profile.avatar ?? 'Nova',
+      profile.mathWorld ?? 'Number Forest',
+      profile.dailyQuestsCompleted ?? 0,
+      profile.weeklyTournamentPoints ?? 0,
+      profile.unlockedThroughGrade ?? profile.grade,
       profile.learningPathLevel,
       profile.updatedAt,
     ],
@@ -349,6 +415,67 @@ export const unlockStudentNextGrade = async (studentId: string, unlockedGrade: G
   const updated: StudentProfile = {
     ...profile,
     grade: profile.grade < unlockedGrade ? unlockedGrade : profile.grade,
+    unlockedThroughGrade: profile.unlockedThroughGrade && profile.unlockedThroughGrade > unlockedGrade
+      ? profile.unlockedThroughGrade
+      : unlockedGrade,
+    updatedAt: new Date().toISOString(),
+  };
+  await saveStudentProfile(updated);
+  return updated;
+};
+
+export const updateStudentProfileFromGame = async (input: {
+  studentId: string;
+  xpEarned: number;
+  streakDelta?: number;
+  badge?: string;
+  unlockedMode?: GameMode;
+}): Promise<StudentProfile> => {
+  const profile = await getStudentProfile(input.studentId);
+  const xp = profile.xp + Math.max(0, input.xpEarned);
+  const streak = Math.max(0, profile.streak + (input.streakDelta ?? 0));
+  const badges = input.badge ? [...new Set([...profile.badges, input.badge])] : profile.badges;
+  const unlockedGameModes = input.unlockedMode
+    ? [...new Set([...(profile.unlockedGameModes ?? ['abacus-flash']), input.unlockedMode])]
+    : (profile.unlockedGameModes ?? ['abacus-flash']);
+
+  const updated: StudentProfile = {
+    ...profile,
+    xp,
+    streak,
+    level: calculateProfileLevel(xp),
+    badges,
+    unlockedGameModes,
+    dailyQuestsCompleted: (profile.dailyQuestsCompleted ?? 0) + 1,
+    weeklyTournamentPoints: (profile.weeklyTournamentPoints ?? 0) + Math.max(0, Math.round(input.xpEarned / 2)),
+    updatedAt: new Date().toISOString(),
+  };
+
+  await saveStudentProfile(updated);
+  return updated;
+};
+
+export const completeStudentOnboarding = async (input: {
+  studentId: string;
+  age: number;
+  grade: GradeLevel;
+  goals: OnboardingGoal[];
+  confidenceLevel: ConfidenceLevel;
+  avatar: string;
+  mathWorld: string;
+  personalizedPath: string[];
+}): Promise<StudentProfile> => {
+  const profile = await getStudentProfile(input.studentId);
+  const updated: StudentProfile = {
+    ...profile,
+    age: input.age,
+    grade: input.grade,
+    goals: input.goals,
+    confidenceLevel: input.confidenceLevel,
+    avatar: input.avatar,
+    mathWorld: input.mathWorld,
+    onboardingCompleted: true,
+    milestones: [...new Set([...(profile.milestones ?? []), `Onboarding completed (${new Date().toISOString().slice(0, 10)})`])],
     updatedAt: new Date().toISOString(),
   };
   await saveStudentProfile(updated);

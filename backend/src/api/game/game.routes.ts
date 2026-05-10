@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { challenge } from './game.controller';
+import { challenge, submitChallenge } from './game.controller';
 
 export const gameRouter = Router();
 const gameRateLimiter = rateLimit({
@@ -11,3 +11,4 @@ const gameRateLimiter = rateLimit({
 });
 
 gameRouter.get('/challenge', gameRateLimiter, challenge);
+gameRouter.post('/submit', gameRateLimiter, submitChallenge);

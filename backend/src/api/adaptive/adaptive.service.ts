@@ -1,11 +1,15 @@
 import {
+  type AdaptiveRecommendationV2,
+  type AdvancedQuestionType,
   type AdaptiveState,
   type DifficultyScore,
+  type GameMode,
   type LearningLevel,
   type MathOperation,
   type WorksheetRecommendation,
 } from '../../models/types';
 import { getStudentProfile } from '../students/student-profile.service';
+import { buildPersonalizedLearningPath } from '../topics/topic.service';
 
 const OPERATIONS: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
 const LEVEL_ORDER: LearningLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
@@ -15,6 +19,17 @@ const LEVEL_BASE_DIFFICULTY: Record<LearningLevel, number> = {
   Advanced: 85,
 };
 const WEAK_OPERATION_WEIGHT = 1.6;
+const WORKSHEET_TYPES: AdvancedQuestionType[] = [
+  'numeric',
+  'symbolic',
+  'multi-step',
+  'graph-interpretation',
+  'word-problem',
+  'proof-style',
+  'function-analysis',
+  'trig-identity',
+];
+const GAME_MODES: GameMode[] = ['abacus-flash', 'falling-numbers', 'boss-battle', 'ai-puzzle'];
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
@@ -129,4 +144,69 @@ export const getNextWorksheetRecommendation = async (input: {
 }): Promise<WorksheetRecommendation> => {
   const adaptiveState = await createAdaptiveState(input);
   return buildWorksheetRecommendation(adaptiveState);
+};
+
+const pickRecommendedGameMode = (difficulty: number, weakOperations: MathOperation[]): GameMode => {
+  if (difficulty >= 85) {
+    return 'boss-battle';
+  }
+  if (weakOperations.includes('division') || weakOperations.includes('multiplication')) {
+    return 'falling-numbers';
+  }
+  if (difficulty >= 65) {
+    return 'ai-puzzle';
+  }
+  return 'abacus-flash';
+};
+
+const pickWorksheetType = (difficulty: number, focusOperations: MathOperation[]): AdvancedQuestionType => {
+  if (difficulty >= 90) {
+    return 'proof-style';
+  }
+  if (difficulty >= 80) {
+    return 'function-analysis';
+  }
+  if (focusOperations.includes('division') || focusOperations.includes('multiplication')) {
+    return 'multi-step';
+  }
+  return 'numeric';
+};
+
+export const getNextWorksheetRecommendationV2 = async (input: {
+  studentId: string;
+  currentLevel: LearningLevel;
+  recentAccuracy: number;
+  operationAccuracy?: Partial<Record<MathOperation, number>>;
+  confidence?: number;
+  averageSecondsPerQuestion?: number;
+  diagnosticAccuracy?: number;
+  latestGameScore?: number;
+}): Promise<AdaptiveRecommendationV2> => {
+  const state = await createAdaptiveState(input);
+  const baseRecommendation = buildWorksheetRecommendation(state);
+  const path = buildPersonalizedLearningPath(state.profile);
+  const recommendedTopic = path[0];
+  const recommendedSubtopic = recommendedTopic?.subtopics[0];
+  const confidenceAdjustment = Math.round((input.confidence ?? 50) * 0.08);
+  const diagnosticsWeight = Math.round((input.diagnosticAccuracy ?? baseRecommendation.targetDifficulty) * 0.15);
+  const speedPenalty = Math.round(Math.max(0, (input.averageSecondsPerQuestion ?? 20) - 20) * 0.8);
+  const gameBoost = Math.round((input.latestGameScore ?? 60) * 0.1);
+  const adjustedDifficulty = clamp(
+    baseRecommendation.targetDifficulty + confidenceAdjustment + diagnosticsWeight + gameBoost - speedPenalty,
+    0,
+    100,
+  );
+  const mode = pickRecommendedGameMode(adjustedDifficulty, state.weakOperations);
+  const worksheetType = pickWorksheetType(adjustedDifficulty, baseRecommendation.focusOperations);
+
+  return {
+    ...baseRecommendation,
+    targetDifficulty: adjustedDifficulty,
+    recommendedTopicId: recommendedTopic?.id ?? 'foundation',
+    recommendedSubtopicId: recommendedSubtopic?.id ?? 'counting',
+    recommendedGameMode: GAME_MODES.includes(mode) ? mode : 'abacus-flash',
+    recommendedWorksheetType: WORKSHEET_TYPES.includes(worksheetType) ? worksheetType : 'numeric',
+    confidenceAdjustment,
+    diagnosticsWeight,
+  };
 };

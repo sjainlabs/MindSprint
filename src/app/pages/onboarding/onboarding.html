@@ -1,0 +1,79 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-3xl mx-auto bg-white rounded-xl shadow p-6 space-y-5">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-primary">Student Onboarding</h1>
+      <a routerLink="/welcome" class="text-sm underline text-primary">Back Home</a>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3">
+      <label class="text-sm text-gray-600">Student ID
+        <input class="mt-1 w-full border rounded px-3 py-2" [ngModel]="studentId()" (ngModelChange)="studentId.set($event)" />
+      </label>
+      <label class="text-sm text-gray-600">Age
+        <input type="number" min="4" max="18" class="mt-1 w-full border rounded px-3 py-2" [ngModel]="age()" (ngModelChange)="age.set(+$event)" />
+      </label>
+      <label class="text-sm text-gray-600">Grade
+        <select class="mt-1 w-full border rounded px-3 py-2" [ngModel]="grade()" (ngModelChange)="grade.set($event)">
+          @for (value of gradeOptions; track value) {
+            <option [ngValue]="value">{{ value === 0 ? 'Kindergarten' : 'Grade ' + value }}</option>
+          }
+        </select>
+      </label>
+      <label class="text-sm text-gray-600">Confidence
+        <select class="mt-1 w-full border rounded px-3 py-2" [ngModel]="confidenceLevel()" (ngModelChange)="confidenceLevel.set($event)">
+          @for (level of confidenceOptions; track level) {
+            <option [ngValue]="level">{{ level | titlecase }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div>
+      <p class="text-sm font-semibold mb-2">Goals</p>
+      <div class="flex flex-wrap gap-2">
+        @for (goal of goalOptions; track goal) {
+          <button
+            type="button"
+            class="px-3 py-1 rounded-full border text-xs font-semibold"
+            [class.bg-primary]="goals().includes(goal)"
+            [class.text-white]="goals().includes(goal)"
+            (click)="toggleGoal(goal)"
+          >
+            {{ goal }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-3">
+      <label class="text-sm text-gray-600">Placement Score
+        <input type="number" min="0" max="100" class="mt-1 w-full border rounded px-3 py-2" [ngModel]="placementScore()" (ngModelChange)="placementScore.set(+$event)" />
+      </label>
+      <label class="text-sm text-gray-600">Avatar
+        <select class="mt-1 w-full border rounded px-3 py-2" [ngModel]="avatar()" (ngModelChange)="avatar.set($event)">
+          @for (item of avatars; track item) {
+            <option [ngValue]="item">{{ item }}</option>
+          }
+        </select>
+      </label>
+      <label class="text-sm text-gray-600">Math World
+        <select class="mt-1 w-full border rounded px-3 py-2" [ngModel]="mathWorld()" (ngModelChange)="mathWorld.set($event)">
+          @for (item of worlds; track item) {
+            <option [ngValue]="item">{{ item }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="text-sm text-red-600">{{ errorMessage() }}</p>
+    }
+    @if (successMessage()) {
+      <p class="text-sm text-emerald-700">{{ successMessage() }}</p>
+    }
+
+    <button type="button" class="w-full bg-primary text-white rounded-lg py-3 font-semibold disabled:opacity-60" [disabled]="loading()" (click)="submit()">
+      {{ loading() ? 'Saving...' : 'Complete Onboarding' }}
+    </button>
+  </div>
+</div>

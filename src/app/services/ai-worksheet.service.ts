@@ -2,7 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export type AdvancedQuestionType = 'numeric' | 'symbolic' | 'multi-step' | 'graph-interpretation';
+export type AdvancedQuestionType =
+  | 'numeric'
+  | 'symbolic'
+  | 'multi-step'
+  | 'graph-interpretation'
+  | 'word-problem'
+  | 'proof-style'
+  | 'function-analysis'
+  | 'trig-identity';
 
 export interface AiWorksheetRequest {
   topic: string;

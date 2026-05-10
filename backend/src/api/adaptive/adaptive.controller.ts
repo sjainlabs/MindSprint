@@ -1,5 +1,5 @@
 import { type Request, type Response } from 'express';
-import { getNextWorksheetRecommendation } from './adaptive.service';
+import { getNextWorksheetRecommendationV2 } from './adaptive.service';
 import { type LearningLevel, type MathOperation } from '../../models/types';
 
 const isLearningLevel = (value: unknown): value is LearningLevel =>
@@ -7,11 +7,24 @@ const isLearningLevel = (value: unknown): value is LearningLevel =>
 
 export const recommendNextWorksheet = async (request: Request, response: Response): Promise<void> => {
   try {
-    const { studentId, currentLevel, recentAccuracy, operationAccuracy } = request.body as {
+    const {
+      studentId,
+      currentLevel,
+      recentAccuracy,
+      operationAccuracy,
+      confidence,
+      averageSecondsPerQuestion,
+      diagnosticAccuracy,
+      latestGameScore,
+    } = request.body as {
       studentId?: string;
       currentLevel?: LearningLevel;
       recentAccuracy?: number;
       operationAccuracy?: Partial<Record<MathOperation, number>>;
+      confidence?: number;
+      averageSecondsPerQuestion?: number;
+      diagnosticAccuracy?: number;
+      latestGameScore?: number;
     };
 
     if (!studentId || !isLearningLevel(currentLevel) || typeof recentAccuracy !== 'number') {
@@ -21,11 +34,15 @@ export const recommendNextWorksheet = async (request: Request, response: Respons
       return;
     }
 
-    const recommendation = await getNextWorksheetRecommendation({
+    const recommendation = await getNextWorksheetRecommendationV2({
       studentId,
       currentLevel,
       recentAccuracy,
       operationAccuracy,
+      confidence,
+      averageSecondsPerQuestion,
+      diagnosticAccuracy,
+      latestGameScore,
     });
 
     response.json(recommendation);

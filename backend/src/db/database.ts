@@ -48,6 +48,17 @@ export const getDatabase = async (): Promise<Database<sqlite3.Database, sqlite3.
         level INTEGER NOT NULL,
         streak INTEGER NOT NULL,
         badges_json TEXT NOT NULL,
+        power_ups_json TEXT NOT NULL DEFAULT '[]',
+        milestones_json TEXT NOT NULL DEFAULT '[]',
+        unlocked_game_modes_json TEXT NOT NULL DEFAULT '[]',
+        goals_json TEXT NOT NULL DEFAULT '[]',
+        confidence_level TEXT NOT NULL DEFAULT 'medium',
+        onboarding_completed INTEGER NOT NULL DEFAULT 0,
+        avatar TEXT,
+        math_world TEXT,
+        daily_quests_completed INTEGER NOT NULL DEFAULT 0,
+        weekly_tournament_points INTEGER NOT NULL DEFAULT 0,
+        unlocked_through_grade INTEGER,
         learning_path_level INTEGER NOT NULL,
         updated_at TEXT NOT NULL
       );
@@ -94,6 +105,34 @@ export const getDatabase = async (): Promise<Database<sqlite3.Database, sqlite3.
 
       CREATE INDEX IF NOT EXISTS idx_diagnostic_records_student_created
       ON diagnostic_records (student_id, created_at);
+
+      CREATE TABLE IF NOT EXISTS onboarding_profiles (
+        student_id TEXT PRIMARY KEY,
+        age INTEGER NOT NULL,
+        grade INTEGER NOT NULL,
+        goals_json TEXT NOT NULL,
+        confidence_level TEXT NOT NULL,
+        placement_score REAL NOT NULL,
+        personalized_path_json TEXT NOT NULL,
+        avatar TEXT NOT NULL,
+        math_world TEXT NOT NULL,
+        completed_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS game_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        score REAL NOT NULL,
+        accuracy REAL NOT NULL,
+        streak INTEGER NOT NULL,
+        xp_earned INTEGER NOT NULL,
+        payload TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_game_records_student_created
+      ON game_records (student_id, created_at);
     `);
 
     const studentProfileColumns = await db.all<Array<{ name: string }>>(`PRAGMA table_info(student_profiles)`);
@@ -106,6 +145,39 @@ export const getDatabase = async (): Promise<Database<sqlite3.Database, sqlite3.
     }
     if (!studentProfileColumnNames.has('topic_mastery_json')) {
       await db.exec(`ALTER TABLE student_profiles ADD COLUMN topic_mastery_json TEXT NOT NULL DEFAULT '{}'`);
+    }
+    if (!studentProfileColumnNames.has('power_ups_json')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN power_ups_json TEXT NOT NULL DEFAULT '[]'`);
+    }
+    if (!studentProfileColumnNames.has('milestones_json')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN milestones_json TEXT NOT NULL DEFAULT '[]'`);
+    }
+    if (!studentProfileColumnNames.has('unlocked_game_modes_json')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN unlocked_game_modes_json TEXT NOT NULL DEFAULT '[]'`);
+    }
+    if (!studentProfileColumnNames.has('goals_json')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN goals_json TEXT NOT NULL DEFAULT '[]'`);
+    }
+    if (!studentProfileColumnNames.has('confidence_level')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN confidence_level TEXT NOT NULL DEFAULT 'medium'`);
+    }
+    if (!studentProfileColumnNames.has('onboarding_completed')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 0`);
+    }
+    if (!studentProfileColumnNames.has('avatar')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN avatar TEXT`);
+    }
+    if (!studentProfileColumnNames.has('math_world')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN math_world TEXT`);
+    }
+    if (!studentProfileColumnNames.has('daily_quests_completed')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN daily_quests_completed INTEGER NOT NULL DEFAULT 0`);
+    }
+    if (!studentProfileColumnNames.has('weekly_tournament_points')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN weekly_tournament_points INTEGER NOT NULL DEFAULT 0`);
+    }
+    if (!studentProfileColumnNames.has('unlocked_through_grade')) {
+      await db.exec(`ALTER TABLE student_profiles ADD COLUMN unlocked_through_grade INTEGER`);
     }
 
     const analyticsColumns = await db.all<Array<{ name: string }>>(`PRAGMA table_info(analytics_events)`);
