@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -15,7 +15,7 @@ import {
   templateUrl: './topic-browser.html',
   styleUrl: './topic-browser.css',
 })
-export class TopicBrowserComponent {
+export class TopicBrowserComponent implements OnInit {
   studentId = signal('student-demo');
   selectedTopicId = signal('foundation');
   browser = signal<TopicBrowserResponse | null>(null);

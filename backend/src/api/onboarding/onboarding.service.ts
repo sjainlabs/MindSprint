@@ -9,15 +9,15 @@ import { buildPersonalizedLearningPath } from '../topics/topic.service';
 import { completeStudentOnboarding, getStudentProfile } from '../students/student-profile.service';
 
 const DEFAULT_STUDENT_ID = 'student-demo';
+const MAX_AVATAR_LENGTH = 40;
+const MAX_MATH_WORLD_LENGTH = 60;
 
 const toGradeFromAge = (age: number): GradeLevel => {
-  if (age < 5) {
+  const normalizedAge = clamp(Math.round(age), 4, 18);
+  if (normalizedAge <= 4) {
     return 0;
   }
-  if (age >= 17) {
-    return 12;
-  }
-  return (Math.round(age) - 4) as GradeLevel;
+  return Math.min(12, normalizedAge - 4) as GradeLevel;
 };
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
@@ -51,8 +51,8 @@ export const saveOnboardingProfile = async (input: {
   const goals = sanitizeGoals(input.goals);
   const confidenceLevel = sanitizeConfidence(input.confidenceLevel);
   const placementScore = clamp(Math.round(input.placementScore ?? 60), 0, 100);
-  const avatar = (input.avatar?.trim() || 'Nova').slice(0, 40);
-  const mathWorld = (input.mathWorld?.trim() || 'Number Forest').slice(0, 60);
+  const avatar = (input.avatar?.trim() || 'Nova').slice(0, MAX_AVATAR_LENGTH);
+  const mathWorld = (input.mathWorld?.trim() || 'Number Forest').slice(0, MAX_MATH_WORLD_LENGTH);
 
   const existingProfile = await getStudentProfile(studentId);
   const personalizedPath = buildPersonalizedLearningPath({

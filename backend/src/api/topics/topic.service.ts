@@ -298,15 +298,21 @@ const BROWSER_DEFINITIONS: Array<{
   { id: 'word-problems', title: 'WORD PROBLEMS', sourceTopicId: 'elementary', prerequisites: ['foundation'] },
   { id: 'logic-puzzles', title: 'LOGIC & PUZZLES', sourceTopicId: 'geometry', prerequisites: ['foundation'] },
 ];
+const EXPLORATION_DIFFICULTY_AI_WEIGHT = 0.7;
+const EXPLORATION_DIFFICULTY_PATH_MULTIPLIER = 2;
 
 const toDifficultyTiers = (topic: Topic): BrowserTopic['difficultyTiers'] => {
   const min = Math.min(...topic.subtopics.map((subtopic) => subtopic.difficulty.min));
   const max = Math.max(...topic.subtopics.map((subtopic) => subtopic.difficulty.max));
-  const spread = Math.max(6, Math.round((max - min) / 3));
+  const spread = Math.max(1, Math.ceil((max - min + 1) / 3));
+  const tier1Max = Math.min(max, min + spread - 1);
+  const tier2Min = Math.min(max, tier1Max + 1);
+  const tier2Max = Math.min(max, tier2Min + spread - 1);
+  const tier3Min = Math.min(max, tier2Max + 1);
   return [
-    { name: 'Tier 1', min, max: Math.min(max, min + spread) },
-    { name: 'Tier 2', min: Math.min(max, min + spread + 1), max: Math.min(max, min + spread * 2) },
-    { name: 'Tier 3', min: Math.min(max, min + spread * 2 + 1), max },
+    { name: 'Tier 1', min, max: tier1Max },
+    { name: 'Tier 2', min: tier2Min, max: tier2Max },
+    { name: 'Tier 3', min: tier3Min, max },
   ];
 };
 
@@ -351,8 +357,8 @@ export const buildExplorationRecommendation = (
   const recommendedTopic = personalized[0] ?? requested;
   const recommendedDifficulty = Math.round(
     (recommendedTopic.subtopics.reduce((sum, subtopic) => sum + subtopic.aiDifficultyScore, 0) /
-      Math.max(recommendedTopic.subtopics.length, 1)) * 0.7 +
-      (profile.learningPathLevel * 2),
+      Math.max(recommendedTopic.subtopics.length, 1)) * EXPLORATION_DIFFICULTY_AI_WEIGHT +
+      (profile.learningPathLevel * EXPLORATION_DIFFICULTY_PATH_MULTIPLIER),
   );
 
   return {

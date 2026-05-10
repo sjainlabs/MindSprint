@@ -16,6 +16,26 @@ const DAILY_QUEST_CONFIG = {
   rewardXp: 50,
   description: 'Complete 3 game challenges with at least 80% accuracy.',
 };
+const ABACUS_MIN_FLASH_COUNT = 3;
+const ABACUS_MAX_NUMBER = 20;
+const ABACUS_MIN_NUMBER = 1;
+const ABACUS_MIN_SPEED_MS = 450;
+const ABACUS_BASE_SPEED_MS = 1500;
+const ABACUS_SPEED_PER_DIFFICULTY = 10;
+const ABACUS_OPERATION_DIVISOR = 35;
+
+const selectDefaultGameMode = (difficulty: number, challengeStreak: number): GameMode => {
+  if (difficulty >= 85) {
+    return 'boss-battle';
+  }
+  if (difficulty >= 65) {
+    return 'ai-puzzle';
+  }
+  if (challengeStreak >= 3) {
+    return 'falling-numbers';
+  }
+  return 'abacus-flash';
+};
 
 const toLevelFromDifficulty = (difficulty: number): LearningLevel => {
   if (difficulty >= 80) {
@@ -88,12 +108,15 @@ export const getGameChallenge = async (input: {
   const streakBonus = challengeStreak >= 3 ? 10 : 0;
   const xp = 15 + Math.round(difficulty / 6);
   const badge = difficulty >= 90 ? 'Mythic Challenger' : difficulty >= 75 ? 'Rising Hero' : undefined;
-  const mode = input.mode ?? (difficulty >= 85 ? 'boss-battle' : difficulty >= 65 ? 'ai-puzzle' : challengeStreak >= 3 ? 'falling-numbers' : 'abacus-flash');
+  const mode = input.mode ?? selectDefaultGameMode(difficulty, challengeStreak);
 
   const abacusPayload = {
-    flashSequence: Array.from({ length: Math.max(3, Math.round(difficulty / 20)) }, () => randomInt(1, 20)),
-    speedMs: Math.max(450, 1500 - difficulty * 10),
-    mixedOperations: shuffle(OPERATIONS).slice(0, Math.max(2, Math.round(difficulty / 35))),
+    flashSequence: Array.from(
+      { length: Math.max(ABACUS_MIN_FLASH_COUNT, Math.round(difficulty / ABACUS_MAX_NUMBER)) },
+      () => randomInt(ABACUS_MIN_NUMBER, ABACUS_MAX_NUMBER),
+    ),
+    speedMs: Math.max(ABACUS_MIN_SPEED_MS, ABACUS_BASE_SPEED_MS - difficulty * ABACUS_SPEED_PER_DIFFICULTY),
+    mixedOperations: shuffle(OPERATIONS).slice(0, Math.max(2, Math.round(difficulty / ABACUS_OPERATION_DIVISOR))),
   };
 
   const fallingPayload = {

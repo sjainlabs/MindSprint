@@ -289,7 +289,7 @@ export class WorksheetPageComponent implements OnInit {
               operationAccuracy: this.mapOperationAccuracy(result),
               confidence: this.normalizeConfidence(profile.confidenceLevel),
               averageSecondsPerQuestion: result.totalQuestions > 0
-                ? Math.round((result.totalDurationSeconds / result.totalQuestions) * 100) / 100
+                ? this.roundToTwoDecimals(result.totalDurationSeconds / result.totalQuestions)
                 : undefined,
               diagnosticAccuracy: profile.learningPathLevel * 2,
               latestGameScore: analytics.gameAnalytics?.averageScore ?? 0,
@@ -312,7 +312,7 @@ export class WorksheetPageComponent implements OnInit {
     });
   }
 
-  private normalizeConfidence(confidence?: string): number {
+  private normalizeConfidence(confidence?: 'low' | 'medium' | 'high'): number {
     if (confidence === 'high') {
       return 85;
     }
@@ -320,6 +320,10 @@ export class WorksheetPageComponent implements OnInit {
       return 35;
     }
     return 60;
+  }
+
+  private roundToTwoDecimals(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   private mapOperationAccuracy(result: WorksheetResult): Partial<Record<MathOperation, number>> {

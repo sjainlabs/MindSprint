@@ -16,6 +16,7 @@ const DEFAULT_MASTERY_LEVEL = 50;
 const TOPIC_MASTERY_RETENTION_WEIGHT = 0.7;
 const TOPIC_MASTERY_NEW_ACCURACY_WEIGHT = 0.3;
 const MAX_LEVEL = 50;
+const DEFAULT_UNLOCKED_GRADE: GradeLevel = 3;
 const NEVER_UPDATED_TIMESTAMP = new Date(0).toISOString();
 const NEVER_UPDATED_DATE_KEY = NEVER_UPDATED_TIMESTAMP.slice(0, 10);
 
@@ -94,7 +95,7 @@ export const createDefaultStudentProfile = (studentId: string): StudentProfile =
   goals: ['explore'],
   confidenceLevel: 'medium',
   diagnosticHistoryCount: 0,
-  unlockedThroughGrade: 3,
+  unlockedThroughGrade: DEFAULT_UNLOCKED_GRADE,
   learningPathLevel: 1,
   updatedAt: NEVER_UPDATED_TIMESTAMP,
 });
@@ -123,7 +124,7 @@ const fromRow = (row: ProfileRow): StudentProfile => ({
   mathWorld: row.math_world ?? 'Number Forest',
   goals: row.goals_json ? (JSON.parse(row.goals_json) as OnboardingGoal[]) : ['explore'],
   confidenceLevel: (row.confidence_level as ConfidenceLevel | undefined) ?? 'medium',
-  unlockedThroughGrade: (row.unlocked_through_grade ?? row.grade ?? 3) as GradeLevel,
+  unlockedThroughGrade: (row.unlocked_through_grade ?? row.grade ?? DEFAULT_UNLOCKED_GRADE) as GradeLevel,
   learningPathLevel: row.learning_path_level,
   updatedAt: row.updated_at,
 });
@@ -415,9 +416,7 @@ export const unlockStudentNextGrade = async (studentId: string, unlockedGrade: G
   const updated: StudentProfile = {
     ...profile,
     grade: profile.grade < unlockedGrade ? unlockedGrade : profile.grade,
-    unlockedThroughGrade: profile.unlockedThroughGrade && profile.unlockedThroughGrade > unlockedGrade
-      ? profile.unlockedThroughGrade
-      : unlockedGrade,
+    unlockedThroughGrade: Math.max(profile.unlockedThroughGrade ?? 0, unlockedGrade) as GradeLevel,
     updatedAt: new Date().toISOString(),
   };
   await saveStudentProfile(updated);

@@ -30,6 +30,12 @@ const WORKSHEET_TYPES: AdvancedQuestionType[] = [
   'trig-identity',
 ];
 const GAME_MODES: GameMode[] = ['abacus-flash', 'falling-numbers', 'boss-battle', 'ai-puzzle'];
+const BASELINE_SECONDS_PER_QUESTION = 20;
+const DEFAULT_CONFIDENCE = 50;
+const CONFIDENCE_WEIGHT = 0.08;
+const DIAGNOSTIC_WEIGHT = 0.15;
+const SPEED_PENALTY_FACTOR = 0.8;
+const GAME_BOOST_FACTOR = 0.1;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
@@ -187,10 +193,12 @@ export const getNextWorksheetRecommendationV2 = async (input: {
   const path = buildPersonalizedLearningPath(state.profile);
   const recommendedTopic = path[0];
   const recommendedSubtopic = recommendedTopic?.subtopics[0];
-  const confidenceAdjustment = Math.round((input.confidence ?? 50) * 0.08);
-  const diagnosticsWeight = Math.round((input.diagnosticAccuracy ?? baseRecommendation.targetDifficulty) * 0.15);
-  const speedPenalty = Math.round(Math.max(0, (input.averageSecondsPerQuestion ?? 20) - 20) * 0.8);
-  const gameBoost = Math.round((input.latestGameScore ?? 60) * 0.1);
+  const confidenceAdjustment = Math.round((input.confidence ?? DEFAULT_CONFIDENCE) * CONFIDENCE_WEIGHT);
+  const diagnosticsWeight = Math.round((input.diagnosticAccuracy ?? baseRecommendation.targetDifficulty) * DIAGNOSTIC_WEIGHT);
+  const speedPenalty = Math.round(
+    Math.max(0, (input.averageSecondsPerQuestion ?? BASELINE_SECONDS_PER_QUESTION) - BASELINE_SECONDS_PER_QUESTION) * SPEED_PENALTY_FACTOR,
+  );
+  const gameBoost = Math.round((input.latestGameScore ?? 60) * GAME_BOOST_FACTOR);
   const adjustedDifficulty = clamp(
     baseRecommendation.targetDifficulty + confidenceAdjustment + diagnosticsWeight + gameBoost - speedPenalty,
     0,
