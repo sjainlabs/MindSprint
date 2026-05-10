@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { eligibilityDiagnostic, startDiagnostic, submitDiagnostic } from './diagnostic.controller';
+import { eligibilityDiagnostic, nextGradeDiagnostic, startDiagnostic, submitDiagnostic } from './diagnostic.controller';
 
 export const diagnosticRouter = Router();
 const eligibilityRateLimiter = rateLimit({
@@ -18,4 +18,5 @@ const submitRateLimiter = rateLimit({
 
 diagnosticRouter.get('/start', startDiagnostic);
 diagnosticRouter.get('/eligibility', eligibilityRateLimiter, eligibilityDiagnostic);
+diagnosticRouter.get('/next-grade', eligibilityRateLimiter, nextGradeDiagnostic);
 diagnosticRouter.post('/submit', submitRateLimiter, submitDiagnostic);

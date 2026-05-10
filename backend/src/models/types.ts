@@ -1,7 +1,28 @@
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
-export type GradeLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type GradeLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type TopicStage =
+  | 'Foundation'
+  | 'Elementary'
+  | 'Middle School'
+  | 'Pre-Algebra'
+  | 'Algebra I'
+  | 'Geometry'
+  | 'Algebra II'
+  | 'Trigonometry'
+  | 'Pre-Calculus'
+  | 'Calculus';
+
+export type AdvancedQuestionType =
+  | 'numeric'
+  | 'symbolic'
+  | 'multi-step'
+  | 'graph-interpretation'
+  | 'word-problem'
+  | 'proof-style'
+  | 'function-analysis'
+  | 'trig-identity';
 
 export interface DifficultyRange {
   min: number;
@@ -49,6 +70,18 @@ export interface DiagnosticSubmission {
   responses: DiagnosticSubmissionResponse[];
 }
 
+export interface DiagnosticRecord {
+  id: number;
+  studentId: string;
+  testId: string;
+  grade: GradeLevel;
+  age: number;
+  accuracyScore: number;
+  finalScore: number;
+  unlockedNextGrade: boolean;
+  createdAt: string;
+}
+
 export interface ScoreBreakdown {
   totalQuestions: number;
   attempted: number;
@@ -74,6 +107,11 @@ export interface DiagnosticResult {
   }>;
   weakAreas: MathOperation[];
   strongAreas: MathOperation[];
+  topicScoring: Array<{
+    topicId: string;
+    accuracy: number;
+    attempted: number;
+  }>;
   diagnosticProgress?: DiagnosticProgress;
 }
 
@@ -88,10 +126,21 @@ export interface DiagnosticProgress {
   studentId: string;
   age: number;
   enrolledGrade: GradeLevel;
+  ageSuggestedGrade: GradeLevel;
+  ageSuggestedTrack: string;
   canAttemptCurrentGrade: boolean;
   unlockedThroughGrade: GradeLevel;
   unlockedNextGrade: boolean;
   grades: DiagnosticGradeEligibility[];
+}
+
+export interface DiagnosticNextGrade {
+  studentId: string;
+  enrolledGrade: GradeLevel;
+  unlockedThroughGrade: GradeLevel;
+  nextGrade: GradeLevel | null;
+  nextGradeLabel: string | null;
+  recommendation: string;
 }
 
 export interface WorksheetQuestion {
@@ -145,11 +194,77 @@ export interface Worksheet {
   questions: WorksheetQuestion[];
 }
 
+export interface Subtopic {
+  id: string;
+  name: string;
+  difficulty: DifficultyRange;
+  conceptualTags: string[];
+  cognitiveComplexity: 'low' | 'medium' | 'high' | 'expert';
+  integrationSkills: string[];
+  realWorldCategories: string[];
+  stemCategories: string[];
+  aiDifficultyScore: number;
+}
+
+export interface Topic {
+  id: string;
+  name: string;
+  stage: TopicStage;
+  grades: GradeLevel[];
+  supportsAiWorksheet: boolean;
+  conceptualFocus: string[];
+  masteryDecayRatePerWeek: number;
+  subtopics: Subtopic[];
+}
+
+export interface TopicDifficultyMapping {
+  topicId: string;
+  subtopicId: string;
+  minDifficulty: number;
+  maxDifficulty: number;
+}
+
+export interface AIWorksheetRequest {
+  topic: string;
+  difficulty: number;
+  questionTypes?: AdvancedQuestionType[];
+  questionCount?: number;
+  studentId?: string;
+}
+
+export interface AIWorksheetQuestion {
+  id: string;
+  type: AdvancedQuestionType;
+  topic: string;
+  subtopic: string;
+  prompt: string;
+  answer: string;
+  difficulty: number;
+  hints: string[];
+}
+
+export interface AIWorksheet {
+  worksheetId: string;
+  topic: string;
+  difficulty: number;
+  generatedAt: string;
+  questionTypes: AdvancedQuestionType[];
+  questions: AIWorksheetQuestion[];
+  validation: {
+    allQuestionsHaveAnswers: boolean;
+    hasSupportedQuestionTypes: boolean;
+    topicSupported: boolean;
+  };
+}
+
 export type OperationMasteryMap = Record<MathOperation, number>;
 
 export interface StudentProfile {
   studentId: string;
+  age: number;
+  grade: GradeLevel;
   masteryLevels: OperationMasteryMap;
+  topicMastery: Record<string, number>;
   xp: number;
   level: number;
   streak: number;
@@ -189,6 +304,7 @@ export interface AnalyticsEvent {
   worksheetId: string;
   eventType: 'worksheet_completed';
   operation: MathOperation | 'overall';
+  topicId?: string;
   accuracy: number;
   durationSeconds: number;
   masteryAfter: number;
@@ -212,6 +328,11 @@ export interface StudentAnalytics {
     createdAt: string;
   }>;
   operationMastery: SkillBreakdown[];
+  topicAnalytics: Array<{
+    topicId: string;
+    averageAccuracy: number;
+    attempts: number;
+  }>;
   averageTimePerWorksheet: number;
   totalWorksheets: number;
   recommendedNextSteps: string[];

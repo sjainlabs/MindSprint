@@ -59,7 +59,7 @@ describe('diagnostic.service', () => {
   it('applies age-grade eligibility rules', () => {
     expect(canAttemptDiagnostic(8, 3)).toBe(true);
     expect(canAttemptDiagnostic(6, 8)).toBe(false);
-    expect(canAttemptDiagnostic(17, 4)).toBe(false);
+    expect(canAttemptDiagnostic(17, 4)).toBe(true);
   });
 
   it('unlocks next grade after a perfect score', async () => {

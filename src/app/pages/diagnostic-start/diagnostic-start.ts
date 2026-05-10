@@ -4,6 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DiagnosticService, type GradeLevel } from '../../services/diagnostic.service';
 
+const gradeFromAge = (age: number): GradeLevel => {
+  const normalized = Math.round(age);
+  if (normalized <= 4) {
+    return 0;
+  }
+  if (normalized >= 17) {
+    return 12;
+  }
+  return (normalized - 4) as GradeLevel;
+};
+
 @Component({
   selector: 'app-diagnostic-start',
   standalone: true,
@@ -15,9 +26,12 @@ export class DiagnosticStartComponent {
   loading = false;
   errorMessage = '';
   age = 8;
-  grade: GradeLevel = 3;
+  grade: GradeLevel = gradeFromAge(this.age);
   studentId = 'student-demo';
   eligibilityLoading = false;
+  nextGradeLoading = false;
+  validationMessage = '';
+  readonly gradeOptions: GradeLevel[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   constructor(
     readonly diagnosticService: DiagnosticService,
@@ -26,15 +40,35 @@ export class DiagnosticStartComponent {
 
   refreshEligibility(): void {
     this.eligibilityLoading = true;
+    this.nextGradeLoading = true;
     this.errorMessage = '';
+    this.validationMessage = '';
     this.diagnosticService.getEligibility(this.age, this.grade, this.studentId).subscribe({
       next: (eligibility) => {
         this.diagnosticService.eligibility = eligibility;
         this.eligibilityLoading = false;
+        this.validationMessage = eligibility.canAttemptCurrentGrade
+          ? `Eligible to attempt ${this.gradeLabel(this.grade)}.`
+          : `Locked: age suggests up to ${this.gradeLabel(eligibility.ageSuggestedGrade)} (${eligibility.ageSuggestedTrack}).`;
+        this.refreshNextGrade();
       },
       error: () => {
         this.eligibilityLoading = false;
+        this.nextGradeLoading = false;
         this.errorMessage = 'Unable to load diagnostic eligibility right now.';
+      },
+    });
+  }
+
+  refreshNextGrade(): void {
+    this.nextGradeLoading = true;
+    this.diagnosticService.getNextGrade(this.age, this.grade, this.studentId).subscribe({
+      next: (nextGrade) => {
+        this.diagnosticService.nextGrade = nextGrade;
+        this.nextGradeLoading = false;
+      },
+      error: () => {
+        this.nextGradeLoading = false;
       },
     });
   }
@@ -71,5 +105,9 @@ export class DiagnosticStartComponent {
 
   ngOnInit(): void {
     this.refreshEligibility();
+  }
+
+  gradeLabel(grade: GradeLevel): string {
+    return grade === 0 ? 'Kindergarten' : `Grade ${grade}`;
   }
 }

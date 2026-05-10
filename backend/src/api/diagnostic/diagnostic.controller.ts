@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express';
 import {
   createDiagnosticTest,
   getDiagnosticEligibility,
+  getDiagnosticNextGrade,
   scoreAndPersistDiagnosticSubmission,
 } from './diagnostic.service';
 
@@ -57,6 +58,26 @@ export const submitDiagnostic = async (request: Request, response: Response): Pr
   } catch (error) {
     response.status(400).json({
       message: error instanceof Error ? error.message : 'Unable to score diagnostic submission.',
+    });
+  }
+};
+
+export const nextGradeDiagnostic = async (request: Request, response: Response): Promise<void> => {
+  try {
+    const age = parseNumber(request.query['age']);
+    const grade = parseNumber(request.query['grade']);
+    const studentId = (request.query['studentId'] as string | undefined)?.trim() || 'student-demo';
+
+    if (age === null || grade === null) {
+      response.status(400).json({ message: 'age and grade query params are required.' });
+      return;
+    }
+
+    const nextGrade = await getDiagnosticNextGrade({ studentId, age, grade });
+    response.json(nextGrade);
+  } catch (error) {
+    response.status(500).json({
+      message: error instanceof Error ? error.message : 'Unable to get next-grade recommendation.',
     });
   }
 };
