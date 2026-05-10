@@ -13,8 +13,8 @@
         Age
         <input
           type="number"
-          min="5"
-          max="16"
+          min="4"
+          max="18"
           class="mt-1 w-full border rounded-md px-3 py-2"
           [(ngModel)]="age"
           (change)="refreshEligibility()"
@@ -23,8 +23,8 @@
       <label class="text-sm text-gray-600">
         Grade
         <select class="mt-1 w-full border rounded-md px-3 py-2" [(ngModel)]="grade" (change)="refreshEligibility()">
-          @for (value of [1,2,3,4,5,6,7,8]; track value) {
-            <option [ngValue]="value">Grade {{ value }}</option>
+          @for (value of gradeOptions; track value) {
+            <option [ngValue]="value">{{ gradeLabel(value) }}</option>
           }
         </select>
       </label>
@@ -45,6 +45,12 @@
     }
 
     @if (diagnosticService.eligibility; as eligibility) {
+      <div class="text-left text-xs rounded-lg bg-blue-50 border border-blue-200 p-3 mb-4">
+        <p>Age suggestion: <span class="font-semibold">{{ gradeLabel(eligibility.ageSuggestedGrade) }}</span></p>
+        <p>Track: <span class="font-semibold">{{ eligibility.ageSuggestedTrack }}</span></p>
+        <p>Unlocked through: <span class="font-semibold">{{ gradeLabel(eligibility.unlockedThroughGrade) }}</span></p>
+      </div>
+
       <div class="grid grid-cols-2 gap-2 text-left mb-6 max-h-48 overflow-auto">
         @for (gradeEligibility of eligibility.grades; track gradeEligibility.grade) {
           <div
@@ -54,11 +60,25 @@
             [class.border-gray-200]="!gradeEligibility.isUnlocked || !gradeEligibility.isAgeEligible"
             [class.bg-gray-50]="!gradeEligibility.isUnlocked || !gradeEligibility.isAgeEligible"
           >
-            <p class="font-semibold">Grade {{ gradeEligibility.grade }}</p>
+            <p class="font-semibold">{{ gradeLabel(gradeEligibility.grade) }}</p>
             <p>{{ gradeEligibility.isUnlocked && gradeEligibility.isAgeEligible ? 'Unlocked' : 'Locked' }}</p>
             <p class="text-[11px] text-gray-500 mt-1">{{ gradeEligibility.reason }}</p>
           </div>
         }
+      </div>
+    }
+
+    @if (validationMessage) {
+      <p class="text-sm mb-3" [class.text-emerald-700]="diagnosticService.eligibility?.canAttemptCurrentGrade" [class.text-amber-700]="!diagnosticService.eligibility?.canAttemptCurrentGrade">
+        {{ validationMessage }}
+      </p>
+    }
+
+    @if (diagnosticService.nextGrade; as nextGrade) {
+      <div class="text-left text-xs rounded-lg bg-indigo-50 border border-indigo-200 p-3 mb-4">
+        <p class="font-semibold">Progression Indicator</p>
+        <p>Next: {{ nextGrade.nextGradeLabel ?? 'Advanced Track' }}</p>
+        <p>{{ nextGrade.recommendation }}</p>
       </div>
     }
 
@@ -69,7 +89,7 @@
     <button
       type="button"
       class="w-full bg-primary text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-60"
-      [disabled]="loading"
+      [disabled]="loading || !diagnosticService.eligibility?.canAttemptCurrentGrade"
       (click)="startDiagnostic()"
     >
       {{ loading ? 'Loading…' : 'Start Diagnostic' }}

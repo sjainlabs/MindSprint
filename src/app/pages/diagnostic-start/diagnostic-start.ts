@@ -15,9 +15,12 @@ export class DiagnosticStartComponent {
   loading = false;
   errorMessage = '';
   age = 8;
-  grade: GradeLevel = 3;
+  grade: GradeLevel = 4;
   studentId = 'student-demo';
   eligibilityLoading = false;
+  nextGradeLoading = false;
+  validationMessage = '';
+  readonly gradeOptions: GradeLevel[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   constructor(
     readonly diagnosticService: DiagnosticService,
@@ -26,15 +29,35 @@ export class DiagnosticStartComponent {
 
   refreshEligibility(): void {
     this.eligibilityLoading = true;
+    this.nextGradeLoading = true;
     this.errorMessage = '';
+    this.validationMessage = '';
     this.diagnosticService.getEligibility(this.age, this.grade, this.studentId).subscribe({
       next: (eligibility) => {
         this.diagnosticService.eligibility = eligibility;
         this.eligibilityLoading = false;
+        this.validationMessage = eligibility.canAttemptCurrentGrade
+          ? `Eligible to attempt ${this.gradeLabel(this.grade)}.`
+          : `Locked: age suggests up to ${this.gradeLabel(eligibility.ageSuggestedGrade)} (${eligibility.ageSuggestedTrack}).`;
+        this.refreshNextGrade();
       },
       error: () => {
         this.eligibilityLoading = false;
+        this.nextGradeLoading = false;
         this.errorMessage = 'Unable to load diagnostic eligibility right now.';
+      },
+    });
+  }
+
+  refreshNextGrade(): void {
+    this.nextGradeLoading = true;
+    this.diagnosticService.getNextGrade(this.age, this.grade, this.studentId).subscribe({
+      next: (nextGrade) => {
+        this.diagnosticService.nextGrade = nextGrade;
+        this.nextGradeLoading = false;
+      },
+      error: () => {
+        this.nextGradeLoading = false;
       },
     });
   }
@@ -71,5 +94,9 @@ export class DiagnosticStartComponent {
 
   ngOnInit(): void {
     this.refreshEligibility();
+  }
+
+  gradeLabel(grade: GradeLevel): string {
+    return grade === 0 ? 'Kindergarten' : `Grade ${grade}`;
   }
 }

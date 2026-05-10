@@ -6,7 +6,7 @@ import {
   type StudentProfile,
   type WorksheetResult,
 } from '../../models/types';
-import { TOPIC_TAXONOMY } from '../topics/topic.service';
+import { TOPIC_TAXONOMY, findTopicById } from '../topics/topic.service';
 
 const OPERATIONS: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
 const DEFAULT_MASTERY_LEVEL = 50;
@@ -133,6 +133,25 @@ const updateMasteryValue = (previousMastery: number, accuracy: number): number =
   return clamp(Math.round(blendedMastery + momentum), 0, 100);
 };
 
+const applyTopicMasteryDecay = (topicMastery: Record<string, number>, updatedAt: string, nowIso: string): Record<string, number> => {
+  const previousDateKey = toDateKey(updatedAt);
+  if (previousDateKey === NEVER_UPDATED_DATE_KEY) {
+    return topicMastery;
+  }
+  const inactivityDays = Math.max(0, daysBetween(previousDateKey, toDateKey(nowIso)));
+  if (inactivityDays <= 7) {
+    return topicMastery;
+  }
+
+  return Object.entries(topicMastery).reduce<Record<string, number>>((accumulator, [topicId, mastery]) => {
+    const topic = findTopicById(topicId);
+    const decayRate = topic?.masteryDecayRatePerWeek ?? 1.25;
+    const decay = Math.floor((inactivityDays / 7) * decayRate);
+    accumulator[topicId] = clamp(mastery - decay, 0, 100);
+    return accumulator;
+  }, {});
+};
+
 const calculateXpGain = (result: WorksheetResult): number => {
   const completionXp = result.attempted * 5;
   const accuracyXp = result.correct * 10;
@@ -205,6 +224,7 @@ export const updateStudentProfileFromWorksheet = (
 ): StudentProfile => {
   const operationPerformance = buildOperationPerformance(result);
   const masteryLevels = { ...profile.masteryLevels };
+  const decayedTopicMastery = applyTopicMasteryDecay(profile.topicMastery, profile.updatedAt, submittedAt);
 
   for (const operation of OPERATIONS) {
     const stats = operationPerformance[operation];
@@ -220,9 +240,9 @@ export const updateStudentProfileFromWorksheet = (
   const topicId = inferTopicFromLearningLevel(result.level);
   const topicMastery = {
     ...defaultTopicMastery(),
-    ...profile.topicMastery,
+    ...decayedTopicMastery,
     [topicId]: clamp(
-      Math.round(((profile.topicMastery[topicId] ?? 0) * 0.7) + result.accuracy * 0.3),
+      Math.round(((decayedTopicMastery[topicId] ?? 0) * 0.7) + result.accuracy * 0.3),
       0,
       100,
     ),

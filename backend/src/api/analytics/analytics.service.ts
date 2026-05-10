@@ -169,8 +169,7 @@ export const getStudentAnalytics = async (studentId: string): Promise<StudentAna
   const db = await getDatabase();
   const profile = await getStudentProfile(studentId);
   const rows = await db.all<AnalyticsRow[]>(
-    `SELECT event_id, student_id, worksheet_id, event_type, operation, accuracy, duration_seconds, mastery_after, payload, created_at
-     SELECT event_id, student_id, worksheet_id, event_type, operation, topic_id, accuracy, duration_seconds, mastery_after, payload, created_at
+    `SELECT event_id, student_id, worksheet_id, event_type, operation, topic_id, accuracy, duration_seconds, mastery_after, payload, created_at
      FROM analytics_events WHERE student_id = ? ORDER BY created_at ASC`,
     [studentId],
   );

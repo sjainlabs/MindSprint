@@ -1,8 +1,31 @@
-import { type GradeLevel, type Topic, type TopicDifficultyMapping } from '../../models/types';
+import { type GradeLevel, type StudentProfile, type Topic, type TopicDifficultyMapping } from '../../models/types';
 
 const FOUNDATION_GRADES: GradeLevel[] = [0, 1];
 const ELEMENTARY_GRADES: GradeLevel[] = [2, 3, 4, 5];
 const MIDDLE_GRADES: GradeLevel[] = [6, 7, 8];
+
+const subtopic = (input: {
+  id: string;
+  name: string;
+  min: number;
+  max: number;
+  conceptualTags: string[];
+  cognitiveComplexity: 'low' | 'medium' | 'high' | 'expert';
+  integrationSkills: string[];
+  realWorldCategories: string[];
+  stemCategories: string[];
+  aiDifficultyScore: number;
+}) => ({
+  id: input.id,
+  name: input.name,
+  difficulty: { min: input.min, max: input.max },
+  conceptualTags: input.conceptualTags,
+  cognitiveComplexity: input.cognitiveComplexity,
+  integrationSkills: input.integrationSkills,
+  realWorldCategories: input.realWorldCategories,
+  stemCategories: input.stemCategories,
+  aiDifficultyScore: input.aiDifficultyScore,
+});
 
 export const TOPIC_TAXONOMY: Topic[] = [
   {
@@ -11,11 +34,57 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Foundation',
     grades: FOUNDATION_GRADES,
     supportsAiWorksheet: false,
+    conceptualFocus: ['number sense', 'spatial reasoning', 'early operations'],
+    masteryDecayRatePerWeek: 1,
     subtopics: [
-      { id: 'counting', name: 'Counting', difficulty: { min: 5, max: 20 } },
-      { id: 'number-sense', name: 'Number Sense', difficulty: { min: 10, max: 25 } },
-      { id: 'shapes', name: 'Shapes', difficulty: { min: 10, max: 30 } },
-      { id: 'basic-addition-subtraction', name: 'Basic Addition/Subtraction', difficulty: { min: 15, max: 35 } },
+      subtopic({
+        id: 'counting',
+        name: 'Counting',
+        min: 5,
+        max: 20,
+        conceptualTags: ['quantity', 'sequencing'],
+        cognitiveComplexity: 'low',
+        integrationSkills: ['verbal reasoning'],
+        realWorldCategories: ['shopping', 'classroom objects'],
+        stemCategories: ['foundations'],
+        aiDifficultyScore: 15,
+      }),
+      subtopic({
+        id: 'number-sense',
+        name: 'Number Sense',
+        min: 10,
+        max: 25,
+        conceptualTags: ['decomposition', 'comparison'],
+        cognitiveComplexity: 'low',
+        integrationSkills: ['mental math'],
+        realWorldCategories: ['daily routines'],
+        stemCategories: ['foundations'],
+        aiDifficultyScore: 20,
+      }),
+      subtopic({
+        id: 'shapes',
+        name: 'Shapes',
+        min: 10,
+        max: 30,
+        conceptualTags: ['geometry basics', 'visual classification'],
+        cognitiveComplexity: 'low',
+        integrationSkills: ['spatial visualization'],
+        realWorldCategories: ['design', 'architecture'],
+        stemCategories: ['engineering'],
+        aiDifficultyScore: 22,
+      }),
+      subtopic({
+        id: 'early-operations',
+        name: 'Early Operations',
+        min: 15,
+        max: 35,
+        conceptualTags: ['combining', 'taking away'],
+        cognitiveComplexity: 'medium',
+        integrationSkills: ['word problem translation'],
+        realWorldCategories: ['games', 'story problems'],
+        stemCategories: ['foundations'],
+        aiDifficultyScore: 28,
+      }),
     ],
   },
   {
@@ -24,13 +93,15 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Elementary',
     grades: ELEMENTARY_GRADES,
     supportsAiWorksheet: false,
+    conceptualFocus: ['fluency', 'multi-step reasoning', 'measurement'],
+    masteryDecayRatePerWeek: 1.25,
     subtopics: [
-      { id: 'multiplication', name: 'Multiplication', difficulty: { min: 25, max: 45 } },
-      { id: 'division', name: 'Division', difficulty: { min: 25, max: 50 } },
-      { id: 'fractions', name: 'Fractions', difficulty: { min: 30, max: 55 } },
-      { id: 'decimals', name: 'Decimals', difficulty: { min: 35, max: 55 } },
-      { id: 'measurement', name: 'Measurement', difficulty: { min: 30, max: 50 } },
-      { id: 'geometry-basics', name: 'Geometry Basics', difficulty: { min: 25, max: 45 } },
+      subtopic({ id: 'addition-subtraction', name: 'Addition/Subtraction', min: 25, max: 45, conceptualTags: ['place value'], cognitiveComplexity: 'medium', integrationSkills: ['error checking'], realWorldCategories: ['finance basics'], stemCategories: ['data'], aiDifficultyScore: 35 }),
+      subtopic({ id: 'multiplication-division', name: 'Multiplication/Division', min: 25, max: 50, conceptualTags: ['inverse operations'], cognitiveComplexity: 'medium', integrationSkills: ['factor reasoning'], realWorldCategories: ['arrays', 'grouping'], stemCategories: ['engineering'], aiDifficultyScore: 42 }),
+      subtopic({ id: 'fractions-decimals', name: 'Fractions/Decimals', min: 30, max: 55, conceptualTags: ['equivalence'], cognitiveComplexity: 'medium', integrationSkills: ['ratio foundations'], realWorldCategories: ['measurement', 'recipes'], stemCategories: ['science'], aiDifficultyScore: 46 }),
+      subtopic({ id: 'measurement', name: 'Measurement', min: 30, max: 50, conceptualTags: ['unit conversion'], cognitiveComplexity: 'medium', integrationSkills: ['modeling'], realWorldCategories: ['experiments'], stemCategories: ['science'], aiDifficultyScore: 45 }),
+      subtopic({ id: 'geometry-basics', name: 'Geometry Basics', min: 25, max: 45, conceptualTags: ['properties'], cognitiveComplexity: 'medium', integrationSkills: ['visual proof'], realWorldCategories: ['maps', 'design'], stemCategories: ['engineering'], aiDifficultyScore: 43 }),
+      subtopic({ id: 'word-problems', name: 'Word Problems', min: 30, max: 55, conceptualTags: ['translation', 'reasoning'], cognitiveComplexity: 'high', integrationSkills: ['multi-skill integration'], realWorldCategories: ['everyday planning'], stemCategories: ['cross-disciplinary'], aiDifficultyScore: 52 }),
     ],
   },
   {
@@ -39,13 +110,14 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Middle School',
     grades: MIDDLE_GRADES,
     supportsAiWorksheet: false,
+    conceptualFocus: ['proportional reasoning', 'algebraic transition', 'data literacy'],
+    masteryDecayRatePerWeek: 1.5,
     subtopics: [
-      { id: 'ratios', name: 'Ratios', difficulty: { min: 45, max: 65 } },
-      { id: 'percentages', name: 'Percentages', difficulty: { min: 45, max: 65 } },
-      { id: 'negative-numbers', name: 'Negative Numbers', difficulty: { min: 40, max: 60 } },
-      { id: 'expressions', name: 'Expressions', difficulty: { min: 50, max: 70 } },
-      { id: 'equations', name: 'Equations', difficulty: { min: 50, max: 70 } },
-      { id: 'graphing', name: 'Graphing', difficulty: { min: 50, max: 70 } },
+      subtopic({ id: 'ratios-percentages', name: 'Ratios/Percentages', min: 45, max: 65, conceptualTags: ['proportionality'], cognitiveComplexity: 'high', integrationSkills: ['comparison modeling'], realWorldCategories: ['discounts', 'rates'], stemCategories: ['economics'], aiDifficultyScore: 58 }),
+      subtopic({ id: 'negative-numbers', name: 'Negative Numbers', min: 40, max: 60, conceptualTags: ['signed values'], cognitiveComplexity: 'medium', integrationSkills: ['coordinate reasoning'], realWorldCategories: ['temperature'], stemCategories: ['science'], aiDifficultyScore: 54 }),
+      subtopic({ id: 'expressions-equations', name: 'Expressions/Equations', min: 50, max: 70, conceptualTags: ['algebraic structure'], cognitiveComplexity: 'high', integrationSkills: ['symbolic manipulation'], realWorldCategories: ['problem modeling'], stemCategories: ['computer science'], aiDifficultyScore: 64 }),
+      subtopic({ id: 'graphing', name: 'Graphing', min: 50, max: 70, conceptualTags: ['function behavior'], cognitiveComplexity: 'high', integrationSkills: ['visual analysis'], realWorldCategories: ['motion graphs'], stemCategories: ['physics'], aiDifficultyScore: 66 }),
+      subtopic({ id: 'probability-statistics-intro', name: 'Intro Probability & Statistics', min: 52, max: 72, conceptualTags: ['uncertainty', 'distribution'], cognitiveComplexity: 'high', integrationSkills: ['data interpretation'], realWorldCategories: ['sports analytics'], stemCategories: ['data science'], aiDifficultyScore: 68 }),
     ],
   },
   {
@@ -54,12 +126,14 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Pre-Algebra',
     grades: [8, 9],
     supportsAiWorksheet: true,
+    conceptualFocus: ['symbolic fluency', 'abstraction'],
+    masteryDecayRatePerWeek: 1.75,
     subtopics: [
-      { id: 'variables', name: 'Variables', difficulty: { min: 55, max: 75 } },
-      { id: 'multi-step-equations', name: 'Multi-step Equations', difficulty: { min: 60, max: 80 } },
-      { id: 'inequalities', name: 'Inequalities', difficulty: { min: 60, max: 80 } },
-      { id: 'exponents', name: 'Exponents', difficulty: { min: 60, max: 80 } },
-      { id: 'square-roots', name: 'Square Roots', difficulty: { min: 60, max: 80 } },
+      subtopic({ id: 'variables', name: 'Variables', min: 55, max: 75, conceptualTags: ['abstraction'], cognitiveComplexity: 'high', integrationSkills: ['symbol translation'], realWorldCategories: ['modeling'], stemCategories: ['computer science'], aiDifficultyScore: 72 }),
+      subtopic({ id: 'multi-step-equations', name: 'Multi-step Equations', min: 60, max: 80, conceptualTags: ['inverse reasoning'], cognitiveComplexity: 'high', integrationSkills: ['sequencing'], realWorldCategories: ['cost models'], stemCategories: ['engineering'], aiDifficultyScore: 74 }),
+      subtopic({ id: 'inequalities', name: 'Inequalities', min: 60, max: 80, conceptualTags: ['constraint reasoning'], cognitiveComplexity: 'high', integrationSkills: ['region interpretation'], realWorldCategories: ['optimization constraints'], stemCategories: ['operations research'], aiDifficultyScore: 76 }),
+      subtopic({ id: 'exponents-square-roots', name: 'Exponents/Square Roots', min: 60, max: 80, conceptualTags: ['power relationships'], cognitiveComplexity: 'high', integrationSkills: ['number system extension'], realWorldCategories: ['growth models'], stemCategories: ['biology'], aiDifficultyScore: 77 }),
+      subtopic({ id: 'coordinate-plane', name: 'Coordinate Plane', min: 60, max: 82, conceptualTags: ['spatial algebra'], cognitiveComplexity: 'high', integrationSkills: ['graph reasoning'], realWorldCategories: ['navigation'], stemCategories: ['robotics'], aiDifficultyScore: 78 }),
     ],
   },
   {
@@ -68,12 +142,14 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Algebra I',
     grades: [9],
     supportsAiWorksheet: true,
+    conceptualFocus: ['functional thinking', 'equation solving'],
+    masteryDecayRatePerWeek: 2,
     subtopics: [
-      { id: 'linear-equations', name: 'Linear Equations', difficulty: { min: 65, max: 85 } },
-      { id: 'systems', name: 'Systems', difficulty: { min: 65, max: 85 } },
-      { id: 'quadratics', name: 'Quadratics', difficulty: { min: 70, max: 90 } },
-      { id: 'polynomials', name: 'Polynomials', difficulty: { min: 70, max: 90 } },
-      { id: 'factoring', name: 'Factoring', difficulty: { min: 70, max: 90 } },
+      subtopic({ id: 'linear-equations', name: 'Linear Equations', min: 65, max: 85, conceptualTags: ['linearity'], cognitiveComplexity: 'high', integrationSkills: ['graph + algebra'], realWorldCategories: ['budgeting'], stemCategories: ['data science'], aiDifficultyScore: 82 }),
+      subtopic({ id: 'systems', name: 'Systems', min: 65, max: 85, conceptualTags: ['simultaneous constraints'], cognitiveComplexity: 'high', integrationSkills: ['elimination/graphing'], realWorldCategories: ['resource allocation'], stemCategories: ['operations research'], aiDifficultyScore: 84 }),
+      subtopic({ id: 'quadratics', name: 'Quadratics', min: 70, max: 90, conceptualTags: ['nonlinear behavior'], cognitiveComplexity: 'expert', integrationSkills: ['factoring + graphing'], realWorldCategories: ['projectile motion'], stemCategories: ['physics'], aiDifficultyScore: 88 }),
+      subtopic({ id: 'polynomials-factoring', name: 'Polynomials/Factoring', min: 70, max: 90, conceptualTags: ['algebraic structure'], cognitiveComplexity: 'expert', integrationSkills: ['pattern recognition'], realWorldCategories: ['signal modeling'], stemCategories: ['engineering'], aiDifficultyScore: 87 }),
+      subtopic({ id: 'functions', name: 'Functions', min: 70, max: 90, conceptualTags: ['mapping', 'composition'], cognitiveComplexity: 'expert', integrationSkills: ['function transformations'], realWorldCategories: ['input-output systems'], stemCategories: ['computer science'], aiDifficultyScore: 89 }),
     ],
   },
   {
@@ -82,13 +158,14 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Geometry',
     grades: [10],
     supportsAiWorksheet: true,
+    conceptualFocus: ['proof', 'spatial logic'],
+    masteryDecayRatePerWeek: 2,
     subtopics: [
-      { id: 'angles', name: 'Angles', difficulty: { min: 65, max: 85 } },
-      { id: 'triangles', name: 'Triangles', difficulty: { min: 65, max: 90 } },
-      { id: 'circles', name: 'Circles', difficulty: { min: 70, max: 90 } },
-      { id: 'area-volume', name: 'Area/Volume', difficulty: { min: 70, max: 90 } },
-      { id: 'transformations', name: 'Transformations', difficulty: { min: 70, max: 90 } },
-      { id: 'proofs', name: 'Proofs', difficulty: { min: 75, max: 95 } },
+      subtopic({ id: 'angles-triangles', name: 'Angles/Triangles', min: 65, max: 90, conceptualTags: ['congruence'], cognitiveComplexity: 'high', integrationSkills: ['diagram reasoning'], realWorldCategories: ['construction'], stemCategories: ['engineering'], aiDifficultyScore: 86 }),
+      subtopic({ id: 'circles', name: 'Circles', min: 70, max: 90, conceptualTags: ['arc relations'], cognitiveComplexity: 'high', integrationSkills: ['equation + geometry'], realWorldCategories: ['rotation systems'], stemCategories: ['physics'], aiDifficultyScore: 88 }),
+      subtopic({ id: 'area-volume', name: 'Area/Volume', min: 70, max: 90, conceptualTags: ['dimensional analysis'], cognitiveComplexity: 'high', integrationSkills: ['unit conversion'], realWorldCategories: ['architecture'], stemCategories: ['engineering'], aiDifficultyScore: 87 }),
+      subtopic({ id: 'transformations', name: 'Transformations', min: 70, max: 90, conceptualTags: ['symmetry'], cognitiveComplexity: 'high', integrationSkills: ['coordinate + geometry'], realWorldCategories: ['computer graphics'], stemCategories: ['computer science'], aiDifficultyScore: 89 }),
+      subtopic({ id: 'proofs', name: 'Proofs', min: 75, max: 95, conceptualTags: ['logical rigor'], cognitiveComplexity: 'expert', integrationSkills: ['axiomatic reasoning'], realWorldCategories: ['legal/scientific argumentation'], stemCategories: ['mathematics'], aiDifficultyScore: 94 }),
     ],
   },
   {
@@ -97,11 +174,13 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Algebra II',
     grades: [11],
     supportsAiWorksheet: true,
+    conceptualFocus: ['advanced functions', 'sequence modeling'],
+    masteryDecayRatePerWeek: 2.2,
     subtopics: [
-      { id: 'complex-numbers', name: 'Complex Numbers', difficulty: { min: 75, max: 95 } },
-      { id: 'exponential-functions', name: 'Exponential Functions', difficulty: { min: 75, max: 95 } },
-      { id: 'logarithmic-functions', name: 'Logarithmic Functions', difficulty: { min: 75, max: 95 } },
-      { id: 'rational-expressions', name: 'Rational Expressions', difficulty: { min: 75, max: 95 } },
+      subtopic({ id: 'complex-numbers', name: 'Complex Numbers', min: 75, max: 95, conceptualTags: ['number system extension'], cognitiveComplexity: 'expert', integrationSkills: ['symbolic fluency'], realWorldCategories: ['signal processing'], stemCategories: ['electrical engineering'], aiDifficultyScore: 91 }),
+      subtopic({ id: 'exponential-logarithmic-functions', name: 'Exponential/Logarithmic Functions', min: 75, max: 95, conceptualTags: ['inverse functions'], cognitiveComplexity: 'expert', integrationSkills: ['graph + equation analysis'], realWorldCategories: ['population models'], stemCategories: ['biology'], aiDifficultyScore: 93 }),
+      subtopic({ id: 'rational-expressions', name: 'Rational Expressions', min: 75, max: 95, conceptualTags: ['domain restrictions'], cognitiveComplexity: 'expert', integrationSkills: ['fractional algebra'], realWorldCategories: ['rate models'], stemCategories: ['chemistry'], aiDifficultyScore: 92 }),
+      subtopic({ id: 'sequences-series', name: 'Sequences & Series', min: 76, max: 96, conceptualTags: ['recursive thinking'], cognitiveComplexity: 'expert', integrationSkills: ['pattern modeling'], realWorldCategories: ['finance growth'], stemCategories: ['computer science'], aiDifficultyScore: 92 }),
     ],
   },
   {
@@ -110,11 +189,12 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Trigonometry',
     grades: [12],
     supportsAiWorksheet: true,
+    conceptualFocus: ['periodicity', 'identity reasoning'],
+    masteryDecayRatePerWeek: 2.2,
     subtopics: [
-      { id: 'unit-circle', name: 'Unit Circle', difficulty: { min: 78, max: 96 } },
-      { id: 'sine-cosine-tangent', name: 'Sine/Cosine/Tangent', difficulty: { min: 78, max: 96 } },
-      { id: 'identities', name: 'Identities', difficulty: { min: 80, max: 98 } },
-      { id: 'trig-graphs', name: 'Trig Graphs', difficulty: { min: 80, max: 98 } },
+      subtopic({ id: 'unit-circle', name: 'Unit Circle', min: 78, max: 96, conceptualTags: ['angle measure'], cognitiveComplexity: 'high', integrationSkills: ['coordinate geometry'], realWorldCategories: ['navigation'], stemCategories: ['physics'], aiDifficultyScore: 91 }),
+      subtopic({ id: 'identities', name: 'Identities', min: 80, max: 98, conceptualTags: ['equivalence transformations'], cognitiveComplexity: 'expert', integrationSkills: ['symbolic proof'], realWorldCategories: ['wave analysis'], stemCategories: ['engineering'], aiDifficultyScore: 95 }),
+      subtopic({ id: 'trig-graphs', name: 'Trig Graphs', min: 80, max: 98, conceptualTags: ['periodic behavior'], cognitiveComplexity: 'expert', integrationSkills: ['graph interpretation'], realWorldCategories: ['signal models'], stemCategories: ['data science'], aiDifficultyScore: 94 }),
     ],
   },
   {
@@ -123,11 +203,12 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Pre-Calculus',
     grades: [12],
     supportsAiWorksheet: true,
+    conceptualFocus: ['limits intuition', 'multi-representation fluency'],
+    masteryDecayRatePerWeek: 2.3,
     subtopics: [
-      { id: 'limits-intro', name: 'Limits (Intro)', difficulty: { min: 82, max: 98 } },
-      { id: 'advanced-functions', name: 'Advanced Functions', difficulty: { min: 82, max: 99 } },
-      { id: 'vectors', name: 'Vectors', difficulty: { min: 82, max: 99 } },
-      { id: 'matrices', name: 'Matrices', difficulty: { min: 82, max: 99 } },
+      subtopic({ id: 'limits-intro', name: 'Limits', min: 82, max: 98, conceptualTags: ['approach behavior'], cognitiveComplexity: 'expert', integrationSkills: ['graph + symbolic limits'], realWorldCategories: ['change models'], stemCategories: ['physics'], aiDifficultyScore: 95 }),
+      subtopic({ id: 'advanced-functions', name: 'Advanced Functions', min: 82, max: 99, conceptualTags: ['composition/inverses'], cognitiveComplexity: 'expert', integrationSkills: ['function families'], realWorldCategories: ['systems modeling'], stemCategories: ['engineering'], aiDifficultyScore: 96 }),
+      subtopic({ id: 'vectors-matrices', name: 'Vectors/Matrices', min: 82, max: 99, conceptualTags: ['linear algebra intro'], cognitiveComplexity: 'expert', integrationSkills: ['geometry + algebra'], realWorldCategories: ['graphics/ML'], stemCategories: ['computer science'], aiDifficultyScore: 97 }),
     ],
   },
   {
@@ -136,12 +217,13 @@ export const TOPIC_TAXONOMY: Topic[] = [
     stage: 'Calculus',
     grades: [12],
     supportsAiWorksheet: true,
+    conceptualFocus: ['change', 'accumulation', 'optimization'],
+    masteryDecayRatePerWeek: 2.5,
     subtopics: [
-      { id: 'limits', name: 'Limits', difficulty: { min: 85, max: 100 } },
-      { id: 'derivatives', name: 'Derivatives', difficulty: { min: 85, max: 100 } },
-      { id: 'integrals', name: 'Integrals', difficulty: { min: 88, max: 100 } },
-      { id: 'optimization', name: 'Optimization', difficulty: { min: 88, max: 100 } },
-      { id: 'differential-equations-intro', name: 'Differential Equations (Intro)', difficulty: { min: 90, max: 100 } },
+      subtopic({ id: 'derivatives', name: 'Derivatives', min: 85, max: 100, conceptualTags: ['instantaneous rate'], cognitiveComplexity: 'expert', integrationSkills: ['symbolic + graphical reasoning'], realWorldCategories: ['motion'], stemCategories: ['physics'], aiDifficultyScore: 98 }),
+      subtopic({ id: 'integrals', name: 'Integrals', min: 88, max: 100, conceptualTags: ['accumulation'], cognitiveComplexity: 'expert', integrationSkills: ['area + antiderivatives'], realWorldCategories: ['volume and accumulation'], stemCategories: ['engineering'], aiDifficultyScore: 99 }),
+      subtopic({ id: 'optimization', name: 'Optimization', min: 88, max: 100, conceptualTags: ['constraint optimization'], cognitiveComplexity: 'expert', integrationSkills: ['modeling + calculus'], realWorldCategories: ['economics/engineering tradeoffs'], stemCategories: ['operations research'], aiDifficultyScore: 99 }),
+      subtopic({ id: 'differential-equations-intro', name: 'Differential Equations (Intro)', min: 90, max: 100, conceptualTags: ['dynamic systems'], cognitiveComplexity: 'expert', integrationSkills: ['model formulation'], realWorldCategories: ['population dynamics'], stemCategories: ['biology/physics'], aiDifficultyScore: 100 }),
     ],
   },
 ];
@@ -153,14 +235,27 @@ export const getTopicsByGrade = (grade: GradeLevel): Topic[] =>
 
 export const getTopicDifficultyMapping = (): TopicDifficultyMapping[] =>
   TOPIC_TAXONOMY.flatMap((topic) =>
-    topic.subtopics.map((subtopic) => ({
+    topic.subtopics.map((s) => ({
       topicId: topic.id,
-      subtopicId: subtopic.id,
-      minDifficulty: subtopic.difficulty.min,
-      maxDifficulty: subtopic.difficulty.max,
+      subtopicId: s.id,
+      minDifficulty: s.difficulty.min,
+      maxDifficulty: s.difficulty.max,
     })),
   );
 
 export const findTopicById = (topicId: string): Topic | undefined =>
   TOPIC_TAXONOMY.find((topic) => topic.id === topicId);
 
+export const buildPersonalizedLearningPath = (profile: StudentProfile): Topic[] => {
+  const scored = TOPIC_TAXONOMY.map((topic) => {
+    const mastery = profile.topicMastery[topic.id] ?? 0;
+    const gradeDistance = Math.abs((topic.grades[0] ?? profile.grade) - profile.grade);
+    const score = mastery * 0.7 - gradeDistance * 4 + (topic.supportsAiWorksheet ? 5 : 0);
+    return { topic, score };
+  });
+
+  return scored
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 4)
+    .map((entry) => entry.topic);
+};

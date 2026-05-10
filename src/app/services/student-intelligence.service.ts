@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { type LearningLevel } from './diagnostic.service';
+import { type GradeLevel } from './diagnostic.service';
 
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
@@ -9,7 +10,10 @@ export const DEFAULT_STUDENT_ID = 'student-demo';
 
 export interface StudentProfile {
   studentId: string;
+  age: number;
+  grade: GradeLevel;
   masteryLevels: Record<MathOperation, number>;
+  topicMastery: Record<string, number>;
   xp: number;
   level: number;
   streak: number;
@@ -50,6 +54,11 @@ export interface StudentAnalytics {
     createdAt: string;
   }>;
   operationMastery: SkillBreakdown[];
+  topicAnalytics: Array<{
+    topicId: string;
+    averageAccuracy: number;
+    attempts: number;
+  }>;
   averageTimePerWorksheet: number;
   totalWorksheets: number;
   recommendedNextSteps: string[];

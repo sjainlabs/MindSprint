@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PracticeService, WorksheetResult, type Worksheet } from '../../services/practice.service';
+import { AiWorksheetService, type AiWorksheet } from '../../services/ai-worksheet.service';
+import { TopicService, type TopicModel } from '../../services/topic.service';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -46,11 +48,23 @@ export class WorksheetPageComponent implements OnInit {
   studentAnalytics = signal<StudentAnalytics | null>(null);
   recommendation = signal<WorksheetRecommendation | null>(null);
   intelligenceError = signal('');
+  adaptiveNavigationLoading = signal(false);
+
+  topics = signal<TopicModel[]>([]);
+  topicsLoading = signal(false);
+  personalizedPath = signal<TopicModel[]>([]);
+  selectedTopicId = signal('algebra-i');
+  aiDifficulty = signal(75);
+  aiWorksheet = signal<AiWorksheet | null>(null);
+  aiLoading = signal(false);
+  aiError = signal('');
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly practiceService: PracticeService,
     private readonly studentIntelligenceService: StudentIntelligenceService,
+    private readonly topicService: TopicService,
+    private readonly aiWorksheetService: AiWorksheetService,
     private readonly router: Router,
   ) {}
 
@@ -66,6 +80,7 @@ export class WorksheetPageComponent implements OnInit {
     this.currentLevel.set(level);
     this.refreshStudentInsights();
     this.loadWorksheet(level);
+    this.loadTopicTaxonomy();
   }
 
   loadWorksheet(level: LearningLevel): void {
@@ -177,18 +192,72 @@ export class WorksheetPageComponent implements OnInit {
     this.answers.update((answers) => ({ ...answers, [questionId]: value }));
   }
 
-  goToAdaptive(): void {
-    const nextLevel = this.recommendedLevel();
-    if (!nextLevel) {
+  async goToAdaptive(): Promise<void> {
+    const computedRecommendation = this.recommendedLevel();
+    if (!computedRecommendation || this.adaptiveNavigationLoading()) {
       return;
     }
 
-    this.currentLevel.set(nextLevel);
-    this.regenerate(nextLevel);
+    this.adaptiveNavigationLoading.set(true);
+    this.currentLevel.set(computedRecommendation);
+
+    const currentRouteLevel = this.route.snapshot.paramMap.get('level');
+
+    try {
+      if (currentRouteLevel === computedRecommendation) {
+        await this.router.navigateByUrl('/', { skipLocationChange: true });
+      }
+
+      const navigated = await this.router.navigate(['/worksheet', computedRecommendation]);
+      if (!navigated) {
+        await this.router.navigateByUrl('/', { skipLocationChange: true });
+        await this.router.navigate(['/worksheet', computedRecommendation]);
+      }
+    } catch {
+      await this.router.navigateByUrl('/', { skipLocationChange: true });
+      await this.router.navigate(['/worksheet', computedRecommendation]);
+    } finally {
+      this.adaptiveNavigationLoading.set(false);
+    }
   }
 
   applyRecommendation(): void {
-    this.goToAdaptive();
+    void this.goToAdaptive();
+  }
+
+  generateAdvancedWorksheet(): void {
+    const topic = this.selectedTopicId();
+    if (!topic || this.aiLoading()) {
+      return;
+    }
+
+    this.aiLoading.set(true);
+    this.aiError.set('');
+    this.aiWorksheet.set(null);
+
+    this.aiWorksheetService
+      .generateWorksheet({
+        topic,
+        difficulty: this.aiDifficulty(),
+        questionTypes: ['numeric', 'symbolic', 'multi-step', 'graph-interpretation'],
+        questionCount: 8,
+        studentId: this.studentId(),
+      })
+      .subscribe({
+        next: (worksheet) => {
+          this.aiWorksheet.set(worksheet);
+          this.aiLoading.set(false);
+        },
+        error: () => {
+          this.aiError.set('Unable to generate advanced AI worksheet right now.');
+          this.aiLoading.set(false);
+        },
+      });
+  }
+
+  updateAiDifficulty(value: number | string): void {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    this.aiDifficulty.set(Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 75);
   }
 
   private refreshStudentInsights(result?: WorksheetResult): void {
@@ -259,5 +328,27 @@ export class WorksheetPageComponent implements OnInit {
       accumulator[operation as MathOperation] = Math.round((current.correct / current.attempted) * 100);
       return accumulator;
     }, {});
+  }
+
+  private loadTopicTaxonomy(): void {
+    this.topicsLoading.set(true);
+    this.topicService.getTaxonomy().subscribe({
+      next: (taxonomy) => {
+        this.topics.set(taxonomy.topics);
+        this.topicsLoading.set(false);
+      },
+      error: () => {
+        this.topicsLoading.set(false);
+      },
+    });
+
+    this.topicService.getPersonalizedPath(this.studentId()).subscribe({
+      next: (response) => {
+        this.personalizedPath.set(response.personalizedPath);
+      },
+      error: () => {
+        this.personalizedPath.set([]);
+      },
+    });
   }
 }

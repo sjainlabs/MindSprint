@@ -1,5 +1,6 @@
 import { type Request, type Response } from 'express';
-import { getTopicDifficultyMapping, getTopicTaxonomy, getTopicsByGrade } from './topic.service';
+import { getTopicDifficultyMapping, getTopicTaxonomy, getTopicsByGrade, buildPersonalizedLearningPath } from './topic.service';
+import { getStudentProfile } from '../students/student-profile.service';
 
 const parseGrade = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isInteger(value)) {
@@ -32,3 +33,17 @@ export const readTopicsByGrade = (request: Request, response: Response): void =>
   });
 };
 
+export const readPersonalizedPath = async (request: Request, response: Response): Promise<void> => {
+  try {
+    const studentId = (request.query['studentId'] as string | undefined)?.trim() || 'student-demo';
+    const profile = await getStudentProfile(studentId);
+    response.json({
+      studentId,
+      personalizedPath: buildPersonalizedLearningPath(profile),
+    });
+  } catch (error) {
+    response.status(500).json({
+      message: error instanceof Error ? error.message : 'Unable to build personalized path.',
+    });
+  }
+};

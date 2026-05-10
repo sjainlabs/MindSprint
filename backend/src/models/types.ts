@@ -107,6 +107,11 @@ export interface DiagnosticResult {
   }>;
   weakAreas: MathOperation[];
   strongAreas: MathOperation[];
+  topicScoring: Array<{
+    topicId: string;
+    accuracy: number;
+    attempted: number;
+  }>;
   diagnosticProgress?: DiagnosticProgress;
 }
 
@@ -121,6 +126,8 @@ export interface DiagnosticProgress {
   studentId: string;
   age: number;
   enrolledGrade: GradeLevel;
+  ageSuggestedGrade: GradeLevel;
+  ageSuggestedTrack: string;
   canAttemptCurrentGrade: boolean;
   unlockedThroughGrade: GradeLevel;
   unlockedNextGrade: boolean;
@@ -191,6 +198,12 @@ export interface Subtopic {
   id: string;
   name: string;
   difficulty: DifficultyRange;
+  conceptualTags: string[];
+  cognitiveComplexity: 'low' | 'medium' | 'high' | 'expert';
+  integrationSkills: string[];
+  realWorldCategories: string[];
+  stemCategories: string[];
+  aiDifficultyScore: number;
 }
 
 export interface Topic {
@@ -199,6 +212,8 @@ export interface Topic {
   stage: TopicStage;
   grades: GradeLevel[];
   supportsAiWorksheet: boolean;
+  conceptualFocus: string[];
+  masteryDecayRatePerWeek: number;
   subtopics: Subtopic[];
 }
 
