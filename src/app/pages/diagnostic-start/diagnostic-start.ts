@@ -20,7 +20,7 @@ export class DiagnosticStartComponent {
   eligibilityLoading = false;
 
   constructor(
-    private readonly diagnosticService: DiagnosticService,
+    readonly diagnosticService: DiagnosticService,
     private readonly router: Router,
   ) {}
 

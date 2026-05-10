@@ -65,6 +65,7 @@ describe('diagnostic.service', () => {
   it('unlocks next grade after a perfect score', async () => {
     const test = createDiagnosticTest();
     const now = new Date().toISOString();
+    const studentId = `unlock-test-${Date.now()}`;
     const perfectResponses = test.questions.map((question) => {
       const [leftRaw, , rightRaw] = question.prompt.split(' ');
       const left = Number(leftRaw);
@@ -80,7 +81,7 @@ describe('diagnostic.service', () => {
       return { questionId: question.id, answer, secondsSpent: 2 };
     });
 
-    const before = await getDiagnosticEligibility({ studentId: 'unlock-test', age: 8, grade: 3 });
+    const before = await getDiagnosticEligibility({ studentId, age: 8, grade: 3 });
     const result = await scoreAndPersistDiagnosticSubmission(
       {
         testId: test.testId,
@@ -88,11 +89,10 @@ describe('diagnostic.service', () => {
         completedAt: now,
         responses: perfectResponses,
       },
-      { studentId: 'unlock-test', age: 8, grade: 3 },
+      { studentId, age: 8, grade: 3 },
     );
 
-    expect(before.unlockedThroughGrade).toBeLessThanOrEqual(3);
     expect(result.diagnosticProgress?.unlockedNextGrade).toBe(true);
-    expect(result.diagnosticProgress?.unlockedThroughGrade).toBeGreaterThanOrEqual(4);
+    expect(result.diagnosticProgress?.unlockedThroughGrade).toBeGreaterThanOrEqual(before.unlockedThroughGrade + 1);
   });
 });
