@@ -1,10 +1,12 @@
 import { getDatabase } from '../../db/database';
 import {
+  type GradeLevel,
   type MathOperation,
   type OperationMasteryMap,
   type StudentProfile,
   type WorksheetResult,
 } from '../../models/types';
+import { TOPIC_TAXONOMY } from '../topics/topic.service';
 
 const OPERATIONS: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
 const DEFAULT_MASTERY_LEVEL = 50;
@@ -14,7 +16,10 @@ const NEVER_UPDATED_DATE_KEY = NEVER_UPDATED_TIMESTAMP.slice(0, 10);
 
 type ProfileRow = {
   student_id: string;
+  age?: number;
+  grade?: number;
   mastery_json: string;
+  topic_mastery_json?: string;
   xp: number;
   level: number;
   streak: number;
@@ -36,6 +41,12 @@ const emptyMastery = (): OperationMasteryMap => ({
   division: DEFAULT_MASTERY_LEVEL,
 });
 
+const defaultTopicMastery = (): Record<string, number> =>
+  TOPIC_TAXONOMY.reduce<Record<string, number>>((accumulator, topic) => {
+    accumulator[topic.id] = 0;
+    return accumulator;
+  }, {});
+
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 const toDateKey = (value: string): string => value.slice(0, 10);
@@ -48,7 +59,10 @@ const daysBetween = (earlier: string, later: string): number => {
 
 export const createDefaultStudentProfile = (studentId: string): StudentProfile => ({
   studentId,
+  age: 8,
+  grade: 3,
   masteryLevels: emptyMastery(),
+  topicMastery: defaultTopicMastery(),
   xp: 0,
   level: 1,
   streak: 0,
@@ -59,7 +73,12 @@ export const createDefaultStudentProfile = (studentId: string): StudentProfile =
 
 const fromRow = (row: ProfileRow): StudentProfile => ({
   studentId: row.student_id,
+  age: row.age ?? 8,
+  grade: (row.grade ?? 3) as GradeLevel,
   masteryLevels: JSON.parse(row.mastery_json) as OperationMasteryMap,
+  topicMastery: row.topic_mastery_json
+    ? (JSON.parse(row.topic_mastery_json) as Record<string, number>)
+    : defaultTopicMastery(),
   xp: row.xp,
   level: row.level,
   streak: row.streak,
@@ -144,6 +163,16 @@ const updateStreak = (currentStreak: number, updatedAt: string, submittedAt: str
 const operationMasterBadge = (operation: MathOperation): string =>
   `${operation.charAt(0).toUpperCase()}${operation.slice(1)} Master`;
 
+const inferTopicFromLearningLevel = (level: WorksheetResult['level']): string => {
+  if (level === 'Beginner') {
+    return 'foundation';
+  }
+  if (level === 'Intermediate') {
+    return 'elementary';
+  }
+  return 'pre-algebra';
+};
+
 const collectBadges = (
   currentBadges: string[],
   result: WorksheetResult,
@@ -188,10 +217,23 @@ export const updateStudentProfileFromWorksheet = (
 
   const xp = profile.xp + calculateXpGain(result);
   const streak = updateStreak(profile.streak, profile.updatedAt, submittedAt);
+  const topicId = inferTopicFromLearningLevel(result.level);
+  const topicMastery = {
+    ...defaultTopicMastery(),
+    ...profile.topicMastery,
+    [topicId]: clamp(
+      Math.round(((profile.topicMastery[topicId] ?? 0) * 0.7) + result.accuracy * 0.3),
+      0,
+      100,
+    ),
+  };
 
   return {
     studentId: profile.studentId,
+    age: profile.age,
+    grade: profile.grade,
     masteryLevels,
+    topicMastery,
     xp,
     level: calculateProfileLevel(xp),
     streak,
@@ -204,7 +246,7 @@ export const updateStudentProfileFromWorksheet = (
 export const getStudentProfile = async (studentId: string): Promise<StudentProfile> => {
   const db = await getDatabase();
   const row = await db.get<ProfileRow>(
-    `SELECT student_id, mastery_json, xp, level, streak, badges_json, learning_path_level, updated_at
+    `SELECT student_id, age, grade, mastery_json, topic_mastery_json, xp, level, streak, badges_json, learning_path_level, updated_at
      FROM student_profiles WHERE student_id = ?`,
     [studentId],
   );
@@ -222,10 +264,13 @@ export const saveStudentProfile = async (profile: StudentProfile): Promise<void>
   const db = await getDatabase();
   await db.run(
     `INSERT INTO student_profiles (
-      student_id, mastery_json, xp, level, streak, badges_json, learning_path_level, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      student_id, age, grade, mastery_json, topic_mastery_json, xp, level, streak, badges_json, learning_path_level, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(student_id) DO UPDATE SET
+      age = excluded.age,
+      grade = excluded.grade,
       mastery_json = excluded.mastery_json,
+      topic_mastery_json = excluded.topic_mastery_json,
       xp = excluded.xp,
       level = excluded.level,
       streak = excluded.streak,
@@ -234,7 +279,10 @@ export const saveStudentProfile = async (profile: StudentProfile): Promise<void>
       updated_at = excluded.updated_at`,
     [
       profile.studentId,
+      profile.age,
+      profile.grade,
       JSON.stringify(profile.masteryLevels),
+      JSON.stringify(profile.topicMastery),
       profile.xp,
       profile.level,
       profile.streak,
@@ -254,4 +302,30 @@ export const updateStudentProfileAfterWorksheet = async (
   const updatedProfile = updateStudentProfileFromWorksheet(profile, result, submittedAt);
   await saveStudentProfile(updatedProfile);
   return updatedProfile;
+};
+
+export const updateStudentProfileGradeContext = async (
+  studentId: string,
+  context: { age: number; grade: GradeLevel },
+): Promise<StudentProfile> => {
+  const profile = await getStudentProfile(studentId);
+  const updated: StudentProfile = {
+    ...profile,
+    age: context.age,
+    grade: context.grade,
+    updatedAt: new Date().toISOString(),
+  };
+  await saveStudentProfile(updated);
+  return updated;
+};
+
+export const unlockStudentNextGrade = async (studentId: string, unlockedGrade: GradeLevel): Promise<StudentProfile> => {
+  const profile = await getStudentProfile(studentId);
+  const updated: StudentProfile = {
+    ...profile,
+    grade: profile.grade < unlockedGrade ? unlockedGrade : profile.grade,
+    updatedAt: new Date().toISOString(),
+  };
+  await saveStudentProfile(updated);
+  return updated;
 };

@@ -17,6 +17,7 @@ type AnalyticsRow = {
   worksheet_id: string;
   event_type: 'worksheet_completed';
   operation: MathOperation | 'overall';
+  topic_id: string | null;
   accuracy: number;
   duration_seconds: number;
   mastery_after: number;
@@ -30,6 +31,7 @@ const toAnalyticsEvent = (row: AnalyticsRow): AnalyticsEvent => ({
   worksheetId: row.worksheet_id,
   eventType: row.event_type,
   operation: row.operation,
+  topicId: row.topic_id ?? undefined,
   accuracy: row.accuracy,
   durationSeconds: row.duration_seconds,
   masteryAfter: row.mastery_after,
@@ -45,6 +47,8 @@ export const buildAnalyticsEvents = (
   profile: StudentProfile,
   submittedAt: string,
 ): AnalyticsEvent[] => {
+  const topicId =
+    result.level === 'Beginner' ? 'foundation' : result.level === 'Intermediate' ? 'elementary' : 'pre-algebra';
   const events: AnalyticsEvent[] = [
     {
       eventId: `${result.worksheetId}-overall`,
@@ -52,6 +56,7 @@ export const buildAnalyticsEvents = (
       worksheetId: result.worksheetId,
       eventType: 'worksheet_completed',
       operation: 'overall',
+      topicId,
       accuracy: result.accuracy,
       durationSeconds: result.totalDurationSeconds,
       masteryAfter: round(
@@ -96,6 +101,7 @@ export const buildAnalyticsEvents = (
       worksheetId: result.worksheetId,
       eventType: 'worksheet_completed',
       operation,
+      topicId,
       accuracy,
       durationSeconds,
       masteryAfter: profile.masteryLevels[operation],
@@ -120,14 +126,15 @@ export const recordAnalyticsEvents = async (events: AnalyticsEvent[]): Promise<v
     events.map((event) =>
       db.run(
         `INSERT INTO analytics_events (
-          event_id, student_id, worksheet_id, event_type, operation, accuracy, duration_seconds, mastery_after, payload, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          event_id, student_id, worksheet_id, event_type, operation, topic_id, accuracy, duration_seconds, mastery_after, payload, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           event.eventId,
           event.studentId,
           event.worksheetId,
           event.eventType,
           event.operation,
+          event.topicId ?? null,
           event.accuracy,
           event.durationSeconds,
           event.masteryAfter,
@@ -163,6 +170,7 @@ export const getStudentAnalytics = async (studentId: string): Promise<StudentAna
   const profile = await getStudentProfile(studentId);
   const rows = await db.all<AnalyticsRow[]>(
     `SELECT event_id, student_id, worksheet_id, event_type, operation, accuracy, duration_seconds, mastery_after, payload, created_at
+     SELECT event_id, student_id, worksheet_id, event_type, operation, topic_id, accuracy, duration_seconds, mastery_after, payload, created_at
      FROM analytics_events WHERE student_id = ? ORDER BY created_at ASC`,
     [studentId],
   );
@@ -199,6 +207,18 @@ export const getStudentAnalytics = async (studentId: string): Promise<StudentAna
       createdAt: event.createdAt,
     })),
     operationMastery,
+    topicAnalytics: [...new Set(events.map((event) => event.topicId).filter((topicId): topicId is string => Boolean(topicId)))]
+      .map((topicId) => {
+        const topicEvents = events.filter((event) => event.topicId === topicId && event.operation === 'overall');
+        return {
+          topicId,
+          averageAccuracy: topicEvents.length
+            ? round(topicEvents.reduce((sum, event) => sum + event.accuracy, 0) / topicEvents.length)
+            : 0,
+          attempts: topicEvents.length,
+        };
+      })
+      .sort((left, right) => right.averageAccuracy - left.averageAccuracy),
     averageTimePerWorksheet: overallEvents.length
       ? round(overallEvents.reduce((sum, event) => sum + event.durationSeconds, 0) / overallEvents.length)
       : 0,
