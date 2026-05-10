@@ -97,8 +97,23 @@
           @if (progress.unlockedNextGrade) {
             <p class="text-sm font-semibold text-emerald-700">🏆 Perfect score! Next grade diagnostic unlocked.</p>
           }
+          <p class="text-sm text-gray-600 mt-2">
+            Age-aligned track: {{ progress.ageSuggestedTrack }} ({{ progress.ageSuggestedGrade === 0 ? 'Kindergarten' : 'Grade ' + progress.ageSuggestedGrade }})
+          </p>
         </div>
       }
+
+      <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-6">
+        <h2 class="text-xl font-bold text-text mb-3">Topic-Level Diagnostic Scoring</h2>
+        <div class="space-y-2">
+          @for (topic of result.topicScoring; track topic.topicId) {
+            <div class="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-sm">
+              <span class="capitalize">{{ topic.topicId }}</span>
+              <span class="font-semibold">{{ topic.accuracy }}% ({{ topic.attempted }} attempted)</span>
+            </div>
+          }
+        </div>
+      </div>
 
       <div class="space-y-3">
         <button

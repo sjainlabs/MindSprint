@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PracticeService, WorksheetResult, type Worksheet } from '../../services/practice.service';
+import { AiWorksheetService, type AiWorksheet } from '../../services/ai-worksheet.service';
+import { TopicService, type TopicModel } from '../../services/topic.service';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -46,11 +48,23 @@ export class WorksheetPageComponent implements OnInit {
   studentAnalytics = signal<StudentAnalytics | null>(null);
   recommendation = signal<WorksheetRecommendation | null>(null);
   intelligenceError = signal('');
+  adaptiveNavigationLoading = signal(false);
+
+  topics = signal<TopicModel[]>([]);
+  topicsLoading = signal(false);
+  personalizedPath = signal<TopicModel[]>([]);
+  selectedTopicId = signal('algebra-i');
+  aiDifficulty = signal(75);
+  aiWorksheet = signal<AiWorksheet | null>(null);
+  aiLoading = signal(false);
+  aiError = signal('');
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly practiceService: PracticeService,
     private readonly studentIntelligenceService: StudentIntelligenceService,
+    private readonly topicService: TopicService,
+    private readonly aiWorksheetService: AiWorksheetService,
     private readonly router: Router,
   ) {}
 
@@ -66,6 +80,7 @@ export class WorksheetPageComponent implements OnInit {
     this.currentLevel.set(level);
     this.refreshStudentInsights();
     this.loadWorksheet(level);
+    this.loadTopicTaxonomy();
   }
 
   loadWorksheet(level: LearningLevel): void {
@@ -123,6 +138,10 @@ export class WorksheetPageComponent implements OnInit {
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
   recommendedLevel = computed(() => this.recommendation()?.recommendedLevel ?? null);
+  canOpenRecommendedWorksheet = computed(() => {
+    const nextLevel = this.recommendedLevel();
+    return !!nextLevel && nextLevel !== this.currentLevel();
+  });
 
   submitWorksheet(): void {
     const worksheet = this.worksheet();
@@ -177,21 +196,71 @@ export class WorksheetPageComponent implements OnInit {
     this.answers.update((answers) => ({ ...answers, [questionId]: value }));
   }
 
-  goToAdaptive(): void {
+  async goToAdaptive(): Promise<void> {
     const nextLevel = this.recommendedLevel();
-    if (!nextLevel) return;
+    if (!nextLevel || nextLevel === this.currentLevel() || this.adaptiveNavigationLoading()) {
+      return;
+    }
 
-    this.currentLevel.set(nextLevel);
+    this.adaptiveNavigationLoading.set(true);
 
-    // Force reload even if navigating to the same route
-    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-      this.router.navigate(['/worksheet', nextLevel]);
-    });
+    try {
+      await this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+        return this.router.navigate(['/worksheet', nextLevel]);
+      });
+    } catch {
+      // non-blocking UI fallback
+    } finally {
+      this.adaptiveNavigationLoading.set(false);
+    }
   }
 
-
   applyRecommendation(): void {
-    this.goToAdaptive();
+    void this.goToAdaptive();
+  }
+
+  generateAdvancedWorksheet(): void {
+    const topic = this.selectedTopicId();
+    if (!topic || this.aiLoading()) {
+      return;
+    }
+
+    this.aiLoading.set(true);
+    this.aiError.set('');
+    this.aiWorksheet.set(null);
+
+    this.aiWorksheetService
+      .generateWorksheet({
+        topic,
+        difficulty: this.aiDifficulty(),
+        questionTypes: [
+          'numeric',
+          'symbolic',
+          'multi-step',
+          'graph-interpretation',
+          'word-problem',
+          'proof-style',
+          'function-analysis',
+          'trig-identity',
+        ],
+        questionCount: 8,
+        studentId: this.studentId(),
+      })
+      .subscribe({
+        next: (worksheet) => {
+          this.aiWorksheet.set(worksheet);
+          this.aiLoading.set(false);
+        },
+        error: () => {
+          this.aiError.set('Unable to generate advanced AI worksheet right now.');
+          this.aiLoading.set(false);
+        },
+      });
+  }
+
+  updateAiDifficulty(value: number | string): void {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    this.aiDifficulty.set(Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 75);
   }
 
   private refreshStudentInsights(result?: WorksheetResult): void {
@@ -213,12 +282,18 @@ export class WorksheetPageComponent implements OnInit {
         }
 
         this.studentIntelligenceService
-          .getAdaptiveRecommendation({
-            studentId: this.studentId(),
-            currentLevel: this.currentLevel(),
-            recentAccuracy: result.accuracy,
-            operationAccuracy: this.mapOperationAccuracy(result),
-          })
+            .getAdaptiveRecommendation({
+              studentId: this.studentId(),
+              currentLevel: this.currentLevel(),
+              recentAccuracy: result.accuracy,
+              operationAccuracy: this.mapOperationAccuracy(result),
+              confidence: this.normalizeConfidence(profile.confidenceLevel),
+              averageSecondsPerQuestion: result.totalQuestions > 0
+                ? this.roundToTwoDecimals(result.totalDurationSeconds / result.totalQuestions)
+                : undefined,
+              diagnosticAccuracy: profile.learningPathLevel * 2,
+              latestGameScore: analytics.gameAnalytics?.averageScore ?? 0,
+            })
           .subscribe({
             next: (recommendation) => {
               this.recommendation.set(recommendation);
@@ -235,6 +310,20 @@ export class WorksheetPageComponent implements OnInit {
         this.intelligenceLoading.set(false);
       },
     });
+  }
+
+  private normalizeConfidence(confidence?: 'low' | 'medium' | 'high'): number {
+    if (confidence === 'high') {
+      return 85;
+    }
+    if (confidence === 'low') {
+      return 35;
+    }
+    return 60;
+  }
+
+  private roundToTwoDecimals(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   private mapOperationAccuracy(result: WorksheetResult): Partial<Record<MathOperation, number>> {
@@ -266,5 +355,27 @@ export class WorksheetPageComponent implements OnInit {
       accumulator[operation as MathOperation] = Math.round((current.correct / current.attempted) * 100);
       return accumulator;
     }, {});
+  }
+
+  private loadTopicTaxonomy(): void {
+    this.topicsLoading.set(true);
+    this.topicService.getTaxonomy().subscribe({
+      next: (taxonomy) => {
+        this.topics.set(taxonomy.topics);
+        this.topicsLoading.set(false);
+      },
+      error: () => {
+        this.topicsLoading.set(false);
+      },
+    });
+
+    this.topicService.getPersonalizedPath(this.studentId()).subscribe({
+      next: (response) => {
+        this.personalizedPath.set(response.personalizedPath);
+      },
+      error: () => {
+        this.personalizedPath.set([]);
+      },
+    });
   }
 }

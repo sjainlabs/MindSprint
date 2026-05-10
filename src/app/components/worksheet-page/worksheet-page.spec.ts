@@ -4,6 +4,8 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { WorksheetPageComponent } from './worksheet-page';
 import { PracticeService, type Worksheet, type WorksheetResult } from '../../services/practice.service';
 import { StudentIntelligenceService } from '../../services/student-intelligence.service';
+import { TopicService } from '../../services/topic.service';
+import { AiWorksheetService } from '../../services/ai-worksheet.service';
 
 const worksheet: Worksheet = {
   worksheetId: 'ws-1',
@@ -48,11 +50,16 @@ describe('WorksheetPageComponent', () => {
     getStudentProfile: vi.fn(() =>
       of({
         studentId: 'student-demo',
+        age: 8,
+        grade: 4,
         masteryLevels: {
           addition: 80,
           subtraction: 70,
           multiplication: 65,
           division: 60,
+        },
+        topicMastery: {
+          foundation: 75,
         },
         xp: 250,
         level: 3,
@@ -67,6 +74,7 @@ describe('WorksheetPageComponent', () => {
         studentId: 'student-demo',
         accuracyOverTime: [],
         operationMastery: [],
+        topicAnalytics: [],
         averageTimePerWorksheet: 60,
         totalWorksheets: 1,
         recommendedNextSteps: ['Focus on division practice.'],
@@ -94,6 +102,34 @@ describe('WorksheetPageComponent', () => {
     ),
   };
 
+  const topicServiceMock = {
+    getTaxonomy: vi.fn(() =>
+      of({
+        topics: [
+          {
+            id: 'algebra-i',
+            name: 'Algebra I',
+            stage: 'Algebra I',
+            grades: [9],
+            supportsAiWorksheet: true,
+            subtopics: [],
+          },
+        ],
+        difficultyMapping: [],
+      }),
+    ),
+    getPersonalizedPath: vi.fn(() =>
+      of({
+        studentId: 'student-demo',
+        personalizedPath: [],
+      }),
+    ),
+  };
+
+  const aiWorksheetServiceMock = {
+    generateWorksheet: vi.fn(),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -102,6 +138,8 @@ describe('WorksheetPageComponent', () => {
         provideRouter([]),
         { provide: PracticeService, useValue: practiceServiceMock },
         { provide: StudentIntelligenceService, useValue: studentIntelligenceServiceMock },
+        { provide: TopicService, useValue: topicServiceMock },
+        { provide: AiWorksheetService, useValue: aiWorksheetServiceMock },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -128,7 +166,7 @@ describe('WorksheetPageComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelectorAll('input[type="number"]').length).toBe(10);
+    expect(compiled.querySelectorAll('[data-testid="worksheet-question-input"]').length).toBe(10);
   });
 
   it('refreshes adaptive recommendation after worksheet submission', () => {

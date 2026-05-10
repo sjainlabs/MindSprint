@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
-export type GradeLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type GradeLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export interface DiagnosticQuestion {
   id: string;
@@ -44,10 +44,21 @@ export interface DiagnosticProgress {
   studentId: string;
   age: number;
   enrolledGrade: GradeLevel;
+  ageSuggestedGrade: GradeLevel;
+  ageSuggestedTrack: string;
   canAttemptCurrentGrade: boolean;
   unlockedThroughGrade: GradeLevel;
   unlockedNextGrade: boolean;
   grades: DiagnosticGradeEligibility[];
+}
+
+export interface DiagnosticNextGrade {
+  studentId: string;
+  enrolledGrade: GradeLevel;
+  unlockedThroughGrade: GradeLevel;
+  nextGrade: GradeLevel | null;
+  nextGradeLabel: string | null;
+  recommendation: string;
 }
 
 export interface DiagnosticResult {
@@ -73,6 +84,11 @@ export interface DiagnosticResult {
   }>;
   weakAreas: ('addition' | 'subtraction' | 'multiplication' | 'division')[];
   strongAreas: ('addition' | 'subtraction' | 'multiplication' | 'division')[];
+  topicScoring: Array<{
+    topicId: string;
+    accuracy: number;
+    attempted: number;
+  }>;
   diagnosticProgress?: DiagnosticProgress;
 }
 
@@ -91,6 +107,7 @@ export class DiagnosticService {
   startedAt: Date | null = null;
   lastResult: DiagnosticResult | null = null;
   eligibility: DiagnosticProgress | null = null;
+  nextGrade: DiagnosticNextGrade | null = null;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -106,5 +123,11 @@ export class DiagnosticService {
 
   submitDiagnostic(payload: DiagnosticSubmission): Observable<DiagnosticResult> {
     return this.http.post<DiagnosticResult>(`${this.baseUrl}/submit`, payload);
+  }
+
+  getNextGrade(age: number, grade: GradeLevel, studentId = 'student-demo'): Observable<DiagnosticNextGrade> {
+    return this.http.get<DiagnosticNextGrade>(
+      `${this.baseUrl}/next-grade?studentId=${encodeURIComponent(studentId)}&age=${age}&grade=${grade}`,
+    );
   }
 }

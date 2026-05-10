@@ -6,6 +6,9 @@ import { diagnosticRouter } from './api/diagnostic/diagnostic.routes';
 import { practiceRouter } from './api/practice/practice.routes';
 import { studentProfileRouter } from './api/students/student-profile.routes';
 import { gameRouter } from './api/game/game.routes';
+import { topicRouter } from './api/topics/topic.routes';
+import { aiWorksheetRouter } from './api/ai/ai-worksheet.routes';
+import { onboardingRouter } from './api/onboarding/onboarding.routes';
 
 export const app = express();
 
@@ -44,3 +47,6 @@ app.use('/api/students', studentProfileRouter);
 app.use('/api/adaptive', adaptiveRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/game', gameRouter);
+app.use('/api/topics', topicRouter);
+app.use('/api/ai', aiWorksheetRouter);
+app.use('/api/onboarding', onboardingRouter);

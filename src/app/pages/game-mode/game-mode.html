@@ -17,6 +17,19 @@
         />
       </label>
 
+      <label class="block text-sm text-gray-600 mb-4">
+        Game Mode
+        <select
+          class="mt-1 w-full border rounded-md px-3 py-2"
+          [ngModel]="selectedMode()"
+          (ngModelChange)="selectedMode.set($event); loadChallenge()"
+        >
+          @for (mode of gameModeOptions; track mode.value) {
+            <option [ngValue]="mode.value">{{ mode.label }}</option>
+          }
+        </select>
+      </label>
+
       @if (loading()) {
         <p class="text-gray-500">Generating adaptive challenge...</p>
       }
@@ -28,10 +41,40 @@
       @if (challenge(); as currentChallenge) {
         <div class="space-y-4">
           <div class="rounded-lg bg-indigo-50 p-4">
+            <p class="text-xs text-indigo-700 font-semibold">Mode: {{ currentChallenge.mode ?? selectedMode() }}</p>
             <p class="text-xs text-gray-600">Adaptive Difficulty: {{ currentChallenge.difficulty }}/100</p>
             <p class="text-xs text-gray-600">Recommended Level: {{ currentChallenge.recommendedLevel }}</p>
             <p class="text-lg font-semibold mt-2">{{ currentChallenge.prompt }}</p>
           </div>
+
+          @if (currentChallenge.mode === 'abacus-flash') {
+            <div class="rounded-lg border bg-white p-3 text-sm">
+              <p class="font-semibold">Abacus Flash</p>
+              <p class="text-xs text-gray-600">Flash sequence and speed adapt to mastery.</p>
+              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
+            </div>
+          }
+          @if (currentChallenge.mode === 'falling-numbers') {
+            <div class="rounded-lg border bg-white p-3 text-sm">
+              <p class="font-semibold">Falling Numbers</p>
+              <p class="text-xs text-gray-600">Catch target sums/products, build combos, use power-ups.</p>
+              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
+            </div>
+          }
+          @if (currentChallenge.mode === 'boss-battle') {
+            <div class="rounded-lg border bg-white p-3 text-sm">
+              <p class="font-semibold">Boss Battle</p>
+              <p class="text-xs text-gray-600">Timed rounds with special attacks and HP bar challenge.</p>
+              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
+            </div>
+          }
+          @if (currentChallenge.mode === 'ai-puzzle') {
+            <div class="rounded-lg border bg-white p-3 text-sm">
+              <p class="font-semibold">AI Puzzle Mode</p>
+              <p class="text-xs text-gray-600">Logic, pattern, geometry, and function puzzle generation.</p>
+              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
+            </div>
+          }
 
           <div class="grid grid-cols-2 gap-3">
             @for (option of currentChallenge.options; track option) {

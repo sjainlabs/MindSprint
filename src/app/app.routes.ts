@@ -8,6 +8,8 @@ import { DiagnosticStartComponent } from './pages/diagnostic-start/diagnostic-st
 import { DiagnosticTestComponent } from './components/diagnostic-test/diagnostic-test';
 import { WorksheetPageComponent } from './components/worksheet-page/worksheet-page';
 import { GameModeComponent } from './pages/game-mode/game-mode';
+import { OnboardingComponent } from './pages/onboarding/onboarding';
+import { TopicBrowserComponent } from './pages/topic-browser/topic-browser';
 
 export const routes: Routes = [
   { path: '', component: Welcome },
@@ -18,6 +20,8 @@ export const routes: Routes = [
   { path: 'results', component: Results },
   { path: 'diagnostic', component: DiagnosticStartComponent },
   { path: 'diagnostic/test', component: DiagnosticTestComponent },
+  { path: 'onboarding', component: OnboardingComponent },
+  { path: 'topics', component: TopicBrowserComponent },
   { path: 'worksheet', redirectTo: '/worksheet/Beginner', pathMatch: 'full' },
   { path: 'worksheet/:level', component: WorksheetPageComponent },
   { path: 'game', component: GameModeComponent },
