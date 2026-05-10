@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canAttemptDiagnostic,
   createDiagnosticTest,
+  getDiagnosticEligibility,
   mapScoreToLevel,
+  scoreAndPersistDiagnosticSubmission,
   scoreDiagnosticSubmission,
 } from './diagnostic.service';
 
@@ -51,5 +54,45 @@ describe('diagnostic.service', () => {
     expect(mapScoreToLevel(85)).toBe('Intermediate');
     expect(mapScoreToLevel(86)).toBe('Advanced');
     expect(mapScoreToLevel(100)).toBe('Advanced');
+  });
+
+  it('applies age-grade eligibility rules', () => {
+    expect(canAttemptDiagnostic(8, 3)).toBe(true);
+    expect(canAttemptDiagnostic(6, 8)).toBe(false);
+    expect(canAttemptDiagnostic(17, 4)).toBe(false);
+  });
+
+  it('unlocks next grade after a perfect score', async () => {
+    const test = createDiagnosticTest();
+    const now = new Date().toISOString();
+    const studentId = `unlock-test-${Date.now()}`;
+    const perfectResponses = test.questions.map((question) => {
+      const [leftRaw, , rightRaw] = question.prompt.split(' ');
+      const left = Number(leftRaw);
+      const right = Number(rightRaw);
+      const answer =
+        question.operation === 'addition'
+          ? left + right
+          : question.operation === 'subtraction'
+            ? left - right
+            : question.operation === 'multiplication'
+              ? left * right
+              : left / right;
+      return { questionId: question.id, answer, secondsSpent: 2 };
+    });
+
+    const before = await getDiagnosticEligibility({ studentId, age: 8, grade: 3 });
+    const result = await scoreAndPersistDiagnosticSubmission(
+      {
+        testId: test.testId,
+        startedAt: now,
+        completedAt: now,
+        responses: perfectResponses,
+      },
+      { studentId, age: 8, grade: 3 },
+    );
+
+    expect(result.diagnosticProgress?.unlockedNextGrade).toBe(true);
+    expect(result.diagnosticProgress?.unlockedThroughGrade).toBeGreaterThanOrEqual(before.unlockedThroughGrade + 1);
   });
 });

@@ -1,6 +1,7 @@
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+export type GradeLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export interface DifficultyRange {
   min: number;
@@ -73,6 +74,24 @@ export interface DiagnosticResult {
   }>;
   weakAreas: MathOperation[];
   strongAreas: MathOperation[];
+  diagnosticProgress?: DiagnosticProgress;
+}
+
+export interface DiagnosticGradeEligibility {
+  grade: GradeLevel;
+  isAgeEligible: boolean;
+  isUnlocked: boolean;
+  reason: string;
+}
+
+export interface DiagnosticProgress {
+  studentId: string;
+  age: number;
+  enrolledGrade: GradeLevel;
+  canAttemptCurrentGrade: boolean;
+  unlockedThroughGrade: GradeLevel;
+  unlockedNextGrade: boolean;
+  grades: DiagnosticGradeEligibility[];
 }
 
 export interface WorksheetQuestion {
@@ -196,4 +215,48 @@ export interface StudentAnalytics {
   averageTimePerWorksheet: number;
   totalWorksheets: number;
   recommendedNextSteps: string[];
+}
+
+export interface GameReward {
+  xp: number;
+  streakBonus: number;
+  badge?: string;
+}
+
+export interface DailyQuest {
+  id: string;
+  description: string;
+  target: number;
+  progress: number;
+  rewardXp: number;
+  completed: boolean;
+}
+
+export interface BossBattle {
+  id: string;
+  title: string;
+  hp: number;
+  phase: number;
+  unlocked: boolean;
+}
+
+export interface GameChallenge {
+  challengeId: string;
+  studentId: string;
+  prompt: string;
+  operation: MathOperation;
+  options: number[];
+  answer: number;
+  timeLimitSeconds: number;
+  difficulty: number;
+  recommendedLevel: LearningLevel;
+  rewards: GameReward;
+  dailyQuest: DailyQuest;
+  bossBattle: BossBattle;
+  playerState: {
+    xp: number;
+    streak: number;
+    badges: string[];
+    level: number;
+  };
 }

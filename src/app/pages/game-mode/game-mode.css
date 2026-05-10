@@ -1,0 +1,7 @@
+.challenge-card {
+  transition: transform 0.2s ease;
+}
+
+.challenge-card:hover {
+  transform: translateY(-2px);
+}

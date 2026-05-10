@@ -6,6 +6,7 @@ import {
   type DiagnosticQuestion,
   DiagnosticService,
   type DiagnosticSubmissionResponse,
+  type GradeLevel,
 } from '../../services/diagnostic.service';
 
 @Component({
@@ -23,6 +24,9 @@ export class DiagnosticTestComponent implements OnInit {
   submitting = false;
   errorMessage = '';
   private startedAt = '';
+  private age?: number;
+  private grade?: GradeLevel;
+  private studentId?: string;
   private secondsSpentPerQuestion: number[] = [];
   private questionStartTime = Date.now();
 
@@ -44,6 +48,9 @@ export class DiagnosticTestComponent implements OnInit {
     this.answers = Array.from({ length: this.questions.length }, () => null);
     this.secondsSpentPerQuestion = Array.from({ length: this.questions.length }, () => 0);
     this.questionStartTime = Date.now();
+    this.age = this.diagnosticService.eligibility?.age;
+    this.grade = this.diagnosticService.eligibility?.enrolledGrade;
+    this.studentId = this.diagnosticService.eligibility?.studentId;
   }
 
   submitTest(): void {
@@ -71,6 +78,9 @@ export class DiagnosticTestComponent implements OnInit {
         startedAt: this.startedAt,
         completedAt,
         responses,
+        age: this.age,
+        grade: this.grade,
+        studentId: this.studentId,
       })
       .subscribe({
         next: (result) => {

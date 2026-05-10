@@ -270,9 +270,9 @@
 
             <button
               type="button"
-              class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
-              (click)="applyRecommendation()"
-              [disabled]="loading()"
+              class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50 pointer-events-auto"
+              (click)="goToAdaptive()"
+              [disabled]="!recommendedLevel()"
             >
               Open Recommended Worksheet
             </button>
