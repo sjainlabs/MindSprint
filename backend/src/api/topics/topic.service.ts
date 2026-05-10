@@ -1,4 +1,10 @@
-import { type GradeLevel, type StudentProfile, type Topic, type TopicDifficultyMapping } from '../../models/types';
+import {
+  type ExplorationRecommendation,
+  type GradeLevel,
+  type StudentProfile,
+  type Topic,
+  type TopicDifficultyMapping,
+} from '../../models/types';
 
 const FOUNDATION_GRADES: GradeLevel[] = [0, 1];
 const ELEMENTARY_GRADES: GradeLevel[] = [2, 3, 4, 5];
@@ -258,4 +264,112 @@ export const buildPersonalizedLearningPath = (profile: StudentProfile): Topic[] 
     .sort((left, right) => right.score - left.score)
     .slice(0, 4)
     .map((entry) => entry.topic);
+};
+
+type BrowserTopic = {
+  id: string;
+  title: string;
+  sourceTopicId: string;
+  subtopics: string[];
+  difficultyTiers: Array<{ name: string; min: number; max: number }>;
+  prerequisites: string[];
+  masteryPercentage: number;
+  recommendedNextSteps: string[];
+};
+
+const BROWSER_DEFINITIONS: Array<{
+  id: string;
+  title: string;
+  sourceTopicId: string;
+  prerequisites: string[];
+}> = [
+  { id: 'foundation', title: 'FOUNDATION', sourceTopicId: 'foundation', prerequisites: [] },
+  { id: 'arithmetic', title: 'ARITHMETIC', sourceTopicId: 'elementary', prerequisites: ['foundation'] },
+  { id: 'fractions', title: 'FRACTIONS', sourceTopicId: 'elementary', prerequisites: ['arithmetic'] },
+  { id: 'decimals', title: 'DECIMALS', sourceTopicId: 'elementary', prerequisites: ['fractions'] },
+  { id: 'pre-algebra', title: 'PRE-ALGEBRA', sourceTopicId: 'pre-algebra', prerequisites: ['arithmetic'] },
+  { id: 'algebra-i', title: 'ALGEBRA I', sourceTopicId: 'algebra-i', prerequisites: ['pre-algebra'] },
+  { id: 'geometry', title: 'GEOMETRY', sourceTopicId: 'geometry', prerequisites: ['algebra-i'] },
+  { id: 'algebra-ii', title: 'ALGEBRA II', sourceTopicId: 'algebra-ii', prerequisites: ['algebra-i', 'geometry'] },
+  { id: 'trigonometry', title: 'TRIGONOMETRY', sourceTopicId: 'trigonometry', prerequisites: ['geometry', 'algebra-ii'] },
+  { id: 'pre-calculus', title: 'PRE-CALCULUS', sourceTopicId: 'pre-calculus', prerequisites: ['trigonometry'] },
+  { id: 'calculus', title: 'CALCULUS', sourceTopicId: 'calculus', prerequisites: ['pre-calculus'] },
+  { id: 'statistics', title: 'STATISTICS', sourceTopicId: 'middle-school', prerequisites: ['arithmetic'] },
+  { id: 'word-problems', title: 'WORD PROBLEMS', sourceTopicId: 'elementary', prerequisites: ['foundation'] },
+  { id: 'logic-puzzles', title: 'LOGIC & PUZZLES', sourceTopicId: 'geometry', prerequisites: ['foundation'] },
+];
+const EXPLORATION_DIFFICULTY_AI_WEIGHT = 0.7;
+const EXPLORATION_DIFFICULTY_PATH_MULTIPLIER = 2;
+
+const toDifficultyTiers = (topic: Topic): BrowserTopic['difficultyTiers'] => {
+  const min = Math.min(...topic.subtopics.map((subtopic) => subtopic.difficulty.min));
+  const max = Math.max(...topic.subtopics.map((subtopic) => subtopic.difficulty.max));
+  const spread = Math.max(1, Math.ceil((max - min + 1) / 3));
+  const tier1Max = Math.min(max, min + spread - 1);
+  const tier2Min = Math.min(max, tier1Max + 1);
+  const tier2Max = Math.min(max, tier2Min + spread - 1);
+  const tier3Min = Math.min(max, tier2Max + 1);
+  return [
+    { name: 'Tier 1', min, max: tier1Max },
+    { name: 'Tier 2', min: tier2Min, max: tier2Max },
+    { name: 'Tier 3', min: tier3Min, max },
+  ];
+};
+
+const safeMastery = (mastery: number | undefined): number => Math.max(0, Math.min(100, Math.round(mastery ?? 0)));
+
+const pickRecommendation = (mastery: number, title: string): string[] => {
+  if (mastery >= 90) {
+    return [`Mastery is high in ${title}; move to the next prerequisite chain topic.`];
+  }
+  if (mastery >= 70) {
+    return [`Strengthen advanced subtopics in ${title} with mixed difficulty practice.`];
+  }
+  return [`Reinforce core subtopics in ${title} and complete a checkpoint worksheet.`];
+};
+
+export const buildTopicBrowser = (profile: StudentProfile): BrowserTopic[] => {
+  return BROWSER_DEFINITIONS.map((definition) => {
+    const topic = findTopicById(definition.sourceTopicId) ?? TOPIC_TAXONOMY[0];
+    const masteryPercentage = safeMastery(profile.topicMastery[definition.sourceTopicId]);
+    return {
+      id: definition.id,
+      title: definition.title,
+      sourceTopicId: definition.sourceTopicId,
+      subtopics: topic.subtopics.map((subtopic) => subtopic.name),
+      difficultyTiers: toDifficultyTiers(topic),
+      prerequisites: definition.prerequisites,
+      masteryPercentage,
+      recommendedNextSteps: pickRecommendation(masteryPercentage, definition.title),
+    };
+  });
+};
+
+export const buildExplorationRecommendation = (
+  profile: StudentProfile,
+  requestedTopicId: string,
+): ExplorationRecommendation => {
+  const normalizedRequested = requestedTopicId.trim().toLowerCase();
+  const requested = findTopicById(normalizedRequested)
+    ?? findTopicById(BROWSER_DEFINITIONS.find((topic) => topic.id === normalizedRequested)?.sourceTopicId ?? '')
+    ?? TOPIC_TAXONOMY[0];
+  const personalized = buildPersonalizedLearningPath(profile);
+  const recommendedTopic = personalized[0] ?? requested;
+  const recommendedDifficulty = Math.round(
+    (recommendedTopic.subtopics.reduce((sum, subtopic) => sum + subtopic.aiDifficultyScore, 0) /
+      Math.max(recommendedTopic.subtopics.length, 1)) * EXPLORATION_DIFFICULTY_AI_WEIGHT +
+      (profile.learningPathLevel * EXPLORATION_DIFFICULTY_PATH_MULTIPLIER),
+  );
+
+  return {
+    studentId: profile.studentId,
+    requestedTopicId: requested.id,
+    recommendedTopicId: recommendedTopic.id,
+    recommendedTopicName: recommendedTopic.name,
+    recommendedDifficulty: Math.max(0, Math.min(100, recommendedDifficulty)),
+    message:
+      requested.id === recommendedTopic.id
+        ? `Great choice—${requested.name} aligns with your mastery progression.`
+        : `You can explore ${requested.name} anytime, but we recommend ${recommendedTopic.name} based on your mastery.`,
+  };
 };

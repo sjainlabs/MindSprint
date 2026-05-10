@@ -138,6 +138,10 @@ export class WorksheetPageComponent implements OnInit {
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
   recommendedLevel = computed(() => this.recommendation()?.recommendedLevel ?? null);
+  canOpenRecommendedWorksheet = computed(() => {
+    const nextLevel = this.recommendedLevel();
+    return !!nextLevel && nextLevel !== this.currentLevel();
+  });
 
   submitWorksheet(): void {
     const worksheet = this.worksheet();
@@ -193,29 +197,19 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   async goToAdaptive(): Promise<void> {
-    const computedRecommendation = this.recommendedLevel();
-    if (!computedRecommendation || this.adaptiveNavigationLoading()) {
+    const nextLevel = this.recommendedLevel();
+    if (!nextLevel || nextLevel === this.currentLevel() || this.adaptiveNavigationLoading()) {
       return;
     }
 
     this.adaptiveNavigationLoading.set(true);
-    this.currentLevel.set(computedRecommendation);
-
-    const currentRouteLevel = this.route.snapshot.paramMap.get('level');
 
     try {
-      if (currentRouteLevel === computedRecommendation) {
-        await this.router.navigateByUrl('/', { skipLocationChange: true });
-      }
-
-      const navigated = await this.router.navigate(['/worksheet', computedRecommendation]);
-      if (!navigated) {
-        await this.router.navigateByUrl('/', { skipLocationChange: true });
-        await this.router.navigate(['/worksheet', computedRecommendation]);
-      }
+      await this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+        return this.router.navigate(['/worksheet', nextLevel]);
+      });
     } catch {
-      await this.router.navigateByUrl('/', { skipLocationChange: true });
-      await this.router.navigate(['/worksheet', computedRecommendation]);
+      // non-blocking UI fallback
     } finally {
       this.adaptiveNavigationLoading.set(false);
     }
@@ -239,7 +233,16 @@ export class WorksheetPageComponent implements OnInit {
       .generateWorksheet({
         topic,
         difficulty: this.aiDifficulty(),
-        questionTypes: ['numeric', 'symbolic', 'multi-step', 'graph-interpretation'],
+        questionTypes: [
+          'numeric',
+          'symbolic',
+          'multi-step',
+          'graph-interpretation',
+          'word-problem',
+          'proof-style',
+          'function-analysis',
+          'trig-identity',
+        ],
         questionCount: 8,
         studentId: this.studentId(),
       })
@@ -279,12 +282,18 @@ export class WorksheetPageComponent implements OnInit {
         }
 
         this.studentIntelligenceService
-          .getAdaptiveRecommendation({
-            studentId: this.studentId(),
-            currentLevel: this.currentLevel(),
-            recentAccuracy: result.accuracy,
-            operationAccuracy: this.mapOperationAccuracy(result),
-          })
+            .getAdaptiveRecommendation({
+              studentId: this.studentId(),
+              currentLevel: this.currentLevel(),
+              recentAccuracy: result.accuracy,
+              operationAccuracy: this.mapOperationAccuracy(result),
+              confidence: this.normalizeConfidence(profile.confidenceLevel),
+              averageSecondsPerQuestion: result.totalQuestions > 0
+                ? this.roundToTwoDecimals(result.totalDurationSeconds / result.totalQuestions)
+                : undefined,
+              diagnosticAccuracy: profile.learningPathLevel * 2,
+              latestGameScore: analytics.gameAnalytics?.averageScore ?? 0,
+            })
           .subscribe({
             next: (recommendation) => {
               this.recommendation.set(recommendation);
@@ -301,6 +310,20 @@ export class WorksheetPageComponent implements OnInit {
         this.intelligenceLoading.set(false);
       },
     });
+  }
+
+  private normalizeConfidence(confidence?: 'low' | 'medium' | 'high'): number {
+    if (confidence === 'high') {
+      return 85;
+    }
+    if (confidence === 'low') {
+      return 35;
+    }
+    return 60;
+  }
+
+  private roundToTwoDecimals(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   private mapOperationAccuracy(result: WorksheetResult): Partial<Record<MathOperation, number>> {

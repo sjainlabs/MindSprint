@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { type LearningLevel } from './diagnostic.service';
-import { type MathOperation } from './student-intelligence.service';
+import { type GameMode, type MathOperation } from './student-intelligence.service';
 
 export interface GameChallenge {
   challengeId: string;
@@ -40,6 +40,8 @@ export interface GameChallenge {
     badges: string[];
     level: number;
   };
+  mode?: GameMode;
+  gamePayload?: Record<string, unknown>;
 }
 
 @Injectable({
@@ -54,11 +56,15 @@ export class GameService {
 
   getChallenge(payload: {
     studentId: string;
+    mode?: GameMode;
     difficulty?: number;
     streak?: number;
     completedDailyQuestCount?: number;
   }): Observable<GameChallenge> {
     const params = new URLSearchParams({ studentId: payload.studentId });
+    if (payload.mode) {
+      params.set('mode', payload.mode);
+    }
     if (typeof payload.difficulty === 'number') {
       params.set('difficulty', String(payload.difficulty));
     }
@@ -69,5 +75,15 @@ export class GameService {
       params.set('completedDailyQuestCount', String(payload.completedDailyQuestCount));
     }
     return this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`);
+  }
+
+  submitChallenge(payload: {
+    studentId: string;
+    mode: GameMode;
+    score: number;
+    accuracy: number;
+    streak: number;
+  }): Observable<{ saved: boolean; xpEarned: number }> {
+    return this.http.post<{ saved: boolean; xpEarned: number }>(`${this.apiRoot}/game/submit`, payload);
   }
 }

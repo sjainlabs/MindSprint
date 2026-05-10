@@ -3,8 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { type LearningLevel } from './diagnostic.service';
 import { type GradeLevel } from './diagnostic.service';
+import { type AdvancedQuestionType } from './ai-worksheet.service';
 
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
+export type GameMode = 'abacus-flash' | 'falling-numbers' | 'boss-battle' | 'ai-puzzle';
 
 export const DEFAULT_STUDENT_ID = 'student-demo';
 
@@ -18,6 +20,16 @@ export interface StudentProfile {
   level: number;
   streak: number;
   badges: string[];
+  powerUps?: string[];
+  dailyQuestsCompleted?: number;
+  weeklyTournamentPoints?: number;
+  milestones?: string[];
+  unlockedGameModes?: GameMode[];
+  onboardingCompleted?: boolean;
+  avatar?: string;
+  mathWorld?: string;
+  goals?: string[];
+  confidenceLevel?: 'low' | 'medium' | 'high';
   learningPathLevel: number;
   updatedAt: string;
 }
@@ -36,6 +48,12 @@ export interface WorksheetRecommendation {
   focusOperations: MathOperation[];
   rationale: string[];
   difficultyScore: DifficultyScore;
+  recommendedTopicId?: string;
+  recommendedSubtopicId?: string;
+  recommendedGameMode?: GameMode;
+  recommendedWorksheetType?: AdvancedQuestionType;
+  confidenceAdjustment?: number;
+  diagnosticsWeight?: number;
 }
 
 export interface SkillBreakdown {
@@ -59,6 +77,17 @@ export interface StudentAnalytics {
     averageAccuracy: number;
     attempts: number;
   }>;
+  gameAnalytics?: {
+    totalSessions: number;
+    averageScore: number;
+    averageAccuracy: number;
+    byMode: Array<{
+      mode: GameMode;
+      sessions: number;
+      averageScore: number;
+      averageAccuracy: number;
+    }>;
+  };
   averageTimePerWorksheet: number;
   totalWorksheets: number;
   recommendedNextSteps: string[];
@@ -87,6 +116,10 @@ export class StudentIntelligenceService {
     currentLevel: LearningLevel;
     recentAccuracy: number;
     operationAccuracy: Partial<Record<MathOperation, number>>;
+    confidence?: number;
+    averageSecondsPerQuestion?: number;
+    diagnosticAccuracy?: number;
+    latestGameScore?: number;
   }): Observable<WorksheetRecommendation> {
     return this.http.post<WorksheetRecommendation>(`${this.apiRoot}/adaptive/next-worksheet`, payload);
   }

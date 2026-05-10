@@ -24,6 +24,10 @@ export type AdvancedQuestionType =
   | 'function-analysis'
   | 'trig-identity';
 
+export type GameMode = 'abacus-flash' | 'falling-numbers' | 'boss-battle' | 'ai-puzzle';
+export type OnboardingGoal = 'catch-up' | 'get-ahead' | 'exam-prep' | 'explore';
+export type ConfidenceLevel = 'low' | 'medium' | 'high';
+
 export interface DifficultyRange {
   min: number;
   max: number;
@@ -79,6 +83,18 @@ export interface DiagnosticRecord {
   accuracyScore: number;
   finalScore: number;
   unlockedNextGrade: boolean;
+  createdAt: string;
+}
+
+export interface GameRecord {
+  id: number;
+  studentId: string;
+  mode: GameMode;
+  score: number;
+  accuracy: number;
+  streak: number;
+  xpEarned: number;
+  payload: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -270,6 +286,18 @@ export interface StudentProfile {
   streak: number;
   badges: string[];
   learningPathLevel: number;
+  powerUps?: string[];
+  dailyQuestsCompleted?: number;
+  weeklyTournamentPoints?: number;
+  milestones?: string[];
+  unlockedGameModes?: GameMode[];
+  onboardingCompleted?: boolean;
+  avatar?: string;
+  mathWorld?: string;
+  goals?: OnboardingGoal[];
+  confidenceLevel?: ConfidenceLevel;
+  diagnosticHistoryCount?: number;
+  unlockedThroughGrade?: GradeLevel;
   updatedAt: string;
 }
 
@@ -333,6 +361,17 @@ export interface StudentAnalytics {
     averageAccuracy: number;
     attempts: number;
   }>;
+  gameAnalytics?: {
+    totalSessions: number;
+    averageScore: number;
+    averageAccuracy: number;
+    byMode: Array<{
+      mode: GameMode;
+      sessions: number;
+      averageScore: number;
+      averageAccuracy: number;
+    }>;
+  };
   averageTimePerWorksheet: number;
   totalWorksheets: number;
   recommendedNextSteps: string[];
@@ -380,4 +419,37 @@ export interface GameChallenge {
     badges: string[];
     level: number;
   };
+  mode?: GameMode;
+  gamePayload?: Record<string, unknown>;
+}
+
+export interface OnboardingProfile {
+  studentId: string;
+  age: number;
+  grade: GradeLevel;
+  goals: OnboardingGoal[];
+  confidenceLevel: ConfidenceLevel;
+  placementScore: number;
+  personalizedPath: string[];
+  avatar: string;
+  mathWorld: string;
+  completedAt: string;
+}
+
+export interface ExplorationRecommendation {
+  studentId: string;
+  requestedTopicId: string;
+  recommendedTopicId: string;
+  recommendedTopicName: string;
+  recommendedDifficulty: number;
+  message: string;
+}
+
+export interface AdaptiveRecommendationV2 extends WorksheetRecommendation {
+  recommendedTopicId: string;
+  recommendedSubtopicId: string;
+  recommendedGameMode: GameMode;
+  recommendedWorksheetType: AdvancedQuestionType;
+  confidenceAdjustment: number;
+  diagnosticsWeight: number;
 }

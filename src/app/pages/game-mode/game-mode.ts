@@ -3,7 +3,11 @@ import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { GameService, type GameChallenge } from '../../services/game.service';
-import { DEFAULT_STUDENT_ID, StudentIntelligenceService } from '../../services/student-intelligence.service';
+import {
+  DEFAULT_STUDENT_ID,
+  StudentIntelligenceService,
+  type GameMode,
+} from '../../services/student-intelligence.service';
 
 const DAILY_QUEST_TARGET = 3;
 
@@ -26,6 +30,13 @@ export class GameModeComponent {
   localXp = signal(0);
   localStreak = signal(0);
   unlockedBadges = signal<string[]>([]);
+  selectedMode = signal<GameMode>('abacus-flash');
+  gameModeOptions: Array<{ value: GameMode; label: string }> = [
+    { value: 'abacus-flash', label: 'Abacus Flash' },
+    { value: 'falling-numbers', label: 'Falling Numbers' },
+    { value: 'boss-battle', label: 'Boss Battle' },
+    { value: 'ai-puzzle', label: 'AI Puzzle' },
+  ];
 
   xpTotal = computed(() => (this.challenge()?.playerState.xp ?? 0) + this.localXp());
   streakTotal = computed(() => Math.max(this.challenge()?.playerState.streak ?? 0, this.localStreak()));
@@ -57,11 +68,12 @@ export class GameModeComponent {
     this.challengeSubmitted.set(false);
 
     this.gameService
-      .getChallenge({
-        studentId: this.studentId(),
-        difficulty: this.adaptiveDifficulty() ?? undefined,
-        streak: this.streakTotal(),
-        completedDailyQuestCount: this.completedQuests(),
+        .getChallenge({
+          studentId: this.studentId(),
+          mode: this.selectedMode(),
+          difficulty: this.adaptiveDifficulty() ?? undefined,
+          streak: this.streakTotal(),
+          completedDailyQuestCount: this.completedQuests(),
       })
       .subscribe({
         next: (challenge) => {
@@ -98,6 +110,23 @@ export class GameModeComponent {
     if (this.completedQuests() < DAILY_QUEST_TARGET) {
       this.completedQuests.update((count) => Math.min(DAILY_QUEST_TARGET, count + 1));
     }
+
+    this.gameService
+      .submitChallenge({
+        studentId: this.studentId(),
+        mode: challenge.mode ?? this.selectedMode(),
+        score: 100,
+        accuracy: 100,
+        streak: this.streakTotal(),
+      })
+      .subscribe({
+        next: () => {
+          // state already updated optimistically in UI
+        },
+        error: () => {
+          // non-blocking
+        },
+      });
   }
 
   refreshAdaptiveDifficulty(): void {
