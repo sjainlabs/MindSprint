@@ -4,6 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DiagnosticService, type GradeLevel } from '../../services/diagnostic.service';
 
+const gradeFromAge = (age: number): GradeLevel => {
+  const normalized = Math.round(age);
+  if (normalized <= 4) {
+    return 0;
+  }
+  if (normalized >= 17) {
+    return 12;
+  }
+  return (normalized - 4) as GradeLevel;
+};
+
 @Component({
   selector: 'app-diagnostic-start',
   standalone: true,
@@ -15,7 +26,7 @@ export class DiagnosticStartComponent {
   loading = false;
   errorMessage = '';
   age = 8;
-  grade: GradeLevel = 4;
+  grade: GradeLevel = gradeFromAge(this.age);
   studentId = 'student-demo';
   eligibilityLoading = false;
   nextGradeLoading = false;

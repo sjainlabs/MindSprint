@@ -166,7 +166,7 @@ describe('WorksheetPageComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelectorAll('input[id^="q-"]').length).toBe(10);
+    expect(compiled.querySelectorAll('[data-testid="worksheet-question-input"]').length).toBe(10);
   });
 
   it('refreshes adaptive recommendation after worksheet submission', () => {

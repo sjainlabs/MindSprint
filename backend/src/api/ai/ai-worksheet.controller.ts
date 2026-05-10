@@ -38,4 +38,3 @@ export const createAiWorksheet = (request: Request, response: Response): void =>
     });
   }
 };
-

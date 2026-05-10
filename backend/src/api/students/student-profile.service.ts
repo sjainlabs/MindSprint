@@ -10,6 +10,8 @@ import { TOPIC_TAXONOMY, findTopicById } from '../topics/topic.service';
 
 const OPERATIONS: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
 const DEFAULT_MASTERY_LEVEL = 50;
+const TOPIC_MASTERY_RETENTION_WEIGHT = 0.7;
+const TOPIC_MASTERY_NEW_ACCURACY_WEIGHT = 0.3;
 const MAX_LEVEL = 50;
 const NEVER_UPDATED_TIMESTAMP = new Date(0).toISOString();
 const NEVER_UPDATED_DATE_KEY = NEVER_UPDATED_TIMESTAMP.slice(0, 10);
@@ -182,14 +184,14 @@ const updateStreak = (currentStreak: number, updatedAt: string, submittedAt: str
 const operationMasterBadge = (operation: MathOperation): string =>
   `${operation.charAt(0).toUpperCase()}${operation.slice(1)} Master`;
 
+const LEARNING_LEVEL_PRIMARY_TOPIC: Record<WorksheetResult['level'], string> = {
+  Beginner: 'foundation',
+  Intermediate: 'elementary',
+  Advanced: 'pre-algebra',
+};
+
 const inferTopicFromLearningLevel = (level: WorksheetResult['level']): string => {
-  if (level === 'Beginner') {
-    return 'foundation';
-  }
-  if (level === 'Intermediate') {
-    return 'elementary';
-  }
-  return 'pre-algebra';
+  return LEARNING_LEVEL_PRIMARY_TOPIC[level];
 };
 
 const collectBadges = (
@@ -242,7 +244,10 @@ export const updateStudentProfileFromWorksheet = (
     ...defaultTopicMastery(),
     ...decayedTopicMastery,
     [topicId]: clamp(
-      Math.round(((decayedTopicMastery[topicId] ?? 0) * 0.7) + result.accuracy * 0.3),
+      Math.round(
+        ((decayedTopicMastery[topicId] ?? 0) * TOPIC_MASTERY_RETENTION_WEIGHT) +
+          result.accuracy * TOPIC_MASTERY_NEW_ACCURACY_WEIGHT,
+      ),
       0,
       100,
     ),

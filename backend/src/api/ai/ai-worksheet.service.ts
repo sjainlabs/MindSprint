@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   type AIWorksheet,
   type AIWorksheetQuestion,
@@ -136,7 +137,7 @@ export const generateAiWorksheet = (request: AIWorksheetRequest): AIWorksheet =>
   });
 
   return {
-    worksheetId: `ai-ws-${Date.now()}-${Math.floor(Math.random() * 10_000)}`,
+    worksheetId: `ai-ws-${randomUUID()}`,
     topic: topic.id,
     difficulty,
     generatedAt: new Date().toISOString(),
@@ -149,4 +150,3 @@ export const generateAiWorksheet = (request: AIWorksheetRequest): AIWorksheet =>
     },
   };
 };
-
