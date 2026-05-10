@@ -9,6 +9,11 @@ import {
 import { getStudentProfile } from '../students/student-profile.service';
 
 const OPERATIONS: MathOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
+const DAILY_QUEST_CONFIG = {
+  target: 3,
+  rewardXp: 50,
+  description: 'Complete 3 game challenges with at least 80% accuracy.',
+};
 
 const toLevelFromDifficulty = (difficulty: number): LearningLevel => {
   if (difficulty >= 80) {
@@ -40,7 +45,15 @@ const buildOptions = (answer: number): number[] => {
     .slice(0, 3)
     .map((offset) => answer + offset)
     .filter((value) => value !== answer)
-    .map((value) => Math.max(0, value));
+    .map((value) => Math.max(0, value))
+    .filter((value, index, all) => all.indexOf(value) === index);
+
+  while (distractors.length < 3) {
+    const extra = Math.max(0, answer + randomInt(-15, 15));
+    if (extra !== answer && !distractors.includes(extra)) {
+      distractors.push(extra);
+    }
+  }
 
   return shuffle([answer, ...distractors.slice(0, 3)]);
 };
@@ -67,8 +80,8 @@ export const getGameChallenge = async (input: {
   const challengeStreak = Math.max(profile.streak, input.streak ?? 0);
   const bossBattleUnlocked = challengeStreak >= 5 || difficulty >= 85;
 
-  const dailyQuestProgress = Math.max(0, Math.min(3, input.completedDailyQuestCount ?? 0));
-  const dailyQuestCompleted = dailyQuestProgress >= 3;
+  const dailyQuestProgress = Math.max(0, Math.min(DAILY_QUEST_CONFIG.target, input.completedDailyQuestCount ?? 0));
+  const dailyQuestCompleted = dailyQuestProgress >= DAILY_QUEST_CONFIG.target;
   const streakBonus = challengeStreak >= 3 ? 10 : 0;
   const xp = 15 + Math.round(difficulty / 6);
   const badge = difficulty >= 90 ? 'Mythic Challenger' : difficulty >= 75 ? 'Rising Hero' : undefined;
@@ -90,10 +103,10 @@ export const getGameChallenge = async (input: {
     },
     dailyQuest: {
       id: `daily-${new Date().toISOString().slice(0, 10)}`,
-      description: 'Complete 3 game challenges with at least 80% accuracy.',
-      target: 3,
+      description: DAILY_QUEST_CONFIG.description,
+      target: DAILY_QUEST_CONFIG.target,
       progress: dailyQuestProgress,
-      rewardXp: 50,
+      rewardXp: DAILY_QUEST_CONFIG.rewardXp,
       completed: dailyQuestCompleted,
     },
     bossBattle: {

@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { GameService, type GameChallenge } from '../../services/game.service';
 import { DEFAULT_STUDENT_ID, StudentIntelligenceService } from '../../services/student-intelligence.service';
 
+const DAILY_QUEST_TARGET = 3;
+
 @Component({
   selector: 'app-game-mode',
   standalone: true,
@@ -64,6 +66,7 @@ export class GameModeComponent {
       .subscribe({
         next: (challenge) => {
           this.challenge.set(challenge);
+          this.completedQuests.set(challenge.dailyQuest.progress);
           this.loading.set(false);
         },
         error: () => {
@@ -88,11 +91,13 @@ export class GameModeComponent {
 
     const totalXp = challenge.rewards.xp + challenge.rewards.streakBonus;
     this.localXp.update((xp) => xp + totalXp);
-    this.localStreak.update((streak) => Math.max(streak + 1, challenge.playerState.streak + 1));
+    this.localStreak.update((streak) => streak + 1);
     if (challenge.rewards.badge) {
       this.unlockedBadges.update((badges) => [...new Set([...badges, challenge.rewards.badge!])]);
     }
-    this.completedQuests.update((count) => Math.min(3, count + 1));
+    if (this.completedQuests() < DAILY_QUEST_TARGET) {
+      this.completedQuests.update((count) => Math.min(DAILY_QUEST_TARGET, count + 1));
+    }
   }
 
   refreshAdaptiveDifficulty(): void {

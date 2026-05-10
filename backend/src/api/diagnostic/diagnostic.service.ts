@@ -144,6 +144,8 @@ export const canAttemptDiagnostic = (age: number, grade: number): boolean => {
     return false;
   }
 
+  // Grade eligibility follows a broad school-age band:
+  // Grade N is available for ages [N + 4, N + 8].
   const minAge = grade + 4;
   const maxAge = grade + 8;
   return age >= minAge && age <= maxAge;
@@ -328,14 +330,14 @@ export const scoreAndPersistDiagnosticSubmission = async (
   const age = context?.age;
   const grade = context?.grade;
 
-  if (!isWholeNumber(age ?? Number.NaN) || !isWholeNumber(grade ?? Number.NaN)) {
+  if (age === undefined || grade === undefined || !isWholeNumber(age) || !isWholeNumber(grade)) {
     return result;
   }
 
   const progress = await getDiagnosticEligibility({
     studentId,
-    age: age as number,
-    grade: grade as number,
+    age,
+    grade,
   });
 
   if (!progress.canAttemptCurrentGrade) {
@@ -343,7 +345,12 @@ export const scoreAndPersistDiagnosticSubmission = async (
   }
 
   const nextGrade = clampGrade(progress.enrolledGrade + 1);
-  const shouldUnlockNextGrade = result.score.accuracyScore === 100 && progress.enrolledGrade < MAX_GRADE_LEVEL;
+  // Unlock progression only advances when a learner achieves a perfect score
+  // at their current highest unlocked grade boundary.
+  const shouldUnlockNextGrade =
+    result.score.accuracyScore === 100 &&
+    progress.enrolledGrade < MAX_GRADE_LEVEL &&
+    progress.enrolledGrade === progress.unlockedThroughGrade;
   const unlockedThroughGrade = shouldUnlockNextGrade
     ? clampGrade(Math.max(progress.unlockedThroughGrade, nextGrade))
     : progress.unlockedThroughGrade;
@@ -354,8 +361,8 @@ export const scoreAndPersistDiagnosticSubmission = async (
 
   const updatedProgress = await getDiagnosticEligibility({
     studentId,
-    age: age as number,
-    grade: grade as number,
+    age,
+    grade,
   });
 
   return {

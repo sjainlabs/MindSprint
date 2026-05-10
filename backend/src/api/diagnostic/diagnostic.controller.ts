@@ -16,6 +16,8 @@ const parseNumber = (value: unknown): number | null => {
   return null;
 };
 
+const optionalNumber = (value: number | null): number | undefined => value ?? undefined;
+
 export const startDiagnostic = (_request: Request, response: Response): void => {
   const test = createDiagnosticTest();
   response.json(test);
@@ -46,7 +48,11 @@ export const submitDiagnostic = async (request: Request, response: Response): Pr
     const age = parseNumber(request.body?.age);
     const grade = parseNumber(request.body?.grade);
     const studentId = typeof request.body?.studentId === 'string' ? request.body.studentId : undefined;
-    const result = await scoreAndPersistDiagnosticSubmission(request.body, { studentId, age: age ?? undefined, grade: grade ?? undefined });
+    const result = await scoreAndPersistDiagnosticSubmission(request.body, {
+      studentId,
+      age: optionalNumber(age),
+      grade: optionalNumber(grade),
+    });
     response.json(result);
   } catch (error) {
     response.status(400).json({

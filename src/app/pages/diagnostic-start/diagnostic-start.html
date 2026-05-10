@@ -56,6 +56,7 @@
           >
             <p class="font-semibold">Grade {{ gradeEligibility.grade }}</p>
             <p>{{ gradeEligibility.isUnlocked && gradeEligibility.isAgeEligible ? 'Unlocked' : 'Locked' }}</p>
+            <p class="text-[11px] text-gray-500 mt-1">{{ gradeEligibility.reason }}</p>
           </div>
         }
       </div>
