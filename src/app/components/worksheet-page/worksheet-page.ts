@@ -179,13 +179,16 @@ export class WorksheetPageComponent implements OnInit {
 
   goToAdaptive(): void {
     const nextLevel = this.recommendedLevel();
-    if (!nextLevel) {
-      return;
-    }
+    if (!nextLevel) return;
 
     this.currentLevel.set(nextLevel);
-    this.regenerate(nextLevel);
+
+    // Force reload even if navigating to the same route
+    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+      this.router.navigate(['/worksheet', nextLevel]);
+    });
   }
+
 
   applyRecommendation(): void {
     this.goToAdaptive();
@@ -242,12 +245,16 @@ export class WorksheetPageComponent implements OnInit {
         return accumulator;
       }
 
-      const current = accumulator[questionResult.operation] ?? { correct: 0, attempted: 0 };
+      const operation = (questionResult as any).operation as MathOperation;
+      const current = accumulator[operation] ?? { correct: 0, attempted: 0 };
+
       current.attempted += 1;
       if (questionResult.isCorrect) {
         current.correct += 1;
       }
-      accumulator[questionResult.operation] = current;
+      // const operation = (questionResult as any).operation as MathOperation;
+      // const current = accumulator[operation] ?? { correct: 0, attempted: 0 };
+
       return accumulator;
     }, {});
 
