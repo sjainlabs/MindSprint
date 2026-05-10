@@ -5,6 +5,7 @@ import { analyticsRouter } from './api/analytics/analytics.routes';
 import { diagnosticRouter } from './api/diagnostic/diagnostic.routes';
 import { practiceRouter } from './api/practice/practice.routes';
 import { studentProfileRouter } from './api/students/student-profile.routes';
+import { gameRouter } from './api/game/game.routes';
 
 export const app = express();
 
@@ -42,3 +43,4 @@ app.use('/api/practice', practiceRouter);
 app.use('/api/students', studentProfileRouter);
 app.use('/api/adaptive', adaptiveRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/game', gameRouter);

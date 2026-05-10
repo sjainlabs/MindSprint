@@ -68,6 +68,12 @@ export const getDatabase = async (): Promise<Database<sqlite3.Database, sqlite3.
 
       CREATE INDEX IF NOT EXISTS idx_analytics_events_student_operation
       ON analytics_events (student_id, operation);
+
+      CREATE TABLE IF NOT EXISTS diagnostic_unlocks (
+        student_id TEXT PRIMARY KEY,
+        unlocked_grade INTEGER NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `);
   }
 

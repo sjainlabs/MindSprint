@@ -8,6 +8,59 @@
       Both accuracy and speed affect your result. Answer as many as you can.
     </p>
 
+    <div class="grid grid-cols-2 gap-3 text-left mb-4">
+      <label class="text-sm text-gray-600">
+        Age
+        <input
+          type="number"
+          min="5"
+          max="16"
+          class="mt-1 w-full border rounded-md px-3 py-2"
+          [(ngModel)]="age"
+          (change)="refreshEligibility()"
+        />
+      </label>
+      <label class="text-sm text-gray-600">
+        Grade
+        <select class="mt-1 w-full border rounded-md px-3 py-2" [(ngModel)]="grade" (change)="refreshEligibility()">
+          @for (value of [1,2,3,4,5,6,7,8]; track value) {
+            <option [ngValue]="value">Grade {{ value }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label class="block text-sm text-left text-gray-600 mb-4">
+      Student ID
+      <input
+        type="text"
+        class="mt-1 w-full border rounded-md px-3 py-2"
+        [(ngModel)]="studentId"
+        (blur)="refreshEligibility()"
+      />
+    </label>
+
+    @if (eligibilityLoading) {
+      <p class="text-sm text-gray-500 mb-4">Checking diagnostic unlocks...</p>
+    }
+
+    @if (diagnosticService.eligibility; as eligibility) {
+      <div class="grid grid-cols-2 gap-2 text-left mb-6 max-h-48 overflow-auto">
+        @for (gradeEligibility of eligibility.grades; track gradeEligibility.grade) {
+          <div
+            class="rounded-lg border p-2 text-xs"
+            [class.border-emerald-300]="gradeEligibility.isUnlocked && gradeEligibility.isAgeEligible"
+            [class.bg-emerald-50]="gradeEligibility.isUnlocked && gradeEligibility.isAgeEligible"
+            [class.border-gray-200]="!gradeEligibility.isUnlocked || !gradeEligibility.isAgeEligible"
+            [class.bg-gray-50]="!gradeEligibility.isUnlocked || !gradeEligibility.isAgeEligible"
+          >
+            <p class="font-semibold">Grade {{ gradeEligibility.grade }}</p>
+            <p>{{ gradeEligibility.isUnlocked && gradeEligibility.isAgeEligible ? 'Unlocked' : 'Locked' }}</p>
+          </div>
+        }
+      </div>
+    }
+
     @if (errorMessage) {
       <p class="text-red-600 mb-4">{{ errorMessage }}</p>
     }

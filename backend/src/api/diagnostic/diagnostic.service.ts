@@ -1,11 +1,15 @@
 import syllabus from '../../utils/syllabus.json';
 import { randomInt, shuffle } from '../../utils/random';
+import { getDatabase } from '../../db/database';
 import {
+  type DiagnosticGradeEligibility,
+  type DiagnosticProgress,
   type DiagnosticQuestion,
   type DiagnosticQuestionView,
   type DiagnosticResult,
   type DiagnosticSubmission,
   type DiagnosticTest,
+  type GradeLevel,
   type LearningLevel,
   type MathOperation,
   type ScoreBreakdown,
@@ -19,6 +23,10 @@ const SPEED_WEIGHT = 0.2;
 // Accuracy thresholds for level determination and weak/strong area classification.
 const ADVANCED_ACCURACY_THRESHOLD = 85;
 const BEGINNER_ACCURACY_THRESHOLD = 60;
+const MIN_GRADE_LEVEL = 1;
+const MAX_GRADE_LEVEL = 8;
+const GRADE_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8] as const satisfies ReadonlyArray<GradeLevel>;
+const DEFAULT_STUDENT_ID = 'student-demo';
 
 // Phase 1 stores generated tests in memory for simplicity.
 const inMemoryTests = new Map<string, DiagnosticQuestion[]>();
@@ -107,6 +115,100 @@ export const createDiagnosticTest = (): DiagnosticTest => {
 };
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+const clampGrade = (grade: number): GradeLevel =>
+  clamp(Math.round(grade), MIN_GRADE_LEVEL, MAX_GRADE_LEVEL) as GradeLevel;
+
+const isWholeNumber = (value: number): boolean => Number.isFinite(value) && Number.isInteger(value);
+
+const getDefaultUnlockedGrade = (enrolledGrade: GradeLevel): GradeLevel =>
+  clampGrade(Math.max(MIN_GRADE_LEVEL, enrolledGrade));
+
+const buildEligibilityReason = (isAgeEligible: boolean, isUnlocked: boolean, grade: GradeLevel): string => {
+  if (!isAgeEligible) {
+    return `Age and grade combination is outside the allowed range for Grade ${grade}.`;
+  }
+
+  if (!isUnlocked) {
+    return `Score 100% on Grade ${Math.max(MIN_GRADE_LEVEL, grade - 1)} to unlock Grade ${grade}.`;
+  }
+
+  return `Grade ${grade} diagnostic is unlocked.`;
+};
+
+export const canAttemptDiagnostic = (age: number, grade: number): boolean => {
+  if (!isWholeNumber(age) || !isWholeNumber(grade)) {
+    return false;
+  }
+
+  if (grade < MIN_GRADE_LEVEL || grade > MAX_GRADE_LEVEL) {
+    return false;
+  }
+
+  const minAge = grade + 4;
+  const maxAge = grade + 8;
+  return age >= minAge && age <= maxAge;
+};
+
+const getUnlockedThroughGrade = async (studentId: string, enrolledGrade: GradeLevel): Promise<GradeLevel> => {
+  const db = await getDatabase();
+  const row = await db.get<{ unlocked_grade: number }>(
+    'SELECT unlocked_grade FROM diagnostic_unlocks WHERE student_id = ?',
+    [studentId],
+  );
+
+  if (!row) {
+    const unlockedThroughGrade = getDefaultUnlockedGrade(enrolledGrade);
+    await db.run(
+      `INSERT INTO diagnostic_unlocks (student_id, unlocked_grade, updated_at) VALUES (?, ?, ?)`,
+      [studentId, unlockedThroughGrade, new Date().toISOString()],
+    );
+    return unlockedThroughGrade;
+  }
+
+  return clampGrade(Math.max(row.unlocked_grade, getDefaultUnlockedGrade(enrolledGrade)));
+};
+
+const saveUnlockedThroughGrade = async (studentId: string, unlockedThroughGrade: GradeLevel): Promise<void> => {
+  const db = await getDatabase();
+  await db.run(
+    `INSERT INTO diagnostic_unlocks (student_id, unlocked_grade, updated_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(student_id) DO UPDATE SET
+       unlocked_grade = excluded.unlocked_grade,
+       updated_at = excluded.updated_at`,
+    [studentId, unlockedThroughGrade, new Date().toISOString()],
+  );
+};
+
+export const getDiagnosticEligibility = async (input: {
+  studentId?: string;
+  age: number;
+  grade: number;
+}): Promise<DiagnosticProgress> => {
+  const studentId = input.studentId?.trim() || DEFAULT_STUDENT_ID;
+  const normalizedGrade = clampGrade(input.grade);
+  const unlockedThroughGrade = await getUnlockedThroughGrade(studentId, normalizedGrade);
+  const grades: DiagnosticGradeEligibility[] = GRADE_LEVELS.map((grade) => {
+    const isAgeEligible = canAttemptDiagnostic(input.age, grade);
+    const isUnlocked = grade <= unlockedThroughGrade;
+    return {
+      grade,
+      isAgeEligible,
+      isUnlocked,
+      reason: buildEligibilityReason(isAgeEligible, isUnlocked, grade),
+    };
+  });
+
+  return {
+    studentId,
+    age: input.age,
+    enrolledGrade: normalizedGrade,
+    canAttemptCurrentGrade: canAttemptDiagnostic(input.age, normalizedGrade) && normalizedGrade <= unlockedThroughGrade,
+    unlockedThroughGrade,
+    unlockedNextGrade: false,
+    grades,
+  };
+};
 
 export const mapScoreToLevel = (accuracy: number): LearningLevel => {
   if (accuracy < BEGINNER_ACCURACY_THRESHOLD) {
@@ -210,5 +312,57 @@ export const scoreDiagnosticSubmission = (submission: DiagnosticSubmission): Dia
     questionResults,
     weakAreas,
     strongAreas,
+  };
+};
+
+export const scoreAndPersistDiagnosticSubmission = async (
+  submission: DiagnosticSubmission,
+  context?: {
+    studentId?: string;
+    age?: number;
+    grade?: number;
+  },
+): Promise<DiagnosticResult> => {
+  const result = scoreDiagnosticSubmission(submission);
+  const studentId = context?.studentId?.trim() || DEFAULT_STUDENT_ID;
+  const age = context?.age;
+  const grade = context?.grade;
+
+  if (!isWholeNumber(age ?? Number.NaN) || !isWholeNumber(grade ?? Number.NaN)) {
+    return result;
+  }
+
+  const progress = await getDiagnosticEligibility({
+    studentId,
+    age: age as number,
+    grade: grade as number,
+  });
+
+  if (!progress.canAttemptCurrentGrade) {
+    throw new Error('Diagnostic is locked for this age/grade profile.');
+  }
+
+  const nextGrade = clampGrade(progress.enrolledGrade + 1);
+  const shouldUnlockNextGrade = result.score.accuracyScore === 100 && progress.enrolledGrade < MAX_GRADE_LEVEL;
+  const unlockedThroughGrade = shouldUnlockNextGrade
+    ? clampGrade(Math.max(progress.unlockedThroughGrade, nextGrade))
+    : progress.unlockedThroughGrade;
+
+  if (shouldUnlockNextGrade) {
+    await saveUnlockedThroughGrade(studentId, unlockedThroughGrade);
+  }
+
+  const updatedProgress = await getDiagnosticEligibility({
+    studentId,
+    age: age as number,
+    grade: grade as number,
+  });
+
+  return {
+    ...result,
+    diagnosticProgress: {
+      ...updatedProgress,
+      unlockedNextGrade: shouldUnlockNextGrade,
+    },
   };
 };

@@ -122,6 +122,7 @@ export class WorksheetPageComponent implements OnInit {
   });
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
+  recommendedLevel = computed(() => this.recommendation()?.recommendedLevel ?? null);
 
   submitWorksheet(): void {
     const worksheet = this.worksheet();
@@ -176,14 +177,18 @@ export class WorksheetPageComponent implements OnInit {
     this.answers.update((answers) => ({ ...answers, [questionId]: value }));
   }
 
-  applyRecommendation(): void {
-    const recommendation = this.recommendation();
-    if (!recommendation) {
+  goToAdaptive(): void {
+    const nextLevel = this.recommendedLevel();
+    if (!nextLevel) {
       return;
     }
 
-    this.currentLevel.set(recommendation.recommendedLevel);
-    this.regenerate(recommendation.recommendedLevel);
+    this.currentLevel.set(nextLevel);
+    this.regenerate(nextLevel);
+  }
+
+  applyRecommendation(): void {
+    this.goToAdaptive();
   }
 
   private refreshStudentInsights(result?: WorksheetResult): void {

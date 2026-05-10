@@ -7,6 +7,7 @@ import { Results } from './pages/results/results';
 import { DiagnosticStartComponent } from './pages/diagnostic-start/diagnostic-start';
 import { DiagnosticTestComponent } from './components/diagnostic-test/diagnostic-test';
 import { WorksheetPageComponent } from './components/worksheet-page/worksheet-page';
+import { GameModeComponent } from './pages/game-mode/game-mode';
 
 export const routes: Routes = [
   { path: '', component: Welcome },
@@ -19,4 +20,5 @@ export const routes: Routes = [
   { path: 'diagnostic/test', component: DiagnosticTestComponent },
   { path: 'worksheet', redirectTo: '/worksheet/Beginner', pathMatch: 'full' },
   { path: 'worksheet/:level', component: WorksheetPageComponent },
+  { path: 'game', component: GameModeComponent },
 ];

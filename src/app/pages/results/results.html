@@ -88,6 +88,18 @@
       }
 
       <!-- Action Buttons -->
+      @if (result.diagnosticProgress; as progress) {
+        <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-6">
+          <h2 class="text-xl font-bold text-text mb-3">Diagnostic Unlock Progress</h2>
+          <p class="text-sm text-gray-600 mb-3">
+            Unlocked through Grade {{ progress.unlockedThroughGrade }} for student {{ progress.studentId }}.
+          </p>
+          @if (progress.unlockedNextGrade) {
+            <p class="text-sm font-semibold text-emerald-700">🏆 Perfect score! Next grade diagnostic unlocked.</p>
+          }
+        </div>
+      }
+
       <div class="space-y-3">
         <button
           type="button"
