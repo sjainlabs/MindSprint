@@ -125,7 +125,9 @@ export class GameModeComponent {
       ? (raw['flashSequence'] as number[])
       : [];
     const speedMs =
-      typeof raw['speedMs'] === 'number' ? raw['speedMs'] : DEFAULT_FLASH_SPEED_MS;
+      typeof raw['speedMs'] === 'number' && raw['speedMs'] > 0
+        ? raw['speedMs']
+        : DEFAULT_FLASH_SPEED_MS;
     return { flashSequence, speedMs };
   }
 
@@ -166,7 +168,10 @@ export class GameModeComponent {
       if (index < flashSequence.length) {
         this.currentFlashNumber.set(flashSequence[index]);
       } else {
-        clearInterval(this.flashIntervalId!);
+        const id = this.flashIntervalId;
+        if (id !== null) {
+          clearInterval(id);
+        }
         this.flashIntervalId = null;
         this.currentFlashNumber.set(null);
         this.isFlashing.set(false);
@@ -276,10 +281,8 @@ export class GameModeComponent {
           next: (result) => {
             // Update adaptive difficulty from server response
             this.adaptiveDifficulty.set(result.newDifficulty);
-            // Reconcile streak with server value
-            if (result.newStreak > this.localStreak()) {
-              this.localStreak.set(result.newStreak);
-            }
+            // Sync streak with authoritative server value
+            this.localStreak.set(result.newStreak);
             // Update quest progress if server reports more completions
             if (result.dailyQuestProgress > this.completedQuests()) {
               this.completedQuests.set(result.dailyQuestProgress);
