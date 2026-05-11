@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
 import { type GradeLevel } from './diagnostic.service';
 import { type AdvancedQuestionType } from './ai-worksheet.service';
@@ -97,9 +98,7 @@ export interface StudentAnalytics {
   providedIn: 'root',
 })
 export class StudentIntelligenceService {
-  private readonly isLocalhost =
-    typeof window !== 'undefined' && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
-  private readonly apiRoot = this.isLocalhost ? 'http://localhost:3001/api' : '/api';
+  private readonly apiRoot = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 

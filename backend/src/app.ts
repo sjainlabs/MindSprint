@@ -12,29 +12,7 @@ import { onboardingRouter } from './api/onboarding/onboarding.routes';
 
 export const app = express();
 
-const allowedOrigins = [
-  'http://localhost:4200',
-  'http://127.0.0.1:4200',
-];
-
-const frontendOrigin = process.env['FRONTEND_ORIGIN'];
-if (frontendOrigin && /^https?:\/\/.+/.test(frontendOrigin)) {
-  allowedOrigins.push(frontendOrigin);
-}
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: origin '${origin}' not allowed`));
-      }
-    },
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }),
-);
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.get('/api/health', (_request, response) => {
