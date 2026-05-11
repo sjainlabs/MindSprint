@@ -1,1 +1,1 @@
-web: npx http-server dist/mindsprint-app/browser -p $PORT
+web: npm start --prefix backend

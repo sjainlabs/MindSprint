@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
 import { type MathOperation } from './student-intelligence.service';
 
@@ -59,9 +60,7 @@ export interface WorksheetResult {
   providedIn: 'root',
 })
 export class PracticeService {
-  private readonly isLocalhost =
-    typeof window !== 'undefined' && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
-  private readonly apiRoot = this.isLocalhost ? 'http://localhost:3001/api' : '/api';
+  private readonly apiRoot = environment.apiUrl;
   private readonly baseUrl = `${this.apiRoot}/practice`;
 
   constructor(private readonly http: HttpClient) {}

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type GradeLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
@@ -96,10 +97,7 @@ export interface DiagnosticResult {
   providedIn: 'root',
 })
 export class DiagnosticService {
-  private readonly apiRoot =
-    typeof window !== 'undefined' && window.location.hostname === 'localhost'
-      ? 'http://localhost:3001/api'
-      : '/api';
+  private readonly apiRoot = environment.apiUrl;
   private readonly baseUrl = `${this.apiRoot}/diagnostic`;
 
   /** State shared between the start, test, and results pages. */
