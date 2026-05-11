@@ -81,31 +81,42 @@
 
           <!-- Mode-specific UI panels -->
           @if (selectedMode() === 'abacus-flash') {
-            <div class="rounded-lg border bg-white p-3 text-sm">
-              <p class="font-semibold">⚡ Abacus Flash</p>
-              <p class="text-xs text-gray-600">Flash sequence and speed adapt to mastery.</p>
-              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
+            <div class="rounded-lg border bg-white p-4 text-sm">
+              <p class="font-semibold mb-2">⚡ Abacus Flash</p>
+              <p class="text-xs text-gray-600 mb-3">Watch the numbers — then answer from memory!</p>
+
+              @if (isFlashing()) {
+                <!-- Flash animation display -->
+                <div class="flash-stage">
+                  @if (currentFlashNumber() !== null) {
+                    <span class="flash-number">{{ currentFlashNumber() }}</span>
+                  } @else {
+                    <span class="flash-number">&nbsp;</span>
+                  }
+                </div>
+              }
+
+              @if (!isFlashing() && !showQuestion() && !loading()) {
+                <p class="text-center text-gray-400 text-xs py-4">Get ready…</p>
+              }
             </div>
           }
           @if (selectedMode() === 'falling-numbers') {
             <div class="rounded-lg border bg-white p-3 text-sm">
               <p class="font-semibold">🎮 Falling Numbers</p>
               <p class="text-xs text-gray-600">Catch target sums/products, build combos, use power-ups.</p>
-              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
           @if (selectedMode() === 'boss-battle') {
             <div class="rounded-lg border bg-white p-3 text-sm">
               <p class="font-semibold">⚔️ Boss Battle</p>
               <p class="text-xs text-gray-600">Timed rounds with special attacks and HP bar challenge.</p>
-              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
           @if (selectedMode() === 'ai-puzzle') {
             <div class="rounded-lg border bg-white p-3 text-sm">
               <p class="font-semibold">🤖 AI Puzzle Mode</p>
               <p class="text-xs text-gray-600">Logic, pattern, geometry, and function puzzle generation.</p>
-              <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
           @if (selectedMode() === 'fluency-speed') {
@@ -119,52 +130,68 @@
             <div class="rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm">
               <p class="font-semibold text-purple-800">🔍 Reasoning Puzzle</p>
               <p class="text-xs text-purple-700">Think carefully — multi-step reasoning required.</p>
-              <pre class="mt-2 text-xs whitespace-pre-wrap text-gray-700">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
           @if (selectedMode() === 'map-challenge') {
             <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm">
               <p class="font-semibold text-green-800">📊 MAP Challenge</p>
               <p class="text-xs text-green-700">Difficulty: {{ currentChallenge.difficulty }}/100 (MAP-aligned)</p>
-              <pre class="mt-2 text-xs whitespace-pre-wrap text-gray-700">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
           @if (selectedMode() === 'competition-boss') {
             <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
               <p class="font-semibold text-red-800">🏆 Competition Boss</p>
               <p class="text-xs text-red-700">AMC/MATHCOUNTS-level. Only the best survive!</p>
-              <pre class="mt-2 text-xs whitespace-pre-wrap text-gray-700">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
 
-          <div class="grid grid-cols-2 gap-3">
-            @for (option of currentChallenge.options; track option) {
+          @if (selectedMode() !== 'abacus-flash' || showQuestion()) {
+            <div class="space-y-3">
+              @if (selectedMode() === 'abacus-flash') {
+                <p class="text-lg font-semibold">{{ currentChallenge.prompt }}</p>
+              }
+              <div class="grid grid-cols-2 gap-3">
+                @for (option of currentChallenge.options; track option) {
+                  <button
+                    type="button"
+                    class="border rounded-lg py-2 px-3 text-left"
+                    [class.border-primary]="selectedAnswer() === option"
+                    (click)="selectedAnswer.set(option)"
+                    [disabled]="challengeSubmitted()"
+                  >
+                    {{ option }}
+                  </button>
+                }
+              </div>
+
               <button
                 type="button"
-                class="border rounded-lg py-2 px-3 text-left"
-                [class.border-primary]="selectedAnswer() === option"
-                (click)="selectedAnswer.set(option)"
-                [disabled]="challengeSubmitted()"
+                class="w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg disabled:opacity-60"
+                [disabled]="selectedAnswer() === null || challengeSubmitted()"
+                (click)="submitChallenge()"
               >
-                {{ option }}
+                Submit Challenge
               </button>
-            }
-          </div>
-
-          <button
-            type="button"
-            class="w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg disabled:opacity-60"
-            [disabled]="selectedAnswer() === null || challengeSubmitted()"
-            (click)="submitChallenge()"
-          >
-            Submit Challenge
-          </button>
+            </div>
+          }
 
           @if (isCorrect() === true) {
-            <p class="text-emerald-700 font-semibold">✅ Correct! XP and streak rewards applied.</p>
+            <p class="text-emerald-700 font-semibold">
+              ✅ Correct! XP and streak rewards applied.
+              @if (selectedMode() === 'abacus-flash') {
+                <span class="text-xs font-normal"> Loading next challenge…</span>
+              }
+            </p>
           }
           @if (isCorrect() === false) {
-            <p class="text-red-600 font-semibold">❌ Not quite. Try another challenge.</p>
+            <p class="text-red-600 font-semibold">
+              ❌ Not quite.
+              @if (selectedMode() === 'abacus-flash') {
+                <span class="text-xs font-normal"> Loading next challenge…</span>
+              } @else {
+                Try another challenge.
+              }
+            </p>
           }
 
           <div class="grid grid-cols-2 gap-3 text-sm">
@@ -203,13 +230,15 @@
             </div>
           </div>
 
-          <button
-            type="button"
-            class="w-full border border-gray-300 py-2 px-4 rounded-lg"
-            (click)="loadChallenge()"
-          >
-            Next AI Challenge
-          </button>
+          @if (selectedMode() !== 'abacus-flash') {
+            <button
+              type="button"
+              class="w-full border border-gray-300 py-2 px-4 rounded-lg"
+              (click)="loadChallenge()"
+            >
+              Next AI Challenge
+            </button>
+          }
         </div>
       }
     </div>

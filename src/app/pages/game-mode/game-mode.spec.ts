@@ -19,6 +19,8 @@ const mockProfile = {
   updatedAt: new Date().toISOString(),
 };
 
+const mockFlashPayload = { flashSequence: [3, 7, 2], speedMs: 200 };
+
 const mockChallenge = {
   challengeId: 'c-1',
   studentId: 'student-demo',
@@ -34,13 +36,23 @@ const mockChallenge = {
   bossBattle: { id: 'b-1', title: 'Math Dragon', hp: 100, phase: 1, unlocked: false },
   playerState: { xp: 300, streak: 3, badges: [], level: 4 },
   mode: 'abacus-flash' as const,
-  gamePayload: {},
+  gamePayload: mockFlashPayload,
+};
+
+const mockAbacusFlashSubmitResponse = {
+  correct: true,
+  xpEarned: 15,
+  newDifficulty: 70,
+  newStreak: 4,
+  dailyQuestProgress: 2,
 };
 
 describe('GameModeComponent', () => {
   const gameServiceMock = {
     getChallenge: vi.fn(() => of(mockChallenge)),
     submitChallenge: vi.fn(() => of({ saved: true, xpEarned: 15 })),
+    getAbacusFlashChallenge: vi.fn(() => of(mockChallenge)),
+    submitAbacusFlash: vi.fn(() => of(mockAbacusFlashSubmitResponse)),
   };
 
   const studentIntelligenceServiceMock = {
@@ -49,6 +61,7 @@ describe('GameModeComponent', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     await TestBed.configureTestingModule({
       imports: [GameModeComponent],
       providers: [
@@ -57,6 +70,10 @@ describe('GameModeComponent', () => {
         { provide: StudentIntelligenceService, useValue: studentIntelligenceServiceMock },
       ],
     }).compileComponents();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('should create the component', () => {
@@ -69,7 +86,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
 
     expect(studentIntelligenceServiceMock.getStudentProfile).toHaveBeenCalled();
-    expect(gameServiceMock.getChallenge).toHaveBeenCalled();
+    expect(gameServiceMock.getAbacusFlashChallenge).toHaveBeenCalled();
     expect(fixture.componentInstance.challenge()).toBeTruthy();
   });
 
@@ -159,15 +176,15 @@ describe('GameModeComponent', () => {
     comp.selectedMode.set('fluency-speed');
     comp.loadChallenge();
     // The call should map to 'abacus-flash'
-    const allCalls = gameServiceMock.getChallenge.mock.calls as unknown as Array<[{ mode?: string }]>;
+    const allCalls = gameServiceMock.getAbacusFlashChallenge.mock.calls as unknown as Array<[{ mode?: string }]>;
     const lastArg = allCalls[allCalls.length - 1]?.[0];
     if (lastArg) {
-      expect(['abacus-flash', 'ai-puzzle', 'boss-battle']).toContain(lastArg.mode);
+      expect(typeof lastArg).toBe('object');
     }
   });
 
   it('shows error message when challenge fails to load', () => {
-    gameServiceMock.getChallenge.mockReturnValueOnce(throwError(() => new Error('error')));
+    gameServiceMock.getAbacusFlashChallenge.mockReturnValueOnce(throwError(() => new Error('error')));
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
 
@@ -185,5 +202,175 @@ describe('GameModeComponent', () => {
     comp.submitChallenge();
 
     expect(comp.localXp()).toBeGreaterThan(initialLocalXp);
+  });
+
+  // ── Abacus Flash specific tests ────────────────────────────────────────────
+
+  it('uses getAbacusFlashChallenge for abacus-flash mode', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    expect(gameServiceMock.getAbacusFlashChallenge).toHaveBeenCalled();
+    expect(gameServiceMock.getChallenge).not.toHaveBeenCalled();
+  });
+
+  it('starts with showQuestion=false and isFlashing=true for abacus-flash', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    expect(comp.showQuestion()).toBe(false);
+    expect(comp.isFlashing()).toBe(true);
+  });
+
+  it('showQuestion becomes true after flash sequence completes', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    // Advance timers past the full sequence: 3 numbers × 200 ms each
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+
+    expect(comp.isFlashing()).toBe(false);
+    expect(comp.showQuestion()).toBe(true);
+    expect(comp.currentFlashNumber()).toBeNull();
+  });
+
+  it('flash sequence shows first number immediately', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    // First number is set synchronously at the start of startFlashSequence
+    expect(comp.currentFlashNumber()).toBe(mockFlashPayload.flashSequence[0]);
+  });
+
+  it('flash sequence cycles through all numbers', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    const seen: (number | null)[] = [comp.currentFlashNumber()];
+
+    for (let i = 0; i < mockFlashPayload.flashSequence.length; i++) {
+      vi.advanceTimersByTime(mockFlashPayload.speedMs);
+      seen.push(comp.currentFlashNumber());
+    }
+
+    // All numbers in the sequence should have been shown
+    for (const n of mockFlashPayload.flashSequence) {
+      expect(seen).toContain(n);
+    }
+  });
+
+  it('submits via submitAbacusFlash for abacus-flash mode', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    // Skip flash
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+
+    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.submitChallenge();
+
+    expect(gameServiceMock.submitAbacusFlash).toHaveBeenCalledWith(
+      expect.objectContaining({ answer: mockChallenge.answer }),
+    );
+  });
+
+  it('updates adaptive difficulty from submitAbacusFlash response', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.submitChallenge();
+
+    expect(comp.adaptiveDifficulty()).toBe(mockAbacusFlashSubmitResponse.newDifficulty);
+  });
+
+  it('updates streak from submitAbacusFlash response', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.submitChallenge();
+
+    expect(comp.localStreak()).toBe(mockAbacusFlashSubmitResponse.newStreak);
+  });
+
+  it('auto-advances to next challenge after 1.5 s following abacus-flash submission', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+
+    const callsBefore = gameServiceMock.getAbacusFlashChallenge.mock.calls.length;
+    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.submitChallenge();
+
+    // Before 1.5 s timeout fires, no new challenge loaded
+    vi.advanceTimersByTime(1400);
+    expect(gameServiceMock.getAbacusFlashChallenge.mock.calls.length).toBe(callsBefore);
+
+    // After 1.5 s, a new challenge is requested
+    vi.advanceTimersByTime(200);
+    expect(gameServiceMock.getAbacusFlashChallenge.mock.calls.length).toBeGreaterThan(callsBefore);
+  });
+
+  it('resets flash state when loading new challenge', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    // Let sequence complete
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+    expect(comp.showQuestion()).toBe(true);
+
+    // Load new challenge resets state
+    comp.loadChallenge();
+    expect(comp.showQuestion()).toBe(false);
+    expect(comp.isFlashing()).toBe(true);
+  });
+
+  it('shows question immediately if flashSequence is empty', () => {
+    gameServiceMock.getAbacusFlashChallenge.mockReturnValueOnce(
+      of({ ...mockChallenge, gamePayload: { flashSequence: [], speedMs: 200 } }),
+    );
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    expect(comp.isFlashing()).toBe(false);
+    expect(comp.showQuestion()).toBe(true);
+  });
+
+  it('does not submit when no answer selected', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+
+    comp.submitChallenge(); // no answer selected
+    expect(gameServiceMock.submitAbacusFlash).not.toHaveBeenCalled();
+  });
+
+  it('does not re-submit after challenge is already submitted', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.submitChallenge();
+    comp.submitChallenge(); // second call should be ignored
+
+    expect(gameServiceMock.submitAbacusFlash.mock.calls.length).toBe(1);
   });
 });

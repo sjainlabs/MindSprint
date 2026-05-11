@@ -5,3 +5,41 @@
 .challenge-card:hover {
   transform: translateY(-2px);
 }
+
+/* ── Abacus Flash animation ── */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.flash-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8rem;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-radius: 0.75rem;
+}
+
+.flash-number {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #4338ca;
+  text-align: center;
+  line-height: 1;
+  animation: fadeInOut 0.3s ease;
+}

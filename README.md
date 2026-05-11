@@ -55,6 +55,15 @@ The Super-Syllabus unifies 7 curriculum domains into a single K–12 framework:
 - **Student Profile** — Fluency score, Conceptual mastery score, Reasoning score, MAP RIT estimate, Competition math level
 - **Exploration Mode** — Adaptive topic recommendations with multi-dimension filtering
 
+### API Services (`GameService`)
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/game/challenge` | GET | Fetch an adaptive challenge for any game mode |
+| `/api/game/submit` | POST | Submit result for any game mode |
+| `/api/game/abacus-flash/challenge` | POST | Fetch an Abacus Flash challenge (returns `flashSequence` + `speedMs` in `gamePayload`) |
+| `/api/game/abacus-flash/submit` | POST | Submit an Abacus Flash answer; returns updated `difficulty`, `streak`, `xpEarned`, and `dailyQuestProgress` |
+
 ### API Services (`SyllabusService`)
 
 | Endpoint | Method | Description |

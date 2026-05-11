@@ -5,6 +5,19 @@ import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
 import { type GameMode, type MathOperation } from './student-intelligence.service';
 
+export interface AbacusFlashPayload {
+  flashSequence: number[];
+  speedMs: number;
+}
+
+export interface AbacusFlashSubmitResponse {
+  correct: boolean;
+  xpEarned: number;
+  newDifficulty: number;
+  newStreak: number;
+  dailyQuestProgress: number;
+}
+
 export interface GameChallenge {
   challengeId: string;
   studentId: string;
@@ -84,5 +97,25 @@ export class GameService {
     streak: number;
   }): Observable<{ saved: boolean; xpEarned: number }> {
     return this.http.post<{ saved: boolean; xpEarned: number }>(`${this.apiRoot}/game/submit`, payload);
+  }
+
+  getAbacusFlashChallenge(payload: {
+    studentId: string;
+    difficulty?: number;
+    streak?: number;
+  }): Observable<GameChallenge> {
+    return this.http.post<GameChallenge>(`${this.apiRoot}/game/abacus-flash/challenge`, payload);
+  }
+
+  submitAbacusFlash(payload: {
+    studentId: string;
+    challengeId: string;
+    answer: number;
+    timeTakenMs?: number;
+  }): Observable<AbacusFlashSubmitResponse> {
+    return this.http.post<AbacusFlashSubmitResponse>(
+      `${this.apiRoot}/game/abacus-flash/submit`,
+      payload,
+    );
   }
 }
