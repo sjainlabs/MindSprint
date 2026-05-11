@@ -1,0 +1,164 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-primary">Student Profile</h1>
+        <p class="text-sm text-gray-600">Super-Syllabus scores: Fluency · Mastery · Reasoning · MAP · Competition</p>
+      </div>
+      <a routerLink="/welcome" class="text-sm underline text-primary">Back Home</a>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-white rounded-xl shadow p-4 flex gap-3">
+      <label class="flex-1 text-sm text-gray-600">Student ID
+        <input
+          class="mt-1 w-full border rounded px-3 py-2"
+          [ngModel]="studentId()"
+          (ngModelChange)="studentId.set($event)"
+          (blur)="loadProfile()"
+        />
+      </label>
+      <div class="flex items-end">
+        <button type="button" class="bg-primary text-white rounded-lg px-4 py-2 font-semibold" (click)="loadProfile()">
+          Load
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">Loading profile…</div>
+    } @else if (errorMessage()) {
+      <div class="bg-white rounded-xl shadow p-6 text-sm text-red-600">{{ errorMessage() }}</div>
+    } @else if (profile(); as p) {
+      <!-- Core info -->
+      <div class="bg-white rounded-xl shadow p-5">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-3xl">
+            {{ p.avatar ?? '🎓' }}
+          </div>
+          <div>
+            <p class="font-bold text-lg">{{ p.studentId }}</p>
+            <p class="text-sm text-gray-500">Grade {{ p.grade }} · Age {{ p.age }} · Level {{ p.level }}</p>
+          </div>
+          <div class="ml-auto text-right">
+            <p class="text-xs text-gray-500">XP</p>
+            <p class="text-2xl font-bold text-amber-600">{{ p.xp }}</p>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          @for (badge of p.badges; track badge) {
+            <span class="rounded-full bg-primary/10 text-primary text-xs px-3 py-1 font-semibold">{{ badge }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Super-Syllabus Scores -->
+      @if (scores(); as s) {
+        <div class="bg-white rounded-xl shadow p-5">
+          <h2 class="text-lg font-bold text-primary mb-4">Super-Syllabus Scores</h2>
+
+          <!-- Fluency Score -->
+          <div class="mb-4">
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-semibold">⚡ Fluency Score</span>
+              <span class="text-sm font-bold" [ngClass]="scoreColor(s.fluencyScore)">{{ s.fluencyScore }}/100</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2.5">
+              <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.fluencyScore)" [style.width.%]="s.fluencyScore"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Based on addition & subtraction mastery</p>
+          </div>
+
+          <!-- Conceptual Mastery Score -->
+          <div class="mb-4">
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-semibold">🧩 Conceptual Mastery Score</span>
+              <span class="text-sm font-bold" [ngClass]="scoreColor(s.conceptualMasteryScore)">{{ s.conceptualMasteryScore }}/100</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2.5">
+              <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.conceptualMasteryScore)" [style.width.%]="s.conceptualMasteryScore"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Based on multiplication & division mastery</p>
+          </div>
+
+          <!-- Reasoning Score -->
+          <div class="mb-4">
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-semibold">🔍 Reasoning & Logic Score</span>
+              <span class="text-sm font-bold" [ngClass]="scoreColor(s.reasoningScore)">{{ s.reasoningScore }}/100</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2.5">
+              <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.reasoningScore)" [style.width.%]="s.reasoningScore"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Derived from overall mastery & adaptive performance</p>
+          </div>
+
+          <!-- MAP RIT Estimate -->
+          <div class="mb-4">
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-semibold">📊 MAP RIT Estimate</span>
+              <span class="text-sm font-bold text-blue-600">{{ s.mapRITEstimate }}</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2.5">
+              <div
+                class="bg-blue-500 h-2.5 rounded-full transition-all"
+                [style.width.%]="((s.mapRITEstimate - 180) / 100) * 100"
+              ></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Estimated RIT score based on mastery data (range 180–280)</p>
+            <a routerLink="/map-prep" class="text-xs text-primary underline mt-1 inline-block">Practice MAP Skills →</a>
+          </div>
+
+          <!-- Competition Math Level -->
+          <div class="rounded-lg border p-3 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold">🏆 Competition Math Level</p>
+              <p class="text-xs text-gray-500 mt-0.5">Based on overall mastery progression</p>
+            </div>
+            <span class="rounded-full px-3 py-1 text-sm font-bold"
+              [ngClass]="{
+                'bg-gray-100 text-gray-600': s.competitionLevel === 'None',
+                'bg-amber-100 text-amber-700': s.competitionLevel === 'AMC-8',
+                'bg-blue-100 text-blue-700': s.competitionLevel === 'AMC-10',
+                'bg-purple-100 text-purple-700': s.competitionLevel === 'MATHCOUNTS',
+                'bg-red-100 text-red-700': s.competitionLevel === 'AIME'
+              }"
+            >{{ s.competitionLevel }}</span>
+          </div>
+        </div>
+
+        <!-- Operation Mastery -->
+        <div class="bg-white rounded-xl shadow p-5">
+          <h2 class="text-lg font-bold text-primary mb-4">Operation Mastery</h2>
+          @for (op of operationKeys(); track op) {
+            <div class="mb-3">
+              <div class="flex justify-between mb-1">
+                <span class="text-sm capitalize">{{ op }}</span>
+                <span class="text-sm font-semibold" [ngClass]="scoreColor(p.masteryLevels[op])">{{ p.masteryLevels[op] }}/100</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="h-2 rounded-full transition-all" [ngClass]="barColor(p.masteryLevels[op])" [style.width.%]="p.masteryLevels[op]"></div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Goals -->
+        @if (p.goals && p.goals.length > 0) {
+          <div class="bg-white rounded-xl shadow p-5">
+            <h2 class="text-lg font-bold text-primary mb-3">Learning Goals</h2>
+            <ul class="space-y-2">
+              @for (goal of p.goals; track goal) {
+                <li class="flex items-center gap-2 text-sm">
+                  <span class="text-primary">🎯</span>{{ goal }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    }
+  </div>
+</div>

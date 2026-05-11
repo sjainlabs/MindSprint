@@ -17,18 +17,50 @@
         />
       </label>
 
-      <label class="block text-sm text-gray-600 mb-4">
-        Game Mode
-        <select
-          class="mt-1 w-full border rounded-md px-3 py-2"
-          [ngModel]="selectedMode()"
-          (ngModelChange)="selectedMode.set($event); loadChallenge()"
-        >
-          @for (mode of gameModeOptions; track mode.value) {
-            <option [ngValue]="mode.value">{{ mode.label }}</option>
+      <!-- Core Game Modes -->
+      <div class="mb-2">
+        <p class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Core Modes</p>
+        <div class="grid grid-cols-2 gap-2 mb-4">
+          @for (mode of coreModes; track mode.value) {
+            <button
+              type="button"
+              class="border rounded-lg p-3 text-left transition-all hover:shadow-sm"
+              [ngClass]="selectedMode() === mode.value ? 'border-primary bg-primary/10' : 'border-gray-200'"
+              (click)="selectedMode.set(mode.value); loadChallenge()"
+            >
+              <span class="text-lg">{{ mode.icon }}</span>
+              <p class="font-semibold text-sm mt-1">{{ mode.label }}</p>
+              <p class="text-xs text-gray-500">{{ mode.description }}</p>
+            </button>
           }
-        </select>
-      </label>
+        </div>
+      </div>
+
+      <!-- Super-Syllabus Game Modes -->
+      <div class="mb-4">
+        <p class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Super-Syllabus Modes</p>
+        <div class="grid grid-cols-2 gap-2">
+          @for (mode of superModes; track mode.value) {
+            <button
+              type="button"
+              class="border rounded-lg p-3 text-left transition-all hover:shadow-sm"
+              [ngClass]="selectedMode() === mode.value ? 'border-primary bg-primary/10' : 'border-gray-200'"
+              (click)="selectedMode.set(mode.value); loadChallenge()"
+            >
+              <span class="text-lg">{{ mode.icon }}</span>
+              <p class="font-semibold text-sm mt-1">{{ mode.label }}</p>
+              <p class="text-xs text-gray-500">{{ mode.description }}</p>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Super mode tip -->
+      @if (isSuperMode() && superModeInfo(); as info) {
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+          <p class="text-xs text-amber-800">💡 {{ info.tip }}</p>
+        </div>
+      }
 
       @if (loading()) {
         <p class="text-gray-500">Generating adaptive challenge...</p>
@@ -41,38 +73,67 @@
       @if (challenge(); as currentChallenge) {
         <div class="space-y-4">
           <div class="rounded-lg bg-indigo-50 p-4">
-            <p class="text-xs text-indigo-700 font-semibold">Mode: {{ currentChallenge.mode ?? selectedMode() }}</p>
+            <p class="text-xs text-indigo-700 font-semibold">Mode: {{ selectedMode() }}</p>
             <p class="text-xs text-gray-600">Adaptive Difficulty: {{ currentChallenge.difficulty }}/100</p>
             <p class="text-xs text-gray-600">Recommended Level: {{ currentChallenge.recommendedLevel }}</p>
             <p class="text-lg font-semibold mt-2">{{ currentChallenge.prompt }}</p>
           </div>
 
-          @if (currentChallenge.mode === 'abacus-flash') {
+          <!-- Mode-specific UI panels -->
+          @if (selectedMode() === 'abacus-flash') {
             <div class="rounded-lg border bg-white p-3 text-sm">
-              <p class="font-semibold">Abacus Flash</p>
+              <p class="font-semibold">⚡ Abacus Flash</p>
               <p class="text-xs text-gray-600">Flash sequence and speed adapt to mastery.</p>
               <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
-          @if (currentChallenge.mode === 'falling-numbers') {
+          @if (selectedMode() === 'falling-numbers') {
             <div class="rounded-lg border bg-white p-3 text-sm">
-              <p class="font-semibold">Falling Numbers</p>
+              <p class="font-semibold">🎮 Falling Numbers</p>
               <p class="text-xs text-gray-600">Catch target sums/products, build combos, use power-ups.</p>
               <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
-          @if (currentChallenge.mode === 'boss-battle') {
+          @if (selectedMode() === 'boss-battle') {
             <div class="rounded-lg border bg-white p-3 text-sm">
-              <p class="font-semibold">Boss Battle</p>
+              <p class="font-semibold">⚔️ Boss Battle</p>
               <p class="text-xs text-gray-600">Timed rounds with special attacks and HP bar challenge.</p>
               <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
-          @if (currentChallenge.mode === 'ai-puzzle') {
+          @if (selectedMode() === 'ai-puzzle') {
             <div class="rounded-lg border bg-white p-3 text-sm">
-              <p class="font-semibold">AI Puzzle Mode</p>
+              <p class="font-semibold">🤖 AI Puzzle Mode</p>
               <p class="text-xs text-gray-600">Logic, pattern, geometry, and function puzzle generation.</p>
               <pre class="mt-2 text-xs whitespace-pre-wrap">{{ currentChallenge.gamePayload | json }}</pre>
+            </div>
+          }
+          @if (selectedMode() === 'fluency-speed') {
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+              <p class="font-semibold text-amber-800">⚡ Fluency Speed</p>
+              <p class="text-xs text-amber-700">Race the clock! Every second counts in fluency mode.</p>
+              <p class="text-xs text-gray-600 mt-1">Time limit: {{ currentChallenge.timeLimitSeconds }}s</p>
+            </div>
+          }
+          @if (selectedMode() === 'reasoning-puzzle') {
+            <div class="rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm">
+              <p class="font-semibold text-purple-800">🔍 Reasoning Puzzle</p>
+              <p class="text-xs text-purple-700">Think carefully — multi-step reasoning required.</p>
+              <pre class="mt-2 text-xs whitespace-pre-wrap text-gray-700">{{ currentChallenge.gamePayload | json }}</pre>
+            </div>
+          }
+          @if (selectedMode() === 'map-challenge') {
+            <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm">
+              <p class="font-semibold text-green-800">📊 MAP Challenge</p>
+              <p class="text-xs text-green-700">Difficulty: {{ currentChallenge.difficulty }}/100 (MAP-aligned)</p>
+              <pre class="mt-2 text-xs whitespace-pre-wrap text-gray-700">{{ currentChallenge.gamePayload | json }}</pre>
+            </div>
+          }
+          @if (selectedMode() === 'competition-boss') {
+            <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
+              <p class="font-semibold text-red-800">🏆 Competition Boss</p>
+              <p class="text-xs text-red-700">AMC/MATHCOUNTS-level. Only the best survive!</p>
+              <pre class="mt-2 text-xs whitespace-pre-wrap text-gray-700">{{ currentChallenge.gamePayload | json }}</pre>
             </div>
           }
 
