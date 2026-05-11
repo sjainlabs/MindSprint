@@ -124,7 +124,7 @@
               </div>
               <div class="rounded-md bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 inline-flex items-center gap-2 animate-pulse-soft">
                 <span>Combo x3</span>
-                <span class="inline-flex animate-spin">⚡</span>
+                <span class="inline-flex motion-safe:animate-spin">⚡</span>
               </div>
             </div>
           }
@@ -144,7 +144,7 @@
                   ></div>
                 </div>
               </div>
-              <div class="relative rounded-lg border border-rose-200 bg-rose-50 p-3 text-center" [ngClass]="isCorrect() === true ? 'animate-shake' : ''">
+              <div class="relative rounded-lg border border-rose-200 bg-rose-50 p-3 text-center" [ngClass]="isCorrect() ? 'animate-shake' : ''">
                 <span class="relative z-10 text-3xl">🐲</span>
                 <span class="absolute inset-0 rounded-lg bg-rose-300/40 animate-attack-flash"></span>
               </div>
@@ -162,7 +162,7 @@
                 <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">2</div>
                 <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">3</div>
                 <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">4</div>
-                <div class="aspect-square rounded-md bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-700" [ngClass]="isCorrect() === true ? 'animate-pulse-strong' : ''">✓</div>
+                <div class="aspect-square rounded-md bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-700" [ngClass]="isCorrect() ? 'animate-pulse-strong' : ''">✓</div>
                 <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">6</div>
               </div>
             </div>

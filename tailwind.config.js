@@ -84,7 +84,7 @@ module.exports = {
         'flash-in': 'flash-in 180ms ease-out both',
         'flash-out': 'flash-out 220ms ease-in 280ms both',
         'flash-pop': 'flash-pop 420ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-        'flash-cycle': 'flash-in 180ms ease-out both, flash-pop 420ms ease-out, flash-out 220ms ease-in 280ms both',
+        'flash-cycle': 'flash-in 180ms ease-out both, flash-pop 180ms ease-out 180ms both, flash-out 220ms ease-in 360ms both',
         fall: 'fall var(--fall-duration, 2.8s) linear var(--fall-delay, 0ms) infinite',
         drift: 'drift 1.8s ease-in-out infinite',
         bounce: 'bounce 620ms ease-in-out infinite',
