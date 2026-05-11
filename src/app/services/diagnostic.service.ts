@@ -97,8 +97,7 @@ export interface DiagnosticResult {
   providedIn: 'root',
 })
 export class DiagnosticService {
-  private readonly apiRoot =
-    typeof window !== 'undefined' && window.location.hostname === 'localhost'
+  private readonly apiRoot = environment.apiUrl;
   private readonly baseUrl = `${this.apiRoot}/diagnostic`;
 
   /** State shared between the start, test, and results pages. */
