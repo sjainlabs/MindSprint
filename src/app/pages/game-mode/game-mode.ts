@@ -202,7 +202,7 @@ export class GameModeComponent {
         .getAbacusFlashChallenge({
           studentId: this.studentId(),
           difficulty: this.adaptiveDifficulty() ?? undefined,
-          streak: this.streakTotal(),
+          streak: this.streakTotal()
         })
         .subscribe({
           next: (challenge) => {

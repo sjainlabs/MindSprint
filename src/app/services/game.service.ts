@@ -103,8 +103,23 @@ export class GameService {
     studentId: string;
     difficulty?: number;
     streak?: number;
-  }): Observable<GameChallenge> {
-    return this.http.post<GameChallenge>(`${this.apiRoot}/game/abacus-flash/challenge`, payload);
+  }) {
+    const params = new URLSearchParams({
+      studentId: payload.studentId,
+      mode: 'abacus-flash'
+    });
+
+    if (payload.difficulty !== undefined) {
+      params.set('difficulty', String(payload.difficulty));
+    }
+
+    if (payload.streak !== undefined) {
+      params.set('streak', String(payload.streak));
+    }
+
+    return this.http.get<GameChallenge>(
+      `${this.apiRoot}/game/challenge?${params.toString()}`
+    );
   }
 
   submitAbacusFlash(payload: {
@@ -114,7 +129,7 @@ export class GameService {
     timeTakenMs?: number;
   }): Observable<AbacusFlashSubmitResponse> {
     return this.http.post<AbacusFlashSubmitResponse>(
-      `${this.apiRoot}/game/abacus-flash/submit`,
+      `${this.apiRoot}/game/submit`,
       payload,
     );
   }
