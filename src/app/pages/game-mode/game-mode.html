@@ -24,7 +24,7 @@
           @for (mode of coreModes; track mode.value) {
             <button
               type="button"
-              class="border rounded-lg p-3 text-left transition-all hover:shadow-sm"
+              class="border rounded-lg p-3 text-left transition-all hover:shadow-lg hover:bg-primary/10 active:scale-95"
               [ngClass]="selectedMode() === mode.value ? 'border-primary bg-primary/10' : 'border-gray-200'"
               (click)="selectedMode.set(mode.value); loadChallenge()"
             >
@@ -43,7 +43,7 @@
           @for (mode of superModes; track mode.value) {
             <button
               type="button"
-              class="border rounded-lg p-3 text-left transition-all hover:shadow-sm"
+              class="border rounded-lg p-3 text-left transition-all hover:shadow-lg hover:bg-primary/10 active:scale-95"
               [ngClass]="selectedMode() === mode.value ? 'border-primary bg-primary/10' : 'border-gray-200'"
               (click)="selectedMode.set(mode.value); loadChallenge()"
             >
@@ -63,7 +63,11 @@
       }
 
       @if (loading()) {
-        <p class="text-gray-500">Generating adaptive challenge...</p>
+        <div class="space-y-3 animate-fade-in">
+          <div class="h-4 rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:220%_100%] animate-skeleton"></div>
+          <div class="h-4 w-2/3 rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:220%_100%] animate-skeleton animation-delay-150"></div>
+          <p class="text-gray-500 text-sm animate-pulse-soft">Generating adaptive challenge…</p>
+        </div>
       }
 
       @if (errorMessage()) {
@@ -71,7 +75,7 @@
       }
 
       @if (challenge(); as currentChallenge) {
-        <div class="space-y-4">
+        <div class="space-y-4 animate-slide-up">
           <div class="rounded-lg bg-indigo-50 p-4">
             <p class="text-xs text-indigo-700 font-semibold">Mode: {{ selectedMode() }}</p>
             <p class="text-xs text-gray-600">Adaptive Difficulty: {{ currentChallenge.difficulty }}/100</p>
@@ -81,17 +85,17 @@
 
           <!-- Mode-specific UI panels -->
           @if (selectedMode() === 'abacus-flash') {
-            <div class="rounded-lg border bg-white p-4 text-sm">
+            <div class="rounded-lg border bg-white p-4 text-sm animate-fade-in">
               <p class="font-semibold mb-2">⚡ Abacus Flash</p>
               <p class="text-xs text-gray-600 mb-3">Watch the numbers — then answer from memory!</p>
 
               @if (isFlashing()) {
                 <!-- Flash animation display -->
-                <div class="flash-stage">
+                <div class="flash-stage relative flex items-center justify-center">
                   @if (currentFlashNumber() !== null) {
-                    <span class="flash-number">{{ currentFlashNumber() }}</span>
+                    <span class="flash-number animate-flash-cycle">{{ currentFlashNumber() }}</span>
                   } @else {
-                    <span class="flash-number">&nbsp;</span>
+                    <span class="flash-number animate-flash-cycle">&nbsp;</span>
                   }
                 </div>
               }
@@ -102,21 +106,65 @@
             </div>
           }
           @if (selectedMode() === 'falling-numbers') {
-            <div class="rounded-lg border bg-white p-3 text-sm">
+            <div class="rounded-lg border bg-white p-3 text-sm space-y-3 animate-fade-in">
               <p class="font-semibold">🎮 Falling Numbers</p>
               <p class="text-xs text-gray-600">Catch target sums/products, build combos, use power-ups.</p>
+              <div class="falling-container">
+                <div class="falling-number left-[14%] [--drift:-16px] [--fall-duration:2.9s] animate-fall">
+                  <span class="animate-drift">4</span>
+                </div>
+                <div class="falling-number left-[42%] [--drift:20px] [--fall-duration:2.5s] animation-delay-150 animate-fall">
+                  <span class="animate-drift">7</span>
+                </div>
+                <div class="falling-number left-[70%] [--drift:-12px] [--fall-duration:2.7s] animation-delay-300 animate-fall">
+                  <span class="animate-drift">9</span>
+                </div>
+                <div class="absolute bottom-3 right-3 text-xl animate-bounce">⭐</div>
+                <div class="absolute bottom-3 left-3 text-xl animate-pulse-soft">🧲</div>
+              </div>
+              <div class="rounded-md bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 inline-flex items-center gap-2 animate-pulse-soft">
+                <span>Combo x3</span>
+                <span class="inline-flex motion-safe:animate-spin">⚡</span>
+              </div>
             </div>
           }
           @if (selectedMode() === 'boss-battle') {
-            <div class="rounded-lg border bg-white p-3 text-sm">
+            <div class="rounded-lg border bg-white p-3 text-sm space-y-3 animate-fade-in">
               <p class="font-semibold">⚔️ Boss Battle</p>
               <p class="text-xs text-gray-600">Timed rounds with special attacks and HP bar challenge.</p>
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-xs text-gray-600">
+                  <span>Boss HP</span>
+                  <span>{{ currentChallenge.bossBattle.hp }}%</span>
+                </div>
+                <div class="h-3 rounded-full bg-gray-200 overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-rose-500 to-orange-400 origin-left animate-hp-shrink transition-all duration-700"
+                    [style.width.%]="currentChallenge.bossBattle.hp"
+                  ></div>
+                </div>
+              </div>
+              <div class="relative rounded-lg border border-rose-200 bg-rose-50 p-3 text-center" [ngClass]="isCorrect() ? 'animate-shake' : ''">
+                <span class="relative z-10 text-3xl">🐲</span>
+                <span class="absolute inset-0 rounded-lg bg-rose-300/40 animate-attack-flash"></span>
+              </div>
+              <p class="text-sm font-semibold" [ngClass]="currentChallenge.timeLimitSeconds < 5 ? 'text-red-600 animate-timer-pulse' : 'text-gray-700'">
+                ⏱️ {{ currentChallenge.timeLimitSeconds }}s remaining
+              </p>
             </div>
           }
           @if (selectedMode() === 'ai-puzzle') {
-            <div class="rounded-lg border bg-white p-3 text-sm">
+            <div class="rounded-lg border bg-white p-3 text-sm space-y-3 animate-fade-in">
               <p class="font-semibold">🤖 AI Puzzle Mode</p>
               <p class="text-xs text-gray-600">Logic, pattern, geometry, and function puzzle generation.</p>
+              <div class="grid grid-cols-3 gap-2 rounded-lg bg-slate-100 p-2 animate-fade-in">
+                <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700 animate-highlight">1</div>
+                <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">2</div>
+                <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">3</div>
+                <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">4</div>
+                <div class="aspect-square rounded-md bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-700" [ngClass]="isCorrect() ? 'animate-pulse-strong' : ''">✓</div>
+                <div class="aspect-square rounded-md bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">6</div>
+              </div>
             </div>
           }
           @if (selectedMode() === 'fluency-speed') {
@@ -154,8 +202,12 @@
                 @for (option of currentChallenge.options; track option) {
                   <button
                     type="button"
-                    class="border rounded-lg py-2 px-3 text-left"
-                    [class.border-primary]="selectedAnswer() === option"
+                    class="border rounded-lg py-2 px-3 text-left transition-all hover:shadow-lg hover:bg-primary/10 active:scale-95"
+                    [ngClass]="{
+                      'border-primary': selectedAnswer() === option,
+                      'animate-pulse-strong border-emerald-500 bg-emerald-50': challengeSubmitted() && selectedAnswer() === option && currentChallenge.answer === option,
+                      'animate-shake border-red-400 bg-red-50': challengeSubmitted() && selectedAnswer() === option && currentChallenge.answer !== option
+                    }"
                     (click)="selectedAnswer.set(option)"
                     [disabled]="challengeSubmitted()"
                   >
@@ -166,7 +218,7 @@
 
               <button
                 type="button"
-                class="w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg disabled:opacity-60"
+                class="w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg transition-all hover:shadow-lg hover:bg-primary/90 active:scale-95 disabled:opacity-60"
                 [disabled]="selectedAnswer() === null || challengeSubmitted()"
                 (click)="submitChallenge()"
               >
@@ -233,7 +285,7 @@
           @if (selectedMode() !== 'abacus-flash') {
             <button
               type="button"
-              class="w-full border border-gray-300 py-2 px-4 rounded-lg"
+              class="w-full border border-gray-300 py-2 px-4 rounded-lg transition-all hover:shadow-lg hover:bg-primary/10 active:scale-95"
               (click)="loadChallenge()"
             >
               Next AI Challenge
