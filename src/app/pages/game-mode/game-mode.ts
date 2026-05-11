@@ -33,6 +33,8 @@ export class GameModeComponent {
   localStreak = signal(0);
   unlockedBadges = signal<string[]>([]);
   selectedMode = signal<SuperGameMode>('abacus-flash');
+  /** The API-compatible mode used for the currently loaded challenge */
+  private activeChallengeApiMode: GameMode = 'abacus-flash';
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
     { value: 'abacus-flash', label: 'Abacus Flash', description: 'Flash-card speed drills with adaptive pacing.', icon: '🔢' },
     { value: 'falling-numbers', label: 'Falling Numbers', description: 'Catch target sums, build combos, use power-ups.', icon: '🎮' },
@@ -108,10 +110,13 @@ export class GameModeComponent {
     this.selectedAnswer.set(null);
     this.challengeSubmitted.set(false);
 
+    const apiMode = this.toApiMode(this.selectedMode());
+    this.activeChallengeApiMode = apiMode;
+
     this.gameService
         .getChallenge({
           studentId: this.studentId(),
-          mode: this.toApiMode(this.selectedMode()),
+          mode: apiMode,
           difficulty: this.adaptiveDifficulty() ?? undefined,
           streak: this.streakTotal(),
           completedDailyQuestCount: this.completedQuests(),
@@ -160,7 +165,7 @@ export class GameModeComponent {
     this.gameService
       .submitChallenge({
         studentId: this.studentId(),
-        mode: this.toApiMode(this.selectedMode()),
+        mode: this.activeChallengeApiMode,
         score: 100,
         accuracy: 100,
         streak: this.streakTotal(),

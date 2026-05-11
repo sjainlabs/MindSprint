@@ -99,9 +99,13 @@ export class TopicBrowserComponent implements OnInit {
     const filter = this.exploreFilter();
     if (filter === 'domain') return all;
     if (filter === 'rit-band') {
+      // RIT bands 180-280 map linearly to difficulty 0-100: difficulty = (rit - 180)
       const band = this.selectedRITBand();
+      const diffCenter = Math.min(100, Math.max(0, band - 180));
       return all.filter((t) =>
-        t.difficultyTiers.some((tier) => tier.min <= band / 3 && tier.max >= band / 3.5),
+        t.difficultyTiers.some(
+          (tier) => tier.min <= diffCenter + 15 && tier.max >= diffCenter - 15,
+        ),
       );
     }
     if (filter === 'reasoning-level') {
