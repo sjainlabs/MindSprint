@@ -22,6 +22,7 @@ import { MapTableComponent } from '../../components/map-table/map-table';
 const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
 const DEFAULT_FLASH_SPEED_MS = 600;
+const MAP_AUTO_ADVANCE_DELAY_MS = 220;
 
 export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'map-challenge' | 'competition-boss';
 
@@ -303,7 +304,7 @@ export class GameModeComponent {
       if (!this.challengeSubmitted() && this.isMapStepAnswered(this.currentStepIndex())) {
         this.nextMapStep();
       }
-    }, 220);
+    }, MAP_AUTO_ADVANCE_DELAY_MS);
   }
 
   mapIsOptionSelected(option: ChallengeOption, index = this.currentStepIndex()): boolean {
@@ -340,6 +341,10 @@ export class GameModeComponent {
 
   private evaluateMapChallenge(): boolean {
     const correctAnswers = this.mapCorrectAnswers();
+    if (correctAnswers.length === 0) {
+      this.mapPartialCredit.set(0);
+      return false;
+    }
     const step = this.currentMapStep();
     const stepSelections = this.mapSelectionForStep(this.currentStepIndex());
     let selectedAnswers = stepSelections;

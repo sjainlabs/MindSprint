@@ -125,7 +125,7 @@
                 <div class="mt-4 space-y-3">
                   @if (mapOptionsForStep(step).length > 0) {
                     <div class="grid gap-3 sm:grid-cols-2">
-                      @for (option of mapOptionsForStep(step); track option) {
+                      @for (option of mapOptionsForStep(step); track $index) {
                         <button
                           type="button"
                           class="min-h-14 rounded-2xl border-2 border-cyan-300 bg-white px-4 py-3 text-left text-lg font-semibold text-cyan-900 transition-all hover:shadow-lg active:scale-95"

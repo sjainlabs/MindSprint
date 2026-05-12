@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, computed } from '@angular/core';
 import { type MapGraphPayload } from '../../services/game.service';
 
+const MIN_BAR_HEIGHT_PERCENT = 8;
+
 @Component({
   selector: 'map-graph',
   standalone: true,
@@ -24,7 +26,7 @@ export class MapGraphComponent {
     return payload.values.map((value, index) => ({
       label: payload.labels[index] ?? `Item ${index + 1}`,
       value,
-      height: Math.max(8, Math.round((value / maxValue) * 100)),
+      height: Math.max(MIN_BAR_HEIGHT_PERCENT, Math.round((value / maxValue) * 100)),
       icon: payload.icons?.[index] ?? '⭐',
     }));
   });
