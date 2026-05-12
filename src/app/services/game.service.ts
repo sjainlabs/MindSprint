@@ -223,6 +223,12 @@ export class GameService {
     accuracy: number;
     streak: number;
   }): Observable<AbacusFlashSubmitResponse> {
-    return this.http.post<AbacusFlashSubmitResponse>(`${this.apiRoot}/game/submit`, payload);
+    const normalizedPayload = {
+      ...payload,
+      score: Math.max(0, Math.min(100, payload.score)),
+      accuracy: Math.max(0, Math.min(100, payload.accuracy)),
+      streak: Math.max(0, Math.floor(payload.streak)),
+    };
+    return this.http.post<AbacusFlashSubmitResponse>(`${this.apiRoot}/game/submit`, normalizedPayload);
   }
 }

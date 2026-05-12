@@ -404,12 +404,14 @@
                   <div class="space-y-3">
                     <label for="abacus-answer" class="text-sm font-medium text-gray-700">Enter the total</label>
                     <input
+                      #abacusAnswerInput
                       id="abacus-answer"
                       type="number"
                       class="w-full border rounded-lg py-2 px-3"
+                      aria-label="Abacus flash total answer"
                       [disabled]="challengeSubmitted()"
                       [value]="selectedAnswer() ?? ''"
-                      (input)="setAbacusAnswer($any($event.target).value)"
+                      (input)="setAbacusAnswer(abacusAnswerInput.value)"
                     />
                     <button
                       type="button"

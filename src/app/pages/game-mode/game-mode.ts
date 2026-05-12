@@ -88,6 +88,7 @@ export class GameModeComponent implements OnDestroy {
   showQuestion = signal(false);
   isFlashing = signal(false);
   private flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private flashSequenceToken = 0;
   private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
@@ -442,7 +443,8 @@ export class GameModeComponent implements OnDestroy {
   }
 
   getModeSpecificPrompt(challenge: LegacyChallenge): string {
-    const basePrompt = challenge.prompt?.trim();
+    const basePrompt =
+      'prompt' in challenge && typeof challenge.prompt === 'string' ? challenge.prompt.trim() : '';
     if (this.selectedMode() !== 'falling-numbers') {
       return basePrompt && basePrompt.length > 0 ? basePrompt : this.t.translate('game.loadingAdaptive');
     }
@@ -500,6 +502,7 @@ export class GameModeComponent implements OnDestroy {
       clearTimeout(this.flashTimeoutId);
       this.flashTimeoutId = null;
     }
+    const sequenceToken = ++this.flashSequenceToken;
 
     const { flashSequence, speedMs } = this.getFlashPayload(challenge);
     this.flashSequence.set(flashSequence);
@@ -522,6 +525,9 @@ export class GameModeComponent implements OnDestroy {
     this.flashState.set(GAME_STATE.ROUND);
 
     const flashNext = (): void => {
+      if (sequenceToken !== this.flashSequenceToken) {
+        return;
+      }
       this.flashState.set(GAME_STATE.NEXT);
       const nextIndex = this.flashCurrentIndex() + 1;
       if (nextIndex < this.flashSequence().length) {
@@ -578,6 +584,7 @@ export class GameModeComponent implements OnDestroy {
       clearTimeout(this.flashTimeoutId);
       this.flashTimeoutId = null;
     }
+    this.flashSequenceToken++;
     this.clearMapAutoAdvanceTimeout();
 
     const apiMode = this.toApiMode(this.selectedMode());
@@ -747,6 +754,7 @@ export class GameModeComponent implements OnDestroy {
       clearTimeout(this.flashTimeoutId);
       this.flashTimeoutId = null;
     }
+    this.flashSequenceToken++;
     this.clearMapAutoAdvanceTimeout();
   }
 }
