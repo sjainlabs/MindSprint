@@ -3,15 +3,18 @@
     <!-- Header -->
     <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-primary">Student Profile</h1>
-        <p class="text-sm text-gray-600">Super-Syllabus scores: Fluency · Mastery · Reasoning · MAP · Competition</p>
+        <h1 class="text-2xl font-bold text-primary">{{ 'profile.title' | translate }}</h1>
+        <p class="text-sm text-gray-600">{{ 'profile.subtitle' | translate }}</p>
       </div>
-      <a routerLink="/welcome" class="text-sm underline text-primary">Back Home</a>
+      <div class="flex items-center gap-3">
+        <app-language-toggle />
+        <a routerLink="/welcome" class="text-sm underline text-primary">{{ 'nav.backHome' | translate }}</a>
+      </div>
     </div>
 
     <!-- Controls -->
     <div class="bg-white rounded-xl shadow p-4 flex gap-3">
-      <label class="flex-1 text-sm text-gray-600">Student ID
+      <label class="flex-1 text-sm text-gray-600">{{ 'profile.studentId' | translate }}
         <input
           class="mt-1 w-full border rounded px-3 py-2"
           [ngModel]="studentId()"
@@ -21,13 +24,13 @@
       </label>
       <div class="flex items-end">
         <button type="button" class="bg-primary text-white rounded-lg px-4 py-2 font-semibold" (click)="loadProfile()">
-          Load
+          {{ 'profile.load' | translate }}
         </button>
       </div>
     </div>
 
     @if (loading()) {
-      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">Loading profile…</div>
+      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">{{ 'profile.loading' | translate }}</div>
     } @else if (errorMessage()) {
       <div class="bg-white rounded-xl shadow p-6 text-sm text-red-600">{{ errorMessage() }}</div>
     } @else if (profile(); as p) {
@@ -39,10 +42,10 @@
           </div>
           <div>
             <p class="font-bold text-lg">{{ p.studentId }}</p>
-            <p class="text-sm text-gray-500">Grade {{ p.grade }} · Age {{ p.age }} · Level {{ p.level }}</p>
+            <p class="text-sm text-gray-500">{{ 'profile.grade' | translate }} {{ p.grade }} · {{ 'profile.age' | translate }} {{ p.age }} · {{ 'profile.level' | translate }} {{ p.level }}</p>
           </div>
           <div class="ml-auto text-right">
-            <p class="text-xs text-gray-500">XP</p>
+            <p class="text-xs text-gray-500">{{ 'profile.xp' | translate }}</p>
             <p class="text-2xl font-bold text-amber-600">{{ p.xp }}</p>
           </div>
         </div>
@@ -57,48 +60,48 @@
       <!-- Super-Syllabus Scores -->
       @if (scores(); as s) {
         <div class="bg-white rounded-xl shadow p-5">
-          <h2 class="text-lg font-bold text-primary mb-4">Super-Syllabus Scores</h2>
+          <h2 class="text-lg font-bold text-primary mb-4">{{ 'profile.superSyllabusScores' | translate }}</h2>
 
           <!-- Fluency Score -->
           <div class="mb-4">
             <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">⚡ Fluency Score</span>
+              <span class="text-sm font-semibold">{{ 'profile.fluencyScore' | translate }}</span>
               <span class="text-sm font-bold" [ngClass]="scoreColor(s.fluencyScore)">{{ s.fluencyScore }}/100</span>
             </div>
             <div class="w-full bg-gray-100 rounded-full h-2.5">
               <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.fluencyScore)" [style.width.%]="s.fluencyScore"></div>
             </div>
-            <p class="text-xs text-gray-400 mt-0.5">Based on addition & subtraction mastery</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.fluencyNote' | translate }}</p>
           </div>
 
           <!-- Conceptual Mastery Score -->
           <div class="mb-4">
             <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">🧩 Conceptual Mastery Score</span>
+              <span class="text-sm font-semibold">{{ 'profile.conceptualScore' | translate }}</span>
               <span class="text-sm font-bold" [ngClass]="scoreColor(s.conceptualMasteryScore)">{{ s.conceptualMasteryScore }}/100</span>
             </div>
             <div class="w-full bg-gray-100 rounded-full h-2.5">
               <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.conceptualMasteryScore)" [style.width.%]="s.conceptualMasteryScore"></div>
             </div>
-            <p class="text-xs text-gray-400 mt-0.5">Based on multiplication & division mastery</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.conceptualNote' | translate }}</p>
           </div>
 
           <!-- Reasoning Score -->
           <div class="mb-4">
             <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">🔍 Reasoning & Logic Score</span>
+              <span class="text-sm font-semibold">{{ 'profile.reasoningScore' | translate }}</span>
               <span class="text-sm font-bold" [ngClass]="scoreColor(s.reasoningScore)">{{ s.reasoningScore }}/100</span>
             </div>
             <div class="w-full bg-gray-100 rounded-full h-2.5">
               <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.reasoningScore)" [style.width.%]="s.reasoningScore"></div>
             </div>
-            <p class="text-xs text-gray-400 mt-0.5">Derived from overall mastery & adaptive performance</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.reasoningNote' | translate }}</p>
           </div>
 
           <!-- MAP RIT Estimate -->
           <div class="mb-4">
             <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">📊 MAP RIT Estimate</span>
+              <span class="text-sm font-semibold">{{ 'profile.mapRIT' | translate }}</span>
               <span class="text-sm font-bold text-blue-600">{{ s.mapRITEstimate }}</span>
             </div>
             <div class="w-full bg-gray-100 rounded-full h-2.5">
@@ -107,15 +110,15 @@
                 [style.width.%]="((s.mapRITEstimate - 180) / 100) * 100"
               ></div>
             </div>
-            <p class="text-xs text-gray-400 mt-0.5">Estimated RIT score based on mastery data (range 180–280)</p>
-            <a routerLink="/map-prep" class="text-xs text-primary underline mt-1 inline-block">Practice MAP Skills →</a>
+            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.mapRITNote' | translate }}</p>
+            <a routerLink="/map-prep" class="text-xs text-primary underline mt-1 inline-block">{{ 'profile.practiceMapSkills' | translate }}</a>
           </div>
 
           <!-- Competition Math Level -->
           <div class="rounded-lg border p-3 flex items-center justify-between">
             <div>
-              <p class="text-sm font-semibold">🏆 Competition Math Level</p>
-              <p class="text-xs text-gray-500 mt-0.5">Based on overall mastery progression</p>
+              <p class="text-sm font-semibold">{{ 'profile.competitionLevel' | translate }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{{ 'profile.competitionNote' | translate }}</p>
             </div>
             <span class="rounded-full px-3 py-1 text-sm font-bold"
               [ngClass]="{
@@ -131,7 +134,7 @@
 
         <!-- Operation Mastery -->
         <div class="bg-white rounded-xl shadow p-5">
-          <h2 class="text-lg font-bold text-primary mb-4">Operation Mastery</h2>
+          <h2 class="text-lg font-bold text-primary mb-4">{{ 'profile.operationMastery' | translate }}</h2>
           @for (op of operationKeys(); track op) {
             <div class="mb-3">
               <div class="flex justify-between mb-1">
@@ -148,7 +151,7 @@
         <!-- Goals -->
         @if (p.goals && p.goals.length > 0) {
           <div class="bg-white rounded-xl shadow p-5">
-            <h2 class="text-lg font-bold text-primary mb-3">Learning Goals</h2>
+            <h2 class="text-lg font-bold text-primary mb-3">{{ 'profile.learningGoals' | translate }}</h2>
             <ul class="space-y-2">
               @for (goal of p.goals; track goal) {
                 <li class="flex items-center gap-2 text-sm">

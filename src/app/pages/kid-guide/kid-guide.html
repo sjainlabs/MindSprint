@@ -1,8 +1,11 @@
 <div class="min-h-screen bg-gradient-to-b from-sky-50 to-purple-50 py-6 px-4">
   <div class="max-w-3xl mx-auto rounded-3xl bg-white shadow-lg p-4 sm:p-6">
     <div class="flex items-center justify-between gap-3">
-      <a routerLink="/onboarding" class="text-sm font-semibold text-primary underline">Back</a>
-      <p class="text-xs sm:text-sm font-semibold text-gray-600">Step {{ currentIndex() + 1 }} of {{ slides.length }}</p>
+      <a routerLink="/onboarding" class="text-sm font-semibold text-primary underline">{{ backLabel() }}</a>
+      <div class="flex items-center gap-3">
+        <p class="text-xs sm:text-sm font-semibold text-gray-600">{{ stepLabel() }}</p>
+        <app-language-toggle />
+      </div>
     </div>
 
     <div class="mt-4 h-2 w-full rounded-full bg-gray-100">
@@ -34,7 +37,7 @@
         (click)="previous()"
         [disabled]="isFirst()"
       >
-        ⬅ Back
+        {{ backLabel() }}
       </button>
 
       @if (!isLast()) {
@@ -43,14 +46,14 @@
           class="w-full sm:w-auto sm:flex-1 rounded-2xl px-6 py-4 text-lg font-bold bg-primary text-white"
           (click)="next()"
         >
-          Next ➡
+          {{ nextLabel() }}
         </button>
       } @else {
         <a
           routerLink="/topics"
           class="w-full sm:w-auto sm:flex-1 rounded-2xl px-6 py-4 text-lg font-bold bg-emerald-500 text-white text-center"
         >
-          Let’s Start! 🚀
+          {{ startLabel() }}
         </a>
       }
     </div>

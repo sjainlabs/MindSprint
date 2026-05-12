@@ -2,14 +2,17 @@
   <div class="max-w-4xl mx-auto space-y-5">
     <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-primary">Parent Guide</h1>
-        <p class="text-sm text-gray-600">MindSprint overview, structure, and support strategies</p>
+        <h1 class="text-2xl font-bold text-primary">{{ 'parentGuide.title' | translate }}</h1>
+        <p class="text-sm text-gray-600">{{ 'parentGuide.subtitle' | translate }}</p>
       </div>
-      <a routerLink="/onboarding" class="text-sm underline text-primary">Back</a>
+      <div class="flex items-center gap-3">
+        <app-language-toggle />
+        <a routerLink="/onboarding" class="text-sm underline text-primary">{{ 'nav.back' | translate }}</a>
+      </div>
     </div>
 
     <div class="bg-white rounded-xl shadow p-4 space-y-3">
-      @for (section of sections; track section.title; let i = $index) {
+      @for (section of sections(); track section.title; let i = $index) {
         <article class="rounded-xl border border-gray-200 overflow-hidden">
           <button
             type="button"
@@ -21,7 +24,7 @@
               <span class="text-lg">{{ section.icon }}</span>
               {{ section.title }}
             </span>
-            <span class="text-sm text-gray-500">{{ isExpanded(i) ? 'Hide' : 'Show' }}</span>
+            <span class="text-sm text-gray-500">{{ isExpanded(i) ? ('parentGuide.hide' | translate) : ('parentGuide.show' | translate) }}</span>
           </button>
           @if (isExpanded(i)) {
             <div class="px-4 pb-4 bg-gray-50">
@@ -40,7 +43,7 @@
       routerLink="/topics"
       class="block w-full rounded-xl bg-primary text-white text-center py-3 font-semibold shadow"
     >
-      Start Learning
+      {{ 'parentGuide.startLearning' | translate }}
     </a>
   </div>
 </div>
