@@ -49,6 +49,7 @@ export class I18nService {
         }
 
         console.warn(`Failed to load ${language} translations. Falling back to English.`);
+        this.loadSubscription?.unsubscribe();
         this.loadSubscription = this.http.get<Record<string, string>>('/assets/i18n/en.json').subscribe({
           next: (dictionary) => this.dictionary.set(dictionary),
           error: () => this.dictionary.set({}),
