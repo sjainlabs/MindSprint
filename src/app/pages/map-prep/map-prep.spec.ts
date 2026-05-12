@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SyllabusService } from '../../services/syllabus.service';
 import { MapPrepComponent } from './map-prep';
+import { PracticeService } from '../../services/practice.service';
 
 const mockRITSkills = {
   band: 220,
@@ -45,10 +46,23 @@ const mockProjection = {
   practiceSessionsNeeded: 12,
 };
 
+const mockSheet = {
+  worksheetId: 'sheet-1',
+  title: 'MAP Practice Sheet · RIT 220',
+  generatedAt: new Date().toISOString(),
+  questionCount: 10,
+  domains: ['Numbers & Operations'],
+  ritBand: 220,
+  downloadUrl: 'https://example.com/sheet-1.pdf',
+};
+
 describe('MapPrepComponent', () => {
   const syllabusServiceMock = {
     getSkillsByRIT: vi.fn(() => of(mockRITSkills)),
     getMAPGrowthProjection: vi.fn(() => of(mockProjection)),
+  };
+  const practiceServiceMock = {
+    generateMapPracticeSheet: vi.fn(() => of(mockSheet)),
   };
 
   beforeEach(async () => {
@@ -58,6 +72,7 @@ describe('MapPrepComponent', () => {
       providers: [
         provideRouter([]),
         { provide: SyllabusService, useValue: syllabusServiceMock },
+        { provide: PracticeService, useValue: practiceServiceMock },
       ],
     }).compileComponents();
   });
@@ -177,5 +192,30 @@ describe('MapPrepComponent', () => {
 
     expect(fixture.componentInstance.ritBands.length).toBeGreaterThanOrEqual(10);
     expect(fixture.componentInstance.ritBands[0].value).toBe(180);
+  });
+
+  it('generates a MAP practice sheet from selected configuration', () => {
+    const fixture = TestBed.createComponent(MapPrepComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.generatePracticeSheet();
+
+    expect(practiceServiceMock.generateMapPracticeSheet).toHaveBeenCalledWith(
+      expect.objectContaining({ ritBand: 220, questionCount: 10 }),
+    );
+    expect(comp.generatedSheet()?.worksheetId).toBe('sheet-1');
+  });
+
+  it('falls back to local generated sheet when generator API fails', () => {
+    practiceServiceMock.generateMapPracticeSheet.mockReturnValueOnce(throwError(() => new Error('generator failed')));
+    const fixture = TestBed.createComponent(MapPrepComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.generatePracticeSheet();
+
+    expect(comp.generatedSheet()).toBeTruthy();
+    expect(comp.sheetError()).toContain('Backend unavailable');
   });
 });

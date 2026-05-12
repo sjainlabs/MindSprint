@@ -56,6 +56,25 @@ export interface WorksheetResult {
   questionResults: WorksheetQuestionResult[];
 }
 
+export interface MapPracticeSheetRequest {
+  studentId: string;
+  ritBand: number;
+  domains: string[];
+  questionCount: number;
+  includeHints: boolean;
+  includeExplanations: boolean;
+}
+
+export interface MapPracticeSheetResponse {
+  worksheetId: string;
+  title: string;
+  generatedAt: string;
+  questionCount: number;
+  domains: string[];
+  ritBand: number;
+  downloadUrl?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -71,5 +90,9 @@ export class PracticeService {
 
   submitWorksheet(payload: WorksheetSubmission): Observable<WorksheetResult> {
     return this.http.post<WorksheetResult>(`${this.baseUrl}/submit`, payload);
+  }
+
+  generateMapPracticeSheet(payload: MapPracticeSheetRequest): Observable<MapPracticeSheetResponse> {
+    return this.http.post<MapPracticeSheetResponse>(`${this.baseUrl}/worksheet`, payload);
   }
 }
