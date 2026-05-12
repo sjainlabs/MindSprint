@@ -8,8 +8,10 @@ import { type AdvancedQuestionType } from './ai-worksheet.service';
 
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 export type GameMode =
+  | 'flash-abacus'
   | 'abacus-flash'
   | 'falling-numbers'
+  | 'arithmetic'
   | 'boss-battle'
   | 'ai-puzzle'
   | 'map'
@@ -57,10 +59,13 @@ export interface WorksheetRecommendation {
   focusOperations: MathOperation[];
   rationale: string[];
   domainId?: string;
+  domainIdRaw?: string;
   domainDisplayLabel?: string;
   skillId?: string;
+  skillIdRaw?: string;
   skillDisplayLabel?: string;
   worksheetId?: string;
+  worksheetIdRaw?: string;
   worksheetDisplayLabel?: string;
   difficultyScore: DifficultyScore;
   recommendedTopicId?: string;

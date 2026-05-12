@@ -7,6 +7,7 @@ import {
   GameService,
   type AbacusFlashPayload,
   type GameChallenge,
+  type LegacyChallenge,
   type MapAnswerType,
   type MapChallenge,
   type MapStep,
@@ -37,7 +38,15 @@ const GAME_STATE = {
 } as const;
 type AbacusGameState = (typeof GAME_STATE)[keyof typeof GAME_STATE];
 
-export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'competition-boss';
+export type SuperGameMode =
+  | 'abacus-flash'
+  | 'falling-numbers'
+  | 'boss-battle'
+  | 'ai-puzzle'
+  | 'map'
+  | 'fluency-speed'
+  | 'reasoning-puzzle'
+  | 'competition-boss';
 
 @Component({
   selector: 'app-game-mode',
@@ -50,7 +59,7 @@ export class GameModeComponent implements OnDestroy {
   readonly t = inject(TranslationService);
   readonly GAME_STATE = GAME_STATE;
   studentId = signal(DEFAULT_STUDENT_ID);
-  challenge = signal<GameChallenge | MapChallenge | null>(null);
+  challenge = signal<GameChallenge | null>(null);
   loading = signal(false);
   errorMessage = signal('');
   selectedAnswer = signal<ChallengeOption | null>(null);
@@ -111,7 +120,7 @@ export class GameModeComponent implements OnDestroy {
       return this.mapPartialCredit() === 1;
     }
     const challenge = this.challenge();
-    if (!challenge || !this.isLegacyChallenge(challenge) || this.selectedAnswer() === null) {
+    if (!challenge || !this.hasAnswerOptions(challenge) || this.selectedAnswer() === null) {
       return null;
     }
     return this.selectedAnswer() === challenge.answer;
@@ -146,27 +155,27 @@ export class GameModeComponent implements OnDestroy {
   /** Map super-syllabus game modes to a backend-compatible mode for the API call */
   private toApiMode(mode: SuperGameMode): GameMode {
     const mapping: Record<SuperGameMode, GameMode> = {
-      'abacus-flash': 'abacus-flash',
+      'abacus-flash': 'flash-abacus',
       'falling-numbers': 'falling-numbers',
       'boss-battle': 'boss-battle',
       'ai-puzzle': 'ai-puzzle',
-      'fluency-speed': 'abacus-flash',
+      'fluency-speed': 'flash-abacus',
       'reasoning-puzzle': 'ai-puzzle',
-      map: 'map-challenge',
+      map: 'map',
       'competition-boss': 'boss-battle',
     };
     return mapping[mode] ?? 'ai-puzzle';
   }
 
-  isLegacyChallenge(challenge: GameChallenge | MapChallenge): challenge is GameChallenge {
-    return 'dailyQuest' in challenge && 'bossBattle' in challenge && 'playerState' in challenge;
+  isLegacyChallenge(challenge: GameChallenge): challenge is LegacyChallenge {
+    return !this.isMapChallenge(challenge);
   }
 
-  isMapChallenge(challenge: GameChallenge | MapChallenge): challenge is MapChallenge {
+  isMapChallenge(challenge: GameChallenge): challenge is MapChallenge {
     return 'answerType' in challenge && 'correctAnswers' in challenge;
   }
 
-  legacyChallenge(): GameChallenge | null {
+  legacyChallenge(): LegacyChallenge | null {
     const challenge = this.challenge();
     if (!challenge || !this.isLegacyChallenge(challenge)) {
       return null;
@@ -174,7 +183,7 @@ export class GameModeComponent implements OnDestroy {
     return challenge;
   }
 
-  hasAnswerOptions(challenge: GameChallenge | MapChallenge | null): challenge is GameChallenge & {
+  hasAnswerOptions(challenge: GameChallenge | null): challenge is LegacyChallenge & {
     answer: ChallengeOption;
     options: ChallengeOption[];
   } {
@@ -182,7 +191,9 @@ export class GameModeComponent implements OnDestroy {
       return false;
     }
     return (
+      'answer' in challenge &&
       challenge.answer !== undefined &&
+      'options' in challenge &&
       Array.isArray(challenge.options) &&
       challenge.options.length > 0
     );
@@ -431,7 +442,7 @@ export class GameModeComponent implements OnDestroy {
     return !!this.getMapChallenge()?.tablePayload;
   }
 
-  getModeSpecificPrompt(challenge: GameChallenge): string {
+  getModeSpecificPrompt(challenge: LegacyChallenge): string {
     const basePrompt = challenge.prompt?.trim();
     if (this.selectedMode() !== 'falling-numbers') {
       return basePrompt && basePrompt.length > 0 ? basePrompt : this.t.translate('game.loadingAdaptive');
@@ -458,8 +469,8 @@ export class GameModeComponent implements OnDestroy {
   }
 
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
-  private getFlashPayload(challenge: GameChallenge): AbacusFlashPayload {
-    const raw = challenge.gamePayload ?? {};
+  private getFlashPayload(challenge: LegacyChallenge): AbacusFlashPayload {
+    const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
     const sequenceSource =
       raw['flashSequence'] ??
       raw['sequence'] ??
@@ -566,7 +577,7 @@ export class GameModeComponent implements OnDestroy {
     const apiMode = this.toApiMode(this.selectedMode());
     this.activeChallengeApiMode = apiMode;
 
-    if (apiMode === 'abacus-flash') {
+    if (apiMode === 'abacus-flash' || apiMode === 'flash-abacus') {
       this.gameService
         .getAbacusFlashChallenge({
           studentId: this.studentId(),
@@ -576,7 +587,11 @@ export class GameModeComponent implements OnDestroy {
         .subscribe({
           next: (challenge) => {
             this.challenge.set(challenge);
-            this.completedQuests.set(challenge.dailyQuest.progress);
+            if (this.isLegacyChallenge(challenge)) {
+              this.completedQuests.set(challenge.dailyQuest.progress);
+            } else {
+              this.completedQuests.set(0);
+            }
             this.loading.set(false);
             this.startFlashSequence();
           },
@@ -649,7 +664,7 @@ export class GameModeComponent implements OnDestroy {
       }
     }
 
-    if (this.activeChallengeApiMode === 'abacus-flash') {
+    if (this.activeChallengeApiMode === 'abacus-flash' || this.activeChallengeApiMode === 'flash-abacus') {
       if (typeof selected !== 'number') {
         return;
       }
@@ -665,13 +680,18 @@ export class GameModeComponent implements OnDestroy {
         })
         .subscribe({
           next: (result) => {
-            // Update adaptive difficulty from server response
-            this.adaptiveDifficulty.set(result.newDifficulty);
-            // Sync streak with authoritative server value
-            this.localStreak.set(result.newStreak);
+            const nextDifficulty = result.newDifficulty ?? result.difficulty;
+            if (typeof nextDifficulty === 'number') {
+              this.adaptiveDifficulty.set(nextDifficulty);
+            }
+            const nextStreak = result.newStreak ?? result.streak;
+            if (typeof nextStreak === 'number') {
+              this.localStreak.set(nextStreak);
+            }
             // Update quest progress if server reports more completions
-            if (result.dailyQuestProgress > this.completedQuests()) {
-              this.completedQuests.set(result.dailyQuestProgress);
+            const questProgress = result.dailyQuestProgress;
+            if (typeof questProgress === 'number' && questProgress > this.completedQuests()) {
+              this.completedQuests.set(questProgress);
             }
             // Auto-advance to next challenge after a short pause
             setTimeout(() => this.loadChallenge(), 1500);

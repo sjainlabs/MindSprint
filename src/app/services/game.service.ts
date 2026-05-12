@@ -6,22 +6,20 @@ import { type LearningLevel } from './diagnostic.service';
 import { type GameMode, type MathOperation } from './student-intelligence.service';
 
 export interface AbacusFlashPayload {
-  flashSequence?: number[];
+  flashSequence: number[];
+  speedMs: number;
   sequence?: number[];
   numbers?: number[];
-  speedMs?: number;
   flashSpeedMs?: number;
   intervalMs?: number;
 }
 
 export interface FallingNumbersPayload {
+  target: number;
+  stream: number[];
+  combosEnabled: boolean;
+  powerUps: string[];
   prompt?: string;
-  target?: number;
-  operation?: MathOperation;
-  numbers?: number[];
-  speedMs?: number;
-  lives?: number;
-  comboTarget?: number;
 }
 
 export interface ChallengeRewards {
@@ -57,9 +55,11 @@ export interface PlayerState {
 export interface AbacusFlashSubmitResponse {
   correct: boolean;
   xpEarned: number;
-  newDifficulty: number;
-  newStreak: number;
-  dailyQuestProgress: number;
+  newDifficulty?: number;
+  difficulty?: number;
+  newStreak?: number;
+  streak?: number;
+  dailyQuestProgress?: number;
 }
 
 export type ChallengeOption = number | string;
@@ -87,22 +87,39 @@ export interface MapTablePayload {
   rows: Array<Array<string | number>>;
 }
 
-export interface GameChallenge {
+interface BaseGameChallenge {
   challengeId: string;
   studentId: string;
-  prompt: string;
-  operation?: MathOperation;
-  options?: ChallengeOption[];
-  answer?: ChallengeOption;
+  prompt?: string;
   timeLimitSeconds: number;
   difficulty: number;
-  recommendedLevel: LearningLevel;
+  recommendedLevel?: LearningLevel;
   rewards: ChallengeRewards;
   dailyQuest: DailyQuestState;
   bossBattle: BossBattleState;
   playerState: PlayerState;
-  mode?: GameMode;
-  gamePayload?: Record<string, unknown> | AbacusFlashPayload | FallingNumbersPayload;
+}
+
+export interface FallingNumbersChallenge extends BaseGameChallenge {
+  mode: 'falling-numbers';
+  gamePayload: FallingNumbersPayload;
+}
+
+export interface AbacusFlashChallenge extends BaseGameChallenge {
+  mode: 'flash-abacus' | 'abacus-flash';
+  prompt?: string;
+  options?: ChallengeOption[];
+  answer?: ChallengeOption;
+  gamePayload: AbacusFlashPayload | Record<string, unknown>;
+}
+
+export interface ArithmeticChallenge extends BaseGameChallenge {
+  mode: 'arithmetic' | 'boss-battle' | 'ai-puzzle';
+  prompt: string;
+  operation: MathOperation;
+  options: ChallengeOption[];
+  answer: ChallengeOption;
+  gamePayload?: Record<string, unknown>;
 }
 
 export interface MapChallenge {
@@ -120,12 +137,30 @@ export interface MapChallenge {
   tablePayload?: MapTablePayload | null;
   hints: string[];
   explanation: string;
-  rewards: {
-    xp: number;
-    streakBonus: number;
-    badge?: string;
-  };
-  mode?: GameMode;
+  rewards: ChallengeRewards;
+  mode: 'map' | 'map-challenge';
+}
+
+export type GameChallenge =
+  | FallingNumbersChallenge
+  | AbacusFlashChallenge
+  | ArithmeticChallenge
+  | MapChallenge;
+
+export type LegacyChallenge = FallingNumbersChallenge | AbacusFlashChallenge | ArithmeticChallenge;
+
+function normalizeMode(mode?: string): string | undefined {
+  if (!mode) {
+    return undefined;
+  }
+  const normalized = mode.trim().toLowerCase();
+  if (normalized === 'abacus-flash') {
+    return 'flash-abacus';
+  }
+  if (normalized === 'map-challenge') {
+    return 'map';
+  }
+  return normalized;
 }
 
 @Injectable({
@@ -145,7 +180,7 @@ export class GameService {
   }): Observable<GameChallenge> {
     const params = new URLSearchParams({ studentId: payload.studentId });
     if (payload.mode) {
-      params.set('mode', payload.mode);
+      params.set('mode', normalizeMode(payload.mode) ?? payload.mode);
     }
     if (typeof payload.difficulty === 'number') {
       params.set('difficulty', String(payload.difficulty));
@@ -176,12 +211,12 @@ export class GameService {
   }): Observable<GameChallenge> {
     const normalizedPayload = {
       ...payload,
-      mode: 'abacus-flash' as const,
+      mode: 'flash-abacus' as const,
     };
 
     const params = new URLSearchParams({
       studentId: payload.studentId,
-      mode: 'abacus-flash'
+      mode: 'flash-abacus'
     });
 
     if (payload.difficulty !== undefined) {
@@ -209,7 +244,7 @@ export class GameService {
   }): Observable<AbacusFlashSubmitResponse> {
     const normalizedPayload = {
       ...payload,
-      mode: 'abacus-flash' as const,
+      mode: 'flash-abacus' as const,
     };
     return this.http
       .post<AbacusFlashSubmitResponse>(

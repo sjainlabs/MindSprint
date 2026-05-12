@@ -187,4 +187,43 @@ describe('WorksheetPageComponent', () => {
     expect(studentIntelligenceServiceMock.getAdaptiveRecommendation).toHaveBeenCalled();
     expect(component.recommendation()?.recommendedLevel).toBe('Advanced');
   });
+
+  it('normalizes translated recommended level values for adaptive navigation logic', () => {
+    studentIntelligenceServiceMock.getAdaptiveRecommendation.mockReturnValueOnce(
+      of({
+        studentId: 'student-demo',
+        targetDifficulty: 78,
+        recommendedLevel: 'Advanced',
+        recommendedLevelRaw: 'अनुशंसित स्तर: उन्नत',
+        focusOperations: ['division'],
+        rationale: ['translation-safe recommendation'],
+        difficultyScore: {
+          overallScore: 82,
+          operationScores: {
+            addition: 88,
+            subtraction: 74,
+            multiplication: 68,
+            division: 55,
+          },
+          weakOperationWeight: 1.6,
+          recommendedLevel: 'Advanced',
+        },
+      } as any),
+    );
+
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.answers.set(
+      worksheet.questions.reduce<Record<string, number | null>>((accumulator, question) => {
+        accumulator[question.id] = question.answer;
+        return accumulator;
+      }, {}),
+    );
+    component.submitWorksheet();
+
+    expect(component.recommendedLevel()).toBe('Advanced');
+    expect(component.canOpenRecommendedWorksheet()).toBe(true);
+  });
 });
