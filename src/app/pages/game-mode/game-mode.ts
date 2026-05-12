@@ -421,11 +421,12 @@ export class GameModeComponent implements OnDestroy {
     if (this.selectedMode() !== 'falling-numbers') {
       return challenge.prompt;
     }
-    const payloadPrompt = challenge.gamePayload?.['prompt'];
+    const payload = challenge.gamePayload as { prompt?: unknown; target?: unknown } | undefined;
+    const payloadPrompt = payload?.prompt;
     if (typeof payloadPrompt === 'string' && payloadPrompt.trim().length > 0) {
       return payloadPrompt;
     }
-    const target = challenge.gamePayload?.['target'];
+    const target = payload?.target;
     if (typeof target === 'number') {
       return `Catch numbers to hit target ${target}.`;
     }
