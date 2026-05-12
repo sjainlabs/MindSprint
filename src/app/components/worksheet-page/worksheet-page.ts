@@ -14,11 +14,13 @@ import {
   type StudentProfile,
   type WorksheetRecommendation,
 } from '../../services/student-intelligence.service';
+import {
+  type LearningLevel,
+  normalizeLearningLevelIdentifier,
+} from '../../services/diagnostic.service';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { TranslationService } from '../../services/translation.service';
-
-type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
 @Component({
   selector: 'app-worksheet-page',
@@ -73,12 +75,17 @@ export class WorksheetPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const level = this.route.snapshot.paramMap.get('level') as LearningLevel | null;
+    const levelParam = this.route.snapshot.paramMap.get('level');
+    const level = normalizeLearningLevelIdentifier(levelParam);
 
     if (!level) {
       this.errorMessage.set('Invalid worksheet level.');
       this.loading.set(false);
       return;
+    }
+
+    if (levelParam !== level) {
+      void this.router.navigate(['/worksheet', level], { replaceUrl: true });
     }
 
     this.currentLevel.set(level);
@@ -141,7 +148,18 @@ export class WorksheetPageComponent implements OnInit {
   });
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
-  recommendedLevel = computed(() => this.recommendation()?.recommendedLevel ?? null);
+  recommendedLevel = computed(() => this.getRecommendationRawLevel(this.recommendation()));
+  recommendedLevelDisplay = computed(() => {
+    const recommendation = this.recommendation();
+    const rawLevel = this.recommendedLevel();
+    if (!recommendation || !rawLevel) {
+      return null;
+    }
+    if (recommendation.recommendedLevelDisplay?.trim()) {
+      return recommendation.recommendedLevelDisplay.trim();
+    }
+    return this.levelDisplayLabel(rawLevel);
+  });
   canOpenRecommendedWorksheet = computed(() => {
     const nextLevel = this.recommendedLevel();
     return !!nextLevel && nextLevel !== this.currentLevel();
@@ -380,5 +398,25 @@ export class WorksheetPageComponent implements OnInit {
         this.personalizedPath.set([]);
       },
     });
+  }
+
+  private getRecommendationRawLevel(recommendation: WorksheetRecommendation | null): LearningLevel | null {
+    if (!recommendation) {
+      return null;
+    }
+    return (
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevelRaw) ??
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevel) ??
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevelDisplay)
+    );
+  }
+
+  private levelDisplayLabel(level: LearningLevel): string {
+    const key = level === 'Beginner'
+      ? 'worksheet.beginner'
+      : level === 'Intermediate'
+        ? 'worksheet.intermediate'
+        : 'worksheet.advanced';
+    return this.t.translate(key);
   }
 }

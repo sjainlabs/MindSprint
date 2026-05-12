@@ -70,7 +70,7 @@
           <div class="h-4 rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:220%_100%] animate-skeleton"></div>
           <div class="h-4 w-2/3 rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:220%_100%] animate-skeleton animation-delay-150"></div>
           <p class="text-gray-500 text-sm animate-pulse-soft">
-            {{ selectedMode() === 'map-challenge' ? ('game.loadingMap' | translate) : ('game.loadingAdaptive' | translate) }}
+            {{ selectedMode() === 'map' ? ('game.loadingMap' | translate) : ('game.loadingAdaptive' | translate) }}
           </p>
         </div>
       }
@@ -261,7 +261,7 @@
               <p class="text-xs text-indigo-700 font-semibold">{{ 'game.mode' | translate }}: {{ selectedMode() }}</p>
               <p class="text-xs text-gray-600">{{ 'game.adaptiveDifficulty' | translate }}: {{ legacyChallenge.difficulty }}/100</p>
               <p class="text-xs text-gray-600">{{ 'game.recommendedLevel' | translate }}: {{ legacyChallenge.recommendedLevel }}</p>
-              <p class="text-lg font-semibold mt-2">{{ legacyChallenge.prompt }}</p>
+              <p class="text-lg font-semibold mt-2">{{ legacyPrompt(legacyChallenge) }}</p>
             </div>
 
             <!-- Mode-specific UI panels -->

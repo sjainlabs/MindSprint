@@ -77,7 +77,7 @@ const mockMapChallenge = {
   hints: ['Look at each bar carefully.'],
   explanation: 'A and C are true based on the data.',
   rewards: { xp: 12, streakBonus: 3, badge: '📊 MAP Achiever' },
-  mode: 'map-challenge' as const,
+  mode: 'map' as const,
 };
 
 const mockAbacusFlashSubmitResponse = {
@@ -91,7 +91,7 @@ const mockAbacusFlashSubmitResponse = {
 describe('GameModeComponent', () => {
   const gameServiceMock = {
     getChallenge: vi.fn((payload?: { mode?: string }) =>
-      of(payload?.mode === 'map-challenge' ? mockMapChallenge : mockChallenge),
+      of(payload?.mode === 'map' ? mockMapChallenge : mockChallenge),
     ),
     submitChallenge: vi.fn(() => of({ saved: true, xpEarned: 15 })),
     getAbacusFlashChallenge: vi.fn(() => of(mockChallenge)),
@@ -149,7 +149,7 @@ describe('GameModeComponent', () => {
     const superValues = comp.superModes.map((m) => m.value);
     expect(superValues).toContain('fluency-speed');
     expect(superValues).toContain('reasoning-puzzle');
-    expect(superValues).toContain('map-challenge');
+    expect(superValues).toContain('map');
     expect(superValues).toContain('competition-boss');
   });
 
@@ -170,7 +170,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    for (const mode of ['fluency-speed', 'reasoning-puzzle', 'map-challenge', 'competition-boss'] as const) {
+    for (const mode of ['fluency-speed', 'reasoning-puzzle', 'map', 'competition-boss'] as const) {
       comp.selectedMode.set(mode);
       expect(comp.isSuperMode()).toBe(true);
     }
@@ -226,16 +226,16 @@ describe('GameModeComponent', () => {
     }
   });
 
-  it('loads MAP challenge payload when map-challenge mode is selected', () => {
+  it('loads MAP challenge payload when map mode is selected', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('map-challenge');
+    comp.selectedMode.set('map');
     comp.loadChallenge();
 
     expect(gameServiceMock.getChallenge).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'map-challenge' }),
+      expect.objectContaining({ mode: 'map' }),
     );
     expect(comp.isMapActive()).toBe(true);
     expect(comp.totalMapSteps()).toBe(2);
@@ -246,7 +246,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('map-challenge');
+    comp.selectedMode.set('map');
     comp.loadChallenge();
     expect(comp.currentStepIndex()).toBe(0);
 
@@ -261,7 +261,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('map-challenge');
+    comp.selectedMode.set('map');
     comp.loadChallenge();
     comp.toggleMapOption(4);
     vi.advanceTimersByTime(250);
@@ -279,7 +279,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('map-challenge');
+    comp.selectedMode.set('map');
     comp.loadChallenge();
 
     expect(comp.mapShowGraph()).toBe(true);
@@ -291,7 +291,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('map-challenge');
+    comp.selectedMode.set('map');
     comp.loadChallenge();
     comp.mapHintsOpen.set(true);
     comp.toggleMapOption(4);
@@ -310,7 +310,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('map-challenge');
+    comp.selectedMode.set('map');
     comp.loadChallenge();
 
     expect(comp.mapGradeLabel()).toBe('Grade 3');
@@ -332,7 +332,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('map-challenge');
+    comp.selectedMode.set('map');
     comp.loadChallenge();
 
     expect(comp.errorMessage()).toBe('Unable to load game challenge.');
