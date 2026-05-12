@@ -8,18 +8,32 @@ export type GradeLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 const LEARNING_LEVEL_NORMALIZATION: Record<string, LearningLevel> = {
   beginner: 'Beginner',
+  'beginner level': 'Beginner',
   intermediate: 'Intermediate',
+  'intermediate level': 'Intermediate',
   advanced: 'Advanced',
+  'advanced level': 'Advanced',
   शुरुआती: 'Beginner',
+  प्रारंभिक: 'Beginner',
+  'शुरुआती स्तर': 'Beginner',
+  'प्रारंभिक स्तर': 'Beginner',
   मध्यवर्ती: 'Intermediate',
+  'मध्य स्तर': 'Intermediate',
   उन्नत: 'Advanced',
+  'उन्नत स्तर': 'Advanced',
 };
 
 export function normalizeLearningLevelIdentifier(value: string | null | undefined): LearningLevel | null {
   if (!value) {
     return null;
   }
-  const normalized = value.trim().normalize('NFC').toLowerCase();
+  const normalized = value
+    .trim()
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/^recommended\s+level\s*[:：-]\s*/u, '')
+    .replace(/^अनुशंसित\s+स्तर\s*[:：-]\s*/u, '')
+    .trim();
   return LEARNING_LEVEL_NORMALIZATION[normalized] ?? null;
 }
 

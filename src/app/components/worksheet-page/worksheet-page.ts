@@ -22,6 +22,8 @@ import { LanguageToggleComponent } from '../../components/language-toggle/langua
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { TranslationService } from '../../services/translation.service';
 
+const VALID_IDENTIFIER_PATTERN = /^[a-z0-9][a-z0-9-_]*$/i;
+
 @Component({
   selector: 'app-worksheet-page',
   standalone: true,
@@ -314,7 +316,7 @@ export class WorksheetPageComponent implements OnInit {
             })
           .subscribe({
             next: (recommendation) => {
-              this.recommendation.set(recommendation);
+              this.recommendation.set(this.normalizeRecommendationForLogic(recommendation));
               this.intelligenceLoading.set(false);
             },
             error: () => {
@@ -404,6 +406,53 @@ export class WorksheetPageComponent implements OnInit {
       normalizeLearningLevelIdentifier(recommendation.recommendedLevelRaw) ??
       normalizeLearningLevelIdentifier(recommendation.recommendedLevel)
     );
+  }
+
+  private normalizeRecommendationForLogic(recommendation: WorksheetRecommendation): WorksheetRecommendation {
+    const normalizedLevel =
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevelRaw) ??
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevel);
+
+    const domainIdRaw = this.normalizeRawIdentifier(recommendation.domainIdRaw, recommendation.domainId);
+    const skillIdRaw = this.normalizeRawIdentifier(recommendation.skillIdRaw, recommendation.skillId);
+    const worksheetIdRaw = this.normalizeRawIdentifier(recommendation.worksheetIdRaw, recommendation.worksheetId);
+
+    return {
+      ...recommendation,
+      recommendedLevelRaw: normalizedLevel ?? recommendation.recommendedLevelRaw,
+      recommendedLevelDisplay:
+        recommendation.recommendedLevelDisplay?.trim() ??
+        (normalizedLevel ? this.levelDisplayLabel(normalizedLevel) : recommendation.recommendedLevel),
+      domainIdRaw,
+      domainId: domainIdRaw ?? recommendation.domainId,
+      domainDisplayLabel: recommendation.domainDisplayLabel?.trim() ?? recommendation.domainDisplayLabel,
+      skillIdRaw,
+      skillId: skillIdRaw ?? recommendation.skillId,
+      skillDisplayLabel: recommendation.skillDisplayLabel?.trim() ?? recommendation.skillDisplayLabel,
+      worksheetIdRaw,
+      worksheetId: worksheetIdRaw ?? recommendation.worksheetId,
+      worksheetDisplayLabel: recommendation.worksheetDisplayLabel?.trim() ?? recommendation.worksheetDisplayLabel,
+    };
+  }
+
+  private normalizeRawIdentifier(raw?: string, fallback?: string): string | undefined {
+    const normalizedRaw = this.sanitizeIdentifier(raw);
+    if (normalizedRaw) {
+      return normalizedRaw;
+    }
+    return this.sanitizeIdentifier(fallback);
+  }
+
+  private sanitizeIdentifier(value?: string): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+    const normalized = value.trim().normalize('NFC');
+    if (!normalized) {
+      return undefined;
+    }
+    // Logic identifiers must stay raw and language-agnostic: alphanumeric + hyphen/underscore only.
+    return VALID_IDENTIFIER_PATTERN.test(normalized) ? normalized : undefined;
   }
 
   private levelDisplayLabel(level: LearningLevel): string {

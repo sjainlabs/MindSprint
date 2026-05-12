@@ -497,6 +497,51 @@ describe('GameModeComponent', () => {
     expect(comp.showQuestion()).toBe(true);
   });
 
+  it('parses alternate abacus payload keys and flashes full sequence', () => {
+    gameServiceMock.getAbacusFlashChallenge.mockReturnValueOnce(
+      of({
+        ...mockChallenge,
+        gamePayload: { sequence: ['1', '2', '3'], speed: '150' },
+      } as any),
+    );
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    expect(comp.currentFlashNumber()).toBe(1);
+    vi.advanceTimersByTime(150);
+    expect(comp.currentFlashNumber()).toBe(2);
+    vi.advanceTimersByTime(150);
+    expect(comp.currentFlashNumber()).toBe(3);
+    vi.advanceTimersByTime(150);
+    expect(comp.showQuestion()).toBe(true);
+  });
+
+  it('does not expose arithmetic options for falling mode payload-only challenges', () => {
+    gameServiceMock.getChallenge.mockReturnValueOnce(
+      of({
+        challengeId: 'falling-1',
+        studentId: 'student-demo',
+        mode: 'falling-numbers' as const,
+        timeLimitSeconds: 25,
+        difficulty: 60,
+        rewards: { xp: 10, streakBonus: 2 },
+        dailyQuest: { id: 'q-1', description: 'Complete 3 challenges', target: 3, progress: 1, rewardXp: 50, completed: false },
+        bossBattle: { id: 'b-1', title: 'Math Dragon', hp: 100, phase: 1, unlocked: false },
+        playerState: { xp: 300, streak: 3, badges: [], level: 4 },
+        gamePayload: { target: 12, stream: [4, 7, 9], combosEnabled: true, powerUps: ['magnet'] },
+      } as any),
+    );
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('falling-numbers');
+    comp.loadChallenge();
+
+    expect(comp.hasAnswerOptions(comp.challenge())).toBe(false);
+  });
+
   it('does not submit when no answer selected', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
