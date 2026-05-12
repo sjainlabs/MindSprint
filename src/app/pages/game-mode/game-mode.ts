@@ -308,12 +308,16 @@ export class GameModeComponent implements OnDestroy {
 
   private queueAutoAdvance(): void {
     this.clearMapAutoAdvanceTimeout();
-    this.mapAutoAdvanceTimeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
+      if (this.mapAutoAdvanceTimeoutId !== timeoutId) {
+        return;
+      }
       if (!this.challengeSubmitted() && this.isMapStepAnswered(this.currentStepIndex())) {
         this.nextMapStep();
       }
       this.mapAutoAdvanceTimeoutId = null;
     }, MAP_AUTO_ADVANCE_DELAY_MS);
+    this.mapAutoAdvanceTimeoutId = timeoutId;
   }
 
   private clearMapAutoAdvanceTimeout(): void {
@@ -349,6 +353,13 @@ export class GameModeComponent implements OnDestroy {
       return 'border-emerald-300 bg-emerald-50';
     }
     return '';
+  }
+
+  mapOptionAriaLabel(option: ChallengeOption): string {
+    const selectionType = this.mapAnswerType() === 'multi' ? 'multi-select' : 'single-select';
+    const selectionState = this.mapIsOptionSelected(option) ? 'selected' : 'not selected';
+    const stepNumber = this.currentStepIndex() + 1;
+    return `Step ${stepNumber}, ${selectionType} option ${option}, ${selectionState}`;
   }
 
   mapPartialCreditPercent(): number {

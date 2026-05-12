@@ -54,7 +54,7 @@
             <div class="rounded-xl bg-white p-3 text-center shadow-sm">
               <p class="text-xs font-bold text-sky-900 mb-2">{{ bar.label }}</p>
               <p class="text-lg leading-relaxed break-all">
-                @for (_ of getPictureIcons(bar.value); track $index) {
+                @for (_ of bar.iconSlots; track $index) {
                   <span>{{ bar.icon }}</span>
                 }
               </p>

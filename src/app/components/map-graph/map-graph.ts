@@ -27,6 +27,7 @@ export class MapGraphComponent {
       value,
       height: Math.max(MIN_BAR_HEIGHT_PERCENT, Math.round((value / maxValue) * 100)),
       icon: payload.icons?.[index] ?? '⭐',
+      iconSlots: Array.from({ length: Math.max(0, Math.floor(value)) }, (_, i) => i),
     }));
   });
 
@@ -56,8 +57,4 @@ export class MapGraphComponent {
       .map((dot) => `${dot.x},${dot.y}`)
       .join(' ');
   });
-
-  getPictureIcons(count: number): number[] {
-    return Array.from({ length: Math.max(0, Math.floor(count)) }, (_, i) => i);
-  }
 }

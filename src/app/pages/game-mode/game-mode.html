@@ -133,7 +133,7 @@
                           (click)="toggleMapOption(option)"
                           [disabled]="challengeSubmitted()"
                           [attr.aria-pressed]="mapIsOptionSelected(option)"
-                          [attr.aria-label]="'Answer option ' + option + (mapIsOptionSelected(option) ? ', selected' : ', not selected')"
+                          [attr.aria-label]="mapOptionAriaLabel(option)"
                         >
                           <div class="flex items-center justify-between gap-3">
                             <span>{{ option }}</span>
