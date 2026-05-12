@@ -152,14 +152,14 @@ export class GameModeComponent implements OnDestroy {
       'ai-puzzle': 'ai-puzzle',
       'fluency-speed': 'abacus-flash',
       'reasoning-puzzle': 'ai-puzzle',
-      map: 'map',
+      map: 'map-challenge',
       'competition-boss': 'boss-battle',
     };
     return mapping[mode] ?? 'ai-puzzle';
   }
 
   isLegacyChallenge(challenge: GameChallenge | MapChallenge): challenge is GameChallenge {
-    return 'answer' in challenge && 'dailyQuest' in challenge;
+    return 'dailyQuest' in challenge && 'bossBattle' in challenge && 'playerState' in challenge;
   }
 
   isMapChallenge(challenge: GameChallenge | MapChallenge): challenge is MapChallenge {
@@ -172,6 +172,20 @@ export class GameModeComponent implements OnDestroy {
       return null;
     }
     return challenge;
+  }
+
+  hasAnswerOptions(challenge: GameChallenge | MapChallenge | null): challenge is GameChallenge & {
+    answer: ChallengeOption;
+    options: ChallengeOption[];
+  } {
+    if (!challenge || !this.isLegacyChallenge(challenge)) {
+      return false;
+    }
+    return (
+      challenge.answer !== undefined &&
+      Array.isArray(challenge.options) &&
+      challenge.options.length > 0
+    );
   }
 
   isMapActive(): boolean {
@@ -418,17 +432,27 @@ export class GameModeComponent implements OnDestroy {
   }
 
   getModeSpecificPrompt(challenge: GameChallenge): string {
+    const basePrompt = challenge.prompt?.trim();
     if (this.selectedMode() !== 'falling-numbers') {
-      return challenge.prompt;
+      return basePrompt && basePrompt.length > 0 ? basePrompt : this.t.translate('game.loadingAdaptive');
     }
-    const payload = challenge.gamePayload as { prompt?: unknown; target?: unknown } | undefined;
+    const payload = challenge.gamePayload as
+      | { prompt?: unknown; target?: unknown; title?: unknown }
+      | undefined;
     const payloadPrompt = payload?.prompt;
     if (typeof payloadPrompt === 'string' && payloadPrompt.trim().length > 0) {
       return payloadPrompt;
     }
+    const payloadTitle = payload?.title;
+    if (typeof payloadTitle === 'string' && payloadTitle.trim().length > 0) {
+      return payloadTitle;
+    }
     const target = payload?.target;
     if (typeof target === 'number') {
       return this.t.translate('game.fallingPromptTarget', { target });
+    }
+    if (basePrompt && basePrompt.length > 0) {
+      return basePrompt;
     }
     return this.t.translate('game.fallingPromptDefault');
   }
@@ -436,12 +460,22 @@ export class GameModeComponent implements OnDestroy {
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
   private getFlashPayload(challenge: GameChallenge): AbacusFlashPayload {
     const raw = challenge.gamePayload ?? {};
-    const flashSequence = Array.isArray(raw['flashSequence'])
-      ? (raw['flashSequence'] as number[])
+    const sequenceSource =
+      raw['flashSequence'] ??
+      raw['sequence'] ??
+      raw['numbers'] ??
+      raw['flashNumbers'];
+    const flashSequence = Array.isArray(sequenceSource)
+      ? sequenceSource
+          .map((value) => (typeof value === 'number' ? value : Number(value)))
+          .filter((value) => Number.isFinite(value))
       : [];
+    const speedSource = raw['speedMs'] ?? raw['flashSpeedMs'] ?? raw['intervalMs'] ?? raw['speed'];
     const speedMs =
-      typeof raw['speedMs'] === 'number' && raw['speedMs'] > 0
-        ? raw['speedMs']
+      typeof speedSource === 'number' && speedSource > 0
+        ? speedSource
+        : typeof speedSource === 'string' && Number(speedSource) > 0
+          ? Number(speedSource)
         : DEFAULT_FLASH_SPEED_MS;
     return { flashSequence, speedMs };
   }
@@ -585,13 +619,18 @@ export class GameModeComponent implements OnDestroy {
     }
 
     const isMapChallenge = this.isMapChallenge(challenge) && this.selectedMode() === 'map';
+    const hasAnswerOptions = this.hasAnswerOptions(challenge);
     const selected = this.selectedAnswer();
-    if (!isMapChallenge && selected === null) {
+    if (!isMapChallenge && hasAnswerOptions && selected === null) {
       return;
     }
 
     this.challengeSubmitted.set(true);
-    const correct = isMapChallenge ? this.evaluateMapChallenge() : selected === (challenge as GameChallenge).answer;
+    const correct = isMapChallenge
+      ? this.evaluateMapChallenge()
+      : hasAnswerOptions
+        ? selected === challenge.answer
+        : false;
 
     if (correct) {
       const totalXp = challenge.rewards.xp + challenge.rewards.streakBonus;

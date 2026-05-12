@@ -1,13 +1,57 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
 import { type GameMode, type MathOperation } from './student-intelligence.service';
 
 export interface AbacusFlashPayload {
-  flashSequence: number[];
-  speedMs: number;
+  flashSequence?: number[];
+  sequence?: number[];
+  numbers?: number[];
+  speedMs?: number;
+  flashSpeedMs?: number;
+  intervalMs?: number;
+}
+
+export interface FallingNumbersPayload {
+  prompt?: string;
+  target?: number;
+  operation?: MathOperation;
+  numbers?: number[];
+  speedMs?: number;
+  lives?: number;
+  comboTarget?: number;
+}
+
+export interface ChallengeRewards {
+  xp: number;
+  streakBonus: number;
+  badge?: string;
+}
+
+export interface DailyQuestState {
+  id: string;
+  description: string;
+  target: number;
+  progress: number;
+  rewardXp: number;
+  completed: boolean;
+}
+
+export interface BossBattleState {
+  id: string;
+  title: string;
+  hp: number;
+  phase: number;
+  unlocked: boolean;
+}
+
+export interface PlayerState {
+  xp: number;
+  streak: number;
+  badges: string[];
+  level: number;
 }
 
 export interface AbacusFlashSubmitResponse {
@@ -47,40 +91,18 @@ export interface GameChallenge {
   challengeId: string;
   studentId: string;
   prompt: string;
-  operation: MathOperation;
-  options: ChallengeOption[];
-  answer: ChallengeOption;
+  operation?: MathOperation;
+  options?: ChallengeOption[];
+  answer?: ChallengeOption;
   timeLimitSeconds: number;
   difficulty: number;
   recommendedLevel: LearningLevel;
-  rewards: {
-    xp: number;
-    streakBonus: number;
-    badge?: string;
-  };
-  dailyQuest: {
-    id: string;
-    description: string;
-    target: number;
-    progress: number;
-    rewardXp: number;
-    completed: boolean;
-  };
-  bossBattle: {
-    id: string;
-    title: string;
-    hp: number;
-    phase: number;
-    unlocked: boolean;
-  };
-  playerState: {
-    xp: number;
-    streak: number;
-    badges: string[];
-    level: number;
-  };
+  rewards: ChallengeRewards;
+  dailyQuest: DailyQuestState;
+  bossBattle: BossBattleState;
+  playerState: PlayerState;
   mode?: GameMode;
-  gamePayload?: Record<string, unknown>;
+  gamePayload?: Record<string, unknown> | AbacusFlashPayload | FallingNumbersPayload;
 }
 
 export interface MapChallenge {
@@ -151,7 +173,12 @@ export class GameService {
     studentId: string;
     difficulty?: number;
     streak?: number;
-  }) {
+  }): Observable<GameChallenge> {
+    const normalizedPayload = {
+      ...payload,
+      mode: 'abacus-flash' as const,
+    };
+
     const params = new URLSearchParams({
       studentId: payload.studentId,
       mode: 'abacus-flash'
@@ -165,9 +192,13 @@ export class GameService {
       params.set('streak', String(payload.streak));
     }
 
-    return this.http.get<GameChallenge>(
-      `${this.apiRoot}/game/challenge?${params.toString()}`
-    );
+    return this.http
+      .post<GameChallenge>(`${this.apiRoot}/game/abacus-flash/challenge`, normalizedPayload)
+      .pipe(
+        catchError(() =>
+          this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`),
+        ),
+      );
   }
 
   submitAbacusFlash(payload: {
@@ -176,9 +207,19 @@ export class GameService {
     answer: number;
     timeTakenMs?: number;
   }): Observable<AbacusFlashSubmitResponse> {
-    return this.http.post<AbacusFlashSubmitResponse>(
-      `${this.apiRoot}/game/submit`,
-      payload,
-    );
+    const normalizedPayload = {
+      ...payload,
+      mode: 'abacus-flash' as const,
+    };
+    return this.http
+      .post<AbacusFlashSubmitResponse>(
+        `${this.apiRoot}/game/abacus-flash/submit`,
+        normalizedPayload,
+      )
+      .pipe(
+        catchError(() =>
+          this.http.post<AbacusFlashSubmitResponse>(`${this.apiRoot}/game/submit`, normalizedPayload),
+        ),
+      );
   }
 }
