@@ -77,10 +77,10 @@ export class GameModeComponent {
   coreModes = this.gameModeOptions.slice(0, 4);
   superModes = this.gameModeOptions.slice(4);
 
-  xpTotal = computed(() => (this.challenge()?.playerState.xp ?? 0) + this.localXp());
-  streakTotal = computed(() => Math.max(this.challenge()?.playerState.streak ?? 0, this.localStreak()));
+  xpTotal = computed(() => (this.legacyChallenge()?.playerState.xp ?? 0) + this.localXp());
+  streakTotal = computed(() => Math.max(this.legacyChallenge()?.playerState.streak ?? 0, this.localStreak()));
   currentBadges = computed(() => {
-    const base = this.challenge()?.playerState.badges ?? [];
+    const base = this.legacyChallenge()?.playerState.badges ?? [];
     return [...new Set([...base, ...this.unlockedBadges()])];
   });
   isCorrect = computed(() => {
@@ -144,6 +144,14 @@ export class GameModeComponent {
 
   isMapChallenge(challenge: GameChallenge | MapChallenge): challenge is MapChallenge {
     return 'answerType' in challenge && 'correctAnswers' in challenge;
+  }
+
+  legacyChallenge(): GameChallenge | null {
+    const challenge = this.challenge();
+    if (!challenge || !this.isLegacyChallenge(challenge)) {
+      return null;
+    }
+    return challenge;
   }
 
   isMapActive(): boolean {
@@ -381,7 +389,7 @@ export class GameModeComponent {
    * Clears any in-progress sequence before starting a new one.
    */
   startFlashSequence(): void {
-    const challenge = this.challenge();
+    const challenge = this.legacyChallenge();
     if (!challenge) {
       return;
     }
@@ -480,7 +488,11 @@ export class GameModeComponent {
         .subscribe({
           next: (challenge) => {
             this.challenge.set(challenge);
-            this.completedQuests.set(challenge.dailyQuest.progress);
+            if (this.isLegacyChallenge(challenge)) {
+              this.completedQuests.set(challenge.dailyQuest.progress);
+            } else {
+              this.completedQuests.set(0);
+            }
             this.loading.set(false);
           },
           error: () => {
@@ -524,6 +536,9 @@ export class GameModeComponent {
     }
 
     if (this.activeChallengeApiMode === 'abacus-flash') {
+      if (typeof selected !== 'number') {
+        return;
+      }
       const timeTakenMs =
         this.flashStartTime !== null ? Date.now() - this.flashStartTime : undefined;
 
