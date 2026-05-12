@@ -8,6 +8,10 @@ import {
   type RITBandSkills,
   type SyllabusSkill,
 } from '../../services/syllabus.service';
+import {
+  PracticeService,
+  type MapPracticeSheetResponse,
+} from '../../services/practice.service';
 
 const RIT_BANDS = [
   { value: 180, label: 'RIT 180 (Grade K–1)' },
@@ -21,6 +25,16 @@ const RIT_BANDS = [
   { value: 260, label: 'RIT 260 (Grade 8–9)' },
   { value: 270, label: 'RIT 270 (Grade 9–10)' },
 ];
+
+const MAP_DOMAINS = [
+  'Numbers & Operations',
+  'Algebraic Thinking',
+  'Data Analysis',
+  'Measurement',
+  'Geometry',
+];
+const MIN_MAP_SHEET_QUESTION_COUNT = 5;
+const MAX_MAP_SHEET_QUESTION_COUNT = 30;
 
 const MOCK_MAP_SKILLS: Record<number, RITBandSkills> = {
   180: {
@@ -166,6 +180,7 @@ export class MapPrepComponent implements OnInit {
   studentId = signal('student-demo');
   selectedRIT = signal(220);
   ritBands = RIT_BANDS;
+  domains = MAP_DOMAINS;
 
   ritSkills = signal<RITBandSkills | null>(null);
   projection = signal<MAPGrowthProjection | null>(null);
@@ -178,6 +193,19 @@ export class MapPrepComponent implements OnInit {
   practiceCorrect = signal(0);
   practiceTotal = signal(0);
   sessionComplete = signal(false);
+  hintsOpen = signal(false);
+  explanationOpen = signal(false);
+  sessionResults = signal<Array<{ skill: SyllabusSkill; correct: boolean }>>([]);
+
+  selectedDomains = signal<string[]>([MAP_DOMAINS[0]]);
+  sheetQuestionCount = signal(10);
+  readonly minQuestionCount = MIN_MAP_SHEET_QUESTION_COUNT;
+  readonly maxQuestionCount = MAX_MAP_SHEET_QUESTION_COUNT;
+  sheetIncludeHints = signal(true);
+  sheetIncludeExplanations = signal(true);
+  generatingSheet = signal(false);
+  sheetError = signal('');
+  generatedSheet = signal<MapPracticeSheetResponse | null>(null);
 
   growthPercent = computed(() => {
     const p = this.projection();
@@ -185,7 +213,38 @@ export class MapPrepComponent implements OnInit {
     return Math.min(100, Math.round((p.projectedGrowth / 15) * 100));
   });
 
-  constructor(private readonly syllabusService: SyllabusService) {}
+  sessionAccuracy = computed(() => {
+    if (this.practiceTotal() === 0) return 0;
+    return Math.round((this.practiceCorrect() / this.practiceTotal()) * 100);
+  });
+
+  sessionAverageDifficulty = computed(() => {
+    const results = this.sessionResults();
+    if (results.length === 0) return 0;
+    const totalDifficulty = results.reduce((sum, entry) => sum + (entry.skill.difficulty ?? 0), 0);
+    return Math.round(totalDifficulty / results.length);
+  });
+
+  sessionByDomain = computed(() => {
+    const summary = new Map<string, { total: number; correct: number }>();
+    for (const entry of this.sessionResults()) {
+      const domain = this.skillDomainLabel(entry.skill);
+      const current = summary.get(domain) ?? { total: 0, correct: 0 };
+      current.total += 1;
+      if (entry.correct) current.correct += 1;
+      summary.set(domain, current);
+    }
+    return Array.from(summary.entries()).map(([domain, stats]) => ({
+      domain,
+      ...stats,
+      accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+    }));
+  });
+
+  constructor(
+    private readonly syllabusService: SyllabusService,
+    private readonly practiceService: PracticeService,
+  ) {}
 
   ngOnInit(): void {
     this.loadRITSkills();
@@ -232,6 +291,9 @@ export class MapPrepComponent implements OnInit {
     this.practiceCorrect.set(0);
     this.practiceTotal.set(0);
     this.practiceIndex.set(0);
+    this.sessionResults.set([]);
+    this.generatedSheet.set(null);
+    this.sheetError.set('');
     this.loadRITSkills();
     this.loadProjection();
   }
@@ -242,15 +304,26 @@ export class MapPrepComponent implements OnInit {
     this.practiceCorrect.set(0);
     this.practiceTotal.set(0);
     this.sessionComplete.set(false);
+    this.hintsOpen.set(false);
+    this.explanationOpen.set(false);
+    this.sessionResults.set([]);
     this.practiceQuestion.set(skills[0] ?? null);
   }
 
   markCorrect(): void {
+    const skill = this.practiceQuestion();
+    if (skill) {
+      this.sessionResults.update((results) => [...results, { skill, correct: true }]);
+    }
     this.practiceCorrect.update((n) => n + 1);
     this.nextQuestion();
   }
 
   markIncorrect(): void {
+    const skill = this.practiceQuestion();
+    if (skill) {
+      this.sessionResults.update((results) => [...results, { skill, correct: false }]);
+    }
     this.nextQuestion();
   }
 
@@ -264,7 +337,95 @@ export class MapPrepComponent implements OnInit {
     } else {
       this.practiceIndex.set(next);
       this.practiceQuestion.set(skills[next]);
+      this.hintsOpen.set(false);
+      this.explanationOpen.set(false);
     }
+  }
+
+  toggleDomain(domain: string): void {
+    this.selectedDomains.update((domains) => {
+      const next = domains.includes(domain)
+        ? domains.filter((value) => value !== domain)
+        : [...domains, domain];
+      return next.length > 0 ? next : [domain];
+    });
+  }
+
+  isDomainSelected(domain: string): boolean {
+    return this.selectedDomains().includes(domain);
+  }
+
+  setQuestionCount(value: number | string): void {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      this.sheetQuestionCount.set(this.minQuestionCount);
+      return;
+    }
+    this.sheetQuestionCount.set(
+      Math.max(this.minQuestionCount, Math.min(this.maxQuestionCount, Math.round(parsed))),
+    );
+  }
+
+  generatePracticeSheet(): void {
+    if (this.generatingSheet()) return;
+    this.generatingSheet.set(true);
+    this.sheetError.set('');
+    this.generatedSheet.set(null);
+
+    this.practiceService
+      .generateMapPracticeSheet({
+        studentId: this.studentId(),
+        ritBand: this.selectedRIT(),
+        domains: this.selectedDomains(),
+        questionCount: this.sheetQuestionCount(),
+        includeHints: this.sheetIncludeHints(),
+        includeExplanations: this.sheetIncludeExplanations(),
+      })
+      .subscribe({
+        next: (sheet) => {
+          this.generatedSheet.set(sheet);
+          this.generatingSheet.set(false);
+        },
+        error: () => {
+          this.generatedSheet.set(this.createMockSheet());
+          this.sheetError.set('Backend unavailable right now. Generated a local MAP practice sheet preview.');
+          this.generatingSheet.set(false);
+        },
+      });
+  }
+
+  private createMockSheet(): MapPracticeSheetResponse {
+    return {
+      worksheetId: `map-sheet-${Date.now()}`,
+      title: `MAP Practice Sheet · RIT ${this.selectedRIT()}`,
+      generatedAt: new Date().toISOString(),
+      questionCount: this.sheetQuestionCount(),
+      domains: this.selectedDomains(),
+      ritBand: this.selectedRIT(),
+      downloadUrl: '',
+    };
+  }
+
+  skillDomainLabel(skill: SyllabusSkill): string {
+    if (skill.tags?.length) {
+      const [firstTag] = skill.tags;
+      return firstTag
+        .split('-')
+        .filter((segment) => segment.length > 0)
+        .map((segment) => segment[0].toUpperCase() + segment.slice(1))
+        .join(' ');
+    }
+    return 'General';
+  }
+
+  skillGradeLabel(skill: SyllabusSkill): string {
+    return `G${skill.gradeRange.min}-${skill.gradeRange.max}`;
+  }
+
+  skillExplanation(skill: SyllabusSkill): string {
+    const rit = skill.ritBand ? `RIT ${skill.ritBand.min}-${skill.ritBand.max}` : 'current band';
+    const description = skill.description.endsWith('.') ? skill.description : `${skill.description}.`;
+    return `${description} Focus on this for ${rit} success.`;
   }
 
   get accuracyPercent(): number {
