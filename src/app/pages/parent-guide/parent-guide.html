@@ -1,15 +1,38 @@
 <div class="min-h-screen bg-gray-50 py-8 px-4">
   <div class="max-w-4xl mx-auto space-y-5">
+    <div class="inline-flex gap-1 rounded-full border border-blue-200 bg-blue-50 p-1">
+      <button
+        type="button"
+        class="rounded-full px-3 py-1 text-xs font-semibold"
+        [class.bg-primary]="language() === 'en'"
+        [class.text-white]="language() === 'en'"
+        [class.text-blue-700]="language() !== 'en'"
+        (click)="setLanguage('en')"
+      >
+        {{ t('common.language.english') }}
+      </button>
+      <button
+        type="button"
+        class="rounded-full px-3 py-1 text-xs font-semibold"
+        [class.bg-primary]="language() === 'hi'"
+        [class.text-white]="language() === 'hi'"
+        [class.text-blue-700]="language() !== 'hi'"
+        (click)="setLanguage('hi')"
+      >
+        {{ t('common.language.hindi') }}
+      </button>
+    </div>
+
     <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-primary">Parent Guide</h1>
-        <p class="text-sm text-gray-600">MindSprint overview, structure, and support strategies</p>
+        <h1 class="text-2xl font-bold text-primary">{{ t('parentGuide.header.title') }}</h1>
+        <p class="text-sm text-gray-600">{{ t('parentGuide.header.subtitle') }}</p>
       </div>
-      <a routerLink="/onboarding" class="text-sm underline text-primary">Back</a>
+      <a routerLink="/onboarding" class="text-sm underline text-primary">{{ t('parentGuide.nav.back') }}</a>
     </div>
 
     <div class="bg-white rounded-xl shadow p-4 space-y-3">
-      @for (section of sections; track section.title; let i = $index) {
+      @for (section of sections; track section.titleKey; let i = $index) {
         <article class="rounded-xl border border-gray-200 overflow-hidden">
           <button
             type="button"
@@ -19,15 +42,15 @@
           >
             <span class="font-semibold text-gray-800 flex items-center gap-2">
               <span class="text-lg">{{ section.icon }}</span>
-              {{ section.title }}
+              {{ t(section.titleKey) }}
             </span>
-            <span class="text-sm text-gray-500">{{ isExpanded(i) ? 'Hide' : 'Show' }}</span>
+            <span class="text-sm text-gray-500">{{ isExpanded(i) ? t('parentGuide.toggle.hide') : t('parentGuide.toggle.show') }}</span>
           </button>
           @if (isExpanded(i)) {
             <div class="px-4 pb-4 bg-gray-50">
               <ul class="list-disc list-inside space-y-2 text-sm text-gray-700 leading-relaxed">
-                @for (point of section.points; track point) {
-                  <li>{{ point }}</li>
+                @for (pointKey of section.pointKeys; track pointKey) {
+                  <li>{{ t(pointKey) }}</li>
                 }
               </ul>
             </div>
@@ -40,7 +63,7 @@
       routerLink="/topics"
       class="block w-full rounded-xl bg-primary text-white text-center py-3 font-semibold shadow"
     >
-      Start Learning
+      {{ t('parentGuide.nav.start') }}
     </a>
   </div>
 </div>

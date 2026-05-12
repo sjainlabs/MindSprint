@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { I18nService, type AppLanguage } from '../../services/i18n.service';
 
 interface ParentGuideSection {
-  title: string;
+  titleKey: string;
   icon: string;
-  points: string[];
+  pointKeys: string[];
 }
 
 @Component({
@@ -16,65 +17,85 @@ interface ParentGuideSection {
   styleUrl: './parent-guide.css',
 })
 export class ParentGuideComponent {
+  private readonly i18n = inject(I18nService);
+
   readonly sections: ParentGuideSection[] = [
     {
-      title: 'What is MindSprint?',
+      titleKey: 'parentGuide.section.overview.title',
       icon: '🧭',
-      points: [
-        'MindSprint is a personalized math practice platform for grades K–8.',
-        'It supports MAP-aligned skill development with adaptive learning and daily mastery practice.',
+      pointKeys: [
+        'parentGuide.section.overview.point1',
+        'parentGuide.section.overview.point2',
       ],
     },
     {
-      title: 'MAP Prep Mode',
-      icon: '📊',
-      points: [
-        'Students practice with RIT-aligned recommendations and MAP-style sessions.',
-        'Parents can use growth projections and skill suggestions to focus practice time.',
+      titleKey: 'parentGuide.section.diagnostic.title',
+      icon: '🧪',
+      pointKeys: [
+        'parentGuide.section.diagnostic.point1',
+        'parentGuide.section.diagnostic.point2',
       ],
     },
     {
-      title: 'Foundational Math Mastery',
+      titleKey: 'parentGuide.section.adaptive.title',
       icon: '📝',
-      points: [
-        'Daily practice sheets build fluency, accuracy, and confidence through short, consistent sessions.',
-        'Students move forward after showing mastery, creating steady incremental growth.',
+      pointKeys: [
+        'parentGuide.section.adaptive.point1',
+        'parentGuide.section.adaptive.point2',
       ],
     },
     {
-      title: 'Skill Practice',
+      titleKey: 'parentGuide.section.mapPrep.title',
+      icon: '📊',
+      pointKeys: [
+        'parentGuide.section.mapPrep.point1',
+        'parentGuide.section.mapPrep.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.skill.title',
       icon: '🧩',
-      points: [
-        'Domain-based learning includes Number Sense, Operations, Fractions, Geometry, and more.',
-        'Step-by-step explanations and adaptive difficulty keep learning at the right challenge level.',
+      pointKeys: [
+        'parentGuide.section.skill.point1',
+        'parentGuide.section.skill.point2',
       ],
     },
     {
-      title: 'AI Tutor',
+      titleKey: 'parentGuide.section.ai.title',
       icon: '🤖',
-      points: [
-        'The AI Tutor provides homework help and clear concept explanations on demand.',
-        'It can generate personalized questions for extra targeted practice.',
+      pointKeys: [
+        'parentGuide.section.ai.point1',
+        'parentGuide.section.ai.point2',
       ],
     },
     {
-      title: 'Progress Tracking',
+      titleKey: 'parentGuide.section.progress.title',
       icon: '📈',
-      points: [
-        'Track accuracy, difficulty level, and time spent to understand learning habits.',
-        'Use RIT growth insights and skill mastery dashboards to monitor outcomes.',
+      pointKeys: [
+        'parentGuide.section.progress.point1',
+        'parentGuide.section.progress.point2',
       ],
     },
     {
-      title: 'How Parents Can Support',
+      titleKey: 'parentGuide.section.different.title',
+      icon: '⚖️',
+      pointKeys: [
+        'parentGuide.section.different.point1',
+        'parentGuide.section.different.point2',
+        'parentGuide.section.different.point3',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.support.title',
       icon: '💙',
-      points: [
-        'Encourage short daily sessions, review progress weekly, and use practice sheets for reinforcement.',
-        'Celebrate small wins consistently to strengthen confidence and momentum.',
+      pointKeys: [
+        'parentGuide.section.support.point1',
+        'parentGuide.section.support.point2',
       ],
     },
   ];
 
+  readonly language = this.i18n.language;
   readonly expanded = signal<Set<number>>(new Set([0]));
 
   toggle(index: number): void {
@@ -91,5 +112,13 @@ export class ParentGuideComponent {
 
   isExpanded(index: number): boolean {
     return this.expanded().has(index);
+  }
+
+  setLanguage(language: AppLanguage): void {
+    this.i18n.setLanguage(language);
+  }
+
+  t(key: string): string {
+    return this.i18n.t(key);
   }
 }
