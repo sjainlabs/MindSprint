@@ -119,7 +119,6 @@
             <div class="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
               <span class="rounded-full bg-white px-2 py-1 text-indigo-700">🧭 {{ skillDomainLabel(skill) }}</span>
               <span class="rounded-full bg-white px-2 py-1 text-indigo-700">🎒 {{ skillGradeLabel(skill) }}</span>
-              <span class="rounded-full bg-white px-2 py-1 text-indigo-700">{{ skill.difficulty }}/100</span>
             </div>
             @if (skill.ritBand) {
               <p class="text-xs text-gray-500 mt-2">Target RIT: {{ skill.ritBand.min }}–{{ skill.ritBand.max }}</p>
@@ -239,15 +238,15 @@
 
     <div class="bg-white rounded-xl shadow p-5">
       <h2 class="text-lg font-bold text-primary mb-3">MAP Practice Sheet Generator</h2>
-      <p class="text-sm text-gray-500 mb-4">Create printable practice aligned to your selected MAP RIT band.</p>
+      <p class="text-sm text-gray-500 mb-4">Create a printable practice sheet aligned to your selected MAP RIT band.</p>
 
       <div class="grid gap-4 md:grid-cols-2">
         <label class="text-sm text-gray-600">
           Question count
           <input
             type="number"
-            min="5"
-            max="30"
+            [attr.min]="minQuestionCount"
+            [attr.max]="maxQuestionCount"
             class="mt-1 w-full border rounded px-3 py-2"
             [ngModel]="sheetQuestionCount()"
             (ngModelChange)="setQuestionCount($event)"

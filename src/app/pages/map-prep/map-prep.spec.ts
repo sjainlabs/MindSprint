@@ -49,7 +49,7 @@ const mockProjection = {
 const mockSheet = {
   worksheetId: 'sheet-1',
   title: 'MAP Practice Sheet · RIT 220',
-  generatedAt: new Date().toISOString(),
+  generatedAt: '2026-01-01T00:00:00.000Z',
   questionCount: 10,
   domains: ['Numbers & Operations'],
   ritBand: 220,

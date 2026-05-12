@@ -33,6 +33,8 @@ const MAP_DOMAINS = [
   'Measurement',
   'Geometry',
 ];
+const MIN_MAP_SHEET_QUESTION_COUNT = 5;
+const MAX_MAP_SHEET_QUESTION_COUNT = 30;
 
 const MOCK_MAP_SKILLS: Record<number, RITBandSkills> = {
   180: {
@@ -197,6 +199,8 @@ export class MapPrepComponent implements OnInit {
 
   selectedDomains = signal<string[]>([MAP_DOMAINS[0]]);
   sheetQuestionCount = signal(10);
+  readonly minQuestionCount = MIN_MAP_SHEET_QUESTION_COUNT;
+  readonly maxQuestionCount = MAX_MAP_SHEET_QUESTION_COUNT;
   sheetIncludeHints = signal(true);
   sheetIncludeExplanations = signal(true);
   generatingSheet = signal(false);
@@ -353,8 +357,13 @@ export class MapPrepComponent implements OnInit {
 
   setQuestionCount(value: number | string): void {
     const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return;
-    this.sheetQuestionCount.set(Math.max(5, Math.min(30, Math.round(parsed))));
+    if (!Number.isFinite(parsed)) {
+      this.sheetQuestionCount.set(this.minQuestionCount);
+      return;
+    }
+    this.sheetQuestionCount.set(
+      Math.max(this.minQuestionCount, Math.min(this.maxQuestionCount, Math.round(parsed))),
+    );
   }
 
   generatePracticeSheet(): void {
@@ -386,11 +395,10 @@ export class MapPrepComponent implements OnInit {
   }
 
   private createMockSheet(): MapPracticeSheetResponse {
-    const timestamp = new Date().toISOString();
     return {
       worksheetId: `map-sheet-${Date.now()}`,
       title: `MAP Practice Sheet · RIT ${this.selectedRIT()}`,
-      generatedAt: timestamp,
+      generatedAt: new Date().toISOString(),
       questionCount: this.sheetQuestionCount(),
       domains: this.selectedDomains(),
       ritBand: this.selectedRIT(),
@@ -401,7 +409,11 @@ export class MapPrepComponent implements OnInit {
   skillDomainLabel(skill: SyllabusSkill): string {
     if (skill.tags?.length) {
       const [firstTag] = skill.tags;
-      return firstTag.replace(/(^\w|-\w)/g, (part) => part.replace('-', '').toUpperCase());
+      return firstTag
+        .split('-')
+        .filter((segment) => segment.length > 0)
+        .map((segment) => segment[0].toUpperCase() + segment.slice(1))
+        .join(' ');
     }
     return 'General';
   }
@@ -412,7 +424,8 @@ export class MapPrepComponent implements OnInit {
 
   skillExplanation(skill: SyllabusSkill): string {
     const rit = skill.ritBand ? `RIT ${skill.ritBand.min}-${skill.ritBand.max}` : 'current band';
-    return `${skill.description} Focus on this for ${rit} success.`;
+    const description = skill.description.endsWith('.') ? skill.description : `${skill.description}.`;
+    return `${description} Focus on this for ${rit} success.`;
   }
 
   get accuracyPercent(): number {
