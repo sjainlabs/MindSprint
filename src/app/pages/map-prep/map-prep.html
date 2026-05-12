@@ -32,6 +32,15 @@
       </label>
     </div>
 
+    <aside class="bg-white rounded-xl shadow p-4">
+      <p class="text-sm font-semibold text-primary">MAP Prep Sidebar · Help / Learn More</p>
+      <p class="text-xs text-gray-600 mt-1">Open quick guides for students and families.</p>
+      <div class="mt-3 grid sm:grid-cols-2 gap-2">
+        <a routerLink="/guide/kids" class="rounded-lg border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-sm font-semibold text-fuchsia-700 text-center">Kid-Friendly Guide</a>
+        <a routerLink="/guide/parents" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 text-center">Parent Guide</a>
+      </div>
+    </aside>
+
     <!-- MAP Growth Projection -->
     @if (loadingProjection()) {
       <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">Loading MAP growth projection…</div>

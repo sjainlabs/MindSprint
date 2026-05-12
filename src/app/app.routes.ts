@@ -23,6 +23,16 @@ export const routes: Routes = [
   { path: 'diagnostic', component: DiagnosticStartComponent },
   { path: 'diagnostic/test', component: DiagnosticTestComponent },
   { path: 'onboarding', component: OnboardingComponent },
+  {
+    path: 'guide/kids',
+    loadComponent: () =>
+      import('./pages/kid-guide/kid-guide').then((module) => module.KidGuideComponent),
+  },
+  {
+    path: 'guide/parents',
+    loadComponent: () =>
+      import('./pages/parent-guide/parent-guide').then((module) => module.ParentGuideComponent),
+  },
   { path: 'topics', component: TopicBrowserComponent },
   { path: 'map-prep', component: MapPrepComponent },
   { path: 'profile', component: StudentProfileComponent },
