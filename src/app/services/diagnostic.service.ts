@@ -19,7 +19,8 @@ export function normalizeLearningLevelIdentifier(value: string | null | undefine
   if (!value) {
     return null;
   }
-  return LEARNING_LEVEL_NORMALIZATION[value.trim().toLowerCase()] ?? null;
+  const normalized = value.trim().normalize('NFC').toLowerCase();
+  return LEARNING_LEVEL_NORMALIZATION[normalized] ?? null;
 }
 
 export interface DiagnosticQuestion {

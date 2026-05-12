@@ -412,11 +412,12 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   private levelDisplayLabel(level: LearningLevel): string {
-    const key = level === 'Beginner'
-      ? 'worksheet.beginner'
-      : level === 'Intermediate'
-        ? 'worksheet.intermediate'
-        : 'worksheet.advanced';
+    const keyByLevel: Record<LearningLevel, string> = {
+      Beginner: 'worksheet.beginner',
+      Intermediate: 'worksheet.intermediate',
+      Advanced: 'worksheet.advanced',
+    };
+    const key = keyByLevel[level];
     return this.t.translate(key);
   }
 }
