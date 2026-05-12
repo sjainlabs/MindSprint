@@ -12,6 +12,8 @@ import { OnboardingComponent } from './pages/onboarding/onboarding';
 import { TopicBrowserComponent } from './pages/topic-browser/topic-browser';
 import { MapPrepComponent } from './pages/map-prep/map-prep';
 import { StudentProfileComponent } from './pages/student-profile/student-profile';
+import { KidGuideComponent } from './pages/kid-guide/kid-guide';
+import { ParentGuideComponent } from './pages/parent-guide/parent-guide';
 
 export const routes: Routes = [
   { path: '', component: Welcome },
@@ -23,6 +25,8 @@ export const routes: Routes = [
   { path: 'diagnostic', component: DiagnosticStartComponent },
   { path: 'diagnostic/test', component: DiagnosticTestComponent },
   { path: 'onboarding', component: OnboardingComponent },
+  { path: 'guide/kids', component: KidGuideComponent },
+  { path: 'guide/parents', component: ParentGuideComponent },
   { path: 'topics', component: TopicBrowserComponent },
   { path: 'map-prep', component: MapPrepComponent },
   { path: 'profile', component: StudentProfileComponent },

@@ -1,0 +1,46 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-4xl mx-auto space-y-5">
+    <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-primary">Parent Guide</h1>
+        <p class="text-sm text-gray-600">MindSprint overview, structure, and support strategies</p>
+      </div>
+      <a routerLink="/onboarding" class="text-sm underline text-primary">Back</a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-4 space-y-3">
+      @for (section of sections; track section.title; let i = $index) {
+        <article class="rounded-xl border border-gray-200 overflow-hidden">
+          <button
+            type="button"
+            class="w-full px-4 py-3 bg-white text-left flex items-center justify-between gap-3 hover:bg-gray-50"
+            (click)="toggle(i)"
+            [attr.aria-expanded]="isExpanded(i)"
+          >
+            <span class="font-semibold text-gray-800 flex items-center gap-2">
+              <span class="text-lg">{{ section.icon }}</span>
+              {{ section.title }}
+            </span>
+            <span class="text-sm text-gray-500">{{ isExpanded(i) ? 'Hide' : 'Show' }}</span>
+          </button>
+          @if (isExpanded(i)) {
+            <div class="px-4 pb-4 bg-gray-50">
+              <ul class="list-disc list-inside space-y-2 text-sm text-gray-700 leading-relaxed">
+                @for (point of section.points; track point) {
+                  <li>{{ point }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </article>
+      }
+    </div>
+
+    <a
+      routerLink="/topics"
+      class="block w-full rounded-xl bg-primary text-white text-center py-3 font-semibold shadow"
+    >
+      Start Learning
+    </a>
+  </div>
+</div>
