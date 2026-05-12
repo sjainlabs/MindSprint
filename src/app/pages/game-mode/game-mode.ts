@@ -417,7 +417,7 @@ export class GameModeComponent implements OnDestroy {
     return !!this.getMapChallenge()?.tablePayload;
   }
 
-  legacyPrompt(challenge: GameChallenge): string {
+  getModeSpecificPrompt(challenge: GameChallenge): string {
     if (this.selectedMode() !== 'falling-numbers') {
       return challenge.prompt;
     }

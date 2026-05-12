@@ -84,10 +84,6 @@ export class WorksheetPageComponent implements OnInit {
       return;
     }
 
-    if (levelParam !== level) {
-      void this.router.navigate(['/worksheet', level], { replaceUrl: true });
-    }
-
     this.currentLevel.set(level);
     this.refreshStudentInsights();
     this.loadWorksheet(level);
@@ -406,8 +402,7 @@ export class WorksheetPageComponent implements OnInit {
     }
     return (
       normalizeLearningLevelIdentifier(recommendation.recommendedLevelRaw) ??
-      normalizeLearningLevelIdentifier(recommendation.recommendedLevel) ??
-      normalizeLearningLevelIdentifier(recommendation.recommendedLevelDisplay)
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevel)
     );
   }
 
