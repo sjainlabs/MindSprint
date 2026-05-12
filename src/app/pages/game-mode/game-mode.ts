@@ -18,11 +18,11 @@ import {
 } from '../../services/student-intelligence.service';
 import { MapGraphComponent } from '../../components/map-graph/map-graph';
 import { MapTableComponent } from '../../components/map-table/map-table';
+import { MAP_AUTO_ADVANCE_DELAY_MS } from '../../constants/ui.constants';
 
 const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
 const DEFAULT_FLASH_SPEED_MS = 600;
-const MAP_AUTO_ADVANCE_DELAY_MS = 220;
 
 export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'map-challenge' | 'competition-boss';
 
@@ -361,7 +361,7 @@ export class GameModeComponent {
     const selectedSet = new Set(selectedAnswers);
     const correctSet = new Set(correctAnswers);
     const matchedCount = [...selectedSet].filter((answer) => correctSet.has(answer)).length;
-    const partialCredit = correctAnswers.length === 0 ? 0 : matchedCount / correctAnswers.length;
+    const partialCredit = matchedCount / correctAnswers.length;
     this.mapPartialCredit.set(Math.max(0, Math.min(1, partialCredit)));
     const noExtras = [...selectedSet].every((answer) => correctSet.has(answer));
     const allCorrectSelected = matchedCount === correctSet.size;

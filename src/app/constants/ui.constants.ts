@@ -1,0 +1,2 @@
+export const MAP_AUTO_ADVANCE_DELAY_MS = 220;
+export const MIN_BAR_HEIGHT_PERCENT = 8;

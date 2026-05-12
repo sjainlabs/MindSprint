@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, computed } from '@angular/core';
 import { type MapGraphPayload } from '../../services/game.service';
-
-const MIN_BAR_HEIGHT_PERCENT = 8;
+import { MIN_BAR_HEIGHT_PERCENT } from '../../constants/ui.constants';
 
 @Component({
   selector: 'map-graph',
