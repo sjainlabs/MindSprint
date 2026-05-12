@@ -8,7 +8,6 @@ import { type AdvancedQuestionType } from './ai-worksheet.service';
 
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 export type GameMode =
-  | 'flash-abacus'
   | 'abacus-flash'
   | 'falling-numbers'
   | 'arithmetic'

@@ -78,7 +78,7 @@ export class GameModeComponent implements OnDestroy {
   mapStepTextAnswers = signal<Record<number, string>>({});
   mapPartialCredit = signal(0);
   /** The API-compatible mode used for the currently loaded challenge */
-  private activeChallengeApiMode: GameMode = 'flash-abacus';
+  private activeChallengeApiMode: GameMode = 'abacus-flash';
 
   // ── Abacus Flash state ─────────────────────────────────────────────────────
   currentFlashNumber = signal<number | null>(null);
@@ -87,9 +87,9 @@ export class GameModeComponent implements OnDestroy {
   flashState = signal<AbacusGameState>(GAME_STATE.START);
   showQuestion = signal(false);
   isFlashing = signal(false);
-  private flashIntervalId: ReturnType<typeof setInterval> | null = null;
+  private flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private flashSequenceToken = 0;
   private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private flashStartTime: number | null = null;
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
     { value: 'abacus-flash', label: 'Abacus Flash', description: 'Flash-card speed drills with adaptive pacing.', icon: '🔢' },
@@ -155,11 +155,11 @@ export class GameModeComponent implements OnDestroy {
   /** Map super-syllabus game modes to a backend-compatible mode for the API call */
   private toApiMode(mode: SuperGameMode): GameMode {
     const mapping: Record<SuperGameMode, GameMode> = {
-      'abacus-flash': 'flash-abacus',
+      'abacus-flash': 'abacus-flash',
       'falling-numbers': 'falling-numbers',
       'boss-battle': 'boss-battle',
       'ai-puzzle': 'ai-puzzle',
-      'fluency-speed': 'flash-abacus',
+      'fluency-speed': 'abacus-flash',
       'reasoning-puzzle': 'ai-puzzle',
       map: 'map',
       'competition-boss': 'boss-battle',
@@ -443,7 +443,8 @@ export class GameModeComponent implements OnDestroy {
   }
 
   getModeSpecificPrompt(challenge: LegacyChallenge): string {
-    const basePrompt = challenge.prompt?.trim();
+    const basePrompt =
+      'prompt' in challenge && typeof challenge.prompt === 'string' ? challenge.prompt.trim() : '';
     if (this.selectedMode() !== 'falling-numbers') {
       return basePrompt && basePrompt.length > 0 ? basePrompt : this.t.translate('game.loadingAdaptive');
     }
@@ -471,18 +472,13 @@ export class GameModeComponent implements OnDestroy {
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
   private getFlashPayload(challenge: LegacyChallenge): AbacusFlashPayload {
     const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
-    // Priority: canonical flashSequence first, then legacy sequence/numbers/flashNumbers aliases.
-    const sequenceSource =
-      raw['flashSequence'] ??
-      raw['sequence'] ??
-      raw['numbers'] ??
-      raw['flashNumbers'];
+    const sequenceSource = raw['flashSequence'];
     const flashSequence = Array.isArray(sequenceSource)
       ? sequenceSource
           .map((value) => (typeof value === 'number' ? value : Number(value)))
           .filter((value) => Number.isFinite(value))
       : [];
-    const speedSource = raw['speedMs'] ?? raw['flashSpeedMs'] ?? raw['intervalMs'] ?? raw['speed'];
+    const speedSource = raw['speedMs'];
     const speedMs =
       typeof speedSource === 'number' && speedSource > 0
         ? speedSource
@@ -502,10 +498,11 @@ export class GameModeComponent implements OnDestroy {
       return;
     }
     // Clear any existing sequence
-    if (this.flashIntervalId !== null) {
-      clearInterval(this.flashIntervalId);
-      this.flashIntervalId = null;
+    if (this.flashTimeoutId !== null) {
+      clearTimeout(this.flashTimeoutId);
+      this.flashTimeoutId = null;
     }
+    const sequenceToken = ++this.flashSequenceToken;
 
     const { flashSequence, speedMs } = this.getFlashPayload(challenge);
     this.flashSequence.set(flashSequence);
@@ -515,7 +512,6 @@ export class GameModeComponent implements OnDestroy {
     this.currentFlashNumber.set(null);
     this.showQuestion.set(false);
     this.isFlashing.set(true);
-    this.flashStartTime = Date.now();
 
     if (flashSequence.length === 0) {
       // No sequence to flash — show the question immediately.
@@ -528,26 +524,41 @@ export class GameModeComponent implements OnDestroy {
     this.currentFlashNumber.set(this.flashSequence()[0] ?? null);
     this.flashState.set(GAME_STATE.ROUND);
 
-    this.flashIntervalId = setInterval(() => {
+    const flashNext = (): void => {
+      if (sequenceToken !== this.flashSequenceToken) {
+        return;
+      }
       this.flashState.set(GAME_STATE.NEXT);
       const nextIndex = this.flashCurrentIndex() + 1;
       if (nextIndex < this.flashSequence().length) {
         this.flashCurrentIndex.set(nextIndex);
         this.currentFlashNumber.set(this.flashSequence()[nextIndex] ?? null);
         this.flashState.set(GAME_STATE.ROUND);
+        this.flashTimeoutId = setTimeout(() => flashNext(), speedMs);
       } else {
-        const id = this.flashIntervalId;
-        if (id !== null) {
-          clearInterval(id);
-        }
-        this.flashIntervalId = null;
+        this.flashTimeoutId = null;
         this.flashCurrentIndex.set(this.flashSequence().length);
         this.currentFlashNumber.set(null);
         this.isFlashing.set(false);
         this.flashState.set(GAME_STATE.ROUND);
         this.showQuestion.set(true);
       }
-    }, speedMs);
+    };
+    this.flashTimeoutId = setTimeout(() => flashNext(), speedMs);
+  }
+
+  setAbacusAnswer(rawValue: string): void {
+    const trimmedValue = rawValue.trim();
+    if (trimmedValue.length === 0) {
+      this.selectedAnswer.set(null);
+      return;
+    }
+    const numericValue = Number(trimmedValue);
+    this.selectedAnswer.set(Number.isFinite(numericValue) ? numericValue : null);
+  }
+
+  private getAbacusExpectedAnswer(): number {
+    return this.flashSequence().reduce((total, value) => total + value, 0);
   }
 
   loadChallenge(): void {
@@ -569,16 +580,17 @@ export class GameModeComponent implements OnDestroy {
     this.showQuestion.set(false);
     this.isFlashing.set(false);
 
-    if (this.flashIntervalId !== null) {
-      clearInterval(this.flashIntervalId);
-      this.flashIntervalId = null;
+    if (this.flashTimeoutId !== null) {
+      clearTimeout(this.flashTimeoutId);
+      this.flashTimeoutId = null;
     }
+    this.flashSequenceToken++;
     this.clearMapAutoAdvanceTimeout();
 
     const apiMode = this.toApiMode(this.selectedMode());
     this.activeChallengeApiMode = apiMode;
 
-    if (apiMode === 'flash-abacus') {
+    if (apiMode === 'abacus-flash') {
       this.gameService
         .getAbacusFlashChallenge({
           studentId: this.studentId(),
@@ -635,8 +647,12 @@ export class GameModeComponent implements OnDestroy {
     }
 
     const isMapChallenge = this.isMapChallenge(challenge) && this.selectedMode() === 'map';
+    const isAbacusFlash = this.activeChallengeApiMode === 'abacus-flash';
     const hasAnswerOptions = this.hasAnswerOptions(challenge);
     const selected = this.selectedAnswer();
+    if (isAbacusFlash && typeof selected !== 'number') {
+      return;
+    }
     if (!isMapChallenge && hasAnswerOptions && selected === null) {
       return;
     }
@@ -646,6 +662,8 @@ export class GameModeComponent implements OnDestroy {
       ? this.evaluateMapChallenge()
       : hasAnswerOptions
         ? selected === challenge.answer
+        : isAbacusFlash
+          ? selected === this.getAbacusExpectedAnswer()
         : false;
 
     if (correct) {
@@ -665,30 +683,20 @@ export class GameModeComponent implements OnDestroy {
       }
     }
 
-    if (this.activeChallengeApiMode === 'flash-abacus') {
-      if (typeof selected !== 'number') {
-        return;
-      }
-      const timeTakenMs =
-        this.flashStartTime !== null ? Date.now() - this.flashStartTime : undefined;
-
+    if (isAbacusFlash) {
+      const accuracy = correct ? 100 : 0;
       this.gameService
         .submitAbacusFlash({
           studentId: this.studentId(),
-          challengeId: challenge.challengeId,
-          answer: selected,
-          timeTakenMs,
+          mode: 'abacus-flash',
+          score: accuracy,
+          accuracy,
+          streak: this.streakTotal(),
         })
         .subscribe({
           next: (result) => {
-            const nextDifficulty = result.newDifficulty ?? result.difficulty;
-            if (typeof nextDifficulty === 'number') {
-              this.adaptiveDifficulty.set(nextDifficulty);
-            }
-            const nextStreak = result.newStreak ?? result.streak;
-            if (typeof nextStreak === 'number') {
-              this.localStreak.set(nextStreak);
-            }
+            this.adaptiveDifficulty.set(result.newDifficulty);
+            this.localStreak.set(result.newStreak);
             // Update quest progress if server reports more completions
             const questProgress = result.dailyQuestProgress;
             if (typeof questProgress === 'number' && questProgress > this.completedQuests()) {
@@ -741,10 +749,11 @@ export class GameModeComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.flashIntervalId !== null) {
-      clearInterval(this.flashIntervalId);
-      this.flashIntervalId = null;
+    if (this.flashTimeoutId !== null) {
+      clearTimeout(this.flashTimeoutId);
+      this.flashTimeoutId = null;
     }
+    this.flashSequenceToken++;
     this.clearMapAutoAdvanceTimeout();
   }
 }

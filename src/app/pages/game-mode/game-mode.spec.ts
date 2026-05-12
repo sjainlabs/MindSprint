@@ -20,14 +20,11 @@ const mockProfile = {
 };
 
 const mockFlashPayload = { flashSequence: [3, 7, 2], speedMs: 200 };
+const mockAbacusAnswer = mockFlashPayload.flashSequence.reduce((sum, value) => sum + value, 0);
 
 const mockChallenge = {
   challengeId: 'c-1',
   studentId: 'student-demo',
-  prompt: 'What is 7 × 8?',
-  operation: 'multiplication' as const,
-  options: [54, 56, 58, 60],
-  answer: 56,
   timeLimitSeconds: 30,
   difficulty: 65,
   recommendedLevel: 'Intermediate' as const,
@@ -191,7 +188,7 @@ describe('GameModeComponent', () => {
 
     const comp = fixture.componentInstance;
     comp.selectedMode.set('fluency-speed');
-    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
 
     expect(comp.unlockedBadges()).toContain('⚡ Fluency Champion');
@@ -345,7 +342,7 @@ describe('GameModeComponent', () => {
     const comp = fixture.componentInstance;
     const initialLocalXp = comp.localXp();
 
-    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
 
     expect(comp.localXp()).toBeGreaterThan(initialLocalXp);
@@ -418,11 +415,15 @@ describe('GameModeComponent', () => {
     // Skip flash
     vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
 
-    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
 
     expect(gameServiceMock.submitAbacusFlash).toHaveBeenCalledWith(
-      expect.objectContaining({ answer: mockChallenge.answer }),
+      expect.objectContaining({
+        mode: 'abacus-flash',
+        score: 100,
+        accuracy: 100,
+      }),
     );
   });
 
@@ -432,7 +433,7 @@ describe('GameModeComponent', () => {
 
     const comp = fixture.componentInstance;
     vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
-    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
 
     expect(comp.adaptiveDifficulty()).toBe(mockAbacusFlashSubmitResponse.newDifficulty);
@@ -444,7 +445,7 @@ describe('GameModeComponent', () => {
 
     const comp = fixture.componentInstance;
     vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
-    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
 
     expect(comp.localStreak()).toBe(mockAbacusFlashSubmitResponse.newStreak);
@@ -458,7 +459,7 @@ describe('GameModeComponent', () => {
     vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
 
     const callsBefore = gameServiceMock.getAbacusFlashChallenge.mock.calls.length;
-    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
 
     // Before 1.5 s timeout fires, no new challenge loaded
@@ -497,11 +498,11 @@ describe('GameModeComponent', () => {
     expect(comp.showQuestion()).toBe(true);
   });
 
-  it('parses alternate abacus payload keys and flashes full sequence', () => {
+  it('falls back to default speed when canonical speedMs is missing', () => {
     gameServiceMock.getAbacusFlashChallenge.mockReturnValueOnce(
       of({
         ...mockChallenge,
-        gamePayload: { sequence: ['1', '2', '3'], speed: '150' },
+        gamePayload: { flashSequence: [1, 2, 3] },
       } as any),
     );
     const fixture = TestBed.createComponent(GameModeComponent);
@@ -509,11 +510,11 @@ describe('GameModeComponent', () => {
     const comp = fixture.componentInstance;
 
     expect(comp.currentFlashNumber()).toBe(1);
-    vi.advanceTimersByTime(150);
+    vi.advanceTimersByTime(600);
     expect(comp.currentFlashNumber()).toBe(2);
-    vi.advanceTimersByTime(150);
+    vi.advanceTimersByTime(600);
     expect(comp.currentFlashNumber()).toBe(3);
-    vi.advanceTimersByTime(150);
+    vi.advanceTimersByTime(600);
     expect(comp.showQuestion()).toBe(true);
   });
 
@@ -559,7 +560,7 @@ describe('GameModeComponent', () => {
 
     const comp = fixture.componentInstance;
     vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
-    comp.selectedAnswer.set(mockChallenge.answer);
+    comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
     comp.submitChallenge(); // second call should be ignored
 
