@@ -70,7 +70,7 @@
           <div class="h-4 rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:220%_100%] animate-skeleton"></div>
           <div class="h-4 w-2/3 rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:220%_100%] animate-skeleton animation-delay-150"></div>
           <p class="text-gray-500 text-sm animate-pulse-soft">
-            {{ selectedMode() === 'map-challenge' ? 'Generating MAP challenge…' : 'Generating adaptive challenge…' }}
+            {{ selectedMode() === 'map-challenge' ? ('game.loadingMap' | translate) : ('game.loadingAdaptive' | translate) }}
           </p>
         </div>
       }
@@ -122,7 +122,7 @@
                     ></span>
                   }
                 </div>
-                <p class="text-xs font-bold text-cyan-700">Step {{ currentStepIndex() + 1 }} of {{ totalMapSteps() }}</p>
+                <p class="text-xs font-bold text-cyan-700">{{ 'game.step' | translate: { current: currentStepIndex() + 1, total: totalMapSteps() } }}</p>
                 <p class="mt-2 text-xl font-black text-cyan-900 leading-relaxed max-w-prose animate-map-fade-in">{{ step.prompt }}</p>
 
                 <div class="mt-4 space-y-3">
@@ -147,7 +147,7 @@
                     </div>
                   } @else {
                     <label class="block text-sm font-semibold text-cyan-800">
-                      Your answer
+                      {{ 'game.yourAnswer' | translate }}
                       <input
                         type="text"
                         class="mt-1 w-full rounded-xl border-2 border-cyan-200 px-4 py-3 text-lg focus:border-cyan-500 focus:outline-none"
@@ -166,7 +166,7 @@
                     (click)="previousMapStep()"
                     [disabled]="currentStepIndex() === 0"
                   >
-                    Previous Step
+                    {{ 'game.previousStep' | translate }}
                   </button>
                   <button
                     type="button"
@@ -174,7 +174,7 @@
                     (click)="nextMapStep()"
                     [disabled]="!isMapStepAnswered() || challengeSubmitted()"
                   >
-                    {{ isMapStepFinal() ? 'Submit MAP Answers' : 'Next Step' }}
+                    {{ isMapStepFinal() ? ('game.submitMapAnswers' | translate) : ('game.nextStep' | translate) }}
                   </button>
                 </div>
               </div>
@@ -183,13 +183,13 @@
             @if (mapShowGraph()) {
               <map-graph [payload]="mapChallenge.graphPayload"></map-graph>
             } @else {
-              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">No graph this round—let’s solve with words and numbers! ✨</div>
+              \<div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">{{ 'game.noGraph' | translate }}</div>
             }
 
             @if (mapShowTable()) {
               <map-table [payload]="mapChallenge.tablePayload"></map-table>
             } @else {
-              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">No table this round—keep going, math explorer! 🚀</div>
+              \<div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">{{ 'game.noTable' | translate }}</div>
             }
 
             <div class="rounded-xl border border-amber-200 bg-amber-50 p-3">
@@ -198,8 +198,8 @@
                 class="flex w-full items-center justify-between text-left text-sm font-bold text-amber-900"
                 (click)="mapHintsOpen.set(!mapHintsOpen())"
               >
-                <span>💡 Hints</span>
-                <span>{{ mapHintsOpen() ? 'Hide' : 'Show' }}</span>
+                <span>{{ 'game.hints' | translate }}</span>
+                <span>{{ mapHintsOpen() ? ('game.hide' | translate) : ('game.show' | translate) }}</span>
               </button>
               @if (mapHintsOpen()) {
                 <ul class="mt-2 space-y-1 text-sm text-amber-800">
@@ -212,34 +212,34 @@
 
             @if (challengeSubmitted()) {
               <div class="rounded-xl border border-purple-200 bg-purple-50 p-4">
-                <p class="text-sm font-bold text-purple-900">Partial Credit: {{ mapPartialCreditPercent() }}%</p>
-                <p class="mt-2 text-sm text-purple-800"><span class="font-bold">Explanation:</span> {{ mapChallenge.explanation }}</p>
+                <p class="text-sm font-bold text-purple-900">{{ 'game.partialCredit' | translate }}: {{ mapPartialCreditPercent() }}%</p>
+                <p class="mt-2 text-sm text-purple-800"><span class="font-bold">{{ 'game.explanation' | translate }}:</span> {{ mapChallenge.explanation }}</p>
               </div>
             }
 
             @if (isCorrect() === true) {
-              <p class="text-emerald-700 font-semibold">✅ Great work! MAP rewards applied.</p>
+              <p class="text-emerald-700 font-semibold">{{ 'game.correctMap' | translate }}</p>
             }
             @if (isCorrect() === false && challengeSubmitted()) {
-              <p class="text-rose-700 font-semibold">❌ Keep trying. Review hints and explanation.</p>
+              <p class="text-rose-700 font-semibold">{{ 'game.wrongMap' | translate }}</p>
             }
 
             <div class="grid grid-cols-2 gap-3 text-sm">
               <div class="rounded-lg bg-amber-50 p-3">
-                <p class="text-gray-600">XP</p>
+                <p class="text-gray-600">{{ 'game.xp' | translate }}</p>
                 <p class="text-xl font-bold text-amber-600">{{ xpTotal() }}</p>
               </div>
               <div class="rounded-lg bg-emerald-50 p-3">
-                <p class="text-gray-600">Streak</p>
+                <p class="text-gray-600">{{ 'game.streak' | translate }}</p>
                 <p class="text-xl font-bold text-emerald-600">{{ streakTotal() }}</p>
               </div>
             </div>
 
             <div>
-              <p class="text-sm font-semibold mb-2">Badges</p>
+              <p class="text-sm font-semibold mb-2">{{ 'game.badges' | translate }}</p>
               <div class="flex flex-wrap gap-2">
                 @if (currentBadges().length === 0) {
-                  <span class="text-sm text-gray-500">No badges yet.</span>
+                  <span class="text-sm text-gray-500">{{ 'game.noBadges' | translate }}</span>
                 }
                 @for (badge of currentBadges(); track badge) {
                   <span class="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">{{ badge }}</span>
@@ -252,15 +252,15 @@
               class="w-full border border-gray-300 py-2 px-4 rounded-lg transition-all hover:shadow-lg hover:bg-primary/10 active:scale-95"
               (click)="loadChallenge()"
             >
-              Next MAP Challenge
+              {{ 'game.nextMapChallenge' | translate }}
             </button>
           </div>
         } @else if (legacyChallenge(); as legacyChallenge) {
           <div class="space-y-4 animate-slide-up">
             <div class="rounded-lg bg-indigo-50 p-4">
-              <p class="text-xs text-indigo-700 font-semibold">Mode: {{ selectedMode() }}</p>
-              <p class="text-xs text-gray-600">Adaptive Difficulty: {{ legacyChallenge.difficulty }}/100</p>
-              <p class="text-xs text-gray-600">Recommended Level: {{ legacyChallenge.recommendedLevel }}</p>
+              <p class="text-xs text-indigo-700 font-semibold">{{ 'game.mode' | translate }}: {{ selectedMode() }}</p>
+              <p class="text-xs text-gray-600">{{ 'game.adaptiveDifficulty' | translate }}: {{ legacyChallenge.difficulty }}/100</p>
+              <p class="text-xs text-gray-600">{{ 'game.recommendedLevel' | translate }}: {{ legacyChallenge.recommendedLevel }}</p>
               <p class="text-lg font-semibold mt-2">{{ legacyChallenge.prompt }}</p>
             </div>
 
@@ -282,7 +282,7 @@
                 }
 
                 @if (!isFlashing() && !showQuestion() && !loading()) {
-                  <p class="text-center text-gray-400 text-xs py-4">Get ready…</p>
+                  <p class="text-center text-gray-400 text-xs py-4">{{ 'game.getReady' | translate }}</p>
                 }
               </div>
             }
@@ -397,59 +397,59 @@
                   [disabled]="selectedAnswer() === null || challengeSubmitted()"
                   (click)="submitChallenge()"
                 >
-                  Submit Challenge
+                  {{ 'game.submitChallenge' | translate }}
                 </button>
               </div>
             }
 
             @if (isCorrect() === true) {
               <p class="text-emerald-700 font-semibold">
-                ✅ Correct! XP and streak rewards applied.
+                {{ 'game.correct' | translate }}
                 @if (selectedMode() === 'abacus-flash') {
-                  <span class="text-xs font-normal"> Loading next challenge…</span>
+                  <span class="text-xs font-normal"> {{ 'game.loadingNext' | translate }}</span>
                 }
               </p>
             }
             @if (isCorrect() === false) {
               <p class="text-red-600 font-semibold">
-                ❌ Not quite.
+                {{ 'game.wrong' | translate }}
                 @if (selectedMode() === 'abacus-flash') {
-                  <span class="text-xs font-normal"> Loading next challenge…</span>
+                  <span class="text-xs font-normal"> {{ 'game.loadingNext' | translate }}</span>
                 } @else {
-                  Try another challenge.
+                  {{ 'game.tryAnother' | translate }}
                 }
               </p>
             }
 
             <div class="grid grid-cols-2 gap-3 text-sm">
               <div class="rounded-lg bg-amber-50 p-3">
-                <p class="text-gray-600">XP</p>
+                <p class="text-gray-600">{{ 'game.xp' | translate }}</p>
                 <p class="text-xl font-bold text-amber-600">{{ xpTotal() }}</p>
               </div>
               <div class="rounded-lg bg-emerald-50 p-3">
-                <p class="text-gray-600">Streak</p>
+                <p class="text-gray-600">{{ 'game.streak' | translate }}</p>
                 <p class="text-xl font-bold text-emerald-600">{{ streakTotal() }}</p>
               </div>
               <div class="rounded-lg bg-blue-50 p-3 col-span-2">
-                <p class="text-gray-600">Daily Quest</p>
+                <p class="text-gray-600">{{ 'game.dailyQuest' | translate }}</p>
                 <p>{{ legacyChallenge.dailyQuest.description }}</p>
                 <p class="font-semibold">
-                  {{ completedQuests() }}/{{ legacyChallenge.dailyQuest.target }} complete
+                  {{ 'game.complete' | translate: { done: completedQuests(), total: legacyChallenge.dailyQuest.target } }}
                 </p>
               </div>
               <div class="rounded-lg bg-purple-50 p-3 col-span-2">
-                <p class="text-gray-600">Boss Battle</p>
+                <p class="text-gray-600">{{ 'game.bossBattle' | translate }}</p>
                 <p class="font-semibold">
-                  {{ legacyChallenge.bossBattle.unlocked ? legacyChallenge.bossBattle.title + ' unlocked!' : 'Locked' }}
+                  {{ legacyChallenge.bossBattle.unlocked ? legacyChallenge.bossBattle.title + ' unlocked!' : ('game.bossLocked' | translate) }}
                 </p>
               </div>
             </div>
 
             <div>
-              <p class="text-sm font-semibold mb-2">Badges</p>
+              <p class="text-sm font-semibold mb-2">{{ 'game.badges' | translate }}</p>
               <div class="flex flex-wrap gap-2">
                 @if (currentBadges().length === 0) {
-                  <span class="text-sm text-gray-500">No badges yet.</span>
+                  <span class="text-sm text-gray-500">{{ 'game.noBadges' | translate }}</span>
                 }
                 @for (badge of currentBadges(); track badge) {
                   <span class="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">{{ badge }}</span>
@@ -463,7 +463,7 @@
                 class="w-full border border-gray-300 py-2 px-4 rounded-lg transition-all hover:shadow-lg hover:bg-primary/10 active:scale-95"
                 (click)="loadChallenge()"
               >
-                Next AI Challenge
+                {{ 'game.nextChallenge' | translate }}
               </button>
             }
           </div>
