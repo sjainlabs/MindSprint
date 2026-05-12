@@ -5,6 +5,7 @@ import { I18nService, type AppLanguage } from '../../services/i18n.service';
 interface VisualGuideItem {
   titleKey: string;
   messageKey: string;
+  ariaKey: string;
   icon: string;
   illustration: 'diagnostic' | 'adaptive' | 'emoji';
 }
@@ -34,42 +35,49 @@ export class Welcome {
     {
       titleKey: 'welcome.visual.diagnostic.title',
       messageKey: 'welcome.visual.diagnostic.message',
+      ariaKey: 'welcome.visual.diagnostic.aria',
       icon: '🧪',
       illustration: 'diagnostic',
     },
     {
       titleKey: 'welcome.visual.adaptive.title',
       messageKey: 'welcome.visual.adaptive.message',
+      ariaKey: 'welcome.visual.adaptive.aria',
       icon: '📝',
       illustration: 'adaptive',
     },
     {
       titleKey: 'welcome.visual.mapPrep.title',
       messageKey: 'welcome.visual.mapPrep.message',
+      ariaKey: 'welcome.visual.mapPrep.title',
       icon: '📊',
       illustration: 'emoji',
     },
     {
       titleKey: 'welcome.visual.skillPractice.title',
       messageKey: 'welcome.visual.skillPractice.message',
+      ariaKey: 'welcome.visual.skillPractice.title',
       icon: '🧩',
       illustration: 'emoji',
     },
     {
       titleKey: 'welcome.visual.games.title',
       messageKey: 'welcome.visual.games.message',
+      ariaKey: 'welcome.visual.games.title',
       icon: '🎮',
       illustration: 'emoji',
     },
     {
       titleKey: 'welcome.visual.aiTutor.title',
       messageKey: 'welcome.visual.aiTutor.message',
+      ariaKey: 'welcome.visual.aiTutor.title',
       icon: '🤖',
       illustration: 'emoji',
     },
     {
       titleKey: 'welcome.visual.progress.title',
       messageKey: 'welcome.visual.progress.message',
+      ariaKey: 'welcome.visual.progress.title',
       icon: '📈',
       illustration: 'emoji',
     },

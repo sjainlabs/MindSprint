@@ -37,7 +37,18 @@ export class I18nService {
   private load(language: AppLanguage): void {
     this.http.get<Record<string, string>>(`/assets/i18n/${language}.json`).subscribe({
       next: (dictionary) => this.dictionary.set(dictionary),
-      error: () => this.dictionary.set({}),
+      error: () => {
+        if (language === 'en') {
+          this.dictionary.set({});
+          return;
+        }
+
+        console.warn(`Failed to load ${language} translations. Falling back to English.`);
+        this.http.get<Record<string, string>>('/assets/i18n/en.json').subscribe({
+          next: (dictionary) => this.dictionary.set(dictionary),
+          error: () => this.dictionary.set({}),
+        });
+      },
     });
   }
 }

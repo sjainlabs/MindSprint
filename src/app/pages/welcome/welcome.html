@@ -56,7 +56,7 @@
             </div>
             <p>{{ t(item.messageKey) }}</p>
             @if (item.illustration === 'diagnostic') {
-              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.titleKey)">
+              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.ariaKey)">
                 <rect x="8" y="8" width="96" height="64" rx="10"></rect>
                 <line x1="26" y1="28" x2="84" y2="28"></line>
                 <line x1="26" y1="42" x2="74" y2="42"></line>
@@ -65,7 +65,7 @@
                 <line x1="141" y1="53" x2="162" y2="70"></line>
               </svg>
             } @else if (item.illustration === 'adaptive') {
-              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.titleKey)">
+              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.ariaKey)">
                 <rect x="10" y="10" width="72" height="56" rx="8"></rect>
                 <line x1="22" y1="28" x2="70" y2="28"></line>
                 <line x1="22" y1="42" x2="64" y2="42"></line>
