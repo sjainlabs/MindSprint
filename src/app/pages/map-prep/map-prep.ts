@@ -383,7 +383,15 @@ export class MapPrepComponent implements OnInit {
       })
       .subscribe({
         next: (sheet) => {
-          this.generatedSheet.set(sheet);
+          this.generatedSheet.set({
+            worksheetId: sheet.worksheetId ?? `map-sheet-${Date.now()}`,
+            title: `MAP Practice Sheet · RIT ${this.selectedRIT()}`,
+            generatedAt: new Date().toISOString(),
+            questionCount: this.sheetQuestionCount(),
+            domains: this.selectedDomains(),
+            ritBand: this.selectedRIT(),
+            downloadUrl: sheet.downloadUrl ?? '',
+          });
           this.generatingSheet.set(false);
         },
         error: () => {
