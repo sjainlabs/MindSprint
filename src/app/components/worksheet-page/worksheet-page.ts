@@ -144,7 +144,7 @@ export class WorksheetPageComponent implements OnInit {
   });
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
-  recommendedLevel = computed(() => this.getRecommendationRawLevel(this.recommendation()));
+  recommendedLevel = computed(() => this.getNormalizedRecommendedLevel(this.recommendation()));
   recommendedLevelDisplay = computed(() => {
     const recommendation = this.recommendation();
     const rawLevel = this.recommendedLevel();
@@ -396,7 +396,7 @@ export class WorksheetPageComponent implements OnInit {
     });
   }
 
-  private getRecommendationRawLevel(recommendation: WorksheetRecommendation | null): LearningLevel | null {
+  private getNormalizedRecommendedLevel(recommendation: WorksheetRecommendation | null): LearningLevel | null {
     if (!recommendation) {
       return null;
     }

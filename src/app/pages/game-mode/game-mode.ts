@@ -428,9 +428,9 @@ export class GameModeComponent implements OnDestroy {
     }
     const target = payload?.target;
     if (typeof target === 'number') {
-      return `Catch numbers to hit target ${target}.`;
+      return this.t.translate('game.fallingPromptTarget', { target });
     }
-    return 'Catch target numbers, build combos, and avoid misses.';
+    return this.t.translate('game.fallingPromptDefault');
   }
 
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
