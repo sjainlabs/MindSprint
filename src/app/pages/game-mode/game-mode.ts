@@ -78,7 +78,7 @@ export class GameModeComponent implements OnDestroy {
   mapStepTextAnswers = signal<Record<number, string>>({});
   mapPartialCredit = signal(0);
   /** The API-compatible mode used for the currently loaded challenge */
-  private activeChallengeApiMode: GameMode = 'abacus-flash';
+  private activeChallengeApiMode: GameMode = 'flash-abacus';
 
   // ── Abacus Flash state ─────────────────────────────────────────────────────
   currentFlashNumber = signal<number | null>(null);
@@ -578,7 +578,7 @@ export class GameModeComponent implements OnDestroy {
     const apiMode = this.toApiMode(this.selectedMode());
     this.activeChallengeApiMode = apiMode;
 
-    if (apiMode === 'abacus-flash' || apiMode === 'flash-abacus') {
+    if (apiMode === 'flash-abacus') {
       this.gameService
         .getAbacusFlashChallenge({
           studentId: this.studentId(),
@@ -665,7 +665,7 @@ export class GameModeComponent implements OnDestroy {
       }
     }
 
-    if (this.activeChallengeApiMode === 'abacus-flash' || this.activeChallengeApiMode === 'flash-abacus') {
+    if (this.activeChallengeApiMode === 'flash-abacus') {
       if (typeof selected !== 'number') {
         return;
       }

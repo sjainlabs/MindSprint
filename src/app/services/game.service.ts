@@ -219,7 +219,7 @@ export class GameService {
     studentId: string;
     difficulty?: number;
     streak?: number;
-  }): Observable<GameChallenge> {
+  }): Observable<AbacusFlashChallenge> {
     const normalizedPayload = {
       ...payload,
       mode: 'flash-abacus' as const,
@@ -239,13 +239,13 @@ export class GameService {
     }
 
     return this.http
-      .post<GameChallenge>(`${this.apiRoot}/game/abacus-flash/challenge`, normalizedPayload)
+      .post<AbacusFlashChallenge>(`${this.apiRoot}/game/abacus-flash/challenge`, normalizedPayload)
       .pipe(
         catchError((error) => {
           if (!this.shouldFallbackToLegacyEndpoint(error)) {
             return throwError(() => error);
           }
-          return this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`);
+          return this.http.get<AbacusFlashChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`);
         }),
       );
   }
