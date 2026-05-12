@@ -1,11 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
-import { TranslatePipe } from '../../pipes/translate.pipe';
-import { TranslationService } from '../../services/translation.service';
+import { I18nService, type AppLanguage } from '../../services/i18n.service';
 
-interface ParentGuideSectionDef {
+interface ParentGuideSection {
   titleKey: string;
   icon: string;
   pointKeys: string[];
@@ -14,31 +12,90 @@ interface ParentGuideSectionDef {
 @Component({
   selector: 'app-parent-guide',
   standalone: true,
-  imports: [CommonModule, RouterLink, LanguageToggleComponent, TranslatePipe],
+  imports: [CommonModule, RouterLink],
   templateUrl: './parent-guide.html',
   styleUrl: './parent-guide.css',
 })
 export class ParentGuideComponent {
-  private readonly t = inject(TranslationService);
+  private readonly i18n = inject(I18nService);
 
-  readonly sectionDefs: ParentGuideSectionDef[] = [
-    { titleKey: 'parentGuide.section0.title', icon: '🧭', pointKeys: ['parentGuide.section0.point0', 'parentGuide.section0.point1'] },
-    { titleKey: 'parentGuide.section1.title', icon: '📊', pointKeys: ['parentGuide.section1.point0', 'parentGuide.section1.point1'] },
-    { titleKey: 'parentGuide.section2.title', icon: '📝', pointKeys: ['parentGuide.section2.point0', 'parentGuide.section2.point1'] },
-    { titleKey: 'parentGuide.section3.title', icon: '🧩', pointKeys: ['parentGuide.section3.point0', 'parentGuide.section3.point1'] },
-    { titleKey: 'parentGuide.section4.title', icon: '🤖', pointKeys: ['parentGuide.section4.point0', 'parentGuide.section4.point1'] },
-    { titleKey: 'parentGuide.section5.title', icon: '📈', pointKeys: ['parentGuide.section5.point0', 'parentGuide.section5.point1'] },
-    { titleKey: 'parentGuide.section6.title', icon: '💙', pointKeys: ['parentGuide.section6.point0', 'parentGuide.section6.point1'] },
+  readonly sections: ParentGuideSection[] = [
+    {
+      titleKey: 'parentGuide.section.overview.title',
+      icon: '🧭',
+      pointKeys: [
+        'parentGuide.section.overview.point1',
+        'parentGuide.section.overview.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.diagnostic.title',
+      icon: '🧪',
+      pointKeys: [
+        'parentGuide.section.diagnostic.point1',
+        'parentGuide.section.diagnostic.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.adaptive.title',
+      icon: '📝',
+      pointKeys: [
+        'parentGuide.section.adaptive.point1',
+        'parentGuide.section.adaptive.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.mapPrep.title',
+      icon: '📊',
+      pointKeys: [
+        'parentGuide.section.mapPrep.point1',
+        'parentGuide.section.mapPrep.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.skill.title',
+      icon: '🧩',
+      pointKeys: [
+        'parentGuide.section.skill.point1',
+        'parentGuide.section.skill.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.ai.title',
+      icon: '🤖',
+      pointKeys: [
+        'parentGuide.section.ai.point1',
+        'parentGuide.section.ai.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.progress.title',
+      icon: '📈',
+      pointKeys: [
+        'parentGuide.section.progress.point1',
+        'parentGuide.section.progress.point2',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.different.title',
+      icon: '⚖️',
+      pointKeys: [
+        'parentGuide.section.different.point1',
+        'parentGuide.section.different.point2',
+        'parentGuide.section.different.point3',
+      ],
+    },
+    {
+      titleKey: 'parentGuide.section.support.title',
+      icon: '💙',
+      pointKeys: [
+        'parentGuide.section.support.point1',
+        'parentGuide.section.support.point2',
+      ],
+    },
   ];
 
-  readonly sections = computed(() =>
-    this.sectionDefs.map((def) => ({
-      title: this.t.translate(def.titleKey),
-      icon: def.icon,
-      points: def.pointKeys.map((k) => this.t.translate(k)),
-    })),
-  );
-
+  readonly language = this.i18n.language;
   readonly expanded = signal<Set<number>>(new Set([0]));
 
   toggle(index: number): void {
@@ -55,5 +112,13 @@ export class ParentGuideComponent {
 
   isExpanded(index: number): boolean {
     return this.expanded().has(index);
+  }
+
+  setLanguage(language: AppLanguage): void {
+    this.i18n.setLanguage(language);
+  }
+
+  t(key: string): string {
+    return this.i18n.t(key);
   }
 }

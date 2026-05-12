@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
-import { TranslationService } from '../../services/translation.service';
+import { I18nService, type AppLanguage } from '../../services/i18n.service';
 
 interface KidGuideSlide {
   titleKey: string;
@@ -11,102 +10,111 @@ interface KidGuideSlide {
   colorClass: string;
   illustrationClass: string;
   illustrationLabel: string;
+  illustration: 'emoji' | 'diagnostic' | 'adaptive';
 }
 
 @Component({
   selector: 'app-kid-guide',
   standalone: true,
-  imports: [CommonModule, RouterLink, LanguageToggleComponent],
+  imports: [CommonModule, RouterLink],
   templateUrl: './kid-guide.html',
   styleUrl: './kid-guide.css',
 })
 export class KidGuideComponent {
-  private readonly t = inject(TranslationService);
+  private readonly i18n = inject(I18nService);
 
-  readonly slideData: KidGuideSlide[] = [
+  readonly slides: KidGuideSlide[] = [
     {
-      titleKey: 'kidGuide.slide0.title',
-      messageKey: 'kidGuide.slide0.message',
+      titleKey: 'kidGuide.slide.welcome.title',
+      messageKey: 'kidGuide.slide.welcome.message',
       icon: '👋',
       colorClass: 'from-fuchsia-200 via-pink-100 to-yellow-100',
       illustrationClass: 'bg-fuchsia-100',
       illustrationLabel: '🤖',
+      illustration: 'emoji',
     },
     {
-      titleKey: 'kidGuide.slide1.title',
-      messageKey: 'kidGuide.slide1.message',
+      titleKey: 'kidGuide.slide.diagnostic.title',
+      messageKey: 'kidGuide.slide.diagnostic.message',
+      icon: '🧪',
+      colorClass: 'from-sky-200 via-blue-100 to-indigo-100',
+      illustrationClass: 'bg-sky-100',
+      illustrationLabel: '📋',
+      illustration: 'diagnostic',
+    },
+    {
+      titleKey: 'kidGuide.slide.adaptive.title',
+      messageKey: 'kidGuide.slide.adaptive.message',
+      icon: '📝',
+      colorClass: 'from-amber-200 via-orange-100 to-yellow-100',
+      illustrationClass: 'bg-amber-100',
+      illustrationLabel: '📈',
+      illustration: 'adaptive',
+    },
+    {
+      titleKey: 'kidGuide.slide.mapPrep.title',
+      messageKey: 'kidGuide.slide.mapPrep.message',
       icon: '📈',
       colorClass: 'from-sky-200 via-cyan-100 to-blue-100',
       illustrationClass: 'bg-sky-100',
       illustrationLabel: '🧒',
+      illustration: 'emoji',
     },
     {
-      titleKey: 'kidGuide.slide2.title',
-      messageKey: 'kidGuide.slide2.message',
+      titleKey: 'kidGuide.slide.skill.title',
+      messageKey: 'kidGuide.slide.skill.message',
       icon: '🧩',
       colorClass: 'from-violet-200 via-purple-100 to-indigo-100',
       illustrationClass: 'bg-violet-100',
       illustrationLabel: '🧱',
+      illustration: 'emoji',
     },
     {
-      titleKey: 'kidGuide.slide3.title',
-      messageKey: 'kidGuide.slide3.message',
+      titleKey: 'kidGuide.slide.daily.title',
+      messageKey: 'kidGuide.slide.daily.message',
       icon: '📝',
       colorClass: 'from-amber-200 via-orange-100 to-yellow-100',
       illustrationClass: 'bg-amber-100',
       illustrationLabel: '✏️',
+      illustration: 'emoji',
     },
     {
-      titleKey: 'kidGuide.slide4.title',
-      messageKey: 'kidGuide.slide4.message',
+      titleKey: 'kidGuide.slide.games.title',
+      messageKey: 'kidGuide.slide.games.message',
       icon: '🎮',
       colorClass: 'from-emerald-200 via-lime-100 to-green-100',
       illustrationClass: 'bg-emerald-100',
       illustrationLabel: '🕹️',
+      illustration: 'emoji',
     },
     {
-      titleKey: 'kidGuide.slide5.title',
-      messageKey: 'kidGuide.slide5.message',
+      titleKey: 'kidGuide.slide.ai.title',
+      messageKey: 'kidGuide.slide.ai.message',
       icon: '🤖',
       colorClass: 'from-indigo-200 via-blue-100 to-cyan-100',
       illustrationClass: 'bg-indigo-100',
       illustrationLabel: '💡',
+      illustration: 'emoji',
     },
     {
-      titleKey: 'kidGuide.slide6.title',
-      messageKey: 'kidGuide.slide6.message',
+      titleKey: 'kidGuide.slide.progress.title',
+      messageKey: 'kidGuide.slide.progress.message',
       icon: '🚀',
       colorClass: 'from-rose-200 via-pink-100 to-purple-100',
       illustrationClass: 'bg-rose-100',
       illustrationLabel: '📊',
+      illustration: 'emoji',
     },
   ];
 
+  readonly language = this.i18n.language;
   readonly currentIndex = signal(0);
-
-  readonly currentSlide = computed(() => {
-    const data = this.slideData[this.currentIndex()];
-    return {
-      ...data,
-      title: this.t.translate(data.titleKey),
-      message: this.t.translate(data.messageKey),
-    };
-  });
-
+  readonly currentSlide = computed(() => this.slides[this.currentIndex()]);
   readonly isFirst = computed(() => this.currentIndex() === 0);
-  readonly isLast = computed(() => this.currentIndex() === this.slideData.length - 1);
+  readonly isLast = computed(() => this.currentIndex() === this.slides.length - 1);
   readonly progressPercent = computed(() =>
-    Math.round(((this.currentIndex() + 1) / this.slideData.length) * 100),
+    Math.round(((this.currentIndex() + 1) / this.slides.length) * 100),
   );
-  readonly stepLabel = computed(() =>
-    this.t.translate('kidGuide.stepOf', {
-      current: this.currentIndex() + 1,
-      total: this.slideData.length,
-    }),
-  );
-  readonly backLabel = computed(() => this.t.translate('kidGuide.back'));
-  readonly nextLabel = computed(() => this.t.translate('kidGuide.next'));
-  readonly startLabel = computed(() => this.t.translate('kidGuide.letsStart'));
 
   previous(): void {
     if (!this.isFirst()) {
@@ -118,5 +126,20 @@ export class KidGuideComponent {
     if (!this.isLast()) {
       this.currentIndex.update((value) => value + 1);
     }
+  }
+
+  setLanguage(language: AppLanguage): void {
+    this.i18n.setLanguage(language);
+  }
+
+  t(key: string): string {
+    return this.i18n.t(key);
+  }
+
+  progressText(): string {
+    return this.i18n.format('kidGuide.progress', {
+      current: this.currentIndex() + 1,
+      total: this.slides.length,
+    });
   }
 }
