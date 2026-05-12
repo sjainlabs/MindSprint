@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -7,6 +7,9 @@ import {
   StudentIntelligenceService,
   type StudentProfile,
 } from '../../services/student-intelligence.service';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { TranslationService } from '../../services/translation.service';
 
 export interface SuperSyllabusScores {
   fluencyScore: number;
@@ -34,11 +37,12 @@ function deriveScores(profile: StudentProfile): SuperSyllabusScores {
 @Component({
   selector: 'app-student-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
   templateUrl: './student-profile.html',
   styleUrl: './student-profile.css',
 })
 export class StudentProfileComponent implements OnInit {
+  readonly t = inject(TranslationService);
   studentId = signal(DEFAULT_STUDENT_ID);
   profile = signal<StudentProfile | null>(null);
   scores = signal<SuperSyllabusScores | null>(null);

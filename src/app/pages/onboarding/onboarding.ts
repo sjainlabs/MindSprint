@@ -1,18 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { type GradeLevel } from '../../services/diagnostic.service';
 import { OnboardingService, type ConfidenceLevel, type OnboardingGoal } from '../../services/onboarding.service';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
   templateUrl: './onboarding.html',
   styleUrl: './onboarding.css',
 })
 export class OnboardingComponent {
+  readonly t = inject(TranslationService);
   studentId = signal('student-demo');
   age = signal(9);
   grade = signal<GradeLevel>(5);

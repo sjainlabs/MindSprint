@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, computed, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -18,6 +18,9 @@ import {
 } from '../../services/student-intelligence.service';
 import { MapGraphComponent } from '../../components/map-graph/map-graph';
 import { MapTableComponent } from '../../components/map-table/map-table';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { TranslationService } from '../../services/translation.service';
 import {
   MAP_AUTO_ADVANCE_DELAY_MS,
   MAP_DIFFICULTY_ADVANCED_THRESHOLD,
@@ -33,11 +36,12 @@ export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'm
 @Component({
   selector: 'app-game-mode',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MapGraphComponent, MapTableComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MapGraphComponent, MapTableComponent, LanguageToggleComponent, TranslatePipe],
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
 })
 export class GameModeComponent implements OnDestroy {
+  readonly t = inject(TranslationService);
   studentId = signal(DEFAULT_STUDENT_ID);
   challenge = signal<GameChallenge | MapChallenge | null>(null);
   loading = signal(false);

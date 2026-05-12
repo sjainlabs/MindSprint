@@ -1,0 +1,621 @@
+import { Injectable, signal, computed } from '@angular/core';
+
+export type Language = 'en' | 'hi';
+
+const EN: Record<string, string> = {
+  // ── Language Toggle ─────────────────────────────────────────────────────────
+  'lang.en': 'EN',
+  'lang.hi': 'HI',
+
+  // ── Navigation / Shared ──────────────────────────────────────────────────────
+  'nav.backHome': 'Back Home',
+  'nav.back': 'Back',
+  'nav.helpLearnMore': 'Help / Learn More',
+  'nav.kidGuide': 'Kid-Friendly Guide',
+  'nav.parentGuide': 'Parent Guide',
+  'nav.load': 'Load',
+  'nav.retry': 'Retry',
+
+  // ── Welcome page ─────────────────────────────────────────────────────────────
+  'welcome.eyebrow': 'Welcome to',
+  'welcome.title': 'MindSprint',
+  'welcome.subtitle': 'Fast Math. Smart Kids.',
+  'welcome.description':
+    'Build speed and confidence with a quick diagnostic, then practice the right worksheet level.',
+  'welcome.startOnboarding': 'Start Onboarding',
+  'welcome.startDiagnostic': 'Start Diagnostic',
+  'welcome.topicBrowser': 'Topic Browser + Exploration',
+  'welcome.worksheets': 'K–12 + AI Worksheets',
+  'welcome.gamified': 'Gamified Learning Hub',
+  'welcome.mapPrep': 'MAP Prep Mode',
+  'welcome.studentProfile': 'Student Profile',
+
+  // ── Onboarding page ──────────────────────────────────────────────────────────
+  'onboarding.title': 'Student Onboarding',
+  'onboarding.chooseGuide': 'Choose a guide before you start.',
+  'onboarding.studentId': 'Student ID',
+  'onboarding.age': 'Age',
+  'onboarding.grade': 'Grade',
+  'onboarding.kindergarten': 'Kindergarten',
+  'onboarding.gradeN': 'Grade',
+  'onboarding.confidence': 'Confidence',
+  'onboarding.goals': 'Goals',
+  'onboarding.placementScore': 'Placement Score',
+  'onboarding.avatar': 'Avatar',
+  'onboarding.mathWorld': 'Math World',
+  'onboarding.saving': 'Saving...',
+  'onboarding.completeOnboarding': 'Complete Onboarding',
+
+  // ── Kid Guide ────────────────────────────────────────────────────────────────
+  'kidGuide.back': '⬅ Back',
+  'kidGuide.next': 'Next ➡',
+  'kidGuide.letsStart': "Let's Start! 🚀",
+  'kidGuide.stepOf': 'Step {current} of {total}',
+
+  'kidGuide.slide0.title': 'Welcome to MindSprint!',
+  'kidGuide.slide0.message': 'This is your place to get better at math every day!',
+  'kidGuide.slide1.title': 'MAP Prep Mode',
+  'kidGuide.slide1.message': 'Practice questions that help you grow your MAP score.',
+  'kidGuide.slide2.title': 'Skill Practice',
+  'kidGuide.slide2.message': 'Learn new math skills step by step.',
+  'kidGuide.slide3.title': 'Daily Practice Sheets',
+  'kidGuide.slide3.message':
+    'Short daily sheets help you get faster and stronger at math. Keep going one level at a time!',
+  'kidGuide.slide4.title': 'Games',
+  'kidGuide.slide4.message': 'Play fun math games to get quicker with numbers!',
+  'kidGuide.slide5.title': 'AI Tutor',
+  'kidGuide.slide5.message': 'Ask questions anytime. Your math helper is always here!',
+  'kidGuide.slide6.title': 'Progress',
+  'kidGuide.slide6.message': "See how much you've grown!",
+
+  // ── Parent Guide ─────────────────────────────────────────────────────────────
+  'parentGuide.title': 'Parent Guide',
+  'parentGuide.subtitle': 'MindSprint overview, structure, and support strategies',
+  'parentGuide.show': 'Show',
+  'parentGuide.hide': 'Hide',
+  'parentGuide.startLearning': 'Start Learning',
+
+  'parentGuide.section0.title': 'What is MindSprint?',
+  'parentGuide.section0.point0': 'MindSprint is a personalized math practice platform for grades K–8.',
+  'parentGuide.section0.point1':
+    'It supports MAP-aligned skill development with adaptive learning and daily mastery practice.',
+
+  'parentGuide.section1.title': 'MAP Prep Mode',
+  'parentGuide.section1.point0':
+    'Students practice with RIT-aligned recommendations and MAP-style sessions.',
+  'parentGuide.section1.point1':
+    'Parents can use growth projections and skill suggestions to focus practice time.',
+
+  'parentGuide.section2.title': 'Foundational Math Mastery',
+  'parentGuide.section2.point0':
+    'Daily practice sheets build fluency, accuracy, and confidence through short, consistent sessions.',
+  'parentGuide.section2.point1':
+    'Students move forward after showing mastery, creating steady incremental growth.',
+
+  'parentGuide.section3.title': 'Skill Practice',
+  'parentGuide.section3.point0':
+    'Domain-based learning includes Number Sense, Operations, Fractions, Geometry, and more.',
+  'parentGuide.section3.point1':
+    'Step-by-step explanations and adaptive difficulty keep learning at the right challenge level.',
+
+  'parentGuide.section4.title': 'AI Tutor',
+  'parentGuide.section4.point0':
+    'The AI Tutor provides homework help and clear concept explanations on demand.',
+  'parentGuide.section4.point1':
+    'It can generate personalized questions for extra targeted practice.',
+
+  'parentGuide.section5.title': 'Progress Tracking',
+  'parentGuide.section5.point0':
+    'Track accuracy, difficulty level, and time spent to understand learning habits.',
+  'parentGuide.section5.point1':
+    'Use RIT growth insights and skill mastery dashboards to monitor outcomes.',
+
+  'parentGuide.section6.title': 'How Parents Can Support',
+  'parentGuide.section6.point0':
+    'Encourage short daily sessions, review progress weekly, and use practice sheets for reinforcement.',
+  'parentGuide.section6.point1':
+    'Celebrate small wins consistently to strengthen confidence and momentum.',
+
+  // ── MAP Prep page ────────────────────────────────────────────────────────────
+  'mapPrep.title': 'MAP Prep Mode',
+  'mapPrep.subtitle': 'Practice by RIT band · Track MAP growth · Build toward your target score',
+  'mapPrep.sidebarTitle': 'MAP Prep Sidebar · Help / Learn More',
+  'mapPrep.sidebarSubtitle': 'Open quick guides for students and families.',
+  'mapPrep.studentId': 'Student ID',
+  'mapPrep.ritBand': 'RIT Band',
+  'mapPrep.loadingProjection': 'Loading MAP growth projection…',
+  'mapPrep.projectionTitle': 'MAP Growth Projection',
+  'mapPrep.currentRIT': 'Current RIT',
+  'mapPrep.projectedRIT': 'Projected RIT',
+  'mapPrep.expectedGrowth': 'Expected Growth',
+  'mapPrep.sessionsNeeded': 'Sessions Needed',
+  'mapPrep.growthProgress': 'Growth Progress (toward +15 RIT)',
+  'mapPrep.confidence': 'Confidence',
+  'mapPrep.loadingSkills': 'Loading skills for this RIT band…',
+  'mapPrep.gradeEquivalent': 'Grade equivalent',
+  'mapPrep.practiceSkill': 'Practice Skill',
+  'mapPrep.targetRIT': 'Target RIT',
+  'mapPrep.difficulty': 'Difficulty',
+  'mapPrep.gotIt': '✅ Got it!',
+  'mapPrep.needPractice': '❌ Need more practice',
+  'mapPrep.hints': '💡 Hints',
+  'mapPrep.explanation': '🧠 Explanation',
+  'mapPrep.show': 'Show',
+  'mapPrep.hide': 'Hide',
+  'mapPrep.skillOf': 'Skill {current} of {total}',
+  'mapPrep.noSkills': 'No practice skills available. Select a RIT band above.',
+  'mapPrep.sessionComplete': 'Session Complete!',
+  'mapPrep.answeredOf': 'You answered {correct} of {total} skills correctly',
+  'mapPrep.accuracy': '% Accuracy',
+  'mapPrep.practiceAgain': 'Practice Again',
+  'mapPrep.sessionSummary': 'MAP Session Summary',
+  'mapPrep.accuracyLabel': 'Accuracy',
+  'mapPrep.skillsMastered': 'Skills Mastered',
+  'mapPrep.avgDifficulty': 'Avg Difficulty',
+  'mapPrep.domainBreakdown': 'Domain Breakdown',
+  'mapPrep.sheetGenerator': 'MAP Practice Sheet Generator',
+  'mapPrep.sheetGeneratorSubtitle':
+    'Create a printable practice sheet aligned to your selected MAP RIT band.',
+  'mapPrep.questionCount': 'Question count',
+  'mapPrep.options': 'Options',
+  'mapPrep.includeHints': 'Include hints',
+  'mapPrep.includeExplanations': 'Include explanations',
+  'mapPrep.domains': 'Domains (multi-select)',
+  'mapPrep.generating': 'Generating…',
+  'mapPrep.generateSheet': 'Generate MAP Practice Sheet',
+  'mapPrep.downloadSheet': 'Download sheet',
+  'mapPrep.skillReport': 'MAP Skill Report',
+  'mapPrep.skillHeader': 'Skill',
+  'mapPrep.difficultyRIT': 'Difficulty / RIT Band',
+  'mapPrep.growthTarget': 'Growth target',
+  'mapPrep.inMonths': 'in {count} months',
+  'mapPrep.nextSteps': 'Next steps',
+  'mapPrep.adaptivePractice': 'Adaptive MAP Practice',
+  'mapPrep.skills': 'Skills',
+
+  // ── Topic Browser ────────────────────────────────────────────────────────────
+  'topicBrowser.title': 'K–12 Topic Browser + Super-Syllabus',
+  'topicBrowser.subtitle':
+    'Fluency · Conceptual Mastery · Reasoning & Logic · MAP Skills · Competition Math',
+  'topicBrowser.mapPrep': 'MAP Prep →',
+  'topicBrowser.myProfile': 'My Profile →',
+  'topicBrowser.superSyllabusTitle': 'Super-Syllabus Categories',
+  'topicBrowser.skills': 'skills',
+  'topicBrowser.loadingCategory': 'Loading category skills…',
+  'topicBrowser.explorationTitle': 'Exploration Mode',
+  'topicBrowser.byDomain': '🌐 By Domain',
+  'topicBrowser.byRITBand': '📊 By RIT Band',
+  'topicBrowser.byReasoningLevel': '🔍 By Reasoning Level',
+  'topicBrowser.byCompetitionLevel': '🏆 By Competition Level',
+  'topicBrowser.ritBand': 'RIT Band',
+  'topicBrowser.reasoningLevel': 'Reasoning Level',
+  'topicBrowser.competitionLevel': 'Competition Level',
+  'topicBrowser.studentId': 'Student ID',
+  'topicBrowser.exploreTopic': 'Explore Topic',
+  'topicBrowser.refreshRecommendation': 'Refresh Recommendation',
+  'topicBrowser.refreshing': 'Refreshing...',
+  'topicBrowser.explorationGuidance': 'Exploration Guidance',
+  'topicBrowser.loading': 'Loading topic browser...',
+  'topicBrowser.noTopics': 'No topics match the selected filter. Try a different exploration mode.',
+  'topicBrowser.prerequisites': 'Prerequisites',
+  'topicBrowser.none': 'None',
+  'topicBrowser.difficultyTiers': 'Difficulty tiers',
+  'topicBrowser.subtopics': 'Subtopics',
+
+  // ── Worksheet page ───────────────────────────────────────────────────────────
+  'worksheet.title': 'Practice Worksheet',
+  'worksheet.backToDiagnostic': 'Back to Diagnostic',
+  'worksheet.attempted': 'Attempted',
+  'worksheet.accuracy': 'Accuracy',
+  'worksheet.results': 'Results',
+  'worksheet.total': 'Total',
+  'worksheet.correct': 'Correct',
+  'worksheet.incorrect': 'Incorrect',
+  'worksheet.time': 'Time',
+  'worksheet.beginner': 'Beginner',
+  'worksheet.intermediate': 'Intermediate',
+  'worksheet.advanced': 'Advanced',
+  'worksheet.submitting': 'Submitting…',
+  'worksheet.submit': 'Submit Worksheet',
+  'worksheet.studentProfile': 'Student Profile',
+  'worksheet.updating': 'Updating…',
+  'worksheet.level': 'Level',
+  'worksheet.xp': 'XP',
+  'worksheet.streak': 'Streak',
+  'worksheet.path': 'Path',
+  'worksheet.age': 'Age',
+  'worksheet.grade': 'Grade',
+  'worksheet.masteryByOperation': 'Mastery by operation',
+  'worksheet.topicMastery': 'Topic mastery',
+  'worksheet.badges': 'Badges',
+  'worksheet.earnBadges': 'Earn badges by completing worksheets accurately.',
+  'worksheet.noProfile': 'Student profile will appear after the first worksheet submission.',
+  'worksheet.analytics': 'Analytics',
+  'worksheet.worksheets': 'Worksheets',
+  'worksheet.avgTime': 'Avg. Time',
+  'worksheet.recentAccuracy': 'Recent accuracy',
+  'worksheet.completeFirst': 'Complete a worksheet to start tracking trends.',
+  'worksheet.topicAnalytics': 'Topic analytics',
+  'worksheet.topicAnalyticsEmpty': 'Topic analytics will appear after more activity.',
+  'worksheet.recommendedNextSteps': 'Recommended next steps',
+  'worksheet.adaptiveRecommendation': 'Adaptive Recommendation',
+  'worksheet.recommendedLevel': 'Recommended level',
+  'worksheet.targetDifficulty': 'Target difficulty',
+  'worksheet.focusOperations': 'Focus operations',
+  'worksheet.recommendedTopic': 'Recommended topic',
+  'worksheet.recommendedGame': 'Recommended game mode',
+  'worksheet.worksheetType': 'Worksheet type',
+  'worksheet.subtopic': 'Subtopic',
+  'worksheet.whyThisWorksheet': 'Why this worksheet?',
+  'worksheet.openRecommended': 'Open Recommended Worksheet',
+  'worksheet.opening': 'Opening…',
+  'worksheet.recommendationUnavailable':
+    'Recommendation is unavailable or matches your current worksheet level.',
+  'worksheet.noRecommendation': 'Submit the worksheet to generate an adaptive next-step recommendation.',
+  'worksheet.aiWorksheetTitle': 'Advanced AI Worksheet (Algebra I → Calculus)',
+  'worksheet.personalizedPath': 'Personalized Learning Path Engine',
+  'worksheet.topic': 'Topic',
+  'worksheet.difficulty': 'Difficulty (0-100)',
+  'worksheet.generating': 'Generating…',
+  'worksheet.generateAI': 'Generate AI Worksheet',
+
+  // ── Game Mode page ───────────────────────────────────────────────────────────
+  'game.title': 'AI Game Challenge',
+  'game.studentId': 'Student ID',
+  'game.coreModes': 'Core Modes',
+  'game.superModes': 'Super-Syllabus Modes',
+  'game.retry': 'Retry',
+  'game.difficulty': 'Difficulty',
+
+  // ── Student Profile page ──────────────────────────────────────────────────────
+  'profile.title': 'Student Profile',
+  'profile.subtitle': 'Super-Syllabus scores: Fluency · Mastery · Reasoning · MAP · Competition',
+  'profile.studentId': 'Student ID',
+  'profile.load': 'Load',
+  'profile.loading': 'Loading profile…',
+  'profile.grade': 'Grade',
+  'profile.age': 'Age',
+  'profile.level': 'Level',
+  'profile.xp': 'XP',
+  'profile.superSyllabusScores': 'Super-Syllabus Scores',
+  'profile.fluencyScore': '⚡ Fluency Score',
+  'profile.fluencyNote': 'Based on addition & subtraction mastery',
+  'profile.conceptualScore': '🧩 Conceptual Mastery Score',
+  'profile.conceptualNote': 'Based on multiplication & division mastery',
+  'profile.reasoningScore': '🔍 Reasoning & Logic Score',
+  'profile.reasoningNote': 'Derived from overall mastery & adaptive performance',
+  'profile.mapRIT': '📊 MAP RIT Estimate',
+  'profile.mapRITNote': 'Estimated RIT score based on mastery data (range 180–280)',
+  'profile.practiceMapSkills': 'Practice MAP Skills →',
+  'profile.competitionLevel': '🏆 Competition Math Level',
+  'profile.competitionNote': 'Based on overall mastery progression',
+  'profile.operationMastery': 'Operation Mastery',
+  'profile.learningGoals': 'Learning Goals',
+};
+
+const HI: Record<string, string> = {
+  // ── Language Toggle ─────────────────────────────────────────────────────────
+  'lang.en': 'EN',
+  'lang.hi': 'HI',
+
+  // ── Navigation / Shared ──────────────────────────────────────────────────────
+  'nav.backHome': 'वापस होम',
+  'nav.back': 'वापस',
+  'nav.helpLearnMore': 'सहायता / अधिक जानें',
+  'nav.kidGuide': 'बच्चों के लिए गाइड',
+  'nav.parentGuide': 'माता-पिता गाइड',
+  'nav.load': 'लोड करें',
+  'nav.retry': 'पुनः प्रयास',
+
+  // ── Welcome page ─────────────────────────────────────────────────────────────
+  'welcome.eyebrow': 'आपका स्वागत है',
+  'welcome.title': 'MindSprint',
+  'welcome.subtitle': 'तेज़ गणित। स्मार्ट बच्चे।',
+  'welcome.description':
+    'एक त्वरित परीक्षण से गति और आत्मविश्वास बढ़ाएं, फिर सही वर्कशीट स्तर पर अभ्यास करें।',
+  'welcome.startOnboarding': 'ऑनबोर्डिंग शुरू करें',
+  'welcome.startDiagnostic': 'डायग्नोस्टिक शुरू करें',
+  'welcome.topicBrowser': 'विषय ब्राउज़र + अन्वेषण',
+  'welcome.worksheets': 'K–12 + AI वर्कशीट',
+  'welcome.gamified': 'गेमीफाइड लर्निंग हब',
+  'welcome.mapPrep': 'MAP तैयारी मोड',
+  'welcome.studentProfile': 'छात्र प्रोफ़ाइल',
+
+  // ── Onboarding page ──────────────────────────────────────────────────────────
+  'onboarding.title': 'छात्र ऑनबोर्डिंग',
+  'onboarding.chooseGuide': 'शुरू करने से पहले एक गाइड चुनें।',
+  'onboarding.studentId': 'छात्र आईडी',
+  'onboarding.age': 'आयु',
+  'onboarding.grade': 'कक्षा',
+  'onboarding.kindergarten': 'किंडरगार्टन',
+  'onboarding.gradeN': 'कक्षा',
+  'onboarding.confidence': 'आत्मविश्वास',
+  'onboarding.goals': 'लक्ष्य',
+  'onboarding.placementScore': 'प्लेसमेंट स्कोर',
+  'onboarding.avatar': 'अवतार',
+  'onboarding.mathWorld': 'गणित विश्व',
+  'onboarding.saving': 'सहेजा जा रहा है...',
+  'onboarding.completeOnboarding': 'ऑनबोर्डिंग पूर्ण करें',
+
+  // ── Kid Guide ────────────────────────────────────────────────────────────────
+  'kidGuide.back': '⬅ वापस',
+  'kidGuide.next': 'आगे ➡',
+  'kidGuide.letsStart': 'चलो शुरू करते हैं! 🚀',
+  'kidGuide.stepOf': 'चरण {current} / {total}',
+
+  'kidGuide.slide0.title': 'MindSprint में आपका स्वागत है!',
+  'kidGuide.slide0.message': 'यह आपकी जगह है जहाँ आप हर दिन गणित में बेहतर बन सकते हैं!',
+  'kidGuide.slide1.title': 'MAP तैयारी मोड',
+  'kidGuide.slide1.message': 'ऐसे प्रश्नों का अभ्यास करें जो आपके MAP स्कोर को बढ़ाने में मदद करें।',
+  'kidGuide.slide2.title': 'कौशल अभ्यास',
+  'kidGuide.slide2.message': 'कदम-दर-कदम नई गणित कौशल सीखें।',
+  'kidGuide.slide3.title': 'दैनिक अभ्यास पत्रक',
+  'kidGuide.slide3.message':
+    'छोटे दैनिक पत्रक आपको गणित में तेज़ और मज़बूत बनाने में मदद करते हैं। एक बार में एक स्तर आगे बढ़ते रहें!',
+  'kidGuide.slide4.title': 'खेल',
+  'kidGuide.slide4.message': 'संख्याओं में तेज़ बनने के लिए मज़ेदार गणित खेल खेलें!',
+  'kidGuide.slide5.title': 'AI शिक्षक',
+  'kidGuide.slide5.message': 'कभी भी सवाल पूछें। आपका गणित सहायक हमेशा यहाँ है!',
+  'kidGuide.slide6.title': 'प्रगति',
+  'kidGuide.slide6.message': 'देखें आपने कितना विकास किया है!',
+
+  // ── Parent Guide ─────────────────────────────────────────────────────────────
+  'parentGuide.title': 'माता-पिता गाइड',
+  'parentGuide.subtitle': 'MindSprint अवलोकन, संरचना और सहायता रणनीतियाँ',
+  'parentGuide.show': 'दिखाएं',
+  'parentGuide.hide': 'छुपाएं',
+  'parentGuide.startLearning': 'सीखना शुरू करें',
+
+  'parentGuide.section0.title': 'MindSprint क्या है?',
+  'parentGuide.section0.point0':
+    'MindSprint K–8 कक्षाओं के लिए एक व्यक्तिगत गणित अभ्यास मंच है।',
+  'parentGuide.section0.point1':
+    'यह अनुकूली शिक्षण और दैनिक महारत अभ्यास के साथ MAP-संरेखित कौशल विकास का समर्थन करता है।',
+
+  'parentGuide.section1.title': 'MAP तैयारी मोड',
+  'parentGuide.section1.point0':
+    'छात्र RIT-संरेखित सिफारिशों और MAP-शैली सत्रों के साथ अभ्यास करते हैं।',
+  'parentGuide.section1.point1':
+    'माता-पिता अभ्यास समय को केंद्रित करने के लिए विकास अनुमानों और कौशल सुझावों का उपयोग कर सकते हैं।',
+
+  'parentGuide.section2.title': 'मूलभूत गणित महारत',
+  'parentGuide.section2.point0':
+    'दैनिक अभ्यास पत्रक छोटे, सुसंगत सत्रों के माध्यम से प्रवाह, सटीकता और आत्मविश्वास बनाते हैं।',
+  'parentGuide.section2.point1':
+    'छात्र महारत दिखाने के बाद आगे बढ़ते हैं, जिससे स्थिर वृद्धिशील विकास होता है।',
+
+  'parentGuide.section3.title': 'कौशल अभ्यास',
+  'parentGuide.section3.point0':
+    'डोमेन-आधारित शिक्षण में संख्या बोध, संचालन, भिन्न, ज्यामिति और अधिक शामिल हैं।',
+  'parentGuide.section3.point1':
+    'चरण-दर-चरण स्पष्टीकरण और अनुकूली कठिनाई सीखने को सही चुनौती स्तर पर रखती है।',
+
+  'parentGuide.section4.title': 'AI शिक्षक',
+  'parentGuide.section4.point0':
+    'AI शिक्षक मांग पर होमवर्क सहायता और स्पष्ट अवधारणा स्पष्टीकरण प्रदान करता है।',
+  'parentGuide.section4.point1':
+    'यह अतिरिक्त लक्षित अभ्यास के लिए व्यक्तिगत प्रश्न उत्पन्न कर सकता है।',
+
+  'parentGuide.section5.title': 'प्रगति ट्रैकिंग',
+  'parentGuide.section5.point0':
+    'सीखने की आदतों को समझने के लिए सटीकता, कठिनाई स्तर और बिताए गए समय को ट्रैक करें।',
+  'parentGuide.section5.point1':
+    'परिणामों की निगरानी के लिए RIT विकास अंतर्दृष्टि और कौशल महारत डैशबोर्ड का उपयोग करें।',
+
+  'parentGuide.section6.title': 'माता-पिता कैसे सहायता कर सकते हैं',
+  'parentGuide.section6.point0':
+    'छोटे दैनिक सत्रों को प्रोत्साहित करें, साप्ताहिक प्रगति की समीक्षा करें, और अभ्यास के लिए पत्रकों का उपयोग करें।',
+  'parentGuide.section6.point1':
+    'आत्मविश्वास और गति को मज़बूत करने के लिए लगातार छोटी जीत का जश्न मनाएं।',
+
+  // ── MAP Prep page ────────────────────────────────────────────────────────────
+  'mapPrep.title': 'MAP तैयारी मोड',
+  'mapPrep.subtitle': 'RIT बैंड द्वारा अभ्यास · MAP विकास ट्रैक करें · लक्ष्य स्कोर की ओर बढ़ें',
+  'mapPrep.sidebarTitle': 'MAP तैयारी साइडबार · सहायता / अधिक जानें',
+  'mapPrep.sidebarSubtitle': 'छात्रों और परिवारों के लिए त्वरित गाइड खोलें।',
+  'mapPrep.studentId': 'छात्र आईडी',
+  'mapPrep.ritBand': 'RIT बैंड',
+  'mapPrep.loadingProjection': 'MAP विकास अनुमान लोड हो रहा है…',
+  'mapPrep.projectionTitle': 'MAP विकास अनुमान',
+  'mapPrep.currentRIT': 'वर्तमान RIT',
+  'mapPrep.projectedRIT': 'अनुमानित RIT',
+  'mapPrep.expectedGrowth': 'अपेक्षित विकास',
+  'mapPrep.sessionsNeeded': 'आवश्यक सत्र',
+  'mapPrep.growthProgress': 'विकास प्रगति (+15 RIT की ओर)',
+  'mapPrep.confidence': 'आत्मविश्वास',
+  'mapPrep.loadingSkills': 'इस RIT बैंड के लिए कौशल लोड हो रहे हैं…',
+  'mapPrep.gradeEquivalent': 'कक्षा समकक्ष',
+  'mapPrep.practiceSkill': 'अभ्यास कौशल',
+  'mapPrep.targetRIT': 'लक्ष्य RIT',
+  'mapPrep.difficulty': 'कठिनाई',
+  'mapPrep.gotIt': '✅ समझ गया!',
+  'mapPrep.needPractice': '❌ और अभ्यास चाहिए',
+  'mapPrep.hints': '💡 संकेत',
+  'mapPrep.explanation': '🧠 व्याख्या',
+  'mapPrep.show': 'दिखाएं',
+  'mapPrep.hide': 'छुपाएं',
+  'mapPrep.skillOf': 'कौशल {current} / {total}',
+  'mapPrep.noSkills': 'कोई अभ्यास कौशल उपलब्ध नहीं। ऊपर से RIT बैंड चुनें।',
+  'mapPrep.sessionComplete': 'सत्र पूर्ण!',
+  'mapPrep.answeredOf': 'आपने {total} में से {correct} कौशल सही उत्तर दिए',
+  'mapPrep.accuracy': '% सटीकता',
+  'mapPrep.practiceAgain': 'फिर से अभ्यास करें',
+  'mapPrep.sessionSummary': 'MAP सत्र सारांश',
+  'mapPrep.accuracyLabel': 'सटीकता',
+  'mapPrep.skillsMastered': 'कौशल महारत',
+  'mapPrep.avgDifficulty': 'औसत कठिनाई',
+  'mapPrep.domainBreakdown': 'डोमेन विवरण',
+  'mapPrep.sheetGenerator': 'MAP अभ्यास पत्रक जनरेटर',
+  'mapPrep.sheetGeneratorSubtitle':
+    'अपने चुने हुए MAP RIT बैंड के अनुसार एक प्रिंट करने योग्य अभ्यास पत्रक बनाएं।',
+  'mapPrep.questionCount': 'प्रश्न संख्या',
+  'mapPrep.options': 'विकल्प',
+  'mapPrep.includeHints': 'संकेत शामिल करें',
+  'mapPrep.includeExplanations': 'व्याख्या शामिल करें',
+  'mapPrep.domains': 'डोमेन (बहु-चयन)',
+  'mapPrep.generating': 'बन रहा है…',
+  'mapPrep.generateSheet': 'MAP अभ्यास पत्रक बनाएं',
+  'mapPrep.downloadSheet': 'पत्रक डाउनलोड करें',
+  'mapPrep.skillReport': 'MAP कौशल रिपोर्ट',
+  'mapPrep.skillHeader': 'कौशल',
+  'mapPrep.difficultyRIT': 'कठिनाई / RIT बैंड',
+  'mapPrep.growthTarget': 'विकास लक्ष्य',
+  'mapPrep.inMonths': '{count} महीने में',
+  'mapPrep.nextSteps': 'अगले चरण',
+  'mapPrep.adaptivePractice': 'अनुकूली MAP अभ्यास',
+  'mapPrep.skills': 'कौशल',
+
+  // ── Topic Browser ────────────────────────────────────────────────────────────
+  'topicBrowser.title': 'K–12 विषय ब्राउज़र + सुपर-पाठ्यक्रम',
+  'topicBrowser.subtitle':
+    'प्रवाह · वैचारिक महारत · तर्क और तर्कशास्त्र · MAP कौशल · प्रतियोगिता गणित',
+  'topicBrowser.mapPrep': 'MAP तैयारी →',
+  'topicBrowser.myProfile': 'मेरी प्रोफ़ाइल →',
+  'topicBrowser.superSyllabusTitle': 'सुपर-पाठ्यक्रम श्रेणियाँ',
+  'topicBrowser.skills': 'कौशल',
+  'topicBrowser.loadingCategory': 'श्रेणी कौशल लोड हो रहे हैं…',
+  'topicBrowser.explorationTitle': 'अन्वेषण मोड',
+  'topicBrowser.byDomain': '🌐 डोमेन द्वारा',
+  'topicBrowser.byRITBand': '📊 RIT बैंड द्वारा',
+  'topicBrowser.byReasoningLevel': '🔍 तर्क स्तर द्वारा',
+  'topicBrowser.byCompetitionLevel': '🏆 प्रतियोगिता स्तर द्वारा',
+  'topicBrowser.ritBand': 'RIT बैंड',
+  'topicBrowser.reasoningLevel': 'तर्क स्तर',
+  'topicBrowser.competitionLevel': 'प्रतियोगिता स्तर',
+  'topicBrowser.studentId': 'छात्र आईडी',
+  'topicBrowser.exploreTopic': 'विषय अन्वेषण',
+  'topicBrowser.refreshRecommendation': 'सिफारिश रीफ्रेश करें',
+  'topicBrowser.refreshing': 'रीफ्रेश हो रहा है...',
+  'topicBrowser.explorationGuidance': 'अन्वेषण मार्गदर्शन',
+  'topicBrowser.loading': 'विषय ब्राउज़र लोड हो रहा है...',
+  'topicBrowser.noTopics':
+    'चयनित फ़िल्टर से कोई विषय मेल नहीं खाता। एक अलग अन्वेषण मोड आज़माएं।',
+  'topicBrowser.prerequisites': 'पूर्वापेक्षाएँ',
+  'topicBrowser.none': 'कोई नहीं',
+  'topicBrowser.difficultyTiers': 'कठिनाई स्तर',
+  'topicBrowser.subtopics': 'उप-विषय',
+
+  // ── Worksheet page ───────────────────────────────────────────────────────────
+  'worksheet.title': 'अभ्यास वर्कशीट',
+  'worksheet.backToDiagnostic': 'डायग्नोस्टिक पर वापस',
+  'worksheet.attempted': 'प्रयास किए',
+  'worksheet.accuracy': 'सटीकता',
+  'worksheet.results': 'परिणाम',
+  'worksheet.total': 'कुल',
+  'worksheet.correct': 'सही',
+  'worksheet.incorrect': 'गलत',
+  'worksheet.time': 'समय',
+  'worksheet.beginner': 'शुरुआती',
+  'worksheet.intermediate': 'मध्यवर्ती',
+  'worksheet.advanced': 'उन्नत',
+  'worksheet.submitting': 'सबमिट हो रहा है…',
+  'worksheet.submit': 'वर्कशीट सबमिट करें',
+  'worksheet.studentProfile': 'छात्र प्रोफ़ाइल',
+  'worksheet.updating': 'अपडेट हो रहा है…',
+  'worksheet.level': 'स्तर',
+  'worksheet.xp': 'XP',
+  'worksheet.streak': 'स्ट्रीक',
+  'worksheet.path': 'पथ',
+  'worksheet.age': 'आयु',
+  'worksheet.grade': 'कक्षा',
+  'worksheet.masteryByOperation': 'ऑपरेशन द्वारा महारत',
+  'worksheet.topicMastery': 'विषय महारत',
+  'worksheet.badges': 'बैज',
+  'worksheet.earnBadges': 'वर्कशीट सटीकता से पूर्ण करके बैज अर्जित करें।',
+  'worksheet.noProfile': 'पहली वर्कशीट सबमिशन के बाद छात्र प्रोफ़ाइल दिखाई देगी।',
+  'worksheet.analytics': 'विश्लेषण',
+  'worksheet.worksheets': 'वर्कशीट',
+  'worksheet.avgTime': 'औसत समय',
+  'worksheet.recentAccuracy': 'हालिया सटीकता',
+  'worksheet.completeFirst': 'ट्रेंड ट्रैक करना शुरू करने के लिए एक वर्कशीट पूरी करें।',
+  'worksheet.topicAnalytics': 'विषय विश्लेषण',
+  'worksheet.topicAnalyticsEmpty': 'अधिक गतिविधि के बाद विषय विश्लेषण दिखाई देगा।',
+  'worksheet.recommendedNextSteps': 'अनुशंसित अगले चरण',
+  'worksheet.adaptiveRecommendation': 'अनुकूली सिफारिश',
+  'worksheet.recommendedLevel': 'अनुशंसित स्तर',
+  'worksheet.targetDifficulty': 'लक्ष्य कठिनाई',
+  'worksheet.focusOperations': 'फोकस ऑपरेशन',
+  'worksheet.recommendedTopic': 'अनुशंसित विषय',
+  'worksheet.recommendedGame': 'अनुशंसित गेम मोड',
+  'worksheet.worksheetType': 'वर्कशीट प्रकार',
+  'worksheet.subtopic': 'उप-विषय',
+  'worksheet.whyThisWorksheet': 'यह वर्कशीट क्यों?',
+  'worksheet.openRecommended': 'अनुशंसित वर्कशीट खोलें',
+  'worksheet.opening': 'खुल रहा है…',
+  'worksheet.recommendationUnavailable':
+    'सिफारिश उपलब्ध नहीं है या आपके वर्तमान वर्कशीट स्तर से मेल खाती है।',
+  'worksheet.noRecommendation':
+    'अनुकूली अगले-चरण सिफारिश उत्पन्न करने के लिए वर्कशीट सबमिट करें।',
+  'worksheet.aiWorksheetTitle': 'उन्नत AI वर्कशीट (बीजगणित I → कलन)',
+  'worksheet.personalizedPath': 'व्यक्तिगत शिक्षण पथ इंजन',
+  'worksheet.topic': 'विषय',
+  'worksheet.difficulty': 'कठिनाई (0-100)',
+  'worksheet.generating': 'बन रहा है…',
+  'worksheet.generateAI': 'AI वर्कशीट बनाएं',
+
+  // ── Game Mode page ───────────────────────────────────────────────────────────
+  'game.title': 'AI गेम चुनौती',
+  'game.studentId': 'छात्र आईडी',
+  'game.coreModes': 'मुख्य मोड',
+  'game.superModes': 'सुपर-पाठ्यक्रम मोड',
+  'game.retry': 'पुनः प्रयास',
+  'game.difficulty': 'कठिनाई',
+
+  // ── Student Profile page ──────────────────────────────────────────────────────
+  'profile.title': 'छात्र प्रोफ़ाइल',
+  'profile.subtitle': 'सुपर-पाठ्यक्रम स्कोर: प्रवाह · महारत · तर्क · MAP · प्रतियोगिता',
+  'profile.studentId': 'छात्र आईडी',
+  'profile.load': 'लोड करें',
+  'profile.loading': 'प्रोफ़ाइल लोड हो रही है…',
+  'profile.grade': 'कक्षा',
+  'profile.age': 'आयु',
+  'profile.level': 'स्तर',
+  'profile.xp': 'XP',
+  'profile.superSyllabusScores': 'सुपर-पाठ्यक्रम स्कोर',
+  'profile.fluencyScore': '⚡ प्रवाह स्कोर',
+  'profile.fluencyNote': 'जोड़ और घटाव महारत पर आधारित',
+  'profile.conceptualScore': '🧩 वैचारिक महारत स्कोर',
+  'profile.conceptualNote': 'गुणा और भाग महारत पर आधारित',
+  'profile.reasoningScore': '🔍 तर्क और तर्कशास्त्र स्कोर',
+  'profile.reasoningNote': 'समग्र महारत और अनुकूली प्रदर्शन से व्युत्पन्न',
+  'profile.mapRIT': '📊 MAP RIT अनुमान',
+  'profile.mapRITNote': 'महारत डेटा के आधार पर अनुमानित RIT स्कोर (श्रेणी 180–280)',
+  'profile.practiceMapSkills': 'MAP कौशल अभ्यास करें →',
+  'profile.competitionLevel': '🏆 प्रतियोगिता गणित स्तर',
+  'profile.competitionNote': 'समग्र महारत प्रगति पर आधारित',
+  'profile.operationMastery': 'ऑपरेशन महारत',
+  'profile.learningGoals': 'शिक्षण लक्ष्य',
+};
+
+const TRANSLATIONS: Record<Language, Record<string, string>> = { en: EN, hi: HI };
+
+@Injectable({ providedIn: 'root' })
+export class TranslationService {
+  private readonly _language = signal<Language>(
+    (localStorage.getItem('ms_lang') as Language | null) ?? 'en',
+  );
+
+  readonly currentLanguage = this._language.asReadonly();
+
+  readonly isHindi = computed(() => this._language() === 'hi');
+
+  setLanguage(lang: Language): void {
+    this._language.set(lang);
+    localStorage.setItem('ms_lang', lang);
+  }
+
+  toggle(): void {
+    this.setLanguage(this._language() === 'en' ? 'hi' : 'en');
+  }
+
+  translate(key: string, params?: Record<string, string | number>): string {
+    const dict = TRANSLATIONS[this._language()];
+    let value = dict[key] ?? TRANSLATIONS['en'][key] ?? key;
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        value = value.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+      }
+    }
+    return value;
+  }
+}

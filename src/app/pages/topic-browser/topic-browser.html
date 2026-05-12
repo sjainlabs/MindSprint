@@ -2,19 +2,20 @@
   <div class="max-w-6xl mx-auto space-y-5">
     <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-primary">K–12 Topic Browser + Super-Syllabus</h1>
-        <p class="text-sm text-gray-600">Fluency · Conceptual Mastery · Reasoning & Logic · MAP Skills · Competition Math</p>
+        <h1 class="text-2xl font-bold text-primary">{{ 'topicBrowser.title' | translate }}</h1>
+        <p class="text-sm text-gray-600">{{ 'topicBrowser.subtitle' | translate }}</p>
       </div>
       <div class="flex gap-3 items-center">
-        <a routerLink="/map-prep" class="text-sm underline text-blue-600">MAP Prep →</a>
-        <a routerLink="/profile" class="text-sm underline text-blue-600">My Profile →</a>
-        <a routerLink="/welcome" class="text-sm underline text-primary">Back Home</a>
+        <app-language-toggle />
+        <a routerLink="/map-prep" class="text-sm underline text-blue-600">{{ 'topicBrowser.mapPrep' | translate }}</a>
+        <a routerLink="/profile" class="text-sm underline text-blue-600">{{ 'topicBrowser.myProfile' | translate }}</a>
+        <a routerLink="/welcome" class="text-sm underline text-primary">{{ 'nav.backHome' | translate }}</a>
       </div>
     </div>
 
     <!-- Super-Syllabus Category Browser -->
     <div class="bg-white rounded-xl shadow p-5">
-      <h2 class="text-lg font-bold text-primary mb-3">Super-Syllabus Categories</h2>
+      <h2 class="text-lg font-bold text-primary mb-3">{{ 'topicBrowser.superSyllabusTitle' | translate }}</h2>
       <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
         @for (cat of superCategories; track cat.id) {
           <button
@@ -31,14 +32,14 @@
       </div>
 
       @if (categoryLoading()) {
-        <p class="text-sm text-gray-500 mt-4">Loading category skills…</p>
+        <p class="text-sm text-gray-500 mt-4">{{ 'topicBrowser.loadingCategory' | translate }}</p>
       }
 
       @if (categoryDetail(); as detail) {
         <div class="mt-4 border rounded-xl p-4 bg-gray-50">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold">{{ detail.name }}</h3>
-            <span class="text-xs text-gray-500">{{ detail.totalSkills }} skills</span>
+            <span class="text-xs text-gray-500">{{ detail.totalSkills }} {{ 'topicBrowser.skills' | translate }}</span>
           </div>
           <p class="text-sm text-gray-600 mb-3">{{ detail.description }}</p>
           <div class="grid sm:grid-cols-2 gap-2">
@@ -70,14 +71,14 @@
 
     <!-- Exploration Mode with Filters -->
     <div class="bg-white rounded-xl shadow p-5">
-      <h2 class="text-lg font-bold text-primary mb-3">Exploration Mode</h2>
+      <h2 class="text-lg font-bold text-primary mb-3">{{ 'topicBrowser.explorationTitle' | translate }}</h2>
 
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         @for (f of [
-          { value: 'domain', label: '🌐 By Domain' },
-          { value: 'rit-band', label: '📊 By RIT Band' },
-          { value: 'reasoning-level', label: '🔍 By Reasoning Level' },
-          { value: 'competition-difficulty', label: '🏆 By Competition Level' }
+          { value: 'domain', labelKey: 'topicBrowser.byDomain' },
+          { value: 'rit-band', labelKey: 'topicBrowser.byRITBand' },
+          { value: 'reasoning-level', labelKey: 'topicBrowser.byReasoningLevel' },
+          { value: 'competition-difficulty', labelKey: 'topicBrowser.byCompetitionLevel' }
         ]; track f.value) {
           <button
             type="button"
@@ -85,7 +86,7 @@
             [ngClass]="exploreFilter() === f.value ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-gray-400'"
             (click)="exploreFilter.set($any(f.value))"
           >
-            {{ f.label }}
+            {{ f.labelKey | translate }}
           </button>
         }
       </div>
@@ -93,7 +94,7 @@
       <!-- Filter-specific controls -->
       @if (exploreFilter() === 'rit-band') {
         <div class="mb-4">
-          <label class="text-sm text-gray-600">RIT Band
+          <label class="text-sm text-gray-600">{{ 'topicBrowser.ritBand' | translate }}
             <select class="mt-1 border rounded px-3 py-1.5 text-sm" [ngModel]="selectedRITBand()" (ngModelChange)="selectedRITBand.set(+$event)">
               @for (band of ritBandOptions; track band) {
                 <option [ngValue]="band">RIT {{ band }}</option>
@@ -104,7 +105,7 @@
       }
       @if (exploreFilter() === 'reasoning-level') {
         <div class="mb-4">
-          <label class="text-sm text-gray-600">Reasoning Level
+          <label class="text-sm text-gray-600">{{ 'topicBrowser.reasoningLevel' | translate }}
             <select class="mt-1 border rounded px-3 py-1.5 text-sm" [ngModel]="selectedReasoningLevel()" (ngModelChange)="selectedReasoningLevel.set($event)">
               @for (level of reasoningLevels; track level) {
                 <option [ngValue]="level" class="capitalize">{{ level }}</option>
@@ -115,7 +116,7 @@
       }
       @if (exploreFilter() === 'competition-difficulty') {
         <div class="mb-4">
-          <label class="text-sm text-gray-600">Competition Level
+          <label class="text-sm text-gray-600">{{ 'topicBrowser.competitionLevel' | translate }}
             <select class="mt-1 border rounded px-3 py-1.5 text-sm" [ngModel]="selectedCompetitionLevel()" (ngModelChange)="selectedCompetitionLevel.set($event)">
               @for (level of competitionLevels; track level) {
                 <option [ngValue]="level">{{ level }}</option>
@@ -126,10 +127,10 @@
       }
 
       <div class="bg-white rounded-xl shadow p-4 grid md:grid-cols-3 gap-3 border">
-        <label class="text-sm text-gray-600">Student ID
+        <label class="text-sm text-gray-600">{{ 'topicBrowser.studentId' | translate }}
           <input class="mt-1 w-full border rounded px-3 py-2" [ngModel]="studentId()" (ngModelChange)="studentId.set($event)" (blur)="loadBrowser()" />
         </label>
-        <label class="text-sm text-gray-600">Explore Topic
+        <label class="text-sm text-gray-600">{{ 'topicBrowser.exploreTopic' | translate }}
           <select class="mt-1 w-full border rounded px-3 py-2" [ngModel]="selectedTopicId()" (ngModelChange)="selectedTopicId.set($event); loadExplorationRecommendation()">
             @for (topic of browser()?.browseTopics ?? []; track topic.id) {
               <option [ngValue]="topic.id">{{ topic.title }}</option>
@@ -138,14 +139,14 @@
         </label>
         <div class="flex items-end">
           <button type="button" class="w-full bg-primary text-white rounded-lg py-2 font-semibold" (click)="loadExplorationRecommendation()" [disabled]="explorationLoading()">
-            {{ explorationLoading() ? 'Refreshing...' : 'Refresh Recommendation' }}
+            {{ explorationLoading() ? ('topicBrowser.refreshing' | translate) : ('topicBrowser.refreshRecommendation' | translate) }}
           </button>
         </div>
       </div>
 
       @if (exploration(); as recommendation) {
         <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mt-3">
-          <p class="text-sm text-indigo-800 font-semibold">Exploration Guidance</p>
+          <p class="text-sm text-indigo-800 font-semibold">{{ 'topicBrowser.explorationGuidance' | translate }}</p>
           <p class="text-sm text-indigo-700 mt-1">{{ recommendation.message }}</p>
           <p class="text-xs text-indigo-600 mt-2">Recommended topic: {{ recommendation.recommendedTopicName }} • Difficulty {{ recommendation.recommendedDifficulty }}/100</p>
         </div>
@@ -153,7 +154,7 @@
     </div>
 
     @if (loading()) {
-      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-600">Loading topic browser...</div>
+      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-600">{{ 'topicBrowser.loading' | translate }}</div>
     } @else if (errorMessage()) {
       <div class="bg-white rounded-xl shadow p-6 text-sm text-red-600">{{ errorMessage() }}</div>
     } @else {
@@ -164,10 +165,10 @@
               <h2 class="font-bold text-primary">{{ topic.title }}</h2>
               <span class="text-xs bg-gray-100 rounded-full px-2 py-1">{{ topic.masteryPercentage }}% mastery</span>
             </div>
-            <p class="mt-2 text-xs text-gray-500">Prerequisites: {{ topic.prerequisites.length ? topic.prerequisites.join(', ') : 'None' }}</p>
+            <p class="mt-2 text-xs text-gray-500">{{ 'topicBrowser.prerequisites' | translate }}: {{ topic.prerequisites.length ? topic.prerequisites.join(', ') : ('topicBrowser.none' | translate) }}</p>
 
             <div class="mt-3">
-              <p class="text-xs font-semibold mb-1">Difficulty tiers</p>
+              <p class="text-xs font-semibold mb-1">{{ 'topicBrowser.difficultyTiers' | translate }}</p>
               <div class="flex flex-wrap gap-2">
                 @for (tier of topic.difficultyTiers; track tier.name) {
                   <span class="text-xs rounded-full bg-blue-50 text-blue-700 px-2 py-1">{{ tier.name }} {{ tier.min }}-{{ tier.max }}</span>
@@ -176,10 +177,10 @@
             </div>
 
             <div class="mt-3">
-              <p class="text-xs font-semibold mb-1">Subtopics</p>
+              <p class="text-xs font-semibold mb-1">{{ 'topicBrowser.subtopics' | translate }}</p>
               <div class="flex flex-wrap gap-1">
                 @for (subtopic of topic.subtopics; track subtopic) {
-                  <span class="text-[11px] rounded bg-gray-100 px-2 py-1">{{ subtopic }}</span>
+                  <span class="text[11px] rounded bg-gray-100 px-2 py-1">{{ subtopic }}</span>
                 }
               </div>
             </div>
@@ -193,7 +194,7 @@
         }
         @if (filteredTopics().length === 0) {
           <div class="col-span-2 bg-white rounded-xl shadow p-6 text-sm text-gray-500 text-center">
-            No topics match the selected filter. Try a different exploration mode.
+            {{ 'topicBrowser.noTopics' | translate }}
           </div>
         }
       </div>
