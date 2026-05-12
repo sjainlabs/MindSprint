@@ -345,8 +345,7 @@ export class WorksheetPageComponent implements OnInit {
       if (questionResult.isCorrect) {
         current.correct += 1;
       }
-      // const operation = (questionResult as any).operation as MathOperation;
-      // const current = accumulator[operation] ?? { correct: 0, attempted: 0 };
+      accumulator[operation] = current;
 
       return accumulator;
     }, {});
