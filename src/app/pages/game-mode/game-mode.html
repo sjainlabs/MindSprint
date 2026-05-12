@@ -400,6 +400,26 @@
                   >
                     {{ 'game.submitChallenge' | translate }}
                   </button>
+                } @else if (selectedMode() === 'abacus-flash') {
+                  <div class="space-y-3">
+                    <label for="abacus-answer" class="text-sm font-medium text-gray-700">Enter the total</label>
+                    <input
+                      id="abacus-answer"
+                      type="number"
+                      class="w-full border rounded-lg py-2 px-3"
+                      [disabled]="challengeSubmitted()"
+                      [value]="selectedAnswer() ?? ''"
+                      (input)="setAbacusAnswer($any($event.target).value)"
+                    />
+                    <button
+                      type="button"
+                      class="w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg transition-all hover:shadow-lg hover:bg-primary/90 active:scale-95 disabled:opacity-60"
+                      [disabled]="selectedAnswer() === null || challengeSubmitted()"
+                      (click)="submitChallenge()"
+                    >
+                      {{ 'game.submitChallenge' | translate }}
+                    </button>
+                  </div>
                 }
               </div>
             }

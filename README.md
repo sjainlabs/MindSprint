@@ -61,8 +61,8 @@ The Super-Syllabus unifies 7 curriculum domains into a single K–12 framework:
 |---|---|---|
 | `/api/game/challenge` | GET | Fetch an adaptive challenge for any game mode |
 | `/api/game/submit` | POST | Submit result for any game mode |
-| `/api/game/abacus-flash/challenge` | POST | Fetch an Abacus Flash challenge (returns `flashSequence` + `speedMs` in `gamePayload`) |
-| `/api/game/abacus-flash/submit` | POST | Submit an Abacus Flash answer; returns updated `difficulty`, `streak`, `xpEarned`, and `dailyQuestProgress` |
+| `/api/game/challenge` (with `mode=abacus-flash`) | GET | Fetch an Abacus Flash challenge (returns `flashSequence` + `speedMs` in `gamePayload`) |
+| `/api/game/submit` (with `mode=abacus-flash`) | POST | Submit Abacus Flash score + accuracy; returns `correct`, `xpEarned`, `newDifficulty`, `newStreak`, and `dailyQuestProgress` |
 
 ### API Services (`SyllabusService`)
 
