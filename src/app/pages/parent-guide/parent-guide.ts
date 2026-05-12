@@ -1,79 +1,43 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { TranslationService } from '../../services/translation.service';
 
-interface ParentGuideSection {
-  title: string;
+interface ParentGuideSectionDef {
+  titleKey: string;
   icon: string;
-  points: string[];
+  pointKeys: string[];
 }
 
 @Component({
   selector: 'app-parent-guide',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, LanguageToggleComponent, TranslatePipe],
   templateUrl: './parent-guide.html',
   styleUrl: './parent-guide.css',
 })
 export class ParentGuideComponent {
-  readonly sections: ParentGuideSection[] = [
-    {
-      title: 'What is MindSprint?',
-      icon: '🧭',
-      points: [
-        'MindSprint is a personalized math practice platform for grades K–8.',
-        'It supports MAP-aligned skill development with adaptive learning and daily mastery practice.',
-      ],
-    },
-    {
-      title: 'MAP Prep Mode',
-      icon: '📊',
-      points: [
-        'Students practice with RIT-aligned recommendations and MAP-style sessions.',
-        'Parents can use growth projections and skill suggestions to focus practice time.',
-      ],
-    },
-    {
-      title: 'Foundational Math Mastery',
-      icon: '📝',
-      points: [
-        'Daily practice sheets build fluency, accuracy, and confidence through short, consistent sessions.',
-        'Students move forward after showing mastery, creating steady incremental growth.',
-      ],
-    },
-    {
-      title: 'Skill Practice',
-      icon: '🧩',
-      points: [
-        'Domain-based learning includes Number Sense, Operations, Fractions, Geometry, and more.',
-        'Step-by-step explanations and adaptive difficulty keep learning at the right challenge level.',
-      ],
-    },
-    {
-      title: 'AI Tutor',
-      icon: '🤖',
-      points: [
-        'The AI Tutor provides homework help and clear concept explanations on demand.',
-        'It can generate personalized questions for extra targeted practice.',
-      ],
-    },
-    {
-      title: 'Progress Tracking',
-      icon: '📈',
-      points: [
-        'Track accuracy, difficulty level, and time spent to understand learning habits.',
-        'Use RIT growth insights and skill mastery dashboards to monitor outcomes.',
-      ],
-    },
-    {
-      title: 'How Parents Can Support',
-      icon: '💙',
-      points: [
-        'Encourage short daily sessions, review progress weekly, and use practice sheets for reinforcement.',
-        'Celebrate small wins consistently to strengthen confidence and momentum.',
-      ],
-    },
+  private readonly t = inject(TranslationService);
+
+  readonly sectionDefs: ParentGuideSectionDef[] = [
+    { titleKey: 'parentGuide.section0.title', icon: '🧭', pointKeys: ['parentGuide.section0.point0', 'parentGuide.section0.point1'] },
+    { titleKey: 'parentGuide.section1.title', icon: '📊', pointKeys: ['parentGuide.section1.point0', 'parentGuide.section1.point1'] },
+    { titleKey: 'parentGuide.section2.title', icon: '📝', pointKeys: ['parentGuide.section2.point0', 'parentGuide.section2.point1'] },
+    { titleKey: 'parentGuide.section3.title', icon: '🧩', pointKeys: ['parentGuide.section3.point0', 'parentGuide.section3.point1'] },
+    { titleKey: 'parentGuide.section4.title', icon: '🤖', pointKeys: ['parentGuide.section4.point0', 'parentGuide.section4.point1'] },
+    { titleKey: 'parentGuide.section5.title', icon: '📈', pointKeys: ['parentGuide.section5.point0', 'parentGuide.section5.point1'] },
+    { titleKey: 'parentGuide.section6.title', icon: '💙', pointKeys: ['parentGuide.section6.point0', 'parentGuide.section6.point1'] },
   ];
+
+  readonly sections = computed(() =>
+    this.sectionDefs.map((def) => ({
+      title: this.t.translate(def.titleKey),
+      icon: def.icon,
+      points: def.pointKeys.map((k) => this.t.translate(k)),
+    })),
+  );
 
   readonly expanded = signal<Set<number>>(new Set([0]));
 

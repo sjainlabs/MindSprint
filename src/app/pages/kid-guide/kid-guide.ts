@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslationService } from '../../services/translation.service';
 
 interface KidGuideSlide {
-  title: string;
-  message: string;
+  titleKey: string;
+  messageKey: string;
   icon: string;
   colorClass: string;
   illustrationClass: string;
@@ -14,63 +16,65 @@ interface KidGuideSlide {
 @Component({
   selector: 'app-kid-guide',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, LanguageToggleComponent],
   templateUrl: './kid-guide.html',
   styleUrl: './kid-guide.css',
 })
 export class KidGuideComponent {
-  readonly slides: KidGuideSlide[] = [
+  private readonly t = inject(TranslationService);
+
+  readonly slideData: KidGuideSlide[] = [
     {
-      title: 'Welcome to MindSprint!',
-      message: 'This is your place to get better at math every day!',
+      titleKey: 'kidGuide.slide0.title',
+      messageKey: 'kidGuide.slide0.message',
       icon: '👋',
       colorClass: 'from-fuchsia-200 via-pink-100 to-yellow-100',
       illustrationClass: 'bg-fuchsia-100',
       illustrationLabel: '🤖',
     },
     {
-      title: 'MAP Prep Mode',
-      message: 'Practice questions that help you grow your MAP score.',
+      titleKey: 'kidGuide.slide1.title',
+      messageKey: 'kidGuide.slide1.message',
       icon: '📈',
       colorClass: 'from-sky-200 via-cyan-100 to-blue-100',
       illustrationClass: 'bg-sky-100',
       illustrationLabel: '🧒',
     },
     {
-      title: 'Skill Practice',
-      message: 'Learn new math skills step by step.',
+      titleKey: 'kidGuide.slide2.title',
+      messageKey: 'kidGuide.slide2.message',
       icon: '🧩',
       colorClass: 'from-violet-200 via-purple-100 to-indigo-100',
       illustrationClass: 'bg-violet-100',
       illustrationLabel: '🧱',
     },
     {
-      title: 'Daily Practice Sheets',
-      message: 'Short daily sheets help you get faster and stronger at math. Keep going one level at a time!',
+      titleKey: 'kidGuide.slide3.title',
+      messageKey: 'kidGuide.slide3.message',
       icon: '📝',
       colorClass: 'from-amber-200 via-orange-100 to-yellow-100',
       illustrationClass: 'bg-amber-100',
       illustrationLabel: '✏️',
     },
     {
-      title: 'Games',
-      message: 'Play fun math games to get quicker with numbers!',
+      titleKey: 'kidGuide.slide4.title',
+      messageKey: 'kidGuide.slide4.message',
       icon: '🎮',
       colorClass: 'from-emerald-200 via-lime-100 to-green-100',
       illustrationClass: 'bg-emerald-100',
       illustrationLabel: '🕹️',
     },
     {
-      title: 'AI Tutor',
-      message: 'Ask questions anytime. Your math helper is always here!',
+      titleKey: 'kidGuide.slide5.title',
+      messageKey: 'kidGuide.slide5.message',
       icon: '🤖',
       colorClass: 'from-indigo-200 via-blue-100 to-cyan-100',
       illustrationClass: 'bg-indigo-100',
       illustrationLabel: '💡',
     },
     {
-      title: 'Progress',
-      message: 'See how much you’ve grown!',
+      titleKey: 'kidGuide.slide6.title',
+      messageKey: 'kidGuide.slide6.message',
       icon: '🚀',
       colorClass: 'from-rose-200 via-pink-100 to-purple-100',
       illustrationClass: 'bg-rose-100',
@@ -79,12 +83,30 @@ export class KidGuideComponent {
   ];
 
   readonly currentIndex = signal(0);
-  readonly currentSlide = computed(() => this.slides[this.currentIndex()]);
+
+  readonly currentSlide = computed(() => {
+    const data = this.slideData[this.currentIndex()];
+    return {
+      ...data,
+      title: this.t.translate(data.titleKey),
+      message: this.t.translate(data.messageKey),
+    };
+  });
+
   readonly isFirst = computed(() => this.currentIndex() === 0);
-  readonly isLast = computed(() => this.currentIndex() === this.slides.length - 1);
+  readonly isLast = computed(() => this.currentIndex() === this.slideData.length - 1);
   readonly progressPercent = computed(() =>
-    Math.round(((this.currentIndex() + 1) / this.slides.length) * 100),
+    Math.round(((this.currentIndex() + 1) / this.slideData.length) * 100),
   );
+  readonly stepLabel = computed(() =>
+    this.t.translate('kidGuide.stepOf', {
+      current: this.currentIndex() + 1,
+      total: this.slideData.length,
+    }),
+  );
+  readonly backLabel = computed(() => this.t.translate('kidGuide.back'));
+  readonly nextLabel = computed(() => this.t.translate('kidGuide.next'));
+  readonly startLabel = computed(() => this.t.translate('kidGuide.letsStart'));
 
   previous(): void {
     if (!this.isFirst()) {

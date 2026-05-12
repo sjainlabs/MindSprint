@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -12,6 +12,9 @@ import {
   PracticeService,
   type MapPracticeSheetResponse,
 } from '../../services/practice.service';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { TranslationService } from '../../services/translation.service';
 
 const RIT_BANDS = [
   { value: 180, label: 'RIT 180 (Grade K–1)' },
@@ -172,11 +175,12 @@ const MOCK_PROJECTION: MAPGrowthProjection = {
 @Component({
   selector: 'app-map-prep',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
   templateUrl: './map-prep.html',
   styleUrl: './map-prep.css',
 })
 export class MapPrepComponent implements OnInit {
+  readonly t = inject(TranslationService);
   studentId = signal('student-demo');
   selectedRIT = signal(220);
   ritBands = RIT_BANDS;

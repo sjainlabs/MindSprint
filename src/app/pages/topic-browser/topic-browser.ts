@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -12,6 +12,9 @@ import {
   type SyllabusDomain,
   type SyllabusDomainDetail,
 } from '../../services/syllabus.service';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { TranslationService } from '../../services/translation.service';
 
 export type ExploreFilter = 'domain' | 'rit-band' | 'reasoning-level' | 'competition-difficulty';
 
@@ -66,11 +69,12 @@ const COMPETITION_LEVELS = ['AMC-8', 'AMC-10', 'MATHCOUNTS', 'AIME'] as const;
 @Component({
   selector: 'app-topic-browser',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
   templateUrl: './topic-browser.html',
   styleUrl: './topic-browser.css',
 })
 export class TopicBrowserComponent implements OnInit {
+  readonly t = inject(TranslationService);
   studentId = signal('student-demo');
   selectedTopicId = signal('foundation');
   browser = signal<TopicBrowserResponse | null>(null);

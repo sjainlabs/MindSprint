@@ -1,26 +1,29 @@
 <section class="home-page">
   <div class="hero-shell">
     <div class="hero-content">
-      <p class="eyebrow">Welcome to</p>
-      <h1>MindSprint</h1>
-      <p class="subtitle">Fast Math. Smart Kids.</p>
+      <div class="flex items-center justify-between mb-2">
+        <p class="eyebrow">{{ 'welcome.eyebrow' | translate }}</p>
+        <app-language-toggle />
+      </div>
+      <h1>{{ 'welcome.title' | translate }}</h1>
+      <p class="subtitle">{{ 'welcome.subtitle' | translate }}</p>
       <p class="description">
-        Build speed and confidence with a quick diagnostic, then practice the right worksheet level.
+        {{ 'welcome.description' | translate }}
       </p>
       <div class="actions">
-        <a routerLink="/onboarding" class="btn btn-primary">Start Onboarding</a>
-        <a routerLink="/diagnostic" class="btn btn-primary">Start Diagnostic</a>
-        <a routerLink="/topics" class="btn btn-secondary">Topic Browser + Exploration</a>
-        <a routerLink="/worksheet/Beginner" class="btn btn-secondary">K–12 + AI Worksheets</a>
-        <a routerLink="/game" class="btn btn-secondary">Gamified Learning Hub</a>
-        <a routerLink="/map-prep" class="btn btn-secondary">MAP Prep Mode</a>
-        <a routerLink="/profile" class="btn btn-secondary">Student Profile</a>
+        <a routerLink="/onboarding" class="btn btn-primary">{{ 'welcome.startOnboarding' | translate }}</a>
+        <a routerLink="/diagnostic" class="btn btn-primary">{{ 'welcome.startDiagnostic' | translate }}</a>
+        <a routerLink="/topics" class="btn btn-secondary">{{ 'welcome.topicBrowser' | translate }}</a>
+        <a routerLink="/worksheet/Beginner" class="btn btn-secondary">{{ 'welcome.worksheets' | translate }}</a>
+        <a routerLink="/game" class="btn btn-secondary">{{ 'welcome.gamified' | translate }}</a>
+        <a routerLink="/map-prep" class="btn btn-secondary">{{ 'welcome.mapPrep' | translate }}</a>
+        <a routerLink="/profile" class="btn btn-secondary">{{ 'welcome.studentProfile' | translate }}</a>
       </div>
       <div class="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
-        <p class="text-sm font-semibold text-blue-800">Help / Learn More</p>
+        <p class="text-sm font-semibold text-blue-800">{{ 'nav.helpLearnMore' | translate }}</p>
         <div class="actions mt-2">
-          <a routerLink="/guide/kids" class="btn btn-secondary">Kid-Friendly Guide</a>
-          <a routerLink="/guide/parents" class="btn btn-secondary">Parent Guide</a>
+          <a routerLink="/guide/kids" class="btn btn-secondary">{{ 'nav.kidGuide' | translate }}</a>
+          <a routerLink="/guide/parents" class="btn btn-secondary">{{ 'nav.parentGuide' | translate }}</a>
         </div>
       </div>
     </div>

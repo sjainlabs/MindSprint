@@ -3,15 +3,18 @@
     <!-- Header -->
     <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-primary">MAP Prep Mode</h1>
-        <p class="text-sm text-gray-600">Practice by RIT band · Track MAP growth · Build toward your target score</p>
+        <h1 class="text-2xl font-bold text-primary">{{ 'mapPrep.title' | translate }}</h1>
+        <p class="text-sm text-gray-600">{{ 'mapPrep.subtitle' | translate }}</p>
       </div>
-      <a routerLink="/welcome" class="text-sm underline text-primary">Back Home</a>
+      <div class="flex items-center gap-3">
+        <app-language-toggle />
+        <a routerLink="/welcome" class="text-sm underline text-primary">{{ 'nav.backHome' | translate }}</a>
+      </div>
     </div>
 
     <!-- Controls -->
     <div class="bg-white rounded-xl shadow p-4 grid md:grid-cols-2 gap-4">
-      <label class="text-sm text-gray-600">Student ID
+      <label class="text-sm text-gray-600">{{ 'mapPrep.studentId' | translate }}
         <input
           class="mt-1 w-full border rounded px-3 py-2"
           [ngModel]="studentId()"
@@ -19,7 +22,7 @@
           (blur)="loadProjection()"
         />
       </label>
-      <label class="text-sm text-gray-600">RIT Band
+      <label class="text-sm text-gray-600">{{ 'mapPrep.ritBand' | translate }}
         <select
           class="mt-1 w-full border rounded px-3 py-2"
           [ngModel]="selectedRIT()"
@@ -33,58 +36,58 @@
     </div>
 
     <aside class="bg-white rounded-xl shadow p-4">
-      <p class="text-sm font-semibold text-primary">MAP Prep Sidebar · Help / Learn More</p>
-      <p class="text-xs text-gray-600 mt-1">Open quick guides for students and families.</p>
+      <p class="text-sm font-semibold text-primary">{{ 'mapPrep.sidebarTitle' | translate }}</p>
+      <p class="text-xs text-gray-600 mt-1">{{ 'mapPrep.sidebarSubtitle' | translate }}</p>
       <div class="mt-3 grid sm:grid-cols-2 gap-2">
-        <a routerLink="/guide/kids" class="rounded-lg border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-sm font-semibold text-fuchsia-700 text-center">Kid-Friendly Guide</a>
-        <a routerLink="/guide/parents" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 text-center">Parent Guide</a>
+        <a routerLink="/guide/kids" class="rounded-lg border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-sm font-semibold text-fuchsia-700 text-center">{{ 'nav.kidGuide' | translate }}</a>
+        <a routerLink="/guide/parents" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 text-center">{{ 'nav.parentGuide' | translate }}</a>
       </div>
     </aside>
 
     <!-- MAP Growth Projection -->
     @if (loadingProjection()) {
-      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">Loading MAP growth projection…</div>
+      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">{{ 'mapPrep.loadingProjection' | translate }}</div>
     } @else if (projection(); as proj) {
       <div class="bg-white rounded-xl shadow p-5">
-        <h2 class="text-lg font-bold text-primary mb-4">MAP Growth Projection</h2>
+        <h2 class="text-lg font-bold text-primary mb-4">{{ 'mapPrep.projectionTitle' | translate }}</h2>
         <div class="grid md:grid-cols-4 gap-4 mb-4">
           <div class="rounded-lg bg-blue-50 p-4 text-center">
-            <p class="text-xs text-gray-500">Current RIT</p>
+            <p class="text-xs text-gray-500">{{ 'mapPrep.currentRIT' | translate }}</p>
             <p class="text-2xl font-bold text-blue-700">{{ proj.currentRIT }}</p>
           </div>
           <div class="rounded-lg bg-emerald-50 p-4 text-center">
-            <p class="text-xs text-gray-500">Projected RIT</p>
+            <p class="text-xs text-gray-500">{{ 'mapPrep.projectedRIT' | translate }}</p>
             <p class="text-2xl font-bold text-emerald-700">{{ proj.projectedRIT }}</p>
           </div>
           <div class="rounded-lg bg-amber-50 p-4 text-center">
-            <p class="text-xs text-gray-500">Expected Growth</p>
+            <p class="text-xs text-gray-500">{{ 'mapPrep.expectedGrowth' | translate }}</p>
             <p class="text-2xl font-bold text-amber-700">+{{ proj.projectedGrowth }}</p>
           </div>
           <div class="rounded-lg bg-purple-50 p-4 text-center">
-            <p class="text-xs text-gray-500">Sessions Needed</p>
+            <p class="text-xs text-gray-500">{{ 'mapPrep.sessionsNeeded' | translate }}</p>
             <p class="text-2xl font-bold text-purple-700">{{ proj.practiceSessionsNeeded }}</p>
           </div>
         </div>
         <div>
-          <p class="text-xs text-gray-500 mb-1">Growth Progress (toward +15 RIT)</p>
+          <p class="text-xs text-gray-500 mb-1">{{ 'mapPrep.growthProgress' | translate }}</p>
           <div class="w-full bg-gray-100 rounded-full h-3">
             <div
               class="bg-emerald-500 h-3 rounded-full transition-all"
               [style.width.%]="growthPercent()"
             ></div>
           </div>
-          <p class="text-xs text-gray-500 mt-1">Confidence: <span class="font-semibold capitalize">{{ proj.confidenceLevel }}</span></p>
+          <p class="text-xs text-gray-500 mt-1">{{ 'mapPrep.confidence' | translate }}: <span class="font-semibold capitalize">{{ proj.confidenceLevel }}</span></p>
         </div>
       </div>
     }
 
     <!-- RIT Band Skills -->
     @if (loadingSkills()) {
-      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">Loading skills for this RIT band…</div>
+      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">{{ 'mapPrep.loadingSkills' | translate }}</div>
     } @else if (ritSkills(); as band) {
       <div class="bg-white rounded-xl shadow p-5">
-        <h2 class="text-lg font-bold text-primary mb-1">{{ band.bandLabel }} Skills</h2>
-        <p class="text-sm text-gray-500 mb-4">Grade equivalent: {{ band.gradeEquivalent }}</p>
+        <h2 class="text-lg font-bold text-primary mb-1">{{ band.bandLabel }} {{ 'mapPrep.skills' | translate }}</h2>
+        <p class="text-sm text-gray-500 mb-4">{{ 'mapPrep.gradeEquivalent' | translate }}: {{ band.gradeEquivalent }}</p>
 
         <div class="grid md:grid-cols-2 gap-3">
           @for (skill of band.skills; track skill.skillId) {
@@ -102,7 +105,7 @@
                 }
               </div>
               <div class="mt-2">
-                <p class="text-xs font-semibold text-gray-600">Next steps:</p>
+                <p class="text-xs font-semibold text-gray-600">{{ 'mapPrep.nextSteps' | translate }}:</p>
                 <ul class="text-xs text-gray-500 list-disc list-inside">
                   @for (step of skill.recommendedNextSteps; track step) {
                     <li>{{ step }}</li>
@@ -117,12 +120,12 @@
 
     <!-- Adaptive MAP Practice -->
     <div class="bg-white rounded-xl shadow p-5">
-      <h2 class="text-lg font-bold text-primary mb-4">Adaptive MAP Practice</h2>
+      <h2 class="text-lg font-bold text-primary mb-4">{{ 'mapPrep.adaptivePractice' | translate }}</h2>
 
       @if (!sessionComplete()) {
         @if (practiceQuestion(); as skill) {
           <div class="border rounded-xl p-4 mb-4 bg-indigo-50">
-            <p class="text-xs text-indigo-700 font-semibold mb-1">Practice Skill</p>
+            <p class="text-xs text-indigo-700 font-semibold mb-1">{{ 'mapPrep.practiceSkill' | translate }}</p>
             <h3 class="font-bold">{{ skill.name }}</h3>
             <p class="text-sm text-gray-600 mt-1">{{ skill.description }}</p>
             <div class="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
@@ -130,11 +133,11 @@
               <span class="rounded-full bg-white px-2 py-1 text-indigo-700">🎒 {{ skillGradeLabel(skill) }}</span>
             </div>
             @if (skill.ritBand) {
-              <p class="text-xs text-gray-500 mt-2">Target RIT: {{ skill.ritBand.min }}–{{ skill.ritBand.max }}</p>
+              <p class="text-xs text-gray-500 mt-2">{{ 'mapPrep.targetRIT' | translate }}: {{ skill.ritBand.min }}–{{ skill.ritBand.max }}</p>
             }
             <div class="mt-2">
               <div class="mb-1 flex items-center justify-between text-[11px] font-semibold text-indigo-800">
-                <span>Difficulty</span>
+                <span>{{ 'mapPrep.difficulty' | translate }}</span>
                 <span>{{ skill.difficulty }}/100</span>
               </div>
               <div class="h-2.5 rounded-full bg-indigo-200">
@@ -148,14 +151,14 @@
               class="flex-1 bg-emerald-500 text-white font-semibold py-2 rounded-lg hover:scale-[1.01] active:scale-[0.98] transition"
               (click)="markCorrect()"
             >
-              ✅ Got it!
+              {{ 'mapPrep.gotIt' | translate }}
             </button>
             <button
               type="button"
               class="flex-1 bg-red-100 text-red-700 font-semibold py-2 rounded-lg hover:scale-[1.01] active:scale-[0.98] transition"
               (click)="markIncorrect()"
             >
-              ❌ Need more practice
+              {{ 'mapPrep.needPractice' | translate }}
             </button>
           </div>
           <div class="mt-3 space-y-2">
@@ -165,8 +168,8 @@
                 class="flex w-full items-center justify-between text-left text-xs font-bold text-amber-900"
                 (click)="hintsOpen.set(!hintsOpen())"
               >
-                <span>💡 Hints</span>
-                <span>{{ hintsOpen() ? 'Hide' : 'Show' }}</span>
+                <span>{{ 'mapPrep.hints' | translate }}</span>
+                <span>{{ hintsOpen() ? ('mapPrep.hide' | translate) : ('mapPrep.show' | translate) }}</span>
               </button>
               @if (hintsOpen()) {
                 <ul class="mt-2 list-disc list-inside space-y-1 text-xs text-amber-800">
@@ -182,8 +185,8 @@
                 class="flex w-full items-center justify-between text-left text-xs font-bold text-violet-900"
                 (click)="explanationOpen.set(!explanationOpen())"
               >
-                <span>🧠 Explanation</span>
-                <span>{{ explanationOpen() ? 'Hide' : 'Show' }}</span>
+                <span>{{ 'mapPrep.explanation' | translate }}</span>
+                <span>{{ explanationOpen() ? ('mapPrep.hide' | translate) : ('mapPrep.show' | translate) }}</span>
               </button>
               @if (explanationOpen()) {
                 <p class="mt-2 text-xs text-violet-800">{{ skillExplanation(skill) }}</p>
@@ -191,23 +194,23 @@
             </div>
           </div>
           <p class="text-xs text-gray-500 mt-3 text-center">
-            Skill {{ practiceIndex() + 1 }} of {{ ritSkills()?.skills?.length ?? 0 }}
+            {{ t.translate('mapPrep.skillOf', { current: practiceIndex() + 1, total: ritSkills()?.skills?.length ?? 0 }) }}
           </p>
         } @else {
-          <p class="text-sm text-gray-500">No practice skills available. Select a RIT band above.</p>
+          <p class="text-sm text-gray-500">{{ 'mapPrep.noSkills' | translate }}</p>
         }
       } @else {
         <div class="text-center py-6">
           <p class="text-4xl mb-2">🎉</p>
-          <h3 class="text-xl font-bold text-primary">Session Complete!</h3>
-          <p class="text-gray-600 mt-2">You answered <span class="font-bold text-emerald-600">{{ practiceCorrect() }}</span> of {{ practiceTotal() }} skills correctly</p>
-          <p class="text-2xl font-bold text-blue-600 mt-1">{{ accuracyPercent }}% Accuracy</p>
+          <h3 class="text-xl font-bold text-primary">{{ 'mapPrep.sessionComplete' | translate }}</h3>
+          <p class="text-gray-600 mt-2">{{ t.translate('mapPrep.answeredOf', { correct: practiceCorrect(), total: practiceTotal() }) }}</p>
+          <p class="text-2xl font-bold text-blue-600 mt-1">{{ accuracyPercent }}{{ 'mapPrep.accuracy' | translate }}</p>
           <button
             type="button"
             class="mt-4 bg-primary text-white font-semibold px-6 py-2 rounded-lg"
             (click)="startPractice()"
           >
-            Practice Again
+            {{ 'mapPrep.practiceAgain' | translate }}
           </button>
         </div>
       }
@@ -215,25 +218,25 @@
 
     @if (sessionComplete() && practiceTotal() > 0) {
       <div class="bg-white rounded-xl shadow p-5">
-        <h2 class="text-lg font-bold text-primary mb-3">MAP Session Summary</h2>
+        <h2 class="text-lg font-bold text-primary mb-3">{{ 'mapPrep.sessionSummary' | translate }}</h2>
         <div class="grid sm:grid-cols-3 gap-3">
           <div class="rounded-lg bg-blue-50 p-3 text-center">
-            <p class="text-xs text-gray-500">Accuracy</p>
+            <p class="text-xs text-gray-500">{{ 'mapPrep.accuracyLabel' | translate }}</p>
             <p class="text-xl font-bold text-blue-700">{{ sessionAccuracy() }}%</p>
           </div>
           <div class="rounded-lg bg-emerald-50 p-3 text-center">
-            <p class="text-xs text-gray-500">Skills Mastered</p>
+            <p class="text-xs text-gray-500">{{ 'mapPrep.skillsMastered' | translate }}</p>
             <p class="text-xl font-bold text-emerald-700">{{ practiceCorrect() }}/{{ practiceTotal() }}</p>
           </div>
           <div class="rounded-lg bg-violet-50 p-3 text-center">
-            <p class="text-xs text-gray-500">Avg Difficulty</p>
+            <p class="text-xs text-gray-500">{{ 'mapPrep.avgDifficulty' | translate }}</p>
             <p class="text-xl font-bold text-violet-700">{{ sessionAverageDifficulty() }}/100</p>
           </div>
         </div>
 
         @if (sessionByDomain().length > 0) {
           <div class="mt-4 space-y-2">
-            <p class="text-sm font-semibold text-gray-700">Domain Breakdown</p>
+            <p class="text-sm font-semibold text-gray-700">{{ 'mapPrep.domainBreakdown' | translate }}</p>
             @for (entry of sessionByDomain(); track entry.domain) {
               <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
                 <span class="font-medium">{{ entry.domain }}</span>
@@ -246,12 +249,12 @@
     }
 
     <div class="bg-white rounded-xl shadow p-5">
-      <h2 class="text-lg font-bold text-primary mb-3">MAP Practice Sheet Generator</h2>
-      <p class="text-sm text-gray-500 mb-4">Create a printable practice sheet aligned to your selected MAP RIT band.</p>
+      <h2 class="text-lg font-bold text-primary mb-3">{{ 'mapPrep.sheetGenerator' | translate }}</h2>
+      <p class="text-sm text-gray-500 mb-4">{{ 'mapPrep.sheetGeneratorSubtitle' | translate }}</p>
 
       <div class="grid gap-4 md:grid-cols-2">
         <label class="text-sm text-gray-600">
-          Question count
+          {{ 'mapPrep.questionCount' | translate }}
           <input
             type="number"
             [attr.min]="minQuestionCount"
@@ -262,20 +265,20 @@
           />
         </label>
         <div class="text-sm text-gray-600">
-          <p class="mb-1">Options</p>
+          <p class="mb-1">{{ 'mapPrep.options' | translate }}</p>
           <label class="flex items-center gap-2">
             <input type="checkbox" [ngModel]="sheetIncludeHints()" (ngModelChange)="sheetIncludeHints.set($event)" />
-            Include hints
+            {{ 'mapPrep.includeHints' | translate }}
           </label>
           <label class="flex items-center gap-2 mt-1">
             <input type="checkbox" [ngModel]="sheetIncludeExplanations()" (ngModelChange)="sheetIncludeExplanations.set($event)" />
-            Include explanations
+            {{ 'mapPrep.includeExplanations' | translate }}
           </label>
         </div>
       </div>
 
       <div class="mt-4">
-        <p class="text-sm font-semibold text-gray-700 mb-2">Domains (multi-select)</p>
+        <p class="text-sm font-semibold text-gray-700 mb-2">{{ 'mapPrep.domains' | translate }}</p>
         <div class="flex flex-wrap gap-2">
           @for (domain of domains; track domain) {
             <button
@@ -302,7 +305,7 @@
           </p>
           <p class="text-xs text-emerald-700 mt-1">Domains: {{ sheet.domains.join(', ') }}</p>
           @if (sheet.downloadUrl) {
-            <a [href]="sheet.downloadUrl" class="inline-block mt-2 text-xs font-semibold underline text-emerald-800" target="_blank" rel="noopener">Download sheet</a>
+            <a [href]="sheet.downloadUrl" class="inline-block mt-2 text-xs font-semibold underline text-emerald-800" target="_blank" rel="noopener">{{ 'mapPrep.downloadSheet' | translate }}</a>
           }
         </div>
       }
@@ -313,18 +316,18 @@
         (click)="generatePracticeSheet()"
         [disabled]="generatingSheet()"
       >
-        {{ generatingSheet() ? 'Generating…' : 'Generate MAP Practice Sheet' }}
+        {{ generatingSheet() ? ('mapPrep.generating' | translate) : ('mapPrep.generateSheet' | translate) }}
       </button>
     </div>
 
     <!-- MAP Skill Report -->
     @if (ritSkills(); as band) {
       <div class="bg-white rounded-xl shadow p-5">
-        <h2 class="text-lg font-bold text-primary mb-3">MAP Skill Report</h2>
+        <h2 class="text-lg font-bold text-primary mb-3">{{ 'mapPrep.skillReport' | translate }}</h2>
         <div class="space-y-2">
           <div class="flex justify-between text-xs text-gray-500 font-semibold px-1">
-            <span>Skill</span>
-            <span>Difficulty / RIT Band</span>
+            <span>{{ 'mapPrep.skillHeader' | translate }}</span>
+            <span>{{ 'mapPrep.difficultyRIT' | translate }}</span>
           </div>
           @for (skill of band.skills; track skill.skillId) {
             <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
@@ -339,8 +342,8 @@
           }
         </div>
         <p class="text-xs text-gray-400 mt-3">
-          Growth target: RIT {{ band.growthTargets.currentBand }} → {{ band.growthTargets.targetBand }}
-          in {{ band.growthTargets.monthsToTarget }} months
+          {{ 'mapPrep.growthTarget' | translate }}: RIT {{ band.growthTargets.currentBand }} → {{ band.growthTargets.targetBand }}
+          {{ t.translate('mapPrep.months') }} {{ band.growthTargets.monthsToTarget }}
         </p>
       </div>
     }

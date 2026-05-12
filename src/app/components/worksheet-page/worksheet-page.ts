@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -14,17 +14,21 @@ import {
   type StudentProfile,
   type WorksheetRecommendation,
 } from '../../services/student-intelligence.service';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { TranslationService } from '../../services/translation.service';
 
 type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
 @Component({
   selector: 'app-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
   templateUrl: './worksheet-page.html',
   styleUrl: './worksheet-page.css',
 })
 export class WorksheetPageComponent implements OnInit {
+  readonly t = inject(TranslationService);
   worksheet = signal<Worksheet | null>(null);
   loading = signal(true);
   ready = signal(false);
