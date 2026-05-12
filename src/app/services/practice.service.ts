@@ -75,6 +75,20 @@ export interface MapPracticeSheetResponse {
   downloadUrl?: string;
 }
 
+interface AiWorksheetPayload {
+  topic: string;
+  difficulty: number;
+  questionCount: number;
+  studentId: string;
+  domainId?: string;
+  skillId?: string;
+}
+
+interface AiWorksheetResponse {
+  worksheetId?: string;
+  downloadUrl?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -92,7 +106,13 @@ export class PracticeService {
     return this.http.post<WorksheetResult>(`${this.baseUrl}/submit`, payload);
   }
 
-  generateMapPracticeSheet(payload: MapPracticeSheetRequest): Observable<MapPracticeSheetResponse> {
-    return this.http.post<MapPracticeSheetResponse>(`${this.baseUrl}/worksheet`, payload);
+  generateMapPracticeSheet(payload: MapPracticeSheetRequest): Observable<AiWorksheetResponse> {
+    const aiPayload: AiWorksheetPayload = {
+      topic: payload.domains?.[0] ?? 'General',
+      difficulty: payload.ritBand,
+      questionCount: payload.questionCount,
+      studentId: payload.studentId,
+    };
+    return this.http.post<AiWorksheetResponse>(`${this.baseUrl}/worksheet`, aiPayload);
   }
 }
