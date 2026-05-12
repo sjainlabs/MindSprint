@@ -18,13 +18,38 @@ export interface AbacusFlashSubmitResponse {
   dailyQuestProgress: number;
 }
 
+export type ChallengeOption = number | string;
+export type MapAnswerType = 'single' | 'multi';
+
+export interface MapStep {
+  id?: string;
+  prompt: string;
+  options?: ChallengeOption[];
+  answerType?: MapAnswerType;
+  correctAnswers?: ChallengeOption[];
+}
+
+export interface MapGraphPayload {
+  type: 'bar' | 'line' | 'picture';
+  title?: string;
+  labels: string[];
+  values: number[];
+  icons?: string[];
+}
+
+export interface MapTablePayload {
+  title?: string;
+  headers: string[];
+  rows: Array<Array<string | number>>;
+}
+
 export interface GameChallenge {
   challengeId: string;
   studentId: string;
   prompt: string;
   operation: MathOperation;
-  options: number[];
-  answer: number;
+  options: ChallengeOption[];
+  answer: ChallengeOption;
   timeLimitSeconds: number;
   difficulty: number;
   recommendedLevel: LearningLevel;
@@ -56,6 +81,29 @@ export interface GameChallenge {
   };
   mode?: GameMode;
   gamePayload?: Record<string, unknown>;
+}
+
+export interface MapChallenge {
+  challengeId: string;
+  studentId: string;
+  gradeLevel: number;
+  domain: string;
+  difficulty: number;
+  prompt: string;
+  steps: MapStep[];
+  options: ChallengeOption[];
+  answerType: MapAnswerType;
+  correctAnswers: ChallengeOption[];
+  graphPayload?: MapGraphPayload | null;
+  tablePayload?: MapTablePayload | null;
+  hints: string[];
+  explanation: string;
+  rewards: {
+    xp: number;
+    streakBonus: number;
+    badge?: string;
+  };
+  mode?: GameMode;
 }
 
 @Injectable({

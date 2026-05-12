@@ -39,6 +39,47 @@ const mockChallenge = {
   gamePayload: mockFlashPayload,
 };
 
+const mockMapChallenge = {
+  challengeId: 'map-1',
+  studentId: 'student-demo',
+  gradeLevel: 3,
+  domain: 'Data & Graphs',
+  difficulty: 62,
+  prompt: 'Use the graph and table to answer each step.',
+  steps: [
+    {
+      id: 's1',
+      prompt: 'How many apples are shown?',
+      options: [2, 3, 4, 5],
+      answerType: 'single' as const,
+      correctAnswers: [4],
+    },
+    {
+      id: 's2',
+      prompt: 'Select all true statements.',
+      options: ['A', 'B', 'C', 'D'],
+      answerType: 'multi' as const,
+      correctAnswers: ['A', 'C'],
+    },
+  ],
+  options: ['A', 'B', 'C', 'D'],
+  answerType: 'multi' as const,
+  correctAnswers: ['A', 'C'],
+  graphPayload: {
+    type: 'bar' as const,
+    labels: ['Mon', 'Tue'],
+    values: [3, 4],
+  },
+  tablePayload: {
+    headers: ['Day', 'Value'],
+    rows: [['Mon', 3], ['Tue', 4]],
+  },
+  hints: ['Look at each bar carefully.'],
+  explanation: 'A and C are true based on the data.',
+  rewards: { xp: 12, streakBonus: 3, badge: '📊 MAP Achiever' },
+  mode: 'map-challenge' as const,
+};
+
 const mockAbacusFlashSubmitResponse = {
   correct: true,
   xpEarned: 15,
@@ -49,7 +90,9 @@ const mockAbacusFlashSubmitResponse = {
 
 describe('GameModeComponent', () => {
   const gameServiceMock = {
-    getChallenge: vi.fn(() => of(mockChallenge)),
+    getChallenge: vi.fn((payload?: { mode?: string }) =>
+      of(payload?.mode === 'map-challenge' ? mockMapChallenge : mockChallenge),
+    ),
     submitChallenge: vi.fn(() => of({ saved: true, xpEarned: 15 })),
     getAbacusFlashChallenge: vi.fn(() => of(mockChallenge)),
     submitAbacusFlash: vi.fn(() => of(mockAbacusFlashSubmitResponse)),
@@ -183,12 +226,116 @@ describe('GameModeComponent', () => {
     }
   });
 
+  it('loads MAP challenge payload when map-challenge mode is selected', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map-challenge');
+    comp.loadChallenge();
+
+    expect(gameServiceMock.getChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'map-challenge' }),
+    );
+    expect(comp.isMapActive()).toBe(true);
+    expect(comp.totalMapSteps()).toBe(2);
+  });
+
+  it('advances MAP step on single-select answer', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map-challenge');
+    comp.loadChallenge();
+    expect(comp.currentStepIndex()).toBe(0);
+
+    comp.toggleMapOption(4);
+    vi.advanceTimersByTime(250);
+
+    expect(comp.currentStepIndex()).toBe(1);
+  });
+
+  it('handles MAP multi-select answers and computes partial credit', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map-challenge');
+    comp.loadChallenge();
+    comp.toggleMapOption(4);
+    vi.advanceTimersByTime(250);
+
+    comp.toggleMapOption('A');
+    comp.toggleMapOption('B'); // one correct, one incorrect
+    comp.submitChallenge();
+
+    expect(comp.mapPartialCreditPercent()).toBe(50);
+    expect(comp.isCorrect()).toBe(false);
+  });
+
+  it('exposes MAP graph and table render flags', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map-challenge');
+    comp.loadChallenge();
+
+    expect(comp.mapShowGraph()).toBe(true);
+    expect(comp.mapShowTable()).toBe(true);
+  });
+
+  it('supports MAP hint toggle and explanation after submit', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map-challenge');
+    comp.loadChallenge();
+    comp.mapHintsOpen.set(true);
+    comp.toggleMapOption(4);
+    vi.advanceTimersByTime(250);
+    comp.toggleMapOption('A');
+    comp.toggleMapOption('C');
+    comp.submitChallenge();
+
+    expect(comp.mapHintsOpen()).toBe(true);
+    expect(comp.challengeSubmitted()).toBe(true);
+    expect(comp.isCorrect()).toBe(true);
+  });
+
+  it('computes MAP grade and difficulty labels', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map-challenge');
+    comp.loadChallenge();
+
+    expect(comp.mapGradeLabel()).toBe('Grade 3');
+    expect(comp.mapDifficultyLabel()).toContain('Ready');
+    expect(comp.mapDomainBadge()).toContain('📊');
+  });
+
   it('shows error message when challenge fails to load', () => {
     gameServiceMock.getAbacusFlashChallenge.mockReturnValueOnce(throwError(() => new Error('error')));
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.errorMessage()).toBe('Unable to load game challenge.');
+  });
+
+  it('shows MAP error state when map challenge fails to load', () => {
+    gameServiceMock.getChallenge.mockReturnValueOnce(throwError(() => new Error('error')));
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map-challenge');
+    comp.loadChallenge();
+
+    expect(comp.errorMessage()).toBe('Unable to load game challenge.');
   });
 
   it('increments XP on correct answer', () => {

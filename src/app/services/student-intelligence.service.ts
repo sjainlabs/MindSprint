@@ -7,7 +7,7 @@ import { type GradeLevel } from './diagnostic.service';
 import { type AdvancedQuestionType } from './ai-worksheet.service';
 
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
-export type GameMode = 'abacus-flash' | 'falling-numbers' | 'boss-battle' | 'ai-puzzle';
+export type GameMode = 'abacus-flash' | 'falling-numbers' | 'boss-battle' | 'ai-puzzle' | 'map-challenge';
 
 export const DEFAULT_STUDENT_ID = 'student-demo';
 

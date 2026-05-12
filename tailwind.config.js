@@ -79,6 +79,27 @@ module.exports = {
           '0%': { backgroundPosition: '200% 0' },
           '100%': { backgroundPosition: '-200% 0' },
         },
+        'slide-left': {
+          '0%': { opacity: '0', transform: 'translateX(20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'slide-right': {
+          '0%': { opacity: '0', transform: 'translateX(-20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'answer-pop': {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.06)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        'map-fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'panel-slide-up': {
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'flash-in': 'flash-in 180ms ease-out both',
@@ -98,6 +119,11 @@ module.exports = {
         'pulse-strong': 'pulse-strong 550ms cubic-bezier(0.34, 1.56, 0.64, 1)',
         'slide-up': 'slide-up 420ms ease-out both',
         skeleton: 'skeleton 1.6s linear infinite',
+        'slide-left': 'slide-left 240ms ease-out both',
+        'slide-right': 'slide-right 240ms ease-out both',
+        'answer-pop': 'answer-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'map-fade-in': 'map-fade-in 320ms ease-out both',
+        'panel-slide-up': 'panel-slide-up 360ms ease-out both',
       },
     },
   },

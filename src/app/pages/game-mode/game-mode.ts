@@ -3,15 +3,21 @@ import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
+  type ChallengeOption,
   GameService,
   type AbacusFlashPayload,
   type GameChallenge,
+  type MapAnswerType,
+  type MapChallenge,
+  type MapStep,
 } from '../../services/game.service';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
   type GameMode,
 } from '../../services/student-intelligence.service';
+import { MapGraphComponent } from '../../components/map-graph/map-graph';
+import { MapTableComponent } from '../../components/map-table/map-table';
 
 const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
@@ -22,16 +28,17 @@ export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'm
 @Component({
   selector: 'app-game-mode',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MapGraphComponent, MapTableComponent],
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
 })
 export class GameModeComponent {
   studentId = signal(DEFAULT_STUDENT_ID);
-  challenge = signal<GameChallenge | null>(null);
+  challenge = signal<GameChallenge | MapChallenge | null>(null);
   loading = signal(false);
   errorMessage = signal('');
-  selectedAnswer = signal<number | null>(null);
+  selectedAnswer = signal<ChallengeOption | null>(null);
+  selectedAnswers = signal<ChallengeOption[]>([]);
   challengeSubmitted = signal(false);
   completedQuests = signal(0);
   adaptiveDifficulty = signal<number | null>(null);
@@ -39,6 +46,12 @@ export class GameModeComponent {
   localStreak = signal(0);
   unlockedBadges = signal<string[]>([]);
   selectedMode = signal<SuperGameMode>('abacus-flash');
+  currentStepIndex = signal(0);
+  stepDirection = signal<'left' | 'right'>('left');
+  mapHintsOpen = signal(false);
+  mapStepAnswers = signal<Record<number, ChallengeOption[]>>({});
+  mapStepTextAnswers = signal<Record<number, string>>({});
+  mapPartialCredit = signal(0);
   /** The API-compatible mode used for the currently loaded challenge */
   private activeChallengeApiMode: GameMode = 'abacus-flash';
 
@@ -71,10 +84,17 @@ export class GameModeComponent {
     return [...new Set([...base, ...this.unlockedBadges()])];
   });
   isCorrect = computed(() => {
-    if (!this.challengeSubmitted() || this.selectedAnswer() === null) {
+    if (!this.challengeSubmitted()) {
       return null;
     }
-    return this.selectedAnswer() === this.challenge()?.answer;
+    if (this.isMapActive()) {
+      return this.mapPartialCredit() === 1;
+    }
+    const challenge = this.challenge();
+    if (!challenge || !this.isLegacyChallenge(challenge) || this.selectedAnswer() === null) {
+      return null;
+    }
+    return this.selectedAnswer() === challenge.answer;
   });
 
   isSuperMode = computed(() => {
@@ -112,10 +132,235 @@ export class GameModeComponent {
       'ai-puzzle': 'ai-puzzle',
       'fluency-speed': 'abacus-flash',
       'reasoning-puzzle': 'ai-puzzle',
-      'map-challenge': 'ai-puzzle',
+      'map-challenge': 'map-challenge',
       'competition-boss': 'boss-battle',
     };
     return mapping[mode] ?? 'ai-puzzle';
+  }
+
+  isLegacyChallenge(challenge: GameChallenge | MapChallenge): challenge is GameChallenge {
+    return 'answer' in challenge && 'dailyQuest' in challenge;
+  }
+
+  isMapChallenge(challenge: GameChallenge | MapChallenge): challenge is MapChallenge {
+    return 'answerType' in challenge && 'correctAnswers' in challenge;
+  }
+
+  isMapActive(): boolean {
+    const challenge = this.challenge();
+    return this.selectedMode() === 'map-challenge' && !!challenge && this.isMapChallenge(challenge);
+  }
+
+  getMapChallenge(): MapChallenge | null {
+    const challenge = this.challenge();
+    if (!challenge || !this.isMapChallenge(challenge)) {
+      return null;
+    }
+    return challenge;
+  }
+
+  mapSteps(): MapStep[] {
+    const challenge = this.getMapChallenge();
+    if (!challenge) return [];
+    if (challenge.steps.length > 0) return challenge.steps;
+    return [
+      {
+        prompt: challenge.prompt,
+        options: challenge.options,
+        answerType: challenge.answerType,
+        correctAnswers: challenge.correctAnswers,
+      },
+    ];
+  }
+
+  currentMapStep(): MapStep | null {
+    const steps = this.mapSteps();
+    if (steps.length === 0) return null;
+    return steps[this.currentStepIndex()] ?? null;
+  }
+
+  totalMapSteps(): number {
+    return this.mapSteps().length;
+  }
+
+  mapStepStateClass(): string {
+    return this.stepDirection() === 'left' ? 'animate-slide-left' : 'animate-slide-right';
+  }
+
+  mapGradeLabel(): string {
+    const grade = this.getMapChallenge()?.gradeLevel;
+    return grade ? `Grade ${grade}` : 'Grade 1-3';
+  }
+
+  mapDomainBadge(): string {
+    const challenge = this.getMapChallenge();
+    if (!challenge) return '📘 MAP Domain';
+    return `${this.domainIcon(challenge.domain)} ${challenge.domain}`;
+  }
+
+  domainIcon(domain: string): string {
+    const key = domain.toLowerCase();
+    if (key.includes('data') || key.includes('graph')) return '📊';
+    if (key.includes('operation') || key.includes('algebra')) return '➗';
+    if (key.includes('geometry') || key.includes('shape')) return '📐';
+    if (key.includes('number')) return '🔢';
+    return '📘';
+  }
+
+  mapDifficultyLabel(): string {
+    const difficulty = this.getMapChallenge()?.difficulty ?? 0;
+    if (difficulty < 35) return 'MAP Level: Developing';
+    if (difficulty < 70) return 'MAP Level: Ready';
+    return 'MAP Level: Advanced';
+  }
+
+  isMapStepFinal(): boolean {
+    return this.currentStepIndex() >= this.totalMapSteps() - 1;
+  }
+
+  mapAnswerType(step?: MapStep | null): MapAnswerType {
+    const current = step ?? this.currentMapStep();
+    const challenge = this.getMapChallenge();
+    return current?.answerType ?? challenge?.answerType ?? 'single';
+  }
+
+  mapOptionsForStep(step?: MapStep | null): ChallengeOption[] {
+    const current = step ?? this.currentMapStep();
+    const challenge = this.getMapChallenge();
+    return current?.options?.length ? current.options : challenge?.options ?? [];
+  }
+
+  mapSelectionForStep(index: number): ChallengeOption[] {
+    return this.mapStepAnswers()[index] ?? [];
+  }
+
+  mapTextAnswerForStep(index: number): string {
+    return this.mapStepTextAnswers()[index] ?? '';
+  }
+
+  isMapStepAnswered(index = this.currentStepIndex()): boolean {
+    const step = this.mapSteps()[index];
+    if (!step) return false;
+    const options = this.mapOptionsForStep(step);
+    if (options.length > 0) {
+      return this.mapSelectionForStep(index).length > 0;
+    }
+    return this.mapTextAnswerForStep(index).trim().length > 0;
+  }
+
+  updateMapTextAnswer(value: string): void {
+    const stepIndex = this.currentStepIndex();
+    this.mapStepTextAnswers.update((state) => ({ ...state, [stepIndex]: value }));
+    if (value.trim().length > 0) {
+      this.queueAutoAdvance();
+    }
+  }
+
+  toggleMapOption(option: ChallengeOption): void {
+    if (this.challengeSubmitted()) return;
+    const stepIndex = this.currentStepIndex();
+    const answerType = this.mapAnswerType();
+    const current = this.mapSelectionForStep(stepIndex);
+    let next: ChallengeOption[];
+    if (answerType === 'multi') {
+      next = current.includes(option) ? current.filter((item) => item !== option) : [...current, option];
+    } else {
+      next = [option];
+      this.selectedAnswer.set(option);
+    }
+    this.mapStepAnswers.update((state) => ({ ...state, [stepIndex]: next }));
+    this.selectedAnswers.set(next);
+    if (answerType === 'single') {
+      this.queueAutoAdvance();
+    }
+  }
+
+  nextMapStep(): void {
+    if (!this.isMapStepAnswered()) return;
+    if (this.isMapStepFinal()) {
+      this.submitChallenge();
+      return;
+    }
+    this.stepDirection.set('left');
+    this.currentStepIndex.update((index) => Math.min(index + 1, this.totalMapSteps() - 1));
+  }
+
+  previousMapStep(): void {
+    this.stepDirection.set('right');
+    this.currentStepIndex.update((index) => Math.max(index - 1, 0));
+  }
+
+  private queueAutoAdvance(): void {
+    setTimeout(() => {
+      if (!this.challengeSubmitted() && this.isMapStepAnswered(this.currentStepIndex())) {
+        this.nextMapStep();
+      }
+    }, 220);
+  }
+
+  mapIsOptionSelected(option: ChallengeOption, index = this.currentStepIndex()): boolean {
+    return this.mapSelectionForStep(index).includes(option);
+  }
+
+  mapCorrectAnswers(): ChallengeOption[] {
+    const step = this.currentMapStep();
+    const challenge = this.getMapChallenge();
+    return step?.correctAnswers?.length ? step.correctAnswers : challenge?.correctAnswers ?? [];
+  }
+
+  mapFeedbackClass(option: ChallengeOption): string {
+    if (!this.challengeSubmitted()) return '';
+    const selected = this.mapSelectionForStep(this.currentStepIndex());
+    const correctAnswers = this.mapCorrectAnswers();
+    const isSelected = selected.includes(option);
+    const isCorrect = correctAnswers.includes(option);
+    if (isSelected && isCorrect) {
+      return 'animate-pulse-strong border-emerald-500 bg-emerald-100';
+    }
+    if (isSelected && !isCorrect) {
+      return 'animate-shake border-rose-400 bg-rose-100';
+    }
+    if (!isSelected && isCorrect) {
+      return 'border-emerald-300 bg-emerald-50';
+    }
+    return '';
+  }
+
+  mapPartialCreditPercent(): number {
+    return Math.round(this.mapPartialCredit() * 100);
+  }
+
+  private evaluateMapChallenge(): boolean {
+    const correctAnswers = this.mapCorrectAnswers();
+    const step = this.currentMapStep();
+    const stepSelections = this.mapSelectionForStep(this.currentStepIndex());
+    let selectedAnswers = stepSelections;
+    if (selectedAnswers.length === 0 && this.selectedAnswers().length > 0) {
+      selectedAnswers = this.selectedAnswers();
+    }
+    if (selectedAnswers.length === 0 && step && this.mapOptionsForStep(step).length === 0) {
+      const textAnswer = this.mapTextAnswerForStep(this.currentStepIndex()).trim().toLowerCase();
+      const matched = correctAnswers.some((answer) => String(answer).trim().toLowerCase() === textAnswer);
+      this.mapPartialCredit.set(matched ? 1 : 0);
+      return matched;
+    }
+
+    const selectedSet = new Set(selectedAnswers);
+    const correctSet = new Set(correctAnswers);
+    const matchedCount = [...selectedSet].filter((answer) => correctSet.has(answer)).length;
+    const partialCredit = correctAnswers.length === 0 ? 0 : matchedCount / correctAnswers.length;
+    this.mapPartialCredit.set(Math.max(0, Math.min(1, partialCredit)));
+    const noExtras = [...selectedSet].every((answer) => correctSet.has(answer));
+    const allCorrectSelected = matchedCount === correctSet.size;
+    return allCorrectSelected && noExtras;
+  }
+
+  mapShowGraph(): boolean {
+    return !!this.getMapChallenge()?.graphPayload;
+  }
+
+  mapShowTable(): boolean {
+    return !!this.getMapChallenge()?.tablePayload;
   }
 
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
@@ -185,6 +430,13 @@ export class GameModeComponent {
     this.errorMessage.set('');
     this.selectedAnswer.set(null);
     this.challengeSubmitted.set(false);
+    this.selectedAnswers.set([]);
+    this.currentStepIndex.set(0);
+    this.stepDirection.set('left');
+    this.mapHintsOpen.set(false);
+    this.mapStepAnswers.set({});
+    this.mapStepTextAnswers.set({});
+    this.mapPartialCredit.set(0);
     this.currentFlashNumber.set(null);
     this.showQuestion.set(false);
     this.isFlashing.set(false);
@@ -241,13 +493,18 @@ export class GameModeComponent {
 
   submitChallenge(): void {
     const challenge = this.challenge();
+    if (!challenge || this.challengeSubmitted()) {
+      return;
+    }
+
+    const isMapChallenge = this.isMapChallenge(challenge) && this.selectedMode() === 'map-challenge';
     const selected = this.selectedAnswer();
-    if (!challenge || selected === null || this.challengeSubmitted()) {
+    if (!isMapChallenge && selected === null) {
       return;
     }
 
     this.challengeSubmitted.set(true);
-    const correct = selected === challenge.answer;
+    const correct = isMapChallenge ? this.evaluateMapChallenge() : selected === (challenge as GameChallenge).answer;
 
     if (correct) {
       const totalXp = challenge.rewards.xp + challenge.rewards.streakBonus;
