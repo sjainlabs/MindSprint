@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnDestroy, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -18,7 +18,11 @@ import {
 } from '../../services/student-intelligence.service';
 import { MapGraphComponent } from '../../components/map-graph/map-graph';
 import { MapTableComponent } from '../../components/map-table/map-table';
-import { MAP_AUTO_ADVANCE_DELAY_MS } from '../../constants/ui.constants';
+import {
+  MAP_AUTO_ADVANCE_DELAY_MS,
+  MAP_DIFFICULTY_ADVANCED_THRESHOLD,
+  MAP_DIFFICULTY_READY_THRESHOLD,
+} from '../../constants/ui.constants';
 
 const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
@@ -33,7 +37,7 @@ export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'm
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
 })
-export class GameModeComponent {
+export class GameModeComponent implements OnDestroy {
   studentId = signal(DEFAULT_STUDENT_ID);
   challenge = signal<GameChallenge | MapChallenge | null>(null);
   loading = signal(false);
@@ -61,6 +65,7 @@ export class GameModeComponent {
   showQuestion = signal(false);
   isFlashing = signal(false);
   private flashIntervalId: ReturnType<typeof setInterval> | null = null;
+  private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private flashStartTime: number | null = null;
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
@@ -218,8 +223,8 @@ export class GameModeComponent {
 
   mapDifficultyLabel(): string {
     const difficulty = this.getMapChallenge()?.difficulty ?? 0;
-    if (difficulty < 35) return 'MAP Level: Developing';
-    if (difficulty < 70) return 'MAP Level: Ready';
+    if (difficulty < MAP_DIFFICULTY_READY_THRESHOLD) return 'MAP Level: Developing';
+    if (difficulty < MAP_DIFFICULTY_ADVANCED_THRESHOLD) return 'MAP Level: Ready';
     return 'MAP Level: Advanced';
   }
 
@@ -285,6 +290,7 @@ export class GameModeComponent {
   }
 
   nextMapStep(): void {
+    this.clearMapAutoAdvanceTimeout();
     if (!this.isMapStepAnswered()) return;
     if (this.isMapStepFinal()) {
       this.submitChallenge();
@@ -295,16 +301,26 @@ export class GameModeComponent {
   }
 
   previousMapStep(): void {
+    this.clearMapAutoAdvanceTimeout();
     this.stepDirection.set('right');
     this.currentStepIndex.update((index) => Math.max(index - 1, 0));
   }
 
   private queueAutoAdvance(): void {
-    setTimeout(() => {
+    this.clearMapAutoAdvanceTimeout();
+    this.mapAutoAdvanceTimeoutId = setTimeout(() => {
       if (!this.challengeSubmitted() && this.isMapStepAnswered(this.currentStepIndex())) {
         this.nextMapStep();
       }
+      this.mapAutoAdvanceTimeoutId = null;
     }, MAP_AUTO_ADVANCE_DELAY_MS);
+  }
+
+  private clearMapAutoAdvanceTimeout(): void {
+    if (this.mapAutoAdvanceTimeoutId !== null) {
+      clearTimeout(this.mapAutoAdvanceTimeoutId);
+      this.mapAutoAdvanceTimeoutId = null;
+    }
   }
 
   mapIsOptionSelected(option: ChallengeOption, index = this.currentStepIndex()): boolean {
@@ -458,6 +474,7 @@ export class GameModeComponent {
       clearInterval(this.flashIntervalId);
       this.flashIntervalId = null;
     }
+    this.clearMapAutoAdvanceTimeout();
 
     const apiMode = this.toApiMode(this.selectedMode());
     this.activeChallengeApiMode = apiMode;
@@ -608,5 +625,13 @@ export class GameModeComponent {
         this.adaptiveDifficulty.set(null);
       },
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.flashIntervalId !== null) {
+      clearInterval(this.flashIntervalId);
+      this.flashIntervalId = null;
+    }
+    this.clearMapAutoAdvanceTimeout();
   }
 }

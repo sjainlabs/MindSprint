@@ -44,10 +44,9 @@ export class MapGraphComponent {
   readonly lineDots = computed(() => {
     const bars = this.normalizedBars();
     const max = this.maxValue();
-    const denominator = Math.max(bars.length - 1, 1);
     return bars.map((bar, index) => ({
       ...bar,
-      x: bars.length <= 1 ? 50 : (index / denominator) * 100,
+      x: bars.length <= 1 ? 50 : (index / (bars.length - 1)) * 100,
       y: 90 - (bar.value / max) * 80,
     }));
   });

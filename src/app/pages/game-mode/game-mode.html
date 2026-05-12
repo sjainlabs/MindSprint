@@ -132,10 +132,12 @@
                           [ngClass]="[mapIsOptionSelected(option) ? 'animate-answer-pop border-cyan-600 bg-cyan-100' : '', challengeSubmitted() ? mapFeedbackClass(option) : '']"
                           (click)="toggleMapOption(option)"
                           [disabled]="challengeSubmitted()"
+                          [attr.aria-pressed]="mapIsOptionSelected(option)"
+                          [attr.aria-label]="'Answer option ' + option + (mapIsOptionSelected(option) ? ', selected' : ', not selected')"
                         >
                           <div class="flex items-center justify-between gap-3">
                             <span>{{ option }}</span>
-                            <span class="text-xl">{{ mapAnswerType(step) === 'multi' ? (mapIsOptionSelected(option) ? '☑️' : '⬜') : (mapIsOptionSelected(option) ? '🔘' : '⚪') }}</span>
+                            <span class="text-xl" aria-hidden="true">{{ mapAnswerType(step) === 'multi' ? (mapIsOptionSelected(option) ? '☑️' : '⬜') : (mapIsOptionSelected(option) ? '🔘' : '⚪') }}</span>
                           </div>
                         </button>
                       }
@@ -178,13 +180,13 @@
             @if (mapShowGraph()) {
               <map-graph [payload]="mapChallenge.graphPayload"></map-graph>
             } @else {
-              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">No graph provided for this challenge.</div>
+              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">No graph this round—let’s solve with words and numbers! ✨</div>
             }
 
             @if (mapShowTable()) {
               <map-table [payload]="mapChallenge.tablePayload"></map-table>
             } @else {
-              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">No table provided for this challenge.</div>
+              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">No table this round—keep going, math explorer! 🚀</div>
             }
 
             <div class="rounded-xl border border-amber-200 bg-amber-50 p-3">
