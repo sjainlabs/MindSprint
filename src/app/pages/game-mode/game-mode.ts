@@ -204,6 +204,10 @@ export class GameModeComponent implements OnDestroy {
     return this.selectedMode() === 'map' && !!challenge && this.isMapChallenge(challenge);
   }
 
+  isAbacusFlashActive(): boolean {
+    return this.activeChallengeApiMode === 'abacus-flash';
+  }
+
   getMapChallenge(): MapChallenge | null {
     const challenge = this.challenge();
     if (!challenge || !this.isMapChallenge(challenge)) {
