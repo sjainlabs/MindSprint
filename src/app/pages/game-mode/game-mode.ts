@@ -685,12 +685,11 @@ export class GameModeComponent implements OnDestroy {
 
     if (isAbacusFlash) {
       const accuracy = correct ? 100 : 0;
-      const score = accuracy;
       this.gameService
         .submitAbacusFlash({
           studentId: this.studentId(),
           mode: 'abacus-flash',
-          score,
+          score: accuracy,
           accuracy,
           streak: this.streakTotal(),
         })
