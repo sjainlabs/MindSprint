@@ -343,7 +343,7 @@
         </div>
         <p class="text-xs text-gray-400 mt-3">
           {{ 'mapPrep.growthTarget' | translate }}: RIT {{ band.growthTargets.currentBand }} → {{ band.growthTargets.targetBand }}
-          {{ t.translate('mapPrep.months') }} {{ band.growthTargets.monthsToTarget }}
+          {{ t.translate('mapPrep.inMonths', { count: band.growthTargets.monthsToTarget }) }}
         </p>
       </div>
     }
