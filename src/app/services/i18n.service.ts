@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 export type AppLanguage = 'en' | 'hi';
 
@@ -9,6 +10,7 @@ export class I18nService {
 
   readonly language = signal<AppLanguage>('en');
   private readonly dictionary = signal<Record<string, string>>({});
+  private loadSubscription?: Subscription;
 
   constructor() {
     this.load('en');
@@ -28,14 +30,17 @@ export class I18nService {
   }
 
   format(key: string, params: Record<string, number | string>): string {
-    return Object.entries(params).reduce(
-      (acc, [paramKey, value]) => acc.replace(new RegExp(`{{\\s*${paramKey}\\s*}}`, 'g'), String(value)),
-      this.t(key),
-    );
+    let content = this.t(key);
+    for (const [paramKey, value] of Object.entries(params)) {
+      const paramValue = String(value);
+      content = content.replaceAll(`{{${paramKey}}}`, paramValue).replaceAll(`{{ ${paramKey} }}`, paramValue);
+    }
+    return content;
   }
 
   private load(language: AppLanguage): void {
-    this.http.get<Record<string, string>>(`/assets/i18n/${language}.json`).subscribe({
+    this.loadSubscription?.unsubscribe();
+    this.loadSubscription = this.http.get<Record<string, string>>(`/assets/i18n/${language}.json`).subscribe({
       next: (dictionary) => this.dictionary.set(dictionary),
       error: () => {
         if (language === 'en') {
@@ -44,7 +49,7 @@ export class I18nService {
         }
 
         console.warn(`Failed to load ${language} translations. Falling back to English.`);
-        this.http.get<Record<string, string>>('/assets/i18n/en.json').subscribe({
+        this.loadSubscription = this.http.get<Record<string, string>>('/assets/i18n/en.json').subscribe({
           next: (dictionary) => this.dictionary.set(dictionary),
           error: () => this.dictionary.set({}),
         });
