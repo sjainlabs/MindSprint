@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, catchError } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
 import { type GameMode, type MathOperation } from './student-intelligence.service';
 
 export interface AbacusFlashPayload {
+  /** Canonical backend fields for flash-abacus payloads. */
   flashSequence: number[];
   speedMs: number;
+  /** Backward-compatible aliases accepted while legacy payloads are still in circulation. */
   sequence?: number[];
   numbers?: number[];
   flashSpeedMs?: number;
@@ -110,7 +112,7 @@ export interface AbacusFlashChallenge extends BaseGameChallenge {
   prompt?: string;
   options?: ChallengeOption[];
   answer?: ChallengeOption;
-  gamePayload: AbacusFlashPayload | Record<string, unknown>;
+  gamePayload: AbacusFlashPayload;
 }
 
 export interface ArithmeticChallenge extends BaseGameChallenge {
@@ -149,10 +151,11 @@ export type GameChallenge =
 
 export type LegacyChallenge = FallingNumbersChallenge | AbacusFlashChallenge | ArithmeticChallenge;
 
-function normalizeMode(mode?: string): string | undefined {
+function normalizeGameMode(mode?: string): string | undefined {
   if (!mode) {
     return undefined;
   }
+  // Normalize historical mode aliases to canonical backend identifiers.
   const normalized = mode.trim().toLowerCase();
   if (normalized === 'abacus-flash') {
     return 'flash-abacus';
@@ -171,6 +174,14 @@ export class GameService {
 
   constructor(private readonly http: HttpClient) {}
 
+  private shouldFallbackToLegacyEndpoint(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) {
+      return false;
+    }
+    // 404/405/501 typically indicate the dedicated flash-abacus endpoints are unavailable on older backends.
+    return [404, 405, 501].includes(error.status);
+  }
+
   getChallenge(payload: {
     studentId: string;
     mode?: GameMode;
@@ -180,7 +191,7 @@ export class GameService {
   }): Observable<GameChallenge> {
     const params = new URLSearchParams({ studentId: payload.studentId });
     if (payload.mode) {
-      params.set('mode', normalizeMode(payload.mode) ?? payload.mode);
+      params.set('mode', normalizeGameMode(payload.mode) ?? payload.mode);
     }
     if (typeof payload.difficulty === 'number') {
       params.set('difficulty', String(payload.difficulty));
@@ -230,9 +241,12 @@ export class GameService {
     return this.http
       .post<GameChallenge>(`${this.apiRoot}/game/abacus-flash/challenge`, normalizedPayload)
       .pipe(
-        catchError(() =>
-          this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`),
-        ),
+        catchError((error) => {
+          if (!this.shouldFallbackToLegacyEndpoint(error)) {
+            return throwError(() => error);
+          }
+          return this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`);
+        }),
       );
   }
 
@@ -252,9 +266,12 @@ export class GameService {
         normalizedPayload,
       )
       .pipe(
-        catchError(() =>
-          this.http.post<AbacusFlashSubmitResponse>(`${this.apiRoot}/game/submit`, normalizedPayload),
-        ),
+        catchError((error) => {
+          if (!this.shouldFallbackToLegacyEndpoint(error)) {
+            return throwError(() => error);
+          }
+          return this.http.post<AbacusFlashSubmitResponse>(`${this.apiRoot}/game/submit`, normalizedPayload);
+        }),
       );
   }
 }

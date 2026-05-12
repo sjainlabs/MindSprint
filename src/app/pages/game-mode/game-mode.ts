@@ -471,6 +471,7 @@ export class GameModeComponent implements OnDestroy {
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
   private getFlashPayload(challenge: LegacyChallenge): AbacusFlashPayload {
     const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
+    // Priority: canonical flashSequence first, then legacy sequence/numbers/flashNumbers aliases.
     const sequenceSource =
       raw['flashSequence'] ??
       raw['sequence'] ??
