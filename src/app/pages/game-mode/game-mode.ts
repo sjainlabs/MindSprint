@@ -30,8 +30,14 @@ import {
 const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
 const DEFAULT_FLASH_SPEED_MS = 600;
+const GAME_STATE = {
+  START: 'START',
+  NEXT: 'NEXT',
+  ROUND: 'ROUND',
+} as const;
+type AbacusGameState = (typeof GAME_STATE)[keyof typeof GAME_STATE];
 
-export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'map-challenge' | 'competition-boss';
+export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'competition-boss';
 
 @Component({
   selector: 'app-game-mode',
@@ -42,6 +48,7 @@ export type SuperGameMode = GameMode | 'fluency-speed' | 'reasoning-puzzle' | 'm
 })
 export class GameModeComponent implements OnDestroy {
   readonly t = inject(TranslationService);
+  readonly GAME_STATE = GAME_STATE;
   studentId = signal(DEFAULT_STUDENT_ID);
   challenge = signal<GameChallenge | MapChallenge | null>(null);
   loading = signal(false);
@@ -66,6 +73,9 @@ export class GameModeComponent implements OnDestroy {
 
   // ── Abacus Flash state ─────────────────────────────────────────────────────
   currentFlashNumber = signal<number | null>(null);
+  flashSequence = signal<number[]>([]);
+  flashCurrentIndex = signal(0);
+  flashState = signal<AbacusGameState>(GAME_STATE.START);
   showQuestion = signal(false);
   isFlashing = signal(false);
   private flashIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -79,7 +89,7 @@ export class GameModeComponent implements OnDestroy {
     { value: 'ai-puzzle', label: 'AI Puzzle', description: 'Logic, pattern and geometry puzzles.', icon: '🤖' },
     { value: 'fluency-speed', label: 'Fluency Speed', description: 'Race the clock on arithmetic fluency drills.', icon: '⚡' },
     { value: 'reasoning-puzzle', label: 'Reasoning Puzzle', description: 'Multi-step reasoning and logical deduction.', icon: '🔍' },
-    { value: 'map-challenge', label: 'MAP Challenge', description: 'Graph interpretation and MAP-style word problems.', icon: '📊' },
+    { value: 'map', label: 'MAP Challenge', description: 'Graph interpretation and MAP-style word problems.', icon: '📊' },
     { value: 'competition-boss', label: 'Competition Boss', description: 'AMC/MATHCOUNTS-level boss battle problems.', icon: '🏆' },
   ];
 
@@ -109,7 +119,7 @@ export class GameModeComponent implements OnDestroy {
 
   isSuperMode = computed(() => {
     const mode = this.selectedMode();
-    return ['fluency-speed', 'reasoning-puzzle', 'map-challenge', 'competition-boss'].includes(mode);
+    return ['fluency-speed', 'reasoning-puzzle', 'map', 'competition-boss'].includes(mode);
   });
 
   superModeInfo = computed(() => {
@@ -117,7 +127,7 @@ export class GameModeComponent implements OnDestroy {
     const info: Record<string, { badge: string; tip: string }> = {
       'fluency-speed': { badge: '⚡ Fluency Champion', tip: 'Answer as fast as possible! Speed builds automaticity.' },
       'reasoning-puzzle': { badge: '🔍 Logic Master', tip: 'Take your time. Read carefully and think step by step.' },
-      'map-challenge': { badge: '📊 MAP Achiever', tip: 'These questions mirror real MAP test items. Pace yourself.' },
+      map: { badge: '📊 MAP Achiever', tip: 'These questions mirror real MAP test items. Pace yourself.' },
       'competition-boss': { badge: '🏆 Competition Pro', tip: 'Hard problems. Show all work mentally before answering.' },
     };
     return info[mode] ?? null;
@@ -142,7 +152,7 @@ export class GameModeComponent implements OnDestroy {
       'ai-puzzle': 'ai-puzzle',
       'fluency-speed': 'abacus-flash',
       'reasoning-puzzle': 'ai-puzzle',
-      'map-challenge': 'map-challenge',
+      map: 'map',
       'competition-boss': 'boss-battle',
     };
     return mapping[mode] ?? 'ai-puzzle';
@@ -166,7 +176,7 @@ export class GameModeComponent implements OnDestroy {
 
   isMapActive(): boolean {
     const challenge = this.challenge();
-    return this.selectedMode() === 'map-challenge' && !!challenge && this.isMapChallenge(challenge);
+    return this.selectedMode() === 'map' && !!challenge && this.isMapChallenge(challenge);
   }
 
   getMapChallenge(): MapChallenge | null {
@@ -407,6 +417,22 @@ export class GameModeComponent implements OnDestroy {
     return !!this.getMapChallenge()?.tablePayload;
   }
 
+  getModeSpecificPrompt(challenge: GameChallenge): string {
+    if (this.selectedMode() !== 'falling-numbers') {
+      return challenge.prompt;
+    }
+    const payload = challenge.gamePayload as { prompt?: unknown; target?: unknown } | undefined;
+    const payloadPrompt = payload?.prompt;
+    if (typeof payloadPrompt === 'string' && payloadPrompt.trim().length > 0) {
+      return payloadPrompt;
+    }
+    const target = payload?.target;
+    if (typeof target === 'number') {
+      return this.t.translate('game.fallingPromptTarget', { target });
+    }
+    return this.t.translate('game.fallingPromptDefault');
+  }
+
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
   private getFlashPayload(challenge: GameChallenge): AbacusFlashPayload {
     const raw = challenge.gamePayload ?? {};
@@ -436,6 +462,9 @@ export class GameModeComponent implements OnDestroy {
     }
 
     const { flashSequence, speedMs } = this.getFlashPayload(challenge);
+    this.flashSequence.set(flashSequence);
+    this.flashCurrentIndex.set(0);
+    this.flashState.set(GAME_STATE.START);
 
     this.currentFlashNumber.set(null);
     this.showQuestion.set(false);
@@ -445,25 +474,31 @@ export class GameModeComponent implements OnDestroy {
     if (flashSequence.length === 0) {
       // No sequence to flash — show the question immediately.
       this.isFlashing.set(false);
+      this.flashState.set(GAME_STATE.ROUND);
       this.showQuestion.set(true);
       return;
     }
 
-    let index = 0;
-    this.currentFlashNumber.set(flashSequence[0]);
+    this.currentFlashNumber.set(this.flashSequence()[0] ?? null);
+    this.flashState.set(GAME_STATE.ROUND);
 
     this.flashIntervalId = setInterval(() => {
-      index++;
-      if (index < flashSequence.length) {
-        this.currentFlashNumber.set(flashSequence[index]);
+      this.flashState.set(GAME_STATE.NEXT);
+      const nextIndex = this.flashCurrentIndex() + 1;
+      if (nextIndex < this.flashSequence().length) {
+        this.flashCurrentIndex.set(nextIndex);
+        this.currentFlashNumber.set(this.flashSequence()[nextIndex] ?? null);
+        this.flashState.set(GAME_STATE.ROUND);
       } else {
         const id = this.flashIntervalId;
         if (id !== null) {
           clearInterval(id);
         }
         this.flashIntervalId = null;
+        this.flashCurrentIndex.set(this.flashSequence().length);
         this.currentFlashNumber.set(null);
         this.isFlashing.set(false);
+        this.flashState.set(GAME_STATE.ROUND);
         this.showQuestion.set(true);
       }
     }, speedMs);
@@ -482,6 +517,9 @@ export class GameModeComponent implements OnDestroy {
     this.mapStepTextAnswers.set({});
     this.mapPartialCredit.set(0);
     this.currentFlashNumber.set(null);
+    this.flashSequence.set([]);
+    this.flashCurrentIndex.set(0);
+    this.flashState.set(GAME_STATE.START);
     this.showQuestion.set(false);
     this.isFlashing.set(false);
 
@@ -546,7 +584,7 @@ export class GameModeComponent implements OnDestroy {
       return;
     }
 
-    const isMapChallenge = this.isMapChallenge(challenge) && this.selectedMode() === 'map-challenge';
+    const isMapChallenge = this.isMapChallenge(challenge) && this.selectedMode() === 'map';
     const selected = this.selectedAnswer();
     if (!isMapChallenge && selected === null) {
       return;

@@ -6,6 +6,23 @@ import { environment } from '../../environments/environment';
 export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type GradeLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
+const LEARNING_LEVEL_NORMALIZATION: Record<string, LearningLevel> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+  शुरुआती: 'Beginner',
+  मध्यवर्ती: 'Intermediate',
+  उन्नत: 'Advanced',
+};
+
+export function normalizeLearningLevelIdentifier(value: string | null | undefined): LearningLevel | null {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.trim().normalize('NFC').toLowerCase();
+  return LEARNING_LEVEL_NORMALIZATION[normalized] ?? null;
+}
+
 export interface DiagnosticQuestion {
   id: string;
   operation: 'addition' | 'subtraction' | 'multiplication' | 'division';

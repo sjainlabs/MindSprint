@@ -7,7 +7,7 @@ import { type GradeLevel } from './diagnostic.service';
 import { type AdvancedQuestionType } from './ai-worksheet.service';
 
 export type MathOperation = 'addition' | 'subtraction' | 'multiplication' | 'division';
-export type GameMode = 'abacus-flash' | 'falling-numbers' | 'boss-battle' | 'ai-puzzle' | 'map-challenge';
+export type GameMode = 'abacus-flash' | 'falling-numbers' | 'boss-battle' | 'ai-puzzle' | 'map';
 
 export const DEFAULT_STUDENT_ID = 'student-demo';
 
@@ -46,8 +46,16 @@ export interface WorksheetRecommendation {
   studentId: string;
   targetDifficulty: number;
   recommendedLevel: LearningLevel;
+  recommendedLevelRaw?: LearningLevel;
+  recommendedLevelDisplay?: string;
   focusOperations: MathOperation[];
   rationale: string[];
+  domainId?: string;
+  domainDisplayLabel?: string;
+  skillId?: string;
+  skillDisplayLabel?: string;
+  worksheetId?: string;
+  worksheetDisplayLabel?: string;
   difficultyScore: DifficultyScore;
   recommendedTopicId?: string;
   recommendedSubtopicId?: string;

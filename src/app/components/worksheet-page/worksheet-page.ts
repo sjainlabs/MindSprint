@@ -14,11 +14,13 @@ import {
   type StudentProfile,
   type WorksheetRecommendation,
 } from '../../services/student-intelligence.service';
+import {
+  type LearningLevel,
+  normalizeLearningLevelIdentifier,
+} from '../../services/diagnostic.service';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { TranslationService } from '../../services/translation.service';
-
-type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
 @Component({
   selector: 'app-worksheet-page',
@@ -73,7 +75,8 @@ export class WorksheetPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const level = this.route.snapshot.paramMap.get('level') as LearningLevel | null;
+    const levelParam = this.route.snapshot.paramMap.get('level');
+    const level = normalizeLearningLevelIdentifier(levelParam);
 
     if (!level) {
       this.errorMessage.set('Invalid worksheet level.');
@@ -141,7 +144,18 @@ export class WorksheetPageComponent implements OnInit {
   });
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
-  recommendedLevel = computed(() => this.recommendation()?.recommendedLevel ?? null);
+  recommendedLevel = computed(() => this.getNormalizedRecommendedLevel(this.recommendation()));
+  recommendedLevelDisplay = computed(() => {
+    const recommendation = this.recommendation();
+    const rawLevel = this.recommendedLevel();
+    if (!recommendation || !rawLevel) {
+      return null;
+    }
+    if (recommendation.recommendedLevelDisplay?.trim()) {
+      return recommendation.recommendedLevelDisplay.trim();
+    }
+    return this.levelDisplayLabel(rawLevel);
+  });
   canOpenRecommendedWorksheet = computed(() => {
     const nextLevel = this.recommendedLevel();
     return !!nextLevel && nextLevel !== this.currentLevel();
@@ -380,5 +394,25 @@ export class WorksheetPageComponent implements OnInit {
         this.personalizedPath.set([]);
       },
     });
+  }
+
+  private getNormalizedRecommendedLevel(recommendation: WorksheetRecommendation | null): LearningLevel | null {
+    if (!recommendation) {
+      return null;
+    }
+    return (
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevelRaw) ??
+      normalizeLearningLevelIdentifier(recommendation.recommendedLevel)
+    );
+  }
+
+  private levelDisplayLabel(level: LearningLevel): string {
+    const keyByLevel: Record<LearningLevel, string> = {
+      Beginner: 'worksheet.beginner',
+      Intermediate: 'worksheet.intermediate',
+      Advanced: 'worksheet.advanced',
+    };
+    const key = keyByLevel[level];
+    return this.t.translate(key);
   }
 }

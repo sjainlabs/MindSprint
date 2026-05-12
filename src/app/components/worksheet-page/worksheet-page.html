@@ -281,7 +281,7 @@
           <div class="space-y-4">
             <div class="rounded-lg bg-indigo-50 p-4">
               <p class="text-sm text-gray-500">{{ 'worksheet.recommendedLevel' | translate }}</p>
-              <p class="text-2xl font-bold text-indigo-700">{{ nextWorksheet.recommendedLevel }}</p>
+              <p class="text-2xl font-bold text-indigo-700">{{ recommendedLevelDisplay() ?? nextWorksheet.recommendedLevel }}</p>
               <p class="text-sm text-gray-600 mt-1">{{ 'worksheet.targetDifficulty' | translate }}: {{ nextWorksheet.targetDifficulty }}/100</p>
             </div>
 

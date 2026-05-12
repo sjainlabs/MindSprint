@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { DiagnosticService, type DiagnosticResult } from '../../services/diagnostic.service';
+import {
+  DiagnosticService,
+  normalizeLearningLevelIdentifier,
+  type DiagnosticResult,
+} from '../../services/diagnostic.service';
 
 @Component({
   selector: 'app-results',
@@ -26,7 +30,7 @@ export class Results implements OnInit {
   }
 
   startPractice(): void {
-    const level = this.result?.level ?? 'Beginner';
+    const level = normalizeLearningLevelIdentifier(this.result?.level) ?? 'Beginner';
     void this.router.navigate(['/worksheet', level]);
   }
 }
