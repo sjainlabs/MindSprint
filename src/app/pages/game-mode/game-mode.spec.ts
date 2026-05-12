@@ -358,6 +358,32 @@ describe('GameModeComponent', () => {
     expect(gameServiceMock.getChallenge).not.toHaveBeenCalled();
   });
 
+  it('treats fluency-speed as abacus-flash active mode', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.selectedMode.set('fluency-speed');
+    comp.loadChallenge();
+
+    expect(comp.isAbacusFlashActive()).toBe(true);
+    expect(comp.isFlashing()).toBe(true);
+  });
+
+  it('renders abacus answer input for fluency-speed after flash sequence', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.selectedMode.set('fluency-speed');
+    comp.loadChallenge();
+    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
+    fixture.detectChanges();
+
+    const input: HTMLInputElement | null = fixture.nativeElement.querySelector('#abacus-answer');
+    expect(input).toBeTruthy();
+  });
+
   it('starts with showQuestion=false and isFlashing=true for abacus-flash', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
