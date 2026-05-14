@@ -433,6 +433,40 @@ describe('GameModeComponent', () => {
     }
   });
 
+  it('startFlashSequence loads flashSequence from backend payload', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    expect(comp.flashSequence()).toEqual(mockFlashPayload.flashSequence);
+    expect(comp.currentFlashNumber()).toBe(mockFlashPayload.flashSequence[0]);
+  });
+
+  it('runFlash advances currentFlashNumber on each timeout and reveals question only at end', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    expect(comp.currentFlashNumber()).toBe(mockFlashPayload.flashSequence[0]);
+    expect(comp.showQuestion()).toBe(false);
+    expect(comp.isFlashing()).toBe(true);
+
+    vi.advanceTimersByTime(mockFlashPayload.speedMs);
+    expect(comp.currentFlashNumber()).toBe(mockFlashPayload.flashSequence[1]);
+    expect(comp.showQuestion()).toBe(false);
+    expect(comp.isFlashing()).toBe(true);
+
+    vi.advanceTimersByTime(mockFlashPayload.speedMs);
+    expect(comp.currentFlashNumber()).toBe(mockFlashPayload.flashSequence[2]);
+    expect(comp.showQuestion()).toBe(false);
+    expect(comp.isFlashing()).toBe(true);
+
+    vi.advanceTimersByTime(mockFlashPayload.speedMs);
+    expect(comp.currentFlashNumber()).toBeNull();
+    expect(comp.isFlashing()).toBe(false);
+    expect(comp.showQuestion()).toBe(true);
+  });
+
   it('submits via submitAbacusFlash for abacus-flash mode', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
