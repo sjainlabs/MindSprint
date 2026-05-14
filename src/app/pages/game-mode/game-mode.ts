@@ -527,28 +527,28 @@ export class GameModeComponent implements OnDestroy {
 
     this.currentFlashNumber.set(this.flashSequence()[0] ?? null);
     this.flashState.set(GAME_STATE.ROUND);
+    this.flashTimeoutId = setTimeout(() => this.runFlash(sequenceToken, speedMs), speedMs);
+  }
 
-    const flashNext = (): void => {
-      if (sequenceToken !== this.flashSequenceToken) {
-        return;
-      }
-      this.flashState.set(GAME_STATE.NEXT);
-      const nextIndex = this.flashCurrentIndex() + 1;
-      if (nextIndex < this.flashSequence().length) {
-        this.flashCurrentIndex.set(nextIndex);
-        this.currentFlashNumber.set(this.flashSequence()[nextIndex] ?? null);
-        this.flashState.set(GAME_STATE.ROUND);
-        this.flashTimeoutId = setTimeout(() => flashNext(), speedMs);
-      } else {
-        this.flashTimeoutId = null;
-        this.flashCurrentIndex.set(this.flashSequence().length);
-        this.currentFlashNumber.set(null);
-        this.isFlashing.set(false);
-        this.flashState.set(GAME_STATE.ROUND);
-        this.showQuestion.set(true);
-      }
-    };
-    this.flashTimeoutId = setTimeout(() => flashNext(), speedMs);
+  private runFlash(sequenceToken: number, speedMs: number): void {
+    if (sequenceToken !== this.flashSequenceToken) {
+      return;
+    }
+    this.flashState.set(GAME_STATE.NEXT);
+    const nextIndex = this.flashCurrentIndex() + 1;
+    if (nextIndex < this.flashSequence().length) {
+      this.flashCurrentIndex.set(nextIndex);
+      this.currentFlashNumber.set(this.flashSequence()[nextIndex] ?? null);
+      this.flashState.set(GAME_STATE.ROUND);
+      this.flashTimeoutId = setTimeout(() => this.runFlash(sequenceToken, speedMs), speedMs);
+      return;
+    }
+    this.flashTimeoutId = null;
+    this.flashCurrentIndex.set(this.flashSequence().length);
+    this.currentFlashNumber.set(null);
+    this.isFlashing.set(false);
+    this.flashState.set(GAME_STATE.ROUND);
+    this.showQuestion.set(true);
   }
 
   setAbacusAnswer(rawValue: string): void {
