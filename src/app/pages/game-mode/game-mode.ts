@@ -204,10 +204,6 @@ export class GameModeComponent implements OnDestroy {
     return this.selectedMode() === 'map' && !!challenge && this.isMapChallenge(challenge);
   }
 
-  isAbacusFlashActive(): boolean {
-    return this.activeChallengeApiMode === 'abacus-flash';
-  }
-
   getMapChallenge(): MapChallenge | null {
     const challenge = this.challenge();
     if (!challenge || !this.isMapChallenge(challenge)) {
@@ -498,57 +494,50 @@ export class GameModeComponent implements OnDestroy {
    */
   startFlashSequence(): void {
     const challenge = this.legacyChallenge();
-    if (!challenge) {
-      return;
-    }
-    // Clear any existing sequence
+    if (!challenge) return;
+
+    // Reset state
     if (this.flashTimeoutId !== null) {
       clearTimeout(this.flashTimeoutId);
       this.flashTimeoutId = null;
     }
-    const sequenceToken = ++this.flashSequenceToken;
 
+    const token = ++this.flashSequenceToken;
     const { flashSequence, speedMs } = this.getFlashPayload(challenge);
+
     this.flashSequence.set(flashSequence);
     this.flashCurrentIndex.set(0);
-    this.flashState.set(GAME_STATE.START);
-
     this.currentFlashNumber.set(null);
     this.showQuestion.set(false);
     this.isFlashing.set(true);
 
     if (flashSequence.length === 0) {
-      // No sequence to flash — show the question immediately.
       this.isFlashing.set(false);
-      this.flashState.set(GAME_STATE.ROUND);
       this.showQuestion.set(true);
       return;
     }
 
-    this.currentFlashNumber.set(this.flashSequence()[0] ?? null);
-    this.flashState.set(GAME_STATE.ROUND);
-    this.flashTimeoutId = setTimeout(() => this.runFlash(sequenceToken, speedMs), speedMs);
-  }
+    const runFlash = (index: number) => {
+      if (token !== this.flashSequenceToken) return;
 
-  private runFlash(sequenceToken: number, speedMs: number): void {
-    if (sequenceToken !== this.flashSequenceToken) {
-      return;
-    }
-    this.flashState.set(GAME_STATE.NEXT);
-    const nextIndex = this.flashCurrentIndex() + 1;
-    if (nextIndex < this.flashSequence().length) {
-      this.flashCurrentIndex.set(nextIndex);
-      this.currentFlashNumber.set(this.flashSequence()[nextIndex] ?? null);
-      this.flashState.set(GAME_STATE.ROUND);
-      this.flashTimeoutId = setTimeout(() => this.runFlash(sequenceToken, speedMs), speedMs);
-      return;
-    }
-    this.flashTimeoutId = null;
-    this.flashCurrentIndex.set(this.flashSequence().length);
-    this.currentFlashNumber.set(null);
-    this.isFlashing.set(false);
-    this.flashState.set(GAME_STATE.ROUND);
-    this.showQuestion.set(true);
+      // 🔥 CRITICAL FIX — update index so Angular re-renders
+      this.flashCurrentIndex.set(index);
+
+      // 🔥 CRITICAL FIX — set number AFTER updating index
+      this.currentFlashNumber.set(flashSequence[index]);
+
+      if (index < flashSequence.length - 1) {
+        this.flashTimeoutId = setTimeout(() => runFlash(index + 1), speedMs);
+      } else {
+        this.flashTimeoutId = setTimeout(() => {
+          this.currentFlashNumber.set(null);
+          this.isFlashing.set(false);
+          this.showQuestion.set(true);
+        }, speedMs);
+      }
+    };
+
+    runFlash(0);
   }
 
   setAbacusAnswer(rawValue: string): void {
