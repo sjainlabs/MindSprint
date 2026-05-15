@@ -6,12 +6,16 @@ import {
   type ChallengeOption,
   GameService,
   type AbacusFlashPayload,
+  type FallingNumbersPayload,
   type GameChallenge,
   type LegacyChallenge,
   type MapAnswerType,
   type MapChallenge,
   type MapStep,
 } from '../../services/game.service';
+import { FallingNumbersComponent } from './falling-numbers/falling-numbers.component';
+import { FallingNumbersEngine } from './falling-numbers/falling-numbers.engine';
+import { type FallingPowerUpType } from './falling-numbers/falling-numbers.types';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -37,6 +41,9 @@ const GAME_STATE = {
   ROUND: 'ROUND',
 } as const;
 type AbacusGameState = (typeof GAME_STATE)[keyof typeof GAME_STATE];
+type FallingEnginePayload = Omit<FallingNumbersPayload, 'powerUps'> & {
+  powerUps: FallingPowerUpType[];
+};
 
 export type SuperGameMode =
   | 'abacus-flash'
@@ -51,7 +58,16 @@ export type SuperGameMode =
 @Component({
   selector: 'app-game-mode',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MapGraphComponent, MapTableComponent, LanguageToggleComponent, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    MapGraphComponent,
+    MapTableComponent,
+    LanguageToggleComponent,
+    TranslatePipe,
+    FallingNumbersComponent,
+  ],
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
 })
@@ -90,6 +106,7 @@ export class GameModeComponent implements OnDestroy {
   private flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private flashSequenceToken = 0;
   private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  readonly fallingEngine = new FallingNumbersEngine();
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
     { value: 'abacus-flash', label: 'Abacus Flash', description: 'Flash-card speed drills with adaptive pacing.', icon: '🔢' },
@@ -469,6 +486,41 @@ export class GameModeComponent implements OnDestroy {
     return this.t.translate('game.fallingPromptDefault');
   }
 
+
+  private stopModeEngines(): void {
+    this.fallingEngine.stop();
+  }
+
+  private getFallingPayload(challenge: LegacyChallenge): FallingEnginePayload {
+    const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
+
+    const targetRaw = raw['target'];
+    const fallbackTarget =
+      this.hasAnswerOptions(challenge) && typeof challenge.answer === 'number' ? challenge.answer : 10;
+    const target = typeof targetRaw === 'number' && Number.isFinite(targetRaw) ? Math.round(targetRaw) : fallbackTarget;
+
+    const streamRaw = raw['stream'];
+    const stream = Array.isArray(streamRaw)
+      ? streamRaw.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+      : [];
+
+    const powerUpsRaw = raw['powerUps'];
+    const powerUps = Array.isArray(powerUpsRaw)
+      ? powerUpsRaw.filter(
+          (value): value is FallingPowerUpType => value === 'magnet' || value === 'slow-mo' || value === 'bomb',
+        )
+      : [];
+
+    return {
+      target,
+      stream,
+      combosEnabled: raw['combosEnabled'] !== false,
+      powerUps,
+      prompt: typeof raw['prompt'] === 'string' ? raw['prompt'] : undefined,
+    };
+  }
+
+
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
   private getFlashPayload(challenge: LegacyChallenge): AbacusFlashPayload {
     const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
@@ -540,25 +592,31 @@ export class GameModeComponent implements OnDestroy {
     runFlash(0);
   }
 
-  setAbacusAnswer(rawValue: string): void {
-    const trimmedValue = rawValue.trim();
-    if (trimmedValue.length === 0) {
+  setAbacusAnswer(rawValue: any): void {
+    // Convert everything to string safely
+    const str = String(rawValue ?? '').trim();
+
+    if (str.length === 0) {
       this.selectedAnswer.set(null);
       return;
     }
-    const numericValue = Number(trimmedValue);
+
+    const numericValue = Number(str);
     this.selectedAnswer.set(Number.isFinite(numericValue) ? numericValue : null);
   }
 
-  private getAbacusExpectedAnswer(): number {
+
+  protected getAbacusExpectedAnswer(): number {
     return this.flashSequence().reduce((total, value) => total + value, 0);
   }
 
   loadChallenge(): void {
+    // Reset all mode state
+    this.stopModeEngines();
     this.loading.set(true);
     this.errorMessage.set('');
-    this.selectedAnswer.set(null);
     this.challengeSubmitted.set(false);
+    this.selectedAnswer.set(null);
     this.selectedAnswers.set([]);
     this.currentStepIndex.set(0);
     this.stepDirection.set('left');
@@ -566,6 +624,8 @@ export class GameModeComponent implements OnDestroy {
     this.mapStepAnswers.set({});
     this.mapStepTextAnswers.set({});
     this.mapPartialCredit.set(0);
+
+    // Reset Abacus Flash state
     this.currentFlashNumber.set(null);
     this.flashSequence.set([]);
     this.flashCurrentIndex.set(0);
@@ -577,27 +637,29 @@ export class GameModeComponent implements OnDestroy {
       clearTimeout(this.flashTimeoutId);
       this.flashTimeoutId = null;
     }
+
     this.flashSequenceToken++;
     this.clearMapAutoAdvanceTimeout();
 
     const apiMode = this.toApiMode(this.selectedMode());
     this.activeChallengeApiMode = apiMode;
 
+    // ───────────────────────────────────────────────
+    // ABACUS FLASH MODE
+    // ───────────────────────────────────────────────
     if (apiMode === 'abacus-flash') {
       this.gameService
         .getAbacusFlashChallenge({
           studentId: this.studentId(),
           difficulty: this.adaptiveDifficulty() ?? undefined,
-          streak: this.streakTotal()
+          streak: this.streakTotal(),
         })
         .subscribe({
           next: (challenge) => {
             this.challenge.set(challenge);
-            if (this.isLegacyChallenge(challenge)) {
-              this.completedQuests.set(challenge.dailyQuest.progress);
-            } else {
-              this.completedQuests.set(0);
-            }
+            this.completedQuests.set(
+              this.isLegacyChallenge(challenge) ? challenge.dailyQuest.progress : 0,
+            );
             this.loading.set(false);
             this.startFlashSequence();
           },
@@ -606,32 +668,56 @@ export class GameModeComponent implements OnDestroy {
             this.loading.set(false);
           },
         });
-    } else {
-      this.gameService
-        .getChallenge({
-          studentId: this.studentId(),
-          mode: apiMode,
-          difficulty: this.adaptiveDifficulty() ?? undefined,
-          streak: this.streakTotal(),
-          completedDailyQuestCount: this.completedQuests(),
-        })
-        .subscribe({
-          next: (challenge) => {
-            this.challenge.set(challenge);
-            if (this.isLegacyChallenge(challenge)) {
-              this.completedQuests.set(challenge.dailyQuest.progress);
-            } else {
-              this.completedQuests.set(0);
-            }
-            this.loading.set(false);
-          },
-          error: () => {
-            this.errorMessage.set('Unable to load game challenge.');
-            this.loading.set(false);
-          },
-        });
+
+      return;
     }
+
+    // ───────────────────────────────────────────────
+    // ALL OTHER MODES (INCLUDING FALLING NUMBERS)
+    // ───────────────────────────────────────────────
+    this.gameService
+      .getChallenge({
+        studentId: this.studentId(),
+        mode: apiMode,
+        difficulty: this.adaptiveDifficulty() ?? undefined,
+        streak: this.streakTotal(),
+        completedDailyQuestCount: this.completedQuests(),
+      })
+      .subscribe({
+        next: (challenge) => {
+          this.challenge.set(challenge);
+          this.completedQuests.set(
+            this.isLegacyChallenge(challenge) ? challenge.dailyQuest.progress : 0,
+          );
+          this.loading.set(false);
+
+          // ⭐ FALLING NUMBERS — START ENGINE HERE ONLY
+          if (this.selectedMode() === 'falling-numbers'
+            && this.isLegacyChallenge(challenge)) {
+            const payload = this.getFallingPayload(challenge);
+
+            this.fallingEngine.configure({
+              target: payload.target,
+              stream: payload.stream,
+              combosEnabled: payload.combosEnabled,
+              powerUps: payload.powerUps,
+              difficulty: challenge.difficulty,
+            });
+
+            this.fallingEngine.start();
+          } else {
+            this.fallingEngine.stop();
+          }
+        },
+        error: () => {
+          this.errorMessage.set('Unable to load game challenge.');
+          this.loading.set(false);
+        },
+      });
   }
+
+
+
 
   submitChallenge(): void {
     const challenge = this.challenge();
@@ -657,7 +743,7 @@ export class GameModeComponent implements OnDestroy {
         ? selected === challenge.answer
         : isAbacusFlash
           ? selected === this.getAbacusExpectedAnswer()
-        : false;
+          : false;
 
     if (correct) {
       const totalXp = challenge.rewards.xp + challenge.rewards.streakBonus;
@@ -742,6 +828,7 @@ export class GameModeComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopModeEngines();
     if (this.flashTimeoutId !== null) {
       clearTimeout(this.flashTimeoutId);
       this.flashTimeoutId = null;
