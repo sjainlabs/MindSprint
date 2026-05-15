@@ -18,6 +18,15 @@ export interface FallingNumbersPayload {
   prompt?: string;
 }
 
+export interface BossBattlePayload {
+  bossId: string;
+  title: string;
+  maxHp: number;
+  difficulty: number;
+  phaseCount: number;
+  specialAttackIntervalMs: number;
+}
+
 export interface ChallengeRewards {
   xp: number;
   streakBonus: number;

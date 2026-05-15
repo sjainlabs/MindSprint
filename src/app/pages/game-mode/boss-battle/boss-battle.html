@@ -1,0 +1,103 @@
+<div class="rounded-lg border bg-white p-4 text-sm space-y-4">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <p class="font-semibold text-base">⚔️ Boss Battle</p>
+    <span
+      class="rounded-md px-3 py-1 text-xs font-semibold"
+      [class.bb-phase-badge--enraged]="engine().isEnraged()"
+      [class.bb-phase-badge]="!engine().isEnraged()"
+    >
+      {{ engine().phaseLabel() }}
+      @if (engine().isEnraged()) { 🔥 ENRAGED }
+    </span>
+  </div>
+
+  <!-- Boss name -->
+  <p class="text-center text-lg font-bold text-rose-700 tracking-wide">
+    {{ engine().bossTitle }}
+  </p>
+
+  <!-- Special-attack warning banner -->
+  @if (engine().specialAttackWarning()) {
+    <div class="bb-warning animate-bb-warn">
+      ⚡ Special Attack Incoming!
+    </div>
+  }
+
+  <!-- Boss HP bar -->
+  <div>
+    <div class="flex justify-between text-xs text-gray-500 mb-1">
+      <span>Boss HP</span>
+      <span>{{ engine().hp() }} / {{ engine().maxHp() }}</span>
+    </div>
+    <div class="bb-hp-track">
+      <div
+        class="bb-hp-fill"
+        [class]="engine().hpBarClass()"
+        [style.width.%]="engine().hpPercent()"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Player HP bar -->
+  <div>
+    <div class="flex justify-between text-xs text-gray-500 mb-1">
+      <span>Your HP</span>
+      <span>{{ engine().playerHp() }} / {{ engine().playerMaxHp() }}</span>
+    </div>
+    <div class="bb-hp-track">
+      <div
+        class="bb-hp-fill bb-hp-bar--player"
+        [style.width.%]="engine().playerHpPercent()"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Arena -->
+  <div
+    class="bb-arena relative flex items-center justify-center rounded-lg overflow-hidden"
+    [class.bb-arena--enraged]="engine().isEnraged()"
+  >
+    @if (engine().isVictory()) {
+      <div class="bb-state-overlay bb-state-overlay--victory animate-bb-result">
+        <p class="text-4xl mb-1">🏆</p>
+        <p class="font-bold text-xl">Victory!</p>
+        <p class="text-sm mt-1 opacity-80">Boss defeated!</p>
+      </div>
+    } @else if (engine().isDefeat()) {
+      <div class="bb-state-overlay bb-state-overlay--defeat animate-bb-result">
+        <p class="text-4xl mb-1">💀</p>
+        <p class="font-bold text-xl">Defeated!</p>
+        <p class="text-sm mt-1 opacity-80">The boss was too powerful.</p>
+      </div>
+    } @else {
+      <div class="bb-boss-sprite" [class.animate-bb-enrage]="engine().isEnraged()">
+        @if (engine().isEnraged()) { 😡 } @else { 👹 }
+      </div>
+    }
+  </div>
+
+  <!-- Controls -->
+  @if (!engine().isVictory() && !engine().isDefeat()) {
+    <button
+      type="button"
+      class="bb-attack-btn w-full"
+      [disabled]="!engine().isRunning()"
+      (click)="onAttack()"
+    >
+      ⚔️ Attack!
+    </button>
+  }
+
+  @if (engine().isDefeat()) {
+    <button
+      type="button"
+      class="bb-retry-btn w-full"
+      (click)="onRetry()"
+    >
+      🔄 Try Again
+    </button>
+  }
+
+</div>
