@@ -77,6 +77,30 @@ const mockMapChallenge = {
   mode: 'map' as const,
 };
 
+const mockAiPuzzleChallenge = {
+  challengeId: 'ai-1',
+  studentId: 'student-demo',
+  timeLimitSeconds: 45,
+  difficulty: 68,
+  recommendedLevel: 'Intermediate' as const,
+  rewards: { xp: 15, streakBonus: 4, badge: '🤖 Puzzle Solver' },
+  dailyQuest: { id: 'q-2', description: 'Complete 3 challenges', target: 3, progress: 1, rewardXp: 50, completed: false },
+  bossBattle: { id: 'b-1', title: 'Math Dragon', hp: 100, phase: 1, unlocked: false },
+  playerState: { xp: 300, streak: 3, badges: [], level: 4 },
+  mode: 'ai-puzzle' as const,
+  prompt: 'Which number comes next: 2, 4, 8, 16, ?',
+  operation: 'addition' as const,
+  options: ['24', '32', '30', '18'],
+  answer: '32',
+  gamePayload: {
+    puzzleId: 'p-321',
+    prompt: 'Which number comes next: 2, 4, 8, 16, ?',
+    options: ['24', '32', '30', '18'],
+    answer: '32',
+    difficulty: 68,
+  },
+};
+
 const mockAbacusFlashSubmitResponse = {
   correct: true,
   xpEarned: 15,
@@ -625,5 +649,36 @@ describe('GameModeComponent', () => {
     comp.submitChallenge(); // second call should be ignored
 
     expect(gameServiceMock.submitAbacusFlash.mock.calls.length).toBe(1);
+  });
+
+  it('configures and starts AI puzzle engine when ai-puzzle mode is loaded', () => {
+    gameServiceMock.getChallenge.mockReturnValueOnce(of(mockAiPuzzleChallenge as any));
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('ai-puzzle');
+    comp.loadChallenge();
+
+    expect(comp.aiPuzzleEngine.prompt()).toContain('Which number comes next');
+    expect(comp.aiPuzzleEngine.options()).toEqual(['24', '32', '30', '18']);
+    expect(comp.aiPuzzleEngine.isRunning()).toBe(true);
+  });
+
+  it('submits AI puzzle answers and updates challenge submission state', () => {
+    gameServiceMock.getChallenge.mockReturnValueOnce(of(mockAiPuzzleChallenge as any));
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('ai-puzzle');
+    comp.loadChallenge();
+    comp.onAiPuzzleSubmit('32');
+
+    expect(comp.challengeSubmitted()).toBe(true);
+    expect(comp.aiPuzzleEngine.isCorrect()).toBe(true);
+    expect(gameServiceMock.submitChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'ai-puzzle' }),
+    );
   });
 });
