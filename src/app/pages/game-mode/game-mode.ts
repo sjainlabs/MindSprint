@@ -6,6 +6,7 @@ import {
   type ChallengeOption,
   GameService,
   type AbacusFlashPayload,
+  type BossBattlePayload,
   type FallingNumbersPayload,
   type GameChallenge,
   type LegacyChallenge,
@@ -16,6 +17,8 @@ import {
 import { FallingNumbersComponent } from './falling-numbers/falling-numbers.component';
 import { FallingNumbersEngine } from './falling-numbers/falling-numbers.engine';
 import { type FallingPowerUpType } from './falling-numbers/falling-numbers.types';
+import { BossBattleComponent } from './boss-battle/boss-battle.component';
+import { BossBattleEngine } from './boss-battle/boss-battle.engine';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -67,6 +70,7 @@ export type SuperGameMode =
     LanguageToggleComponent,
     TranslatePipe,
     FallingNumbersComponent,
+    BossBattleComponent,
   ],
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
@@ -107,6 +111,7 @@ export class GameModeComponent implements OnDestroy {
   private flashSequenceToken = 0;
   private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
   readonly fallingEngine = new FallingNumbersEngine();
+  readonly bossBattleEngine = new BossBattleEngine();
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
     { value: 'abacus-flash', label: 'Abacus Flash', description: 'Flash-card speed drills with adaptive pacing.', icon: '🔢' },
@@ -489,6 +494,7 @@ export class GameModeComponent implements OnDestroy {
 
   private stopModeEngines(): void {
     this.fallingEngine.stop();
+    this.bossBattleEngine.stop();
   }
 
   private getFallingPayload(challenge: LegacyChallenge): FallingEnginePayload {
@@ -520,6 +526,20 @@ export class GameModeComponent implements OnDestroy {
     };
   }
 
+  private getBossBattlePayload(challenge: LegacyChallenge): BossBattlePayload {
+    const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
+    return {
+      bossId: typeof raw['bossId'] === 'string' ? raw['bossId'] : 'boss-default',
+      title: typeof raw['title'] === 'string' ? raw['title'] : 'The Math Overlord',
+      maxHp: typeof raw['maxHp'] === 'number' && raw['maxHp'] > 0 ? Math.round(raw['maxHp']) : 100,
+      difficulty: typeof raw['difficulty'] === 'number' ? Math.round(raw['difficulty']) : challenge.difficulty ?? 50,
+      phaseCount: typeof raw['phaseCount'] === 'number' && raw['phaseCount'] >= 1 ? Math.round(raw['phaseCount']) : 3,
+      specialAttackIntervalMs:
+        typeof raw['specialAttackIntervalMs'] === 'number' && raw['specialAttackIntervalMs'] > 0
+          ? raw['specialAttackIntervalMs']
+          : 8000,
+    };
+  }
 
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
   private getFlashPayload(challenge: LegacyChallenge): AbacusFlashPayload {
@@ -707,6 +727,16 @@ export class GameModeComponent implements OnDestroy {
             this.fallingEngine.start();
           } else {
             this.fallingEngine.stop();
+          }
+
+          // ⭐ BOSS BATTLE — START ENGINE HERE ONLY
+          const isBossBattle = this.selectedMode() === 'boss-battle' || this.selectedMode() === 'competition-boss';
+          if (isBossBattle && this.isLegacyChallenge(challenge)) {
+            const bbPayload = this.getBossBattlePayload(challenge);
+            this.bossBattleEngine.configure(bbPayload);
+            this.bossBattleEngine.start();
+          } else {
+            this.bossBattleEngine.stop();
           }
         },
         error: () => {

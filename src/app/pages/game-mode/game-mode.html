@@ -196,6 +196,14 @@
               />
             }
 
+            <!-- ⭐ BOSS BATTLE GAME MODE -->
+            @if (selectedMode() === 'boss-battle' || selectedMode() === 'competition-boss') {
+              <app-boss-battle-mode
+                [engine]="bossBattleEngine"
+                [loading]="loading()"
+              />
+            }
+
             <!-- ⭐ Next Challenge (shown AFTER the game) -->
             @if (selectedMode() !== 'abacus-flash') {
               <button
