@@ -25,9 +25,10 @@
       }
     </div>
   } @else {
-    <label class="block text-sm text-gray-600">
+    <label for="ai-puzzle-answer" class="block text-sm text-gray-600">
       Enter your answer:
       <input
+        id="ai-puzzle-answer"
         type="text"
         class="mt-1 w-full border rounded-md px-3 py-2"
         [ngModel]="textAnswer()"
@@ -68,4 +69,3 @@
     Next Puzzle
   </button>
 </div>
-

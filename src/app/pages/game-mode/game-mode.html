@@ -128,7 +128,7 @@
           <div class="space-y-4 animate-slide-up">
 
             <!-- ⭐ Abacus Flash -->
-            @if (selectedMode() === 'abacus-flash') {
+            @if (selectedMode() === 'abacus-flash' || selectedMode() === 'fluency-speed') {
               <div class="rounded-lg border bg-white p-4 text-sm animate-fade-in">
                 <p class="font-semibold mb-2">⚡ Abacus Flash</p>
                 <p class="text-xs text-gray-600 mb-3">
@@ -148,9 +148,10 @@
 
                 @if (!isFlashing() && showQuestion()) {
                   <div class="mt-4 space-y-3">
-                    <label class="block text-sm text-gray-600">
+                    <label for="abacus-answer" class="block text-sm text-gray-600">
                       Enter your answer:
                       <input
+                        id="abacus-answer"
                         type="text"
                         inputmode="numeric"
                         pattern="[0-9]*"
@@ -205,7 +206,7 @@
             }
 
             <!-- ⭐ AI PUZZLE GAME MODE -->
-            @if (selectedMode() === 'ai-puzzle' || selectedMode() === 'reasoning-puzzle') {
+            @if (isAiPuzzleSelectedMode()) {
               <app-ai-puzzle-mode
                 [engine]="aiPuzzleEngine"
                 [loading]="loading()"
@@ -215,11 +216,7 @@
             }
 
             <!-- ⭐ Next Challenge (shown AFTER the game) -->
-            @if (
-              selectedMode() !== 'abacus-flash'
-              && selectedMode() !== 'ai-puzzle'
-              && selectedMode() !== 'reasoning-puzzle'
-            ) {
+            @if (shouldShowGenericNextChallenge()) {
               <button
                 type="button"
                 class="w-full border border-gray-300 py-2 px-4 rounded-lg transition-all hover:shadow-lg hover:bg-primary/10 active:scale-95"

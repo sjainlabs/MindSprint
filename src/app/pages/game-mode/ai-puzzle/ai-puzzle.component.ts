@@ -39,4 +39,3 @@ export class AiPuzzleComponent {
     this.nextPuzzle.emit();
   }
 }
-

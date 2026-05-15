@@ -52,7 +52,7 @@ type FallingEnginePayload = Omit<FallingNumbersPayload, 'powerUps'> & {
 type AiPuzzlePayload = {
   puzzleId: string;
   prompt: string;
-  options: string[];
+  options?: string[];
   answer: string;
   difficulty: number;
 };
@@ -235,6 +235,14 @@ export class GameModeComponent implements OnDestroy {
   isMapActive(): boolean {
     const challenge = this.challenge();
     return this.selectedMode() === 'map' && !!challenge && this.isMapChallenge(challenge);
+  }
+
+  isAiPuzzleSelectedMode(): boolean {
+    return this.selectedMode() === 'ai-puzzle' || this.selectedMode() === 'reasoning-puzzle';
+  }
+
+  shouldShowGenericNextChallenge(): boolean {
+    return this.selectedMode() !== 'abacus-flash' && !this.isAiPuzzleSelectedMode();
   }
 
   getMapChallenge(): MapChallenge | null {
@@ -780,7 +788,7 @@ export class GameModeComponent implements OnDestroy {
             this.bossBattleEngine.stop();
           }
 
-          const isAiPuzzle = this.selectedMode() === 'ai-puzzle' || this.selectedMode() === 'reasoning-puzzle';
+          const isAiPuzzle = this.isAiPuzzleSelectedMode();
           if (isAiPuzzle && this.isLegacyChallenge(challenge)) {
             const puzzlePayload = this.getAiPuzzlePayload(challenge);
             this.aiPuzzleEngine.configure(puzzlePayload);
@@ -912,8 +920,8 @@ export class GameModeComponent implements OnDestroy {
 
   onAiPuzzleSubmit(answer: string): void {
     this.selectedAnswer.set(answer);
-    const submitted = this.aiPuzzleEngine.submitAnswer(answer);
-    if (!submitted && this.aiPuzzleEngine.isCorrect() === null) {
+    const wasEvaluated = this.aiPuzzleEngine.submitAnswer(answer);
+    if (!wasEvaluated) {
       return;
     }
     this.submitChallenge();

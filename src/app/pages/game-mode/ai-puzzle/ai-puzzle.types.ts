@@ -5,4 +5,3 @@ export interface AiPuzzleConfig {
   answer: string;
   difficulty: number;
 }
-

@@ -35,10 +35,11 @@ export class AiPuzzleEngine {
 
   configure(config: Partial<AiPuzzleConfig> & Pick<AiPuzzleConfig, 'prompt' | 'answer'>): void {
     const prompt = config.prompt.trim();
-    const answer = String(config.answer).trim();
     const options = Array.isArray(config.options)
       ? config.options.map((item) => String(item).trim()).filter((item) => item.length > 0)
       : [];
+    const rawAnswer = String(config.answer).trim();
+    const answer = rawAnswer.length > 0 ? rawAnswer : options[0] ?? '';
     const difficulty = clamp(Math.round(config.difficulty ?? DEFAULT_CONFIG.difficulty), 1, 100);
 
     this.config = {
@@ -61,7 +62,7 @@ export class AiPuzzleEngine {
   }
 
   start(): void {
-    if (this.prompt().length === 0) return;
+    if (this.prompt().length === 0 || this.expectedAnswer().length === 0) return;
     this.isRunning.set(true);
   }
 
@@ -84,7 +85,7 @@ export class AiPuzzleEngine {
     this.isCorrect.set(isCorrect);
     this.isCompleted.set(true);
     this.isRunning.set(false);
-    return isCorrect;
+    return true;
   }
 
   reset(): void {
@@ -94,4 +95,3 @@ export class AiPuzzleEngine {
     this.isRunning.set(false);
   }
 }
-
