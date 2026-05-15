@@ -19,6 +19,8 @@ import { FallingNumbersEngine } from './falling-numbers/falling-numbers.engine';
 import { type FallingPowerUpType } from './falling-numbers/falling-numbers.types';
 import { BossBattleComponent } from './boss-battle/boss-battle.component';
 import { BossBattleEngine } from './boss-battle/boss-battle.engine';
+import { AiPuzzleComponent } from './ai-puzzle/ai-puzzle.component';
+import { AiPuzzleEngine } from './ai-puzzle/ai-puzzle.engine';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -47,6 +49,13 @@ type AbacusGameState = (typeof GAME_STATE)[keyof typeof GAME_STATE];
 type FallingEnginePayload = Omit<FallingNumbersPayload, 'powerUps'> & {
   powerUps: FallingPowerUpType[];
 };
+type AiPuzzlePayload = {
+  puzzleId: string;
+  prompt: string;
+  options?: string[];
+  answer: string;
+  difficulty: number;
+};
 
 export type SuperGameMode =
   | 'abacus-flash'
@@ -71,6 +80,7 @@ export type SuperGameMode =
     TranslatePipe,
     FallingNumbersComponent,
     BossBattleComponent,
+    AiPuzzleComponent,
   ],
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
@@ -112,6 +122,7 @@ export class GameModeComponent implements OnDestroy {
   private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
   readonly fallingEngine = new FallingNumbersEngine();
   readonly bossBattleEngine = new BossBattleEngine();
+  readonly aiPuzzleEngine = new AiPuzzleEngine();
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
     { value: 'abacus-flash', label: 'Abacus Flash', description: 'Flash-card speed drills with adaptive pacing.', icon: '🔢' },
@@ -224,6 +235,14 @@ export class GameModeComponent implements OnDestroy {
   isMapActive(): boolean {
     const challenge = this.challenge();
     return this.selectedMode() === 'map' && !!challenge && this.isMapChallenge(challenge);
+  }
+
+  isAiPuzzleSelectedMode(): boolean {
+    return this.selectedMode() === 'ai-puzzle' || this.selectedMode() === 'reasoning-puzzle';
+  }
+
+  shouldShowGenericNextChallenge(): boolean {
+    return this.selectedMode() !== 'abacus-flash' && !this.isAiPuzzleSelectedMode();
   }
 
   getMapChallenge(): MapChallenge | null {
@@ -495,6 +514,7 @@ export class GameModeComponent implements OnDestroy {
   private stopModeEngines(): void {
     this.fallingEngine.stop();
     this.bossBattleEngine.stop();
+    this.aiPuzzleEngine.stop();
   }
 
   private getFallingPayload(challenge: LegacyChallenge): FallingEnginePayload {
@@ -538,6 +558,35 @@ export class GameModeComponent implements OnDestroy {
         typeof raw['specialAttackIntervalMs'] === 'number' && raw['specialAttackIntervalMs'] > 0
           ? raw['specialAttackIntervalMs']
           : 8000,
+    };
+  }
+
+  private getAiPuzzlePayload(challenge: LegacyChallenge): AiPuzzlePayload {
+    const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
+    const challengeAnswer = 'answer' in challenge ? challenge.answer : '';
+    const challengePrompt = 'prompt' in challenge ? challenge.prompt : '';
+    const challengeOptions = 'options' in challenge ? challenge.options : [];
+
+    const optionsRaw = Array.isArray(raw['options']) ? raw['options'] : challengeOptions;
+    const options = optionsRaw
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+
+    const promptRaw = typeof raw['prompt'] === 'string' ? raw['prompt'] : challengePrompt;
+    const answerRaw =
+      typeof raw['answer'] === 'string' || typeof raw['answer'] === 'number'
+        ? raw['answer']
+        : challengeAnswer;
+
+    return {
+      puzzleId: typeof raw['puzzleId'] === 'string' ? raw['puzzleId'] : challenge.challengeId,
+      prompt: String(promptRaw ?? '').trim(),
+      options,
+      answer: String(answerRaw ?? '').trim(),
+      difficulty:
+        typeof raw['difficulty'] === 'number' && Number.isFinite(raw['difficulty'])
+          ? Math.round(raw['difficulty'])
+          : challenge.difficulty,
     };
   }
 
@@ -738,6 +787,15 @@ export class GameModeComponent implements OnDestroy {
           } else {
             this.bossBattleEngine.stop();
           }
+
+          const isAiPuzzle = this.isAiPuzzleSelectedMode();
+          if (isAiPuzzle && this.isLegacyChallenge(challenge)) {
+            const puzzlePayload = this.getAiPuzzlePayload(challenge);
+            this.aiPuzzleEngine.configure(puzzlePayload);
+            this.aiPuzzleEngine.start();
+          } else {
+            this.aiPuzzleEngine.stop();
+          }
         },
         error: () => {
           this.errorMessage.set('Unable to load game challenge.');
@@ -757,6 +815,7 @@ export class GameModeComponent implements OnDestroy {
 
     const isMapChallenge = this.isMapChallenge(challenge) && this.selectedMode() === 'map';
     const isAbacusFlash = this.activeChallengeApiMode === 'abacus-flash';
+    const isAiPuzzle = this.activeChallengeApiMode === 'ai-puzzle';
     const hasAnswerOptions = this.hasAnswerOptions(challenge);
     const selected = this.selectedAnswer();
     if (isAbacusFlash && typeof selected !== 'number') {
@@ -769,6 +828,8 @@ export class GameModeComponent implements OnDestroy {
     this.challengeSubmitted.set(true);
     const correct = isMapChallenge
       ? this.evaluateMapChallenge()
+      : isAiPuzzle
+        ? this.aiPuzzleEngine.isCorrect() === true
       : hasAnswerOptions
         ? selected === challenge.answer
         : isAbacusFlash
@@ -855,6 +916,19 @@ export class GameModeComponent implements OnDestroy {
         this.adaptiveDifficulty.set(null);
       },
     });
+  }
+
+  onAiPuzzleSubmit(answer: string): void {
+    this.selectedAnswer.set(answer);
+    const wasEvaluated = this.aiPuzzleEngine.submitAnswer(answer);
+    if (!wasEvaluated) {
+      return;
+    }
+    this.submitChallenge();
+  }
+
+  isAbacusFlashActive(): boolean {
+    return this.activeChallengeApiMode === 'abacus-flash';
   }
 
   ngOnDestroy(): void {
