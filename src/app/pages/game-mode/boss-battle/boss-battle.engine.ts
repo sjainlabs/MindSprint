@@ -149,9 +149,10 @@ export class BossBattleEngine {
     const phaseCount = this.config.phaseCount;
     const phaseSizePct = 100 / phaseCount;
 
-    // Phase number = which "slice" of HP the boss is currently in (1-based)
+    // Phase number: 1 = full HP segment, phaseCount = lowest HP segment.
+    // Using Math.floor avoids premature phase transitions at high HP%.
     const newPhase = clamp(
-      Math.ceil((100 - hpPct) / phaseSizePct) + 1,
+      Math.floor((100 - hpPct) / phaseSizePct) + 1,
       1,
       phaseCount
     );

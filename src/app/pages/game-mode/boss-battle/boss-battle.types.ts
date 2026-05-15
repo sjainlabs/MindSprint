@@ -6,5 +6,3 @@ export interface BossBattleConfig {
   phaseCount: number;
   specialAttackIntervalMs: number;
 }
-
-export {};
