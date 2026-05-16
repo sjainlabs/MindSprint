@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
@@ -102,8 +102,8 @@ export class PracticeService {
     if (!skillId?.trim()) {
       return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
     }
-    const params = new URLSearchParams({ skillId: skillId.trim() });
-    return this.http.get<Worksheet>(`${this.baseUrl}/${level}?${params.toString()}`);
+    const params = new HttpParams().set('skillId', skillId.trim());
+    return this.http.get<Worksheet>(`${this.baseUrl}/${level}`, { params });
   }
 
   submitWorksheet(payload: WorksheetSubmission): Observable<WorksheetResult> {

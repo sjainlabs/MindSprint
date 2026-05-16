@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
@@ -192,23 +192,23 @@ export class GameService {
     completedDailyQuestCount?: number;
     skillId?: string;
   }): Observable<GameChallenge> {
-    const params = new URLSearchParams({ studentId: payload.studentId });
+    let params = new HttpParams().set('studentId', payload.studentId);
     if (payload.mode) {
-      params.set('mode', normalizeGameMode(payload.mode) ?? payload.mode);
+      params = params.set('mode', normalizeGameMode(payload.mode) ?? payload.mode);
     }
     if (typeof payload.difficulty === 'number') {
-      params.set('difficulty', String(payload.difficulty));
+      params = params.set('difficulty', String(payload.difficulty));
     }
     if (typeof payload.streak === 'number') {
-      params.set('streak', String(payload.streak));
+      params = params.set('streak', String(payload.streak));
     }
     if (typeof payload.completedDailyQuestCount === 'number') {
-      params.set('completedDailyQuestCount', String(payload.completedDailyQuestCount));
+      params = params.set('completedDailyQuestCount', String(payload.completedDailyQuestCount));
     }
     if (payload.skillId?.trim()) {
-      params.set('skillId', payload.skillId.trim());
+      params = params.set('skillId', payload.skillId.trim());
     }
-    return this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`);
+    return this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge`, { params });
   }
 
   submitChallenge(payload: {

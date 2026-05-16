@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -41,6 +41,14 @@ export interface MasteryUpdateEvent {
   attemptedAt?: string;
 }
 
+const MAX_ACCURACY_PERCENT = 100;
+const MASTERY_MASTERED_THRESHOLD = 90;
+const MASTERY_PROFICIENT_THRESHOLD = 75;
+const MASTERY_DEVELOPING_THRESHOLD = 45;
+const MASTERY_MASTERED_SPAN = MAX_ACCURACY_PERCENT - MASTERY_PROFICIENT_THRESHOLD;
+const MASTERY_PROFICIENT_SPAN = MASTERY_PROFICIENT_THRESHOLD - MASTERY_DEVELOPING_THRESHOLD;
+const MASTERY_DEVELOPING_SPAN = MASTERY_DEVELOPING_THRESHOLD;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -63,7 +71,9 @@ export class MasteryEngineService {
     }
 
     return this.http
-      .get<MasteryState>(`${this.masteryUrl}/state?studentId=${encodeURIComponent(studentId)}`)
+      .get<MasteryState>(`${this.masteryUrl}/state`, {
+        params: new HttpParams().set('studentId', studentId),
+      })
       .pipe(
         map((state) => this.normalizeMasteryState(state, studentId)),
         tap((state) => this.cache.set(studentId, state)),
@@ -123,7 +133,7 @@ export class MasteryEngineService {
     const now = event.attemptedAt ?? new Date().toISOString();
 
     if (!existing) {
-      const accuracy = event.isCorrect ? 100 : 0;
+      const accuracy = event.isCorrect ? MAX_ACCURACY_PERCENT : 0;
       const created: MasterySkillState = {
         skillId,
         skillName: event.skillName ?? this.toSkillDisplayName(skillId),
@@ -137,7 +147,9 @@ export class MasteryEngineService {
     } else {
       const attempts = existing.attempts + 1;
       const weightedAccuracy =
-        ((existing.accuracy * existing.attempts) + (event.isCorrect ? 100 : 0)) / attempts;
+        ((existing.accuracy * existing.attempts)
+          + (event.isCorrect ? MAX_ACCURACY_PERCENT : 0))
+        / attempts;
       existing.attempts = attempts;
       existing.accuracy = Math.round(weightedAccuracy);
       existing.lastPracticed = now;
@@ -233,17 +245,26 @@ export class MasteryEngineService {
   }
 
   private toLevelFromAccuracy(accuracy: number): MasteryLevel {
-    if (accuracy >= 90) return 'mastered';
-    if (accuracy >= 75) return 'proficient';
-    if (accuracy >= 45) return 'developing';
+    if (accuracy >= MASTERY_MASTERED_THRESHOLD) return 'mastered';
+    if (accuracy >= MASTERY_PROFICIENT_THRESHOLD) return 'proficient';
+    if (accuracy >= MASTERY_DEVELOPING_THRESHOLD) return 'developing';
     return 'not-started';
   }
 
   private toProgress(accuracy: number, level: MasteryLevel): number {
     if (level === 'mastered') return 100;
-    if (level === 'proficient') return Math.round(((accuracy - 75) / 15) * 100);
-    if (level === 'developing') return Math.round(((accuracy - 45) / 30) * 100);
-    return Math.round((accuracy / 45) * 100);
+    if (level === 'proficient') {
+      return Math.round(
+        ((accuracy - MASTERY_PROFICIENT_THRESHOLD) / MASTERY_MASTERED_SPAN) * MAX_ACCURACY_PERCENT,
+      );
+    }
+    if (level === 'developing') {
+      return Math.round(
+        ((accuracy - MASTERY_DEVELOPING_THRESHOLD) / MASTERY_PROFICIENT_SPAN)
+          * MAX_ACCURACY_PERCENT,
+      );
+    }
+    return Math.round((accuracy / MASTERY_DEVELOPING_SPAN) * MAX_ACCURACY_PERCENT);
   }
 
   private clampPercent(value: number): number {

@@ -92,6 +92,7 @@ export class WorksheetPageComponent implements OnInit {
   masteryReady = signal(false);
   weakSkills = signal<MasterySkillState[]>([]);
   recommendedSkill = signal<MasteryRecommendation | null>(null);
+  private readonly trackedQuestionSubmissions = new Set<string>();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -132,6 +133,7 @@ export class WorksheetPageComponent implements OnInit {
     this.accuracyPercentage.set(null);
     this.submitError.set('');
     this.answers.set({});
+    this.trackedQuestionSubmissions.clear();
     this.worksheetStartedAt.set(new Date().toISOString());
 
     const recommendedSkillId = this.recommendedSkill()?.skillId;
@@ -545,6 +547,8 @@ export class WorksheetPageComponent implements OnInit {
 
   private trackQuestionMastery(questionId: string, submittedValue: number | null): void {
     if (submittedValue === null) return;
+    if (this.trackedQuestionSubmissions.has(questionId)) return;
+    this.trackedQuestionSubmissions.add(questionId);
     const worksheet = this.worksheet();
     if (!worksheet) return;
     const question = worksheet.questions.find((entry) => entry.id === questionId);

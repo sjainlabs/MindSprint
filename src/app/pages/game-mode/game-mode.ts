@@ -65,6 +65,9 @@ const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
 const DEFAULT_FLASH_SPEED_MS = 600;
 const MAP_CHALLENGE_STORAGE_KEY_PREFIX = 'mindsprint.map.challenge';
+const DEFAULT_REASONING_SKILL_ID = 'reasoning-logic';
+const DEFAULT_FLUENCY_SKILL_ID = 'addition';
+const DEFAULT_BOSS_SKILL_ID = 'boss-battle';
 const GAME_STATE = {
   START: 'START',
   NEXT: 'NEXT',
@@ -1133,11 +1136,14 @@ export class GameModeComponent implements OnDestroy {
           // ⭐ FLUENCY — START ENGINE HERE ONLY
           if (this.selectedMode() === 'fluency' && this.isLegacyChallenge(challenge)) {
             const fluencyPayload = this.getFluencyPayload(challenge);
-            const weakOps = this.getWeakFoundationalOperations();
+            const weakFoundationalOperations = this.getWeakFoundationalOperations();
             this.fluencyEngine.configure({
               difficulty: fluencyPayload.difficulty,
               timeLimitSeconds: fluencyPayload.timeLimitSeconds,
-              operations: weakOps.length > 0 ? weakOps : fluencyPayload.operations,
+              operations:
+                weakFoundationalOperations.length > 0
+                  ? weakFoundationalOperations
+                  : fluencyPayload.operations,
             });
             this.fluencyEngine.start();
           } else {
@@ -1323,13 +1329,16 @@ export class GameModeComponent implements OnDestroy {
 
   private resolveSkillIdForMode(mode: SuperGameMode): string {
     if (mode === 'reasoning-puzzle') {
-      return this.masteryEngine.getRecommendedNextSkill(this.studentId())?.skillId ?? 'reasoning-logic';
+      return (
+        this.masteryEngine.getRecommendedNextSkill(this.studentId())?.skillId
+        ?? DEFAULT_REASONING_SKILL_ID
+      );
     }
     if (mode === 'fluency') {
-      return this.masteryWeakSkills()[0]?.skillId ?? 'addition';
+      return this.masteryWeakSkills()[0]?.skillId ?? DEFAULT_FLUENCY_SKILL_ID;
     }
     if (mode === 'boss-battle') {
-      return this.currentModeSkillId() || 'boss-battle';
+      return DEFAULT_BOSS_SKILL_ID;
     }
     return mode;
   }
