@@ -138,6 +138,7 @@ describe('GameModeComponent', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [GameModeComponent],
       providers: [
@@ -347,6 +348,65 @@ describe('GameModeComponent', () => {
     expect(comp.mapGradeLabel()).toBe('Grade 3');
     expect(comp.mapDifficultyLabel()).toContain('Ready');
     expect(comp.mapDomainBadge()).toContain('📊');
+  });
+
+  it('initializes MAP state model with tiles, nodes, and regions', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map');
+    comp.loadChallenge();
+
+    expect(comp.mapState()).toBeTruthy();
+    expect(comp.mapState()!.tiles.length).toBeGreaterThan(0);
+    expect(comp.mapState()!.nodes.length).toBe(2);
+    expect(comp.mapState()!.regions.length).toBeGreaterThan(0);
+  });
+
+  it('stores and restores MAP state from localStorage', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map');
+    comp.loadChallenge();
+    comp.toggleMapOption(4);
+    vi.advanceTimersByTime(250);
+    comp.toggleMapOption('A');
+    comp.submitChallenge();
+
+    const savedState = comp.mapState();
+    expect(savedState).toBeTruthy();
+
+    comp.loadChallenge();
+    expect(comp.mapState()?.stepCredits[1]).toBe(savedState?.stepCredits[1]);
+  });
+
+  it('prevents selecting locked MAP nodes and reports validation errors', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map');
+    comp.loadChallenge();
+    comp.selectMapNode(10);
+
+    expect(comp.mapLastValidationError()).toContain('Illegal move');
+  });
+
+  it('applies MAP penalties on failed deterministic submissions', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('map');
+    comp.loadChallenge();
+    comp.toggleMapOption(2);
+    comp.submitChallenge();
+
+    expect(comp.mapPenaltyTotal()).toBeGreaterThan(0);
+    expect(comp.mapScore()).toBeLessThanOrEqual(0);
   });
 
   it('shows error message when challenge fails to load', () => {
