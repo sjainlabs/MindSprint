@@ -12,6 +12,7 @@ export type GameMode =
   | 'falling-numbers'
   | 'arithmetic'
   | 'boss-battle'
+  | 'competition-boss'
   | 'ai-puzzle'
   | 'map'
   | 'map-challenge';

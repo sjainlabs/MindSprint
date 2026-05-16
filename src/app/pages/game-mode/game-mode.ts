@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -7,6 +7,7 @@ import {
   GameService,
   type AbacusFlashPayload,
   type BossBattlePayload,
+  type CompetitionBossPayload,
   type FallingNumbersPayload,
   type FluencyPayload,
   type GameChallenge,
@@ -20,6 +21,8 @@ import { FallingNumbersEngine } from './falling-numbers/falling-numbers.engine';
 import { type FallingPowerUpType } from './falling-numbers/falling-numbers.types';
 import { BossBattleComponent } from './boss-battle/boss-battle.component';
 import { BossBattleEngine } from './boss-battle/boss-battle.engine';
+import { CompetitionBossModeComponent } from './competition-boss/competition-boss';
+import { CompetitionBossEngine } from './competition-boss/competition-boss.engine';
 import { AiPuzzleComponent } from './ai-puzzle/ai-puzzle.component';
 import { AiPuzzleEngine } from './ai-puzzle/ai-puzzle.engine';
 import { FluencyModeComponent } from './fluency/fluency.component';
@@ -102,6 +105,7 @@ export type SuperGameMode =
     TranslatePipe,
     FallingNumbersComponent,
     BossBattleComponent,
+    CompetitionBossModeComponent,
     AiPuzzleComponent,
     FluencyModeComponent,
     ReasoningPuzzleModeComponent,
@@ -144,11 +148,13 @@ export class GameModeComponent implements OnDestroy {
   flashState = signal<AbacusGameState>(GAME_STATE.START);
   showQuestion = signal(false);
   isFlashing = signal(false);
+  private competitionBossSubmissionArmed = signal(false);
   private flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private flashSequenceToken = 0;
   private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
   readonly fallingEngine = new FallingNumbersEngine();
   readonly bossBattleEngine = new BossBattleEngine();
+  readonly competitionBossEngine = new CompetitionBossEngine();
   readonly aiPuzzleEngine = new AiPuzzleEngine();
   readonly fluencyEngine = new FluencyEngine();
   readonly reasoningPuzzleEngine = new ReasoningPuzzleEngine();
@@ -207,7 +213,33 @@ export class GameModeComponent implements OnDestroy {
   constructor(
     private readonly gameService: GameService,
     private readonly studentIntelligenceService: StudentIntelligenceService,
-  ) {}
+  ) {
+    effect(() => {
+      const isCompetitionBoss = this.selectedMode() === 'competition-boss';
+      const challenge = this.challenge();
+      const outcome = this.competitionBossEngine.outcome();
+
+      if (
+        !isCompetitionBoss
+        || !challenge
+        || !this.isLegacyChallenge(challenge)
+        || outcome === 'in-progress'
+      ) {
+        return;
+      }
+
+      const challengeId = challenge.challengeId;
+      queueMicrotask(() => {
+        if (
+          this.competitionBossSubmissionArmed()
+          && this.challenge()?.challengeId === challengeId
+          && !this.challengeSubmitted()
+        ) {
+          this.submitChallenge();
+        }
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.refreshAdaptiveDifficulty();
@@ -224,7 +256,7 @@ export class GameModeComponent implements OnDestroy {
       'fluency': 'ai-puzzle',
       'reasoning-puzzle': 'ai-puzzle',
       map: 'map',
-      'competition-boss': 'boss-battle',
+      'competition-boss': 'competition-boss',
     };
     return mapping[mode] ?? 'ai-puzzle';
   }
@@ -281,6 +313,7 @@ export class GameModeComponent implements OnDestroy {
       && !this.isAiPuzzleSelectedMode()
       && !this.isReasoningPuzzleSelectedMode()
       && mode !== 'fluency'
+      && mode !== 'competition-boss'
     );
   }
 
@@ -690,6 +723,8 @@ export class GameModeComponent implements OnDestroy {
   private stopModeEngines(): void {
     this.fallingEngine.stop();
     this.bossBattleEngine.stop();
+    this.competitionBossEngine.stop();
+    this.competitionBossSubmissionArmed.set(false);
     this.aiPuzzleEngine.stop();
     this.fluencyEngine.stop();
     this.reasoningPuzzleEngine.stop();
@@ -736,6 +771,28 @@ export class GameModeComponent implements OnDestroy {
         typeof raw['specialAttackIntervalMs'] === 'number' && raw['specialAttackIntervalMs'] > 0
           ? raw['specialAttackIntervalMs']
           : 8000,
+    };
+  }
+
+  private getCompetitionBossPayload(challenge: LegacyChallenge): CompetitionBossPayload {
+    const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
+    return {
+      bossId: typeof raw['bossId'] === 'string' ? raw['bossId'] : 'competition-boss-default',
+      title: typeof raw['title'] === 'string' ? raw['title'] : 'Tournament Tyrant',
+      maxHp: typeof raw['maxHp'] === 'number' && raw['maxHp'] > 0 ? Math.round(raw['maxHp']) : 140,
+      difficulty:
+        typeof raw['difficulty'] === 'number' && Number.isFinite(raw['difficulty'])
+          ? Math.round(raw['difficulty'])
+          : challenge.difficulty ?? 60,
+      phaseCount: typeof raw['phaseCount'] === 'number' && raw['phaseCount'] >= 1 ? Math.round(raw['phaseCount']) : 3,
+      specialAttackIntervalMs:
+        typeof raw['specialAttackIntervalMs'] === 'number' && raw['specialAttackIntervalMs'] > 0
+          ? raw['specialAttackIntervalMs']
+          : 7000,
+      competitorDps:
+        typeof raw['competitorDps'] === 'number' && Number.isFinite(raw['competitorDps'])
+          ? raw['competitorDps']
+          : 12,
     };
   }
 
@@ -914,6 +971,7 @@ export class GameModeComponent implements OnDestroy {
     this.loading.set(true);
     this.errorMessage.set('');
     this.challengeSubmitted.set(false);
+    this.competitionBossSubmissionArmed.set(false);
     this.selectedAnswer.set(null);
     this.selectedAnswers.set([]);
     this.currentStepIndex.set(0);
@@ -1014,13 +1072,24 @@ export class GameModeComponent implements OnDestroy {
           }
 
           // ⭐ BOSS BATTLE — START ENGINE HERE ONLY
-          const isBossBattle = this.selectedMode() === 'boss-battle' || this.selectedMode() === 'competition-boss';
+          const isBossBattle = this.selectedMode() === 'boss-battle';
           if (isBossBattle && this.isLegacyChallenge(challenge)) {
             const bbPayload = this.getBossBattlePayload(challenge);
             this.bossBattleEngine.configure(bbPayload);
             this.bossBattleEngine.start();
           } else {
             this.bossBattleEngine.stop();
+          }
+
+          const isCompetitionBoss = this.selectedMode() === 'competition-boss';
+          if (isCompetitionBoss && this.isLegacyChallenge(challenge)) {
+            const competitionBossPayload = this.getCompetitionBossPayload(challenge);
+            this.competitionBossEngine.configure(competitionBossPayload);
+            this.competitionBossEngine.start();
+            this.competitionBossSubmissionArmed.set(true);
+          } else {
+            this.competitionBossEngine.stop();
+            this.competitionBossSubmissionArmed.set(false);
           }
 
           const isAiPuzzle = this.isAiPuzzleSelectedMode();
@@ -1052,6 +1121,7 @@ export class GameModeComponent implements OnDestroy {
           } else {
             this.fluencyEngine.stop();
           }
+
         },
         error: () => {
           this.errorMessage.set('Unable to load game challenge.');
@@ -1073,12 +1143,13 @@ export class GameModeComponent implements OnDestroy {
     const isAbacusFlash = this.activeChallengeApiMode === 'abacus-flash';
     const isAiPuzzle = this.activeChallengeApiMode === 'ai-puzzle';
     const isReasoningPuzzle = this.selectedMode() === 'reasoning-puzzle';
+    const isCompetitionBoss = this.selectedMode() === 'competition-boss';
     const hasAnswerOptions = this.hasAnswerOptions(challenge);
     const selected = this.selectedAnswer();
     if (isAbacusFlash && typeof selected !== 'number') {
       return;
     }
-    if (!isMapChallenge && hasAnswerOptions && selected === null) {
+    if (!isCompetitionBoss && !isMapChallenge && hasAnswerOptions && selected === null) {
       return;
     }
 
@@ -1090,6 +1161,8 @@ export class GameModeComponent implements OnDestroy {
         this.challengeSubmitted.set(false);
         return;
       }
+    } else if (isCompetitionBoss) {
+      correct = this.competitionBossEngine.isPlayerVictory();
     } else if (isReasoningPuzzle) {
       correct = this.reasoningPuzzleEngine.isCorrect() === true;
     } else if (isAiPuzzle) {
@@ -1147,8 +1220,18 @@ export class GameModeComponent implements OnDestroy {
     } else {
       const mapScore = this.mapScore();
       const mapAccuracy = this.mapProgressPercent();
-      const submittedScore = isMapChallenge ? Math.max(0, mapScore) : 100;
-      const submittedAccuracy = isMapChallenge ? mapAccuracy : 100;
+      let submittedScore = 100;
+      let submittedAccuracy = 100;
+
+      if (isMapChallenge) {
+        submittedScore = Math.max(0, mapScore);
+        submittedAccuracy = mapAccuracy;
+      } else if (isCompetitionBoss) {
+        const competitionBossScore = correct ? 100 : 0;
+        submittedScore = competitionBossScore;
+        submittedAccuracy = competitionBossScore;
+      }
+
       this.gameService
         .submitChallenge({
           studentId: this.studentId(),

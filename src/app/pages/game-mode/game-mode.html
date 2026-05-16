@@ -338,10 +338,19 @@
             }
 
             <!-- ⭐ BOSS BATTLE GAME MODE -->
-            @if (selectedMode() === 'boss-battle' || selectedMode() === 'competition-boss') {
+            @if (selectedMode() === 'boss-battle') {
               <app-boss-battle-mode
                 [engine]="bossBattleEngine"
                 [loading]="loading()"
+              />
+            }
+
+            <!-- ⭐ COMPETITION BOSS GAME MODE -->
+            @if (selectedMode() === 'competition-boss') {
+              <app-competition-boss-mode
+                [engine]="competitionBossEngine"
+                [loading]="loading()"
+                (nextChallenge)="loadChallenge()"
               />
             }
 
