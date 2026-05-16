@@ -54,7 +54,7 @@ import {
 const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
 const DEFAULT_FLASH_SPEED_MS = 600;
-const MAP_SAVE_PREFIX = 'mindsprint.map.challenge';
+const MAP_CHALLENGE_STORAGE_KEY_PREFIX = 'mindsprint.map.challenge';
 const GAME_STATE = {
   START: 'START',
   NEXT: 'NEXT',
@@ -393,7 +393,6 @@ export class GameModeComponent implements OnDestroy {
     );
     this.persistMapState();
     if (value.trim().length > 0) {
-      this.unlockMapPathFromInteraction(stepIndex);
       this.queueAutoAdvance();
     }
   }
@@ -418,9 +417,6 @@ export class GameModeComponent implements OnDestroy {
         }
         : state,
     );
-    if (next.length > 0) {
-      this.unlockMapPathFromInteraction(stepIndex);
-    }
     this.persistMapState();
     this.selectedAnswers.set(next);
     if (answerType === 'single') {
@@ -433,6 +429,9 @@ export class GameModeComponent implements OnDestroy {
     if (!this.isMapStepAnswered()) return;
     if (this.isMapStepFinal()) {
       this.submitChallenge();
+      return;
+    }
+    if (!this.applyMapProgressForCurrentStep()) {
       return;
     }
     const nextIndex = Math.min(this.currentStepIndex() + 1, this.totalMapSteps() - 1);
@@ -459,19 +458,6 @@ export class GameModeComponent implements OnDestroy {
       this.mapAutoAdvanceTimeoutId = null;
     }, MAP_AUTO_ADVANCE_DELAY_MS);
     this.mapAutoAdvanceTimeoutId = timeoutId;
-  }
-
-  private unlockMapPathFromInteraction(stepIndex: number): void {
-    this.mapState.update((state) => {
-      if (!state) return state;
-      const nextIndex = stepIndex + 1;
-      return {
-        ...state,
-        nodes: state.nodes.map((node) =>
-          node.stepIndex === nextIndex ? { ...node, unlocked: true } : node,
-        ),
-      };
-    });
   }
 
   private clearMapAutoAdvanceTimeout(): void {
@@ -582,11 +568,17 @@ export class GameModeComponent implements OnDestroy {
     return Math.round(this.mapPartialCredit() * 100);
   }
 
-  private evaluateMapChallenge(): boolean {
+  private applyMapProgressForCurrentStep(): boolean {
     const challenge = this.getMapChallenge();
     const state = this.mapState();
     if (!challenge || !state) {
-      this.mapPartialCredit.set(0);
+      this.mapLastValidationError.set('MAP state unavailable.');
+      return false;
+    }
+    if (!this.isMapStepAnswered()) {
+      const message = 'Answer required before submitting this step.';
+      this.mapLastValidationError.set(message);
+      this.mapEvents.update((events) => [...events, { type: 'map:invalid-move', message }]);
       return false;
     }
 
@@ -604,7 +596,16 @@ export class GameModeComponent implements OnDestroy {
     );
     this.mapPartialCredit.set(result.evaluation?.credit ?? 0);
     this.persistMapState();
-    return (result.evaluation?.credit ?? 0) >= 1;
+    return result.valid;
+  }
+
+  private evaluateMapChallenge(): boolean {
+    const wasApplied = this.applyMapProgressForCurrentStep();
+    if (!wasApplied) {
+      this.mapPartialCredit.set(0);
+      return false;
+    }
+    return this.mapPartialCredit() >= 1;
   }
 
   mapShowGraph(): boolean {
@@ -616,7 +617,7 @@ export class GameModeComponent implements OnDestroy {
   }
 
   private mapStorageKey(challenge: MapChallenge): string {
-    return `${MAP_SAVE_PREFIX}:${this.studentId()}:${challenge.challengeId}`;
+    return `${MAP_CHALLENGE_STORAGE_KEY_PREFIX}:${this.studentId()}:${challenge.challengeId}`;
   }
 
   private persistMapState(): void {
@@ -650,6 +651,7 @@ export class GameModeComponent implements OnDestroy {
   }
 
   private initializeMapState(challenge: MapChallenge): void {
+    // restoreMapState always returns a valid state (restored snapshot or fresh initial state).
     const restored = this.restoreMapState(challenge);
     this.mapState.set(restored);
     this.currentStepIndex.set(restored.currentStepIndex);
@@ -1076,10 +1078,6 @@ export class GameModeComponent implements OnDestroy {
     if (isAbacusFlash && typeof selected !== 'number') {
       return;
     }
-    if (isMapChallenge && !this.isMapStepAnswered()) {
-      this.mapLastValidationError.set('Answer required before submitting this step.');
-      return;
-    }
     if (!isMapChallenge && hasAnswerOptions && selected === null) {
       return;
     }
@@ -1149,14 +1147,14 @@ export class GameModeComponent implements OnDestroy {
     } else {
       const mapScore = this.mapScore();
       const mapAccuracy = this.mapProgressPercent();
-      const normalizedScore = isMapChallenge ? Math.max(0, mapScore) : 100;
-      const normalizedAccuracy = isMapChallenge ? mapAccuracy : 100;
+      const submittedScore = isMapChallenge ? Math.max(0, mapScore) : 100;
+      const submittedAccuracy = isMapChallenge ? mapAccuracy : 100;
       this.gameService
         .submitChallenge({
           studentId: this.studentId(),
           mode: this.activeChallengeApiMode,
-          score: normalizedScore,
-          accuracy: normalizedAccuracy,
+          score: submittedScore,
+          accuracy: submittedAccuracy,
           streak: this.streakTotal(),
         })
         .subscribe({

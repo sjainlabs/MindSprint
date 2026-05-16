@@ -4,6 +4,14 @@ import { type ChallengeOption, type MapChallenge, type MapStep } from '../../../
 export const MAP_STEP_COOLDOWN_MS = 2_000;
 /** Region size used for deterministic node-region grouping. */
 export const MAP_REGION_SIZE = 2;
+/** Default node score awarded for full-credit completion. */
+export const MAP_DEFAULT_NODE_SCORE = 100;
+/** Default penalty applied when a step is failed. */
+export const MAP_DEFAULT_NODE_FAIL_PENALTY = 20;
+/** Partial-credit penalty factor for extra incorrect selected answers. */
+export const MAP_EXTRA_SELECTION_PENALTY_FACTOR = 0.5;
+/** Serialized snapshot schema version for save/load compatibility. */
+export const MAP_STATE_VERSION = 1;
 
 export type MapStepOutcome = 'success' | 'fail' | 'partial';
 export type MapChallengeOutcome = 'in_progress' | 'success' | 'fail' | 'partial';
@@ -129,7 +137,7 @@ function evaluateSelectionCredit(
   const correctSet = new Set(correctAnswers);
   const matched = [...selectedSet].filter((answer) => correctSet.has(answer)).length;
   const extras = [...selectedSet].filter((answer) => !correctSet.has(answer)).length;
-  const rawCredit = (matched - extras * 0.5) / correctAnswers.length;
+  const rawCredit = (matched - extras * MAP_EXTRA_SELECTION_PENALTY_FACTOR) / correctAnswers.length;
   return clamp(rawCredit, 0, 1);
 }
 
@@ -203,6 +211,12 @@ export function createInitialMapChallengeState(challenge: MapChallenge): MapChal
     const tileId = `tile-${i}`;
     const regionId = `region-${regionForIndex(i)}`;
     const isFinalNode = i === stepCount - 1;
+    let tileType: 'start' | 'path' | 'goal' = 'path';
+    if (i === 0) {
+      tileType = 'start';
+    } else if (isFinalNode) {
+      tileType = 'goal';
+    }
 
     nodes.push({
       id: nodeId,
@@ -214,15 +228,15 @@ export function createInitialMapChallengeState(challenge: MapChallenge): MapChal
       blocked: false,
       attempts: 0,
       cooldownUntilMs: 0,
-      scoreValue: 100,
-      penaltyOnFail: 20,
+      scoreValue: MAP_DEFAULT_NODE_SCORE,
+      penaltyOnFail: MAP_DEFAULT_NODE_FAIL_PENALTY,
     });
 
     tiles.push({
       id: tileId,
       nodeId,
       regionId,
-      type: i === 0 ? 'start' : isFinalNode ? 'goal' : 'path',
+      type: tileType,
       blocked: false,
     });
   }
@@ -272,7 +286,7 @@ export function evaluateMapStep(
   const selectedAnswers = unique(state.selectionsByStep[stepIndex] ?? []);
   const textAnswer = state.textAnswersByStep[stepIndex] ?? '';
 
-  const hasOptions = (step?.options?.length ?? 0) > 0 || challenge.options.length > 0;
+  const hasOptions = step ? (step.options?.length ?? 0) > 0 : challenge.options.length > 0;
   const credit = hasOptions
     ? evaluateSelectionCredit(selectedAnswers, correctAnswers)
     : evaluateTextCredit(textAnswer, correctAnswers);
@@ -488,18 +502,20 @@ export function validateMapMove(
 
 /** Serialize state for save/load integration. */
 export function serializeMapChallengeState(state: MapChallengeState): string {
-  return JSON.stringify({ version: 1, state });
+  return JSON.stringify({ version: MAP_STATE_VERSION, state });
 }
 
 /** Deserialize state snapshot and validate challenge identity. */
 export function deserializeMapChallengeState(serialized: string, challengeId: string): MapChallengeState | null {
   try {
     const parsed = JSON.parse(serialized) as { version?: number; state?: MapChallengeState };
-    if (parsed.version !== 1 || !parsed.state || parsed.state.challengeId !== challengeId) {
+    if (parsed.version !== MAP_STATE_VERSION || !parsed.state || parsed.state.challengeId !== challengeId) {
       return null;
     }
     return parsed.state;
-  } catch {
+  } catch (error) {
+    // Corrupt or stale snapshots are treated as cache misses to keep gameplay recoverable.
+    console.warn('Failed to deserialize MAP challenge state snapshot.', error);
     return null;
   }
 }

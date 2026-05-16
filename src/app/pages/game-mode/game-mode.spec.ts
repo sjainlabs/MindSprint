@@ -302,7 +302,8 @@ describe('GameModeComponent', () => {
     comp.toggleMapOption('B'); // one correct, one incorrect
     comp.submitChallenge();
 
-    expect(comp.mapPartialCreditPercent()).toBe(50);
+    // Credit formula: (matched - 0.5 * extras) / correctCount = (1 - 0.5) / 2 = 0.25
+    expect(comp.mapPartialCreditPercent()).toBe(25);
     expect(comp.isCorrect()).toBe(false);
   });
 
