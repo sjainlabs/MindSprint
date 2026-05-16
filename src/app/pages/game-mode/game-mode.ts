@@ -8,6 +8,7 @@ import {
   type AbacusFlashPayload,
   type BossBattlePayload,
   type FallingNumbersPayload,
+  type FluencyPayload,
   type GameChallenge,
   type LegacyChallenge,
   type MapAnswerType,
@@ -21,6 +22,8 @@ import { BossBattleComponent } from './boss-battle/boss-battle.component';
 import { BossBattleEngine } from './boss-battle/boss-battle.engine';
 import { AiPuzzleComponent } from './ai-puzzle/ai-puzzle.component';
 import { AiPuzzleEngine } from './ai-puzzle/ai-puzzle.engine';
+import { FluencyModeComponent } from './fluency/fluency.component';
+import { FluencyEngine, type FluencyOperation } from './fluency/fluency.engine';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -62,8 +65,8 @@ export type SuperGameMode =
   | 'falling-numbers'
   | 'boss-battle'
   | 'ai-puzzle'
+  | 'fluency'
   | 'map'
-  | 'fluency-speed'
   | 'reasoning-puzzle'
   | 'competition-boss';
 
@@ -81,6 +84,7 @@ export type SuperGameMode =
     FallingNumbersComponent,
     BossBattleComponent,
     AiPuzzleComponent,
+    FluencyModeComponent,
   ],
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
@@ -123,13 +127,14 @@ export class GameModeComponent implements OnDestroy {
   readonly fallingEngine = new FallingNumbersEngine();
   readonly bossBattleEngine = new BossBattleEngine();
   readonly aiPuzzleEngine = new AiPuzzleEngine();
+  readonly fluencyEngine = new FluencyEngine();
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
     { value: 'abacus-flash', label: 'Abacus Flash', description: 'Flash-card speed drills with adaptive pacing.', icon: '🔢' },
     { value: 'falling-numbers', label: 'Falling Numbers', description: 'Catch target sums, build combos, use power-ups.', icon: '🎮' },
     { value: 'boss-battle', label: 'Boss Battle', description: 'Timed HP-bar battle with special attacks.', icon: '⚔️' },
     { value: 'ai-puzzle', label: 'AI Puzzle', description: 'Logic, pattern and geometry puzzles.', icon: '🤖' },
-    { value: 'fluency-speed', label: 'Fluency Speed', description: 'Race the clock on arithmetic fluency drills.', icon: '⚡' },
+    { value: 'fluency', label: 'Fluency', description: 'Rapid-fire arithmetic drills against the clock.', icon: '⚡' },
     { value: 'reasoning-puzzle', label: 'Reasoning Puzzle', description: 'Multi-step reasoning and logical deduction.', icon: '🔍' },
     { value: 'map', label: 'MAP Challenge', description: 'Graph interpretation and MAP-style word problems.', icon: '📊' },
     { value: 'competition-boss', label: 'Competition Boss', description: 'AMC/MATHCOUNTS-level boss battle problems.', icon: '🏆' },
@@ -161,13 +166,13 @@ export class GameModeComponent implements OnDestroy {
 
   isSuperMode = computed(() => {
     const mode = this.selectedMode();
-    return ['fluency-speed', 'reasoning-puzzle', 'map', 'competition-boss'].includes(mode);
+    return ['fluency', 'reasoning-puzzle', 'map', 'competition-boss'].includes(mode);
   });
 
   superModeInfo = computed(() => {
     const mode = this.selectedMode();
     const info: Record<string, { badge: string; tip: string }> = {
-      'fluency-speed': { badge: '⚡ Fluency Champion', tip: 'Answer as fast as possible! Speed builds automaticity.' },
+      fluency: { badge: '⚡ Fluency Champion', tip: 'Answer as fast as possible! Speed builds automaticity.' },
       'reasoning-puzzle': { badge: '🔍 Logic Master', tip: 'Take your time. Read carefully and think step by step.' },
       map: { badge: '📊 MAP Achiever', tip: 'These questions mirror real MAP test items. Pace yourself.' },
       'competition-boss': { badge: '🏆 Competition Pro', tip: 'Hard problems. Show all work mentally before answering.' },
@@ -192,7 +197,7 @@ export class GameModeComponent implements OnDestroy {
       'falling-numbers': 'falling-numbers',
       'boss-battle': 'boss-battle',
       'ai-puzzle': 'ai-puzzle',
-      'fluency-speed': 'abacus-flash',
+      'fluency': 'ai-puzzle',
       'reasoning-puzzle': 'ai-puzzle',
       map: 'map',
       'competition-boss': 'boss-battle',
@@ -242,7 +247,8 @@ export class GameModeComponent implements OnDestroy {
   }
 
   shouldShowGenericNextChallenge(): boolean {
-    return this.selectedMode() !== 'abacus-flash' && !this.isAiPuzzleSelectedMode();
+    const mode = this.selectedMode();
+    return mode !== 'abacus-flash' && !this.isAiPuzzleSelectedMode() && mode !== 'fluency';
   }
 
   getMapChallenge(): MapChallenge | null {
@@ -515,6 +521,7 @@ export class GameModeComponent implements OnDestroy {
     this.fallingEngine.stop();
     this.bossBattleEngine.stop();
     this.aiPuzzleEngine.stop();
+    this.fluencyEngine.stop();
   }
 
   private getFallingPayload(challenge: LegacyChallenge): FallingEnginePayload {
@@ -588,6 +595,28 @@ export class GameModeComponent implements OnDestroy {
           ? Math.round(raw['difficulty'])
           : challenge.difficulty,
     };
+  }
+
+  private getFluencyPayload(challenge: LegacyChallenge): FluencyPayload {
+    const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
+    const timeLimitSeconds =
+      typeof raw['timeLimitSeconds'] === 'number' && raw['timeLimitSeconds'] > 0
+        ? raw['timeLimitSeconds']
+        : challenge.timeLimitSeconds > 0
+          ? challenge.timeLimitSeconds
+          : 60;
+    const difficulty =
+      typeof raw['difficulty'] === 'number' && Number.isFinite(raw['difficulty'])
+        ? Math.round(raw['difficulty'])
+        : challenge.difficulty;
+    const operationsRaw = raw['operations'];
+    const operations = Array.isArray(operationsRaw)
+      ? (operationsRaw.filter(
+          (op): op is FluencyOperation =>
+            op === 'addition' || op === 'subtraction' || op === 'multiplication' || op === 'division',
+        ) as FluencyOperation[])
+      : undefined;
+    return { timeLimitSeconds, difficulty, operations };
   }
 
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
@@ -795,6 +824,19 @@ export class GameModeComponent implements OnDestroy {
             this.aiPuzzleEngine.start();
           } else {
             this.aiPuzzleEngine.stop();
+          }
+
+          // ⭐ FLUENCY — START ENGINE HERE ONLY
+          if (this.selectedMode() === 'fluency' && this.isLegacyChallenge(challenge)) {
+            const fluencyPayload = this.getFluencyPayload(challenge);
+            this.fluencyEngine.configure({
+              difficulty: fluencyPayload.difficulty,
+              timeLimitSeconds: fluencyPayload.timeLimitSeconds,
+              operations: fluencyPayload.operations,
+            });
+            this.fluencyEngine.start();
+          } else {
+            this.fluencyEngine.stop();
           }
         },
         error: () => {

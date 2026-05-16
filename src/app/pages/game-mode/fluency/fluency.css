@@ -1,0 +1,250 @@
+/* ── Timer track ──────────────────────────────────────────────────────────── */
+
+.fl-timer-track {
+  height: 0.625rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.fl-timer-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.12s linear, background 0.5s ease;
+}
+
+.fl-timer-bar--high {
+  background: linear-gradient(90deg, #22c55e, #86efac);
+}
+
+.fl-timer-bar--medium {
+  background: linear-gradient(90deg, #f59e0b, #fde68a);
+}
+
+.fl-timer-bar--low {
+  background: linear-gradient(90deg, #ef4444, #fca5a5);
+  animation: flLowTimerPulse 0.8s ease-in-out infinite;
+}
+
+/* ── Question card ────────────────────────────────────────────────────────── */
+
+.fl-question-card {
+  min-height: 7rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: background 0.2s ease;
+}
+
+.fl-question-card--correct {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.3);
+}
+
+.fl-question-card--incorrect {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.3);
+}
+
+.fl-question-text {
+  font-size: clamp(2rem, 9vw, 3.5rem);
+  font-weight: 800;
+  color: #4338ca;
+  text-align: center;
+  line-height: 1;
+  text-shadow: 0 0 14px rgba(129, 140, 248, 0.35);
+  user-select: none;
+}
+
+.fl-feedback-icon {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #16a34a;
+  line-height: 1;
+  user-select: none;
+}
+
+.fl-feedback-icon--wrong {
+  color: #dc2626;
+}
+
+/* ── Keypad ───────────────────────────────────────────────────────────────── */
+
+.fl-keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.fl-keypad-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.375rem;
+}
+
+.fl-key {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 1.125rem;
+  font-weight: 700;
+  padding: 0.75rem 0.25rem;
+  cursor: pointer;
+  transition: background 0.1s, transform 0.08s;
+  user-select: none;
+}
+
+.fl-key:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+.fl-key:active {
+  transform: scale(0.93);
+  background: #c7d2fe;
+}
+
+.fl-key--action {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.fl-key--action:hover {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+/* ── Submit button ────────────────────────────────────────────────────────── */
+
+.fl-submit-btn {
+  border: none;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
+  letter-spacing: 0.02em;
+}
+
+.fl-submit-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.fl-submit-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.fl-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Summary ──────────────────────────────────────────────────────────────── */
+
+.fl-summary {
+  padding: 0.5rem 0;
+}
+
+.fl-stat-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  padding: 0.75rem 0.5rem;
+}
+
+.fl-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.fl-stat-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.125rem;
+}
+
+/* ── Next challenge button ────────────────────────────────────────────────── */
+
+.fl-next-btn {
+  border: none;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
+}
+
+.fl-next-btn:hover {
+  opacity: 0.9;
+}
+
+.fl-next-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+
+@keyframes flLowTimerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes flQuestionIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes flFeedbackPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fl-question-in {
+  animation: flQuestionIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-fl-feedback-pop {
+  animation: flFeedbackPop 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
