@@ -8,6 +8,11 @@ const BOSS_BASE_DAMAGE = 12;
 const COMPETITOR_TICK_MS = 250;
 const TIMER_TICK_MS = 100;
 const SPECIAL_ATTACK_WARN_MS = 1500;
+const COMPETITOR_DIFFICULTY_SCALING_FACTOR = 200;
+const ENRAGED_COMPETITOR_DPS_MULTIPLIER = 1.15;
+const MAX_COMPETITOR_DPS = 600;
+const ENRAGED_SPECIAL_INTERVAL_MULTIPLIER = 0.7;
+const SPECIAL_INTERVAL_DIFFICULTY_REDUCTION = 0.25;
 
 const DEFAULT_CONFIG: CompetitionBossConfig = {
   bossId: 'competition-boss-default',
@@ -227,14 +232,14 @@ export class CompetitionBossEngine {
   }
 
   private computeCompetitorAttackRate(): number {
-    const difficultyMultiplier = 1 + this.config.difficulty / 200;
-    const enragedMultiplier = this.enraged() ? 1.15 : 1;
-    return clamp(this.config.competitorDps * difficultyMultiplier * enragedMultiplier, 1, 600);
+    const difficultyMultiplier = 1 + this.config.difficulty / COMPETITOR_DIFFICULTY_SCALING_FACTOR;
+    const enragedMultiplier = this.enraged() ? ENRAGED_COMPETITOR_DPS_MULTIPLIER : 1;
+    return clamp(this.config.competitorDps * difficultyMultiplier * enragedMultiplier, 1, MAX_COMPETITOR_DPS);
   }
 
   private currentSpecialAttackIntervalMs(): number {
-    const enrageMultiplier = this.enraged() ? 0.7 : 1;
-    const difficultyMultiplier = 1 - (this.config.difficulty / 100) * 0.25;
+    const enrageMultiplier = this.enraged() ? ENRAGED_SPECIAL_INTERVAL_MULTIPLIER : 1;
+    const difficultyMultiplier = 1 - (this.config.difficulty / 100) * SPECIAL_INTERVAL_DIFFICULTY_REDUCTION;
     return clamp(
       Math.round(this.config.specialAttackIntervalMs * enrageMultiplier * difficultyMultiplier),
       1000,

@@ -218,15 +218,12 @@ export class GameModeComponent implements OnDestroy {
       const isCompetitionBoss = this.selectedMode() === 'competition-boss';
       const challenge = this.challenge();
       const outcome = this.competitionBossEngine.outcome();
-      const isCompetitionBossSubmissionArmed = this.competitionBossSubmissionArmed();
 
       if (
         !isCompetitionBoss
-        || !isCompetitionBossSubmissionArmed
         || !challenge
         || !this.isLegacyChallenge(challenge)
         || outcome === 'in-progress'
-        || this.challengeSubmitted()
       ) {
         return;
       }
@@ -1223,7 +1220,6 @@ export class GameModeComponent implements OnDestroy {
     } else {
       const mapScore = this.mapScore();
       const mapAccuracy = this.mapProgressPercent();
-      const competitionBossScore = correct ? 100 : 0;
       let submittedScore = 100;
       let submittedAccuracy = 100;
 
@@ -1231,6 +1227,7 @@ export class GameModeComponent implements OnDestroy {
         submittedScore = Math.max(0, mapScore);
         submittedAccuracy = mapAccuracy;
       } else if (isCompetitionBoss) {
+        const competitionBossScore = correct ? 100 : 0;
         submittedScore = competitionBossScore;
         submittedAccuracy = competitionBossScore;
       }
