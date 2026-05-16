@@ -360,43 +360,156 @@
         </div>
       }
 
-      <div class="grid gap-3 md:grid-cols-3">
-        <label class="text-sm text-gray-600">
-          {{ 'worksheet.topic' | translate }}
-          <select
-            class="mt-1 w-full border rounded-md px-3 py-2"
-            [ngModel]="selectedTopicId()"
-            (ngModelChange)="selectedTopicId.set($event)"
-          >
-            @for (topic of topics(); track topic.id) {
-              @if (topic.supportsAiWorksheet) {
-                <option [ngValue]="topic.id">{{ topic.name }}</option>
+      <div class="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <div class="space-y-5">
+          <div class="rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">{{ 'worksheet.topicLibrary' | translate }}</h3>
+                <p class="text-sm text-slate-500">{{ 'worksheet.topicBrowseHelp' | translate }}</p>
+              </div>
+              @if (topicsLoading()) {
+                <span class="text-xs text-slate-400">{{ 'worksheet.updating' | translate }}</span>
               }
-            }
-          </select>
-        </label>
+            </div>
 
-        <label class="text-sm text-gray-600">
-          {{ 'worksheet.difficulty' | translate }}
-          <input
-            class="mt-1 w-full border rounded-md px-3 py-2"
-            type="number"
-            min="0"
-            max="100"
-            [ngModel]="aiDifficulty()"
-            (ngModelChange)="updateAiDifficulty($event)"
-          />
-        </label>
+            <div class="mt-4 grid gap-4 lg:grid-cols-2">
+              <section class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-sm font-semibold text-slate-800">{{ 'worksheet.k12Track' | translate }}</h4>
+                  <span class="text-xs text-slate-500">{{ k12TopicGroups().length }} {{ 'worksheet.groups' | translate }}</span>
+                </div>
+                <div class="max-h-80 space-y-3 overflow-y-auto pr-1">
+                  @for (group of k12TopicGroups(); track group.id) {
+                    <div class="rounded-lg border border-slate-200 p-3">
+                      <p class="text-sm font-semibold text-slate-800">{{ group.label }}</p>
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        @for (topic of group.topics; track topic.id) {
+                          <button
+                            type="button"
+                            class="rounded-full border px-3 py-1 text-xs font-medium transition"
+                            [class.border-primary]="selectedTopicId() === topic.id"
+                            [class.bg-primary]="selectedTopicId() === topic.id"
+                            [class.text-white]="selectedTopicId() === topic.id"
+                            [class.border-slate-200]="selectedTopicId() !== topic.id"
+                            [class.text-slate-700]="selectedTopicId() !== topic.id"
+                            (click)="selectTopic(topic.id)"
+                          >
+                            {{ topic.name }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
 
-        <div class="flex items-end">
-          <button
-            type="button"
-            class="w-full bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
-            [disabled]="aiLoading() || topicsLoading()"
-            (click)="generateAdvancedWorksheet()"
-          >
-            {{ aiLoading() ? ('worksheet.generating' | translate) : ('worksheet.generateAI' | translate) }}
-          </button>
+              <section class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-sm font-semibold text-slate-800">{{ 'worksheet.kumonTrack' | translate }}</h4>
+                  <span class="text-xs text-slate-500">{{ kumonTopicGroups().length }} {{ 'worksheet.groups' | translate }}</span>
+                </div>
+                <div class="max-h-80 space-y-3 overflow-y-auto pr-1">
+                  @for (group of kumonTopicGroups(); track group.id) {
+                    <div class="rounded-lg border border-slate-200 p-3">
+                      <p class="text-sm font-semibold text-slate-800">{{ group.label }}</p>
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        @for (topic of group.topics; track topic.id) {
+                          <button
+                            type="button"
+                            class="rounded-full border px-3 py-1 text-xs font-medium transition"
+                            [class.border-primary]="selectedTopicId() === topic.id"
+                            [class.bg-primary]="selectedTopicId() === topic.id"
+                            [class.text-white]="selectedTopicId() === topic.id"
+                            [class.border-slate-200]="selectedTopicId() !== topic.id"
+                            [class.text-slate-700]="selectedTopicId() !== topic.id"
+                            (click)="selectTopic(topic.id)"
+                          >
+                            {{ topic.name }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <label class="text-sm text-gray-600">
+            {{ 'worksheet.topic' | translate }}
+            <select
+              class="mt-1 w-full border rounded-md px-3 py-2"
+              [ngModel]="selectedTopicId()"
+              (ngModelChange)="selectTopic($event)"
+            >
+              @for (group of k12TopicGroups(); track group.id) {
+                <optgroup [label]="group.label">
+                  @for (topic of group.topics; track topic.id) {
+                    <option [ngValue]="topic.id">{{ topic.name }}</option>
+                  }
+                </optgroup>
+              }
+              @for (group of kumonTopicGroups(); track group.id) {
+                <optgroup [label]="group.label">
+                  @for (topic of group.topics; track topic.id) {
+                    <option [ngValue]="topic.id">{{ topic.name }}</option>
+                  }
+                </optgroup>
+              }
+            </select>
+          </label>
+
+          @if (selectedTopic(); as topic) {
+            <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900">
+              <p class="font-semibold">{{ topic.name }}</p>
+              <p class="mt-1 text-xs text-indigo-700">{{ topic.groupLabel }}</p>
+              <p class="mt-2 text-xs text-indigo-700">
+                {{ 'worksheet.questionTypes' | translate }}: {{ selectedTopicQuestionTypes() }}
+              </p>
+            </div>
+          }
+
+          <label class="text-sm text-gray-600">
+            {{ 'worksheet.difficulty' | translate }}
+            <input
+              class="mt-1 w-full border rounded-md px-3 py-2"
+              type="number"
+              min="0"
+              max="100"
+              [ngModel]="aiDifficulty()"
+              (ngModelChange)="updateAiDifficulty($event)"
+            />
+          </label>
+
+          <div class="grid gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              class="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              [disabled]="aiLoading() || topicsLoading() || !selectedTopic()"
+              (click)="generateAdvancedWorksheet()"
+            >
+              {{ aiLoading() ? ('worksheet.generating' | translate) : ('worksheet.generateAI' | translate) }}
+            </button>
+            <button
+              type="button"
+              class="border border-slate-300 px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              [disabled]="!aiWorksheet()"
+              (click)="printAiWorksheet()"
+            >
+              {{ 'worksheet.print' | translate }}
+            </button>
+            <button
+              type="button"
+              class="border border-slate-300 px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              [disabled]="!aiWorksheet()"
+              (click)="exportAiWorksheet()"
+            >
+              {{ 'worksheet.export' | translate }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -407,9 +520,19 @@
       @if (aiWorksheet(); as generated) {
         <div class="mt-4 rounded-lg border border-gray-200 p-4">
           <p class="text-sm text-gray-500">
-            Topic: <span class="font-semibold text-gray-700 capitalize">{{ generated.topic }}</span>
+            Topic: <span class="font-semibold text-gray-700">{{ selectedTopic()?.name ?? generated.topic }}</span>
             • Difficulty: <span class="font-semibold text-gray-700">{{ generated.difficulty }}</span>
           </p>
+          @if (generated.downloadUrl) {
+            <a
+              class="mt-2 inline-flex text-sm font-medium text-primary underline"
+              [href]="generated.downloadUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ 'worksheet.download' | translate }}
+            </a>
+          }
 
           <ol class="mt-3 space-y-2">
             @for (question of generated.questions; track question.id) {

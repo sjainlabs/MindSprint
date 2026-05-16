@@ -6,6 +6,7 @@ import { PracticeService, type Worksheet, type WorksheetResult } from '../../ser
 import { StudentIntelligenceService } from '../../services/student-intelligence.service';
 import { TopicService } from '../../services/topic.service';
 import { AiWorksheetService } from '../../services/ai-worksheet.service';
+import { PRACTICE_TOPIC_CATALOG } from '../../services/practice-topic-catalog';
 
 const worksheet: Worksheet = {
   worksheetId: 'ws-1',
@@ -106,14 +107,8 @@ describe('WorksheetPageComponent', () => {
     getTaxonomy: vi.fn(() =>
       of({
         topics: [
-          {
-            id: 'algebra-i',
-            name: 'Algebra I',
-            stage: 'Algebra I',
-            grades: [9],
-            supportsAiWorksheet: true,
-            subtopics: [],
-          },
+          PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'Kindergarten')!,
+          PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'LevelA')!,
         ],
         difficultyMapping: [],
       }),
@@ -127,7 +122,21 @@ describe('WorksheetPageComponent', () => {
   };
 
   const aiWorksheetServiceMock = {
-    generateWorksheet: vi.fn(),
+    generateWorksheet: vi.fn(() =>
+      of({
+        worksheetId: 'ai-1',
+        topic: PRACTICE_TOPIC_CATALOG[0].id,
+        difficulty: 30,
+        generatedAt: new Date().toISOString(),
+        questionTypes: ['numeric'],
+        questions: [],
+        validation: {
+          allQuestionsHaveAnswers: true,
+          hasSupportedQuestionTypes: true,
+          topicSupported: true,
+        },
+      }),
+    ),
   };
 
   beforeEach(async () => {
@@ -167,6 +176,15 @@ describe('WorksheetPageComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelectorAll('[data-testid="worksheet-question-input"]').length).toBe(10);
+  });
+
+  it('renders grouped K-12 and Kumon topic sections', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Kindergarten');
+    expect(compiled.textContent).toContain('Kumon Level A');
   });
 
   it('refreshes adaptive recommendation after worksheet submission', () => {
@@ -225,5 +243,22 @@ describe('WorksheetPageComponent', () => {
 
     expect(component.recommendedLevel()).toBe('Advanced');
     expect(component.canOpenRecommendedWorksheet()).toBe(true);
+  });
+
+  it('uses topic-specific question types when generating an AI worksheet', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    const selectedTopic = PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'LevelA')!;
+    component.selectTopic(selectedTopic.id);
+    component.generateAdvancedWorksheet();
+
+    expect(aiWorksheetServiceMock.generateWorksheet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topic: selectedTopic.id,
+        questionTypes: selectedTopic.questionTypes,
+      }),
+    );
   });
 });

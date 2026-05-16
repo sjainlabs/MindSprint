@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PracticeService, WorksheetResult, type Worksheet } from '../../services/practice.service';
 import { AiWorksheetService, type AiWorksheet } from '../../services/ai-worksheet.service';
-import { TopicService, type TopicModel } from '../../services/topic.service';
+import { TopicService } from '../../services/topic.service';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -18,6 +18,11 @@ import {
   type LearningLevel,
   normalizeLearningLevelIdentifier,
 } from '../../services/diagnostic.service';
+import {
+  type PracticeTopicDefinition,
+  type PracticeTopicGroup,
+  findPracticeTopicById,
+} from '../../services/practice-topic-catalog';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { TranslationService } from '../../services/translation.service';
@@ -58,10 +63,10 @@ export class WorksheetPageComponent implements OnInit {
   intelligenceError = signal('');
   adaptiveNavigationLoading = signal(false);
 
-  topics = signal<TopicModel[]>([]);
+  topics = signal<PracticeTopicDefinition[]>([]);
   topicsLoading = signal(false);
-  personalizedPath = signal<TopicModel[]>([]);
-  selectedTopicId = signal('algebra-i');
+  personalizedPath = signal<PracticeTopicDefinition[]>([]);
+  selectedTopicId = signal('');
   aiDifficulty = signal(75);
   aiWorksheet = signal<AiWorksheet | null>(null);
   aiLoading = signal(false);
@@ -146,6 +151,10 @@ export class WorksheetPageComponent implements OnInit {
   });
 
   accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
+  k12TopicGroups = computed(() => this.groupTopics('k12'));
+  kumonTopicGroups = computed(() => this.groupTopics('kumon'));
+  selectedTopic = computed(() => findPracticeTopicById(this.selectedTopicId()) ?? this.topics()[0] ?? null);
+  selectedTopicQuestionTypes = computed(() => this.selectedTopic()?.questionTypes.join(', ') ?? '');
   recommendedLevel = computed(() => this.getNormalizedRecommendedLevel(this.recommendation()));
   recommendedLevelDisplay = computed(() => {
     const recommendation = this.recommendation();
@@ -240,7 +249,7 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   generateAdvancedWorksheet(): void {
-    const topic = this.selectedTopicId();
+    const topic = this.selectedTopic();
     if (!topic || this.aiLoading()) {
       return;
     }
@@ -251,18 +260,9 @@ export class WorksheetPageComponent implements OnInit {
 
     this.aiWorksheetService
       .generateWorksheet({
-        topic,
+        topic: topic.id,
         difficulty: this.aiDifficulty(),
-        questionTypes: [
-          'numeric',
-          'symbolic',
-          'multi-step',
-          'graph-interpretation',
-          'word-problem',
-          'proof-style',
-          'function-analysis',
-          'trig-identity',
-        ],
+        questionTypes: topic.questionTypes,
         questionCount: 8,
         studentId: this.studentId(),
       })
@@ -281,6 +281,83 @@ export class WorksheetPageComponent implements OnInit {
   updateAiDifficulty(value: number | string): void {
     const parsed = typeof value === 'number' ? value : Number(value);
     this.aiDifficulty.set(Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 75);
+  }
+
+  selectTopic(topicId: string): void {
+    this.selectedTopicId.set(topicId);
+    const topic = this.selectedTopic();
+    const suggestedDifficulty = topic?.subtopics[0]
+      ? Math.round((topic.subtopics[0].difficulty.min + topic.subtopics[0].difficulty.max) / 2)
+      : 75;
+    this.aiDifficulty.set(suggestedDifficulty);
+  }
+
+  printAiWorksheet(): void {
+    const worksheet = this.aiWorksheet();
+    if (!worksheet || typeof window === 'undefined') {
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!printWindow) {
+      return;
+    }
+
+    const topic = this.selectedTopic();
+    const questionsHtml = worksheet.questions
+      .map(
+        (question, index) => `
+          <li style="margin-bottom: 12px;">
+            <strong>${index + 1}.</strong> ${this.escapeHtml(question.prompt)}
+            <div style="margin-top: 4px; color: #4b5563; font-size: 12px;">Answer: ${this.escapeHtml(question.answer)}</div>
+          </li>`,
+      )
+      .join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${this.escapeHtml(topic?.name ?? worksheet.topic)}</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; padding: 24px;">
+          <h1>${this.escapeHtml(topic?.name ?? worksheet.topic)}</h1>
+          <p>${this.escapeHtml(topic?.groupLabel ?? '')}</p>
+          <p>Difficulty: ${worksheet.difficulty}</p>
+          <ol>${questionsHtml}</ol>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }
+
+  exportAiWorksheet(): void {
+    const worksheet = this.aiWorksheet();
+    if (!worksheet || typeof document === 'undefined' || typeof URL === 'undefined') {
+      return;
+    }
+
+    const topic = this.selectedTopic();
+    const exportText = [
+      `${topic?.name ?? worksheet.topic} (${topic?.groupLabel ?? ''})`,
+      `Difficulty: ${worksheet.difficulty}`,
+      `Generated: ${worksheet.generatedAt}`,
+      '',
+      ...worksheet.questions.flatMap((question, index) => [
+        `${index + 1}. ${question.prompt}`,
+        `Answer: ${question.answer}`,
+        '',
+      ]),
+    ].join('\n');
+
+    const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = `${topic?.id ?? worksheet.topic}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
   }
 
   private refreshStudentInsights(result?: WorksheetResult): void {
@@ -380,7 +457,13 @@ export class WorksheetPageComponent implements OnInit {
     this.topicsLoading.set(true);
     this.topicService.getTaxonomy().subscribe({
       next: (taxonomy) => {
-        this.topics.set(taxonomy.topics);
+        const supportedTopics = taxonomy.topics
+          .filter((topic): topic is PracticeTopicDefinition => topic.supportsAiWorksheet)
+          .sort((left, right) => left.displayOrder - right.displayOrder);
+        this.topics.set(supportedTopics);
+        if (!supportedTopics.some((topic) => topic.id === this.selectedTopicId())) {
+          this.selectTopic(supportedTopics[0]?.id ?? '');
+        }
         this.topicsLoading.set(false);
       },
       error: () => {
@@ -390,7 +473,11 @@ export class WorksheetPageComponent implements OnInit {
 
     this.topicService.getPersonalizedPath(this.studentId()).subscribe({
       next: (response) => {
-        this.personalizedPath.set(response.personalizedPath);
+        this.personalizedPath.set(
+          response.personalizedPath
+            .map((topic) => findPracticeTopicById(topic.id))
+            .filter((topic): topic is PracticeTopicDefinition => !!topic),
+        );
       },
       error: () => {
         this.personalizedPath.set([]);
@@ -463,5 +550,33 @@ export class WorksheetPageComponent implements OnInit {
     };
     const key = keyByLevel[level];
     return this.t.translate(key);
+  }
+
+  private groupTopics(track: PracticeTopicGroup['track']): PracticeTopicGroup[] {
+    const grouped = new Map<string, PracticeTopicGroup>();
+    for (const topic of this.topics()) {
+      if (topic.track !== track) {
+        continue;
+      }
+      if (!grouped.has(topic.groupKey)) {
+        grouped.set(topic.groupKey, {
+          id: `${track}-${topic.groupKey}`,
+          label: topic.groupLabel,
+          track,
+          topics: [],
+        });
+      }
+      grouped.get(topic.groupKey)?.topics.push(topic);
+    }
+    return Array.from(grouped.values());
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 }

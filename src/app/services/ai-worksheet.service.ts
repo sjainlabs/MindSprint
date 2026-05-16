@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { generatePracticeWorksheetPreview } from './practice-topic-catalog';
 
 export type AdvancedQuestionType =
   | 'numeric'
@@ -26,6 +27,7 @@ export interface AiWorksheet {
   topic: string;
   difficulty: number;
   generatedAt: string;
+   downloadUrl?: string;
   questionTypes: string[];
   questions: Array<{
     id: string;
@@ -53,6 +55,8 @@ export class AiWorksheetService {
   constructor(private readonly http: HttpClient) {}
 
   generateWorksheet(payload: AiWorksheetRequest): Observable<AiWorksheet> {
-    return this.http.post<AiWorksheet>(`${this.apiRoot}/ai/worksheet`, payload);
+    return this.http
+      .post<AiWorksheet>(`${this.apiRoot}/ai/worksheet`, payload)
+      .pipe(catchError(() => of(generatePracticeWorksheetPreview(payload))));
   }
 }
