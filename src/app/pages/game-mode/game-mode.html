@@ -215,6 +215,16 @@
               />
             }
 
+            <!-- ⭐ REASONING PUZZLE GAME MODE -->
+            @if (isReasoningPuzzleSelectedMode()) {
+              <app-reasoning-puzzle-mode
+                [engine]="reasoningPuzzleEngine"
+                [loading]="loading()"
+                (submitAnswer)="onReasoningPuzzleSubmit($event)"
+                (nextPuzzle)="loadChallenge()"
+              />
+            }
+
             <!-- ⭐ FLUENCY GAME MODE -->
             @if (selectedMode() === 'fluency') {
               <app-fluency-mode

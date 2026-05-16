@@ -24,6 +24,8 @@ import { AiPuzzleComponent } from './ai-puzzle/ai-puzzle.component';
 import { AiPuzzleEngine } from './ai-puzzle/ai-puzzle.engine';
 import { FluencyModeComponent } from './fluency/fluency.component';
 import { FluencyEngine, type FluencyOperation } from './fluency/fluency.engine';
+import { ReasoningPuzzleModeComponent } from './reasoning-puzzle/reasoning-puzzle.component';
+import { ReasoningPuzzleEngine } from './reasoning-puzzle/reasoning-puzzle.engine';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
@@ -59,6 +61,13 @@ type AiPuzzlePayload = {
   answer: string;
   difficulty: number;
 };
+type ReasoningPuzzlePayload = {
+  puzzleId: string;
+  prompt: string;
+  options?: string[];
+  answer: string;
+  difficulty: number;
+};
 
 export type SuperGameMode =
   | 'abacus-flash'
@@ -85,6 +94,7 @@ export type SuperGameMode =
     BossBattleComponent,
     AiPuzzleComponent,
     FluencyModeComponent,
+    ReasoningPuzzleModeComponent,
   ],
   templateUrl: './game-mode.html',
   styleUrl: './game-mode.css',
@@ -128,6 +138,7 @@ export class GameModeComponent implements OnDestroy {
   readonly bossBattleEngine = new BossBattleEngine();
   readonly aiPuzzleEngine = new AiPuzzleEngine();
   readonly fluencyEngine = new FluencyEngine();
+  readonly reasoningPuzzleEngine = new ReasoningPuzzleEngine();
 
   gameModeOptions: Array<{ value: SuperGameMode; label: string; description: string; icon: string }> = [
     { value: 'abacus-flash', label: 'Abacus Flash', description: 'Flash-card speed drills with adaptive pacing.', icon: '🔢' },
@@ -243,12 +254,21 @@ export class GameModeComponent implements OnDestroy {
   }
 
   isAiPuzzleSelectedMode(): boolean {
-    return this.selectedMode() === 'ai-puzzle' || this.selectedMode() === 'reasoning-puzzle';
+    return this.selectedMode() === 'ai-puzzle';
+  }
+
+  isReasoningPuzzleSelectedMode(): boolean {
+    return this.selectedMode() === 'reasoning-puzzle';
   }
 
   shouldShowGenericNextChallenge(): boolean {
     const mode = this.selectedMode();
-    return mode !== 'abacus-flash' && !this.isAiPuzzleSelectedMode() && mode !== 'fluency';
+    return (
+      mode !== 'abacus-flash'
+      && !this.isAiPuzzleSelectedMode()
+      && !this.isReasoningPuzzleSelectedMode()
+      && mode !== 'fluency'
+    );
   }
 
   getMapChallenge(): MapChallenge | null {
@@ -522,6 +542,7 @@ export class GameModeComponent implements OnDestroy {
     this.bossBattleEngine.stop();
     this.aiPuzzleEngine.stop();
     this.fluencyEngine.stop();
+    this.reasoningPuzzleEngine.stop();
   }
 
   private getFallingPayload(challenge: LegacyChallenge): FallingEnginePayload {
@@ -617,6 +638,35 @@ export class GameModeComponent implements OnDestroy {
         ) as FluencyOperation[])
       : undefined;
     return { timeLimitSeconds, difficulty, operations };
+  }
+
+  private getReasoningPuzzlePayload(challenge: LegacyChallenge): ReasoningPuzzlePayload {
+    const raw = (challenge.gamePayload ?? {}) as Record<string, unknown>;
+    const challengeAnswer = 'answer' in challenge ? challenge.answer : '';
+    const challengePrompt = 'prompt' in challenge ? challenge.prompt : '';
+    const challengeOptions = 'options' in challenge ? challenge.options : [];
+
+    const optionsRaw = Array.isArray(raw['options']) ? raw['options'] : challengeOptions;
+    const options = optionsRaw
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+
+    const promptRaw = typeof raw['prompt'] === 'string' ? raw['prompt'] : challengePrompt;
+    const answerRaw =
+      typeof raw['answer'] === 'string' || typeof raw['answer'] === 'number'
+        ? raw['answer']
+        : challengeAnswer;
+
+    return {
+      puzzleId: typeof raw['puzzleId'] === 'string' ? raw['puzzleId'] : challenge.challengeId,
+      prompt: String(promptRaw ?? '').trim(),
+      options,
+      answer: String(answerRaw ?? '').trim(),
+      difficulty:
+        typeof raw['difficulty'] === 'number' && Number.isFinite(raw['difficulty'])
+          ? Math.round(raw['difficulty'])
+          : challenge.difficulty,
+    };
   }
 
   /** Extract the typed abacus-flash payload from a challenge's gamePayload. */
@@ -826,6 +876,14 @@ export class GameModeComponent implements OnDestroy {
             this.aiPuzzleEngine.stop();
           }
 
+          if (this.isReasoningPuzzleSelectedMode() && this.isLegacyChallenge(challenge)) {
+            const reasoningPayload = this.getReasoningPuzzlePayload(challenge);
+            this.reasoningPuzzleEngine.configure(reasoningPayload);
+            this.reasoningPuzzleEngine.start();
+          } else {
+            this.reasoningPuzzleEngine.stop();
+          }
+
           // ⭐ FLUENCY — START ENGINE HERE ONLY
           if (this.selectedMode() === 'fluency' && this.isLegacyChallenge(challenge)) {
             const fluencyPayload = this.getFluencyPayload(challenge);
@@ -858,6 +916,7 @@ export class GameModeComponent implements OnDestroy {
     const isMapChallenge = this.isMapChallenge(challenge) && this.selectedMode() === 'map';
     const isAbacusFlash = this.activeChallengeApiMode === 'abacus-flash';
     const isAiPuzzle = this.activeChallengeApiMode === 'ai-puzzle';
+    const isReasoningPuzzle = this.selectedMode() === 'reasoning-puzzle';
     const hasAnswerOptions = this.hasAnswerOptions(challenge);
     const selected = this.selectedAnswer();
     if (isAbacusFlash && typeof selected !== 'number') {
@@ -871,7 +930,9 @@ export class GameModeComponent implements OnDestroy {
     const correct = isMapChallenge
       ? this.evaluateMapChallenge()
       : isAiPuzzle
-        ? this.aiPuzzleEngine.isCorrect() === true
+        ? (isReasoningPuzzle
+            ? this.reasoningPuzzleEngine.isCorrect() === true
+            : this.aiPuzzleEngine.isCorrect() === true)
       : hasAnswerOptions
         ? selected === challenge.answer
         : isAbacusFlash
@@ -966,6 +1027,15 @@ export class GameModeComponent implements OnDestroy {
     if (!wasEvaluated) {
       return;
     }
+    this.submitChallenge();
+  }
+
+  onReasoningPuzzleSubmit(answer: string): void {
+    const wasEvaluated = this.reasoningPuzzleEngine.submitAnswer(answer);
+    if (!wasEvaluated || !this.reasoningPuzzleEngine.isCompleted()) {
+      return;
+    }
+    this.selectedAnswer.set(answer);
     this.submitChallenge();
   }
 

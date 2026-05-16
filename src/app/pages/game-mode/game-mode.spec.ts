@@ -101,6 +101,18 @@ const mockAiPuzzleChallenge = {
   },
 };
 
+const mockReasoningPuzzleChallenge = {
+  ...mockAiPuzzleChallenge,
+  challengeId: 'rp-1',
+  gamePayload: {
+    puzzleId: 'rp-001',
+    prompt: 'Find the missing letter: A, C, F, J, ?',
+    options: ['K', 'M', 'O', 'P'],
+    answer: 'O',
+    difficulty: 72,
+  },
+};
+
 const mockAbacusFlashSubmitResponse = {
   correct: true,
   xpEarned: 15,
@@ -168,7 +180,7 @@ describe('GameModeComponent', () => {
     const comp = fixture.componentInstance;
 
     const superValues = comp.superModes.map((m) => m.value);
-    expect(superValues).toContain('fluency-speed');
+    expect(superValues).toContain('fluency');
     expect(superValues).toContain('reasoning-puzzle');
     expect(superValues).toContain('map');
     expect(superValues).toContain('competition-boss');
@@ -191,7 +203,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    for (const mode of ['fluency-speed', 'reasoning-puzzle', 'map', 'competition-boss'] as const) {
+    for (const mode of ['fluency', 'reasoning-puzzle', 'map', 'competition-boss'] as const) {
       comp.selectedMode.set(mode);
       expect(comp.isSuperMode()).toBe(true);
     }
@@ -201,7 +213,7 @@ describe('GameModeComponent', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     const comp = fixture.componentInstance;
 
-    comp.selectedMode.set('fluency-speed');
+    comp.selectedMode.set('fluency');
     expect(comp.superModeInfo()).toBeTruthy();
     expect(comp.superModeInfo()!.tip).toBeTruthy();
   });
@@ -211,7 +223,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    comp.selectedMode.set('fluency-speed');
+    comp.selectedMode.set('fluency');
     comp.selectedAnswer.set(mockAbacusAnswer);
     comp.submitChallenge();
 
@@ -223,7 +235,7 @@ describe('GameModeComponent', () => {
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    comp.selectedMode.set('fluency-speed');
+    comp.selectedMode.set('fluency');
     comp.selectedAnswer.set(999); // wrong
     comp.submitChallenge();
 
@@ -236,15 +248,13 @@ describe('GameModeComponent', () => {
 
     const comp = fixture.componentInstance;
 
-    // Trigger a challenge load for each super mode
-    comp.selectedMode.set('fluency-speed');
+    // Trigger a challenge load for fluency mode
+    comp.selectedMode.set('fluency');
     comp.loadChallenge();
-    // The call should map to 'abacus-flash'
-    const allCalls = gameServiceMock.getAbacusFlashChallenge.mock.calls as unknown as Array<[{ mode?: string }]>;
-    const lastArg = allCalls[allCalls.length - 1]?.[0];
-    if (lastArg) {
-      expect(typeof lastArg).toBe('object');
-    }
+
+    expect(gameServiceMock.getChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'ai-puzzle' }),
+    );
   });
 
   it('loads MAP challenge payload when map mode is selected', () => {
@@ -382,30 +392,29 @@ describe('GameModeComponent', () => {
     expect(gameServiceMock.getChallenge).not.toHaveBeenCalled();
   });
 
-  it('treats fluency-speed as abacus-flash active mode', () => {
+  it('does not treat fluency as abacus-flash active mode', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    comp.selectedMode.set('fluency-speed');
+    comp.selectedMode.set('fluency');
     comp.loadChallenge();
 
-    expect(comp.isAbacusFlashActive()).toBe(true);
-    expect(comp.isFlashing()).toBe(true);
+    expect(comp.isAbacusFlashActive()).toBe(false);
+    expect(comp.isFlashing()).toBe(false);
   });
 
-  it('renders abacus answer input for fluency-speed after flash sequence', () => {
+  it('does not render abacus answer input for fluency mode', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    comp.selectedMode.set('fluency-speed');
+    comp.selectedMode.set('fluency');
     comp.loadChallenge();
-    vi.advanceTimersByTime(mockFlashPayload.speedMs * mockFlashPayload.flashSequence.length + 50);
     fixture.detectChanges();
 
     const input: HTMLInputElement | null = fixture.nativeElement.querySelector('#abacus-answer');
-    expect(input).toBeTruthy();
+    expect(input).toBeFalsy();
   });
 
   it('starts with showQuestion=false and isFlashing=true for abacus-flash', () => {
@@ -677,6 +686,42 @@ describe('GameModeComponent', () => {
 
     expect(comp.challengeSubmitted()).toBe(true);
     expect(comp.aiPuzzleEngine.isCorrect()).toBe(true);
+    expect(gameServiceMock.submitChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'ai-puzzle' }),
+    );
+  });
+
+  it('configures and starts reasoning puzzle engine when reasoning-puzzle mode is loaded', () => {
+    gameServiceMock.getChallenge.mockReturnValueOnce(of(mockReasoningPuzzleChallenge as any));
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('reasoning-puzzle');
+    comp.loadChallenge();
+
+    expect(comp.reasoningPuzzleEngine.prompt()).toContain('Find the missing letter');
+    expect(comp.reasoningPuzzleEngine.options()).toEqual(['K', 'M', 'O', 'P']);
+    expect(comp.reasoningPuzzleEngine.isRunning()).toBe(true);
+  });
+
+  it('submits reasoning puzzle answers only when solved correctly', () => {
+    gameServiceMock.getChallenge.mockReturnValueOnce(of(mockReasoningPuzzleChallenge as any));
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.selectedMode.set('reasoning-puzzle');
+    comp.loadChallenge();
+    comp.onReasoningPuzzleSubmit('K');
+
+    expect(comp.challengeSubmitted()).toBe(false);
+    expect(comp.reasoningPuzzleEngine.isCompleted()).toBe(false);
+
+    comp.onReasoningPuzzleSubmit('O');
+
+    expect(comp.challengeSubmitted()).toBe(true);
+    expect(comp.reasoningPuzzleEngine.isCorrect()).toBe(true);
     expect(gameServiceMock.submitChallenge).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'ai-puzzle' }),
     );
