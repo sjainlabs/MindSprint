@@ -41,8 +41,7 @@ export class ReasoningPuzzleEngine {
     const options = Array.isArray(config.options)
       ? config.options.map((item) => String(item).trim()).filter((item) => item.length > 0)
       : [];
-    const rawAnswer = String(config.answer).trim();
-    const answer = rawAnswer.length > 0 ? rawAnswer : options[0] ?? '';
+    const answer = String(config.answer).trim();
     const difficulty = clamp(Math.round(config.difficulty ?? DEFAULT_CONFIG.difficulty), 1, 100);
 
     this.config = {
