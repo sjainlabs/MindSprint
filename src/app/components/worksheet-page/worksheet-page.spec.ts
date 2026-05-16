@@ -2,7 +2,11 @@ import { of } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { WorksheetPageComponent } from './worksheet-page';
-import { PracticeService, type Worksheet, type WorksheetResult } from '../../services/practice.service';
+import {
+  PracticeService,
+  type Worksheet,
+  type WorksheetResult,
+} from '../../services/practice.service';
 import { StudentIntelligenceService } from '../../services/student-intelligence.service';
 import { TopicService } from '../../services/topic.service';
 import { AiWorksheetService } from '../../services/ai-worksheet.service';
@@ -87,7 +91,9 @@ describe('WorksheetPageComponent', () => {
         targetDifficulty: 78,
         recommendedLevel: 'Advanced',
         focusOperations: ['division', 'multiplication'],
-        rationale: ['Recent worksheet accuracy is above 85%, so the next worksheet increases difficulty.'],
+        rationale: [
+          'Recent worksheet accuracy is above 85%, so the next worksheet increases difficulty.',
+        ],
         difficultyScore: {
           overallScore: 82,
           operationScores: {

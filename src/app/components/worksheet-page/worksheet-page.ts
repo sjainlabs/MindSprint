@@ -137,7 +137,9 @@ export class WorksheetPageComponent implements OnInit {
     });
   }
 
-  attemptedCount = computed(() => Object.values(this.answers()).filter((value) => value !== null).length);
+  attemptedCount = computed(
+    () => Object.values(this.answers()).filter((value) => value !== null).length,
+  );
 
   masteryEntries = computed(() => {
     const profile = this.studentProfile();
@@ -150,10 +152,15 @@ export class WorksheetPageComponent implements OnInit {
       .map(([operation, mastery]) => ({ operation, mastery }));
   });
 
-  accuracyTrend = computed(() => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? []);
+  accuracyTrend = computed(
+    () => this.studentAnalytics()?.accuracyOverTime.slice(-3).reverse() ?? [],
+  );
   k12TopicGroups = computed(() => this.groupTopics('k12'));
   kumonTopicGroups = computed(() => this.groupTopics('kumon'));
-  selectedTopic = computed(() => findPracticeTopicById(this.selectedTopicId()) ?? this.topics()[0] ?? null);
+  selectedTopic = computed(
+    () => findPracticeTopicById(this.selectedTopicId()) ?? this.topics()[0] ?? null,
+  );
+  selectedTopicName = computed(() => this.selectedTopic()?.name ?? '');
   selectedTopicQuestionTypes = computed(() => this.selectedTopic()?.questionTypes.join(', ') ?? '');
   recommendedLevel = computed(() => this.getNormalizedRecommendedLevel(this.recommendation()));
   recommendedLevelDisplay = computed(() => {
@@ -294,42 +301,69 @@ export class WorksheetPageComponent implements OnInit {
 
   printAiWorksheet(): void {
     const worksheet = this.aiWorksheet();
-    if (!worksheet || typeof window === 'undefined') {
-      return;
-    }
-
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-    if (!printWindow) {
+    if (!worksheet || typeof document === 'undefined') {
       return;
     }
 
     const topic = this.selectedTopic();
-    const questionsHtml = worksheet.questions
-      .map(
-        (question, index) => `
-          <li style="margin-bottom: 12px;">
-            <strong>${index + 1}.</strong> ${this.escapeHtml(question.prompt)}
-            <div style="margin-top: 4px; color: #4b5563; font-size: 12px;">Answer: ${this.escapeHtml(question.answer)}</div>
-          </li>`,
-      )
-      .join('');
+    const frame = document.createElement('iframe');
+    frame.style.position = 'fixed';
+    frame.style.width = '0';
+    frame.style.height = '0';
+    frame.style.border = '0';
+    frame.style.opacity = '0';
+    document.body.appendChild(frame);
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${this.escapeHtml(topic?.name ?? worksheet.topic)}</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; padding: 24px;">
-          <h1>${this.escapeHtml(topic?.name ?? worksheet.topic)}</h1>
-          <p>${this.escapeHtml(topic?.groupLabel ?? '')}</p>
-          <p>Difficulty: ${worksheet.difficulty}</p>
-          <ol>${questionsHtml}</ol>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+    const frameWindow = frame.contentWindow;
+    const frameDocument = frame.contentDocument;
+    if (!frameWindow || !frameDocument) {
+      frame.remove();
+      return;
+    }
+
+    frameDocument.open();
+    frameDocument.write('<!DOCTYPE html><html><head><title></title></head><body></body></html>');
+    frameDocument.close();
+
+    frameDocument.title = topic?.name ?? worksheet.topic;
+    frameDocument.body.style.fontFamily = 'Arial, sans-serif';
+    frameDocument.body.style.padding = '24px';
+
+    const heading = frameDocument.createElement('h1');
+    heading.textContent = topic?.name ?? worksheet.topic;
+    frameDocument.body.appendChild(heading);
+
+    const subheading = frameDocument.createElement('p');
+    subheading.textContent = topic?.groupLabel ?? '';
+    frameDocument.body.appendChild(subheading);
+
+    const difficulty = frameDocument.createElement('p');
+    difficulty.textContent = `Difficulty: ${worksheet.difficulty}`;
+    frameDocument.body.appendChild(difficulty);
+
+    const list = frameDocument.createElement('ol');
+    for (const [index, question] of worksheet.questions.entries()) {
+      const item = frameDocument.createElement('li');
+      item.style.marginBottom = '12px';
+
+      const prompt = frameDocument.createElement('div');
+      prompt.textContent = `${index + 1}. ${question.prompt}`;
+      item.appendChild(prompt);
+
+      const answer = frameDocument.createElement('div');
+      answer.style.marginTop = '4px';
+      answer.style.color = '#4b5563';
+      answer.style.fontSize = '12px';
+      answer.textContent = `Answer: ${question.answer}`;
+      item.appendChild(answer);
+
+      list.appendChild(item);
+    }
+
+    frameDocument.body.appendChild(list);
+    frameWindow.focus();
+    frameWindow.print();
+    window.setTimeout(() => frame.remove(), 1000);
   }
 
   exportAiWorksheet(): void {
@@ -340,13 +374,13 @@ export class WorksheetPageComponent implements OnInit {
 
     const topic = this.selectedTopic();
     const exportText = [
-      `${topic?.name ?? worksheet.topic} (${topic?.groupLabel ?? ''})`,
+      `${this.sanitizeTextLine(topic?.name ?? worksheet.topic)} (${this.sanitizeTextLine(topic?.groupLabel ?? '')})`,
       `Difficulty: ${worksheet.difficulty}`,
-      `Generated: ${worksheet.generatedAt}`,
+      `Generated: ${this.sanitizeTextLine(worksheet.generatedAt)}`,
       '',
       ...worksheet.questions.flatMap((question, index) => [
-        `${index + 1}. ${question.prompt}`,
-        `Answer: ${question.answer}`,
+        `${index + 1}. ${this.sanitizeTextLine(question.prompt)}`,
+        `Answer: ${this.sanitizeTextLine(question.answer)}`,
         '',
       ]),
     ].join('\n');
@@ -355,7 +389,7 @@ export class WorksheetPageComponent implements OnInit {
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = objectUrl;
-    anchor.download = `${topic?.id ?? worksheet.topic}.txt`;
+    anchor.download = `${this.sanitizeFilename(topic?.id ?? worksheet.topic)}.txt`;
     anchor.click();
     URL.revokeObjectURL(objectUrl);
   }
@@ -379,18 +413,19 @@ export class WorksheetPageComponent implements OnInit {
         }
 
         this.studentIntelligenceService
-            .getAdaptiveRecommendation({
-              studentId: this.studentId(),
-              currentLevel: this.currentLevel(),
-              recentAccuracy: result.accuracy,
-              operationAccuracy: this.mapOperationAccuracy(result),
-              confidence: this.normalizeConfidence(profile.confidenceLevel),
-              averageSecondsPerQuestion: result.totalQuestions > 0
+          .getAdaptiveRecommendation({
+            studentId: this.studentId(),
+            currentLevel: this.currentLevel(),
+            recentAccuracy: result.accuracy,
+            operationAccuracy: this.mapOperationAccuracy(result),
+            confidence: this.normalizeConfidence(profile.confidenceLevel),
+            averageSecondsPerQuestion:
+              result.totalQuestions > 0
                 ? this.roundToTwoDecimals(result.totalDurationSeconds / result.totalQuestions)
                 : undefined,
-              diagnosticAccuracy: profile.learningPathLevel * 2,
-              latestGameScore: analytics.gameAnalytics?.averageScore ?? 0,
-            })
+            diagnosticAccuracy: profile.learningPathLevel * 2,
+            latestGameScore: analytics.gameAnalytics?.averageScore ?? 0,
+          })
           .subscribe({
             next: (recommendation) => {
               this.recommendation.set(this.normalizeRecommendationForLogic(recommendation));
@@ -443,14 +478,19 @@ export class WorksheetPageComponent implements OnInit {
       return accumulator;
     }, {});
 
-    return Object.entries(stats).reduce<Partial<Record<MathOperation, number>>>((accumulator, [operation, current]) => {
-      if (!current || current.attempted === 0) {
-        return accumulator;
-      }
+    return Object.entries(stats).reduce<Partial<Record<MathOperation, number>>>(
+      (accumulator, [operation, current]) => {
+        if (!current || current.attempted === 0) {
+          return accumulator;
+        }
 
-      accumulator[operation as MathOperation] = Math.round((current.correct / current.attempted) * 100);
-      return accumulator;
-    }, {});
+        accumulator[operation as MathOperation] = Math.round(
+          (current.correct / current.attempted) * 100,
+        );
+        return accumulator;
+      },
+      {},
+    );
   }
 
   private loadTopicTaxonomy(): void {
@@ -485,7 +525,9 @@ export class WorksheetPageComponent implements OnInit {
     });
   }
 
-  private getNormalizedRecommendedLevel(recommendation: WorksheetRecommendation | null): LearningLevel | null {
+  private getNormalizedRecommendedLevel(
+    recommendation: WorksheetRecommendation | null,
+  ): LearningLevel | null {
     if (!recommendation) {
       return null;
     }
@@ -495,30 +537,46 @@ export class WorksheetPageComponent implements OnInit {
     );
   }
 
-  private normalizeRecommendationForLogic(recommendation: WorksheetRecommendation): WorksheetRecommendation {
+  private normalizeRecommendationForLogic(
+    recommendation: WorksheetRecommendation,
+  ): WorksheetRecommendation {
     const normalizedLevel =
       normalizeLearningLevelIdentifier(recommendation.recommendedLevelRaw) ??
       normalizeLearningLevelIdentifier(recommendation.recommendedLevel);
 
-    const domainIdRaw = this.normalizeRawIdentifier(recommendation.domainIdRaw, recommendation.domainId);
-    const skillIdRaw = this.normalizeRawIdentifier(recommendation.skillIdRaw, recommendation.skillId);
-    const worksheetIdRaw = this.normalizeRawIdentifier(recommendation.worksheetIdRaw, recommendation.worksheetId);
+    const domainIdRaw = this.normalizeRawIdentifier(
+      recommendation.domainIdRaw,
+      recommendation.domainId,
+    );
+    const skillIdRaw = this.normalizeRawIdentifier(
+      recommendation.skillIdRaw,
+      recommendation.skillId,
+    );
+    const worksheetIdRaw = this.normalizeRawIdentifier(
+      recommendation.worksheetIdRaw,
+      recommendation.worksheetId,
+    );
 
     return {
       ...recommendation,
       recommendedLevelRaw: normalizedLevel ?? recommendation.recommendedLevelRaw,
       recommendedLevelDisplay:
         recommendation.recommendedLevelDisplay?.trim() ??
-        (normalizedLevel ? this.levelDisplayLabel(normalizedLevel) : recommendation.recommendedLevel),
+        (normalizedLevel
+          ? this.levelDisplayLabel(normalizedLevel)
+          : recommendation.recommendedLevel),
       domainIdRaw,
       domainId: domainIdRaw ?? recommendation.domainId,
-      domainDisplayLabel: recommendation.domainDisplayLabel?.trim() ?? recommendation.domainDisplayLabel,
+      domainDisplayLabel:
+        recommendation.domainDisplayLabel?.trim() ?? recommendation.domainDisplayLabel,
       skillIdRaw,
       skillId: skillIdRaw ?? recommendation.skillId,
-      skillDisplayLabel: recommendation.skillDisplayLabel?.trim() ?? recommendation.skillDisplayLabel,
+      skillDisplayLabel:
+        recommendation.skillDisplayLabel?.trim() ?? recommendation.skillDisplayLabel,
       worksheetIdRaw,
       worksheetId: worksheetIdRaw ?? recommendation.worksheetId,
-      worksheetDisplayLabel: recommendation.worksheetDisplayLabel?.trim() ?? recommendation.worksheetDisplayLabel,
+      worksheetDisplayLabel:
+        recommendation.worksheetDisplayLabel?.trim() ?? recommendation.worksheetDisplayLabel,
     };
   }
 
@@ -571,12 +629,19 @@ export class WorksheetPageComponent implements OnInit {
     return Array.from(grouped.values());
   }
 
-  private escapeHtml(value: string): string {
+  private sanitizeTextLine(value: string): string {
     return value
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
+      .replace(/[\u0000-\u001f\u007f]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private sanitizeFilename(value: string): string {
+    const sanitized = value
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return sanitized || 'worksheet';
   }
 }

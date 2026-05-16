@@ -27,7 +27,7 @@ export interface AiWorksheet {
   topic: string;
   difficulty: number;
   generatedAt: string;
-   downloadUrl?: string;
+  downloadUrl?: string;
   questionTypes: string[];
   questions: Array<{
     id: string;

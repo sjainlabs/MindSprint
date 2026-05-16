@@ -78,7 +78,9 @@ export class TopicService {
     });
   }
 
-  getPersonalizedPath(studentId: string): Observable<{ studentId: string; personalizedPath: TopicModel[] }> {
+  getPersonalizedPath(
+    studentId: string,
+  ): Observable<{ studentId: string; personalizedPath: TopicModel[] }> {
     return this.http.get<{ studentId: string; personalizedPath: TopicModel[] }>(
       `${this.apiRoot}/topics/personalized-path?studentId=${encodeURIComponent(studentId)}`,
     );
@@ -90,7 +92,10 @@ export class TopicService {
     );
   }
 
-  getExplorationRecommendation(studentId: string, topicId: string): Observable<ExplorationRecommendation> {
+  getExplorationRecommendation(
+    studentId: string,
+    topicId: string,
+  ): Observable<ExplorationRecommendation> {
     return this.http.get<ExplorationRecommendation>(
       `${this.apiRoot}/topics/explore?studentId=${encodeURIComponent(studentId)}&topicId=${encodeURIComponent(topicId)}`,
     );
