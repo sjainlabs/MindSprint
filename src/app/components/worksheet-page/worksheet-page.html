@@ -5,13 +5,17 @@
         <h1 class="text-2xl font-bold text-primary">{{ 'worksheet.title' | translate }}</h1>
         <div class="flex items-center gap-3">
           <app-language-toggle />
-          <a routerLink="/diagnostic" class="text-sm text-primary underline">{{ 'worksheet.backToDiagnostic' | translate }}</a>
+          <a routerLink="/diagnostic" class="text-sm text-primary underline">{{
+            'worksheet.backToDiagnostic' | translate
+          }}</a>
         </div>
       </div>
 
       @if (loading()) {
         <div class="flex justify-center py-10">
-          <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"
+          ></div>
         </div>
       }
 
@@ -21,125 +25,144 @@
 
       @if (ready()) {
         @if (worksheet(); as activeWorksheet) {
-        <div class="mb-5">
-          <h2 class="text-xl font-semibold">{{ activeWorksheet.title }}</h2>
-          <p class="text-sm text-gray-500">{{ 'worksheet.level' | translate }}: {{ activeWorksheet.level }}</p>
-          <p class="mt-2">{{ activeWorksheet.instructions }}</p>
+          <div class="mb-5">
+            <h2 class="text-xl font-semibold">{{ activeWorksheet.title }}</h2>
+            <p class="text-sm text-gray-500">
+              {{ 'worksheet.level' | translate }}: {{ activeWorksheet.level }}
+            </p>
+            <p class="mt-2">{{ activeWorksheet.instructions }}</p>
 
-          <p class="mt-2 text-sm text-gray-600">
-            {{ 'worksheet.attempted' | translate }}: {{ attemptedCount() }}/{{ activeWorksheet.questions.length }}
-            @if (accuracyPercentage() !== null) {
-              • {{ 'worksheet.accuracy' | translate }}: {{ accuracyPercentage() }}%
-            }
-          </p>
-        </div>
-
-        @if (result() !== null) {
-          <div class="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 class="text-lg font-semibold text-blue-800 mb-2">{{ 'worksheet.results' | translate }}</h3>
-
-            <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
-              <div class="bg-white rounded p-2 text-center shadow-sm">
-                <p class="text-gray-500">{{ 'worksheet.total' | translate }}</p>
-                <p class="text-xl font-bold">{{ result()!.totalQuestions }}</p>
-              </div>
-              <div class="bg-white rounded p-2 text-center shadow-sm">
-                <p class="text-gray-500">{{ 'worksheet.attempted' | translate }}</p>
-                <p class="text-xl font-bold">{{ result()!.attempted }}</p>
-              </div>
-              <div class="bg-white rounded p-2 text-center shadow-sm">
-                <p class="text-green-600">{{ 'worksheet.correct' | translate }}</p>
-                <p class="text-xl font-bold text-green-700">{{ result()!.correct }}</p>
-              </div>
-              <div class="bg-white rounded p-2 text-center shadow-sm">
-                <p class="text-red-500">{{ 'worksheet.incorrect' | translate }}</p>
-                <p class="text-xl font-bold text-red-600">{{ result()!.incorrect }}</p>
-              </div>
-              <div class="bg-white rounded p-2 text-center shadow-sm">
-                <p class="text-gray-500">{{ 'worksheet.time' | translate }}</p>
-                <p class="text-xl font-bold">{{ result()!.totalDurationSeconds }}s</p>
-              </div>
-            </div>
-
-            <p class="mt-3 text-center font-semibold text-blue-700">{{ 'worksheet.accuracy' | translate }}: {{ result()!.accuracy }}%</p>
+            <p class="mt-2 text-sm text-gray-600">
+              {{ 'worksheet.attempted' | translate }}: {{ attemptedCount() }}/{{
+                activeWorksheet.questions.length
+              }}
+              @if (accuracyPercentage() !== null) {
+                • {{ 'worksheet.accuracy' | translate }}: {{ accuracyPercentage() }}%
+              }
+            </p>
           </div>
-        }
 
-        <ol class="space-y-3 mb-6">
-          @for (question of activeWorksheet.questions; track question.id) {
-            <li
-              class="p-3 border rounded-md"
-              [class.border-green-400]="hasCheckedAnswers() && checkedAnswers()[question.id] === true"
-              [class.bg-green-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === true"
-              [class.border-red-400]="hasCheckedAnswers() && checkedAnswers()[question.id] === false"
-              [class.bg-red-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === false"
-            >
-              <label class="block font-medium mb-2" [for]="question.id">
-                {{ question.prompt }}
-              </label>
+          @if (result() !== null) {
+            <div class="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 class="text-lg font-semibold text-blue-800 mb-2">
+                {{ 'worksheet.results' | translate }}
+              </h3>
 
-              <input
-                class="w-full border border-gray-300 rounded-md px-3 py-2"
-                type="number"
-                data-testid="worksheet-question-input"
-                [id]="question.id"
-                [name]="question.id"
-                [(ngModel)]="answers()[question.id]"
-                (ngModelChange)="updateAnswer(question.id, $event)"
-                [disabled]="result() !== null"
-              />
+              <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-gray-500">{{ 'worksheet.total' | translate }}</p>
+                  <p class="text-xl font-bold">{{ result()!.totalQuestions }}</p>
+                </div>
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-gray-500">{{ 'worksheet.attempted' | translate }}</p>
+                  <p class="text-xl font-bold">{{ result()!.attempted }}</p>
+                </div>
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-green-600">{{ 'worksheet.correct' | translate }}</p>
+                  <p class="text-xl font-bold text-green-700">{{ result()!.correct }}</p>
+                </div>
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-red-500">{{ 'worksheet.incorrect' | translate }}</p>
+                  <p class="text-xl font-bold text-red-600">{{ result()!.incorrect }}</p>
+                </div>
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-gray-500">{{ 'worksheet.time' | translate }}</p>
+                  <p class="text-xl font-bold">{{ result()!.totalDurationSeconds }}s</p>
+                </div>
+              </div>
 
-              @if (hasCheckedAnswers() && checkedAnswers()[question.id] === true) {
-                <p class="mt-1 text-sm text-green-700 font-medium">✓ {{ 'worksheet.correct' | translate }}</p>
-              }
-
-              @if (hasCheckedAnswers() && checkedAnswers()[question.id] === false) {
-                <p class="mt-1 text-sm text-red-600 font-medium">
-                  ✗ {{ 'worksheet.incorrect' | translate }} – correct answer: {{ question.answer }}
-                </p>
-              }
-            </li>
+              <p class="mt-3 text-center font-semibold text-blue-700">
+                {{ 'worksheet.accuracy' | translate }}: {{ result()!.accuracy }}%
+              </p>
+            </div>
           }
-        </ol>
 
-        @if (submitError()) {
-          <p class="mb-3 text-sm text-red-600">{{ submitError() }}</p>
-        }
+          <ol class="space-y-3 mb-6">
+            @for (question of activeWorksheet.questions; track question.id) {
+              <li
+                class="p-3 border rounded-md"
+                [class.border-green-400]="
+                  hasCheckedAnswers() && checkedAnswers()[question.id] === true
+                "
+                [class.bg-green-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === true"
+                [class.border-red-400]="
+                  hasCheckedAnswers() && checkedAnswers()[question.id] === false
+                "
+                [class.bg-red-50]="hasCheckedAnswers() && checkedAnswers()[question.id] === false"
+              >
+                <label class="block font-medium mb-2" [for]="question.id">
+                  {{ question.prompt }}
+                </label>
 
-        <div class="flex flex-wrap gap-2">
-          <button
-            type="button"
-            class="border border-gray-300 px-3 py-2 rounded-lg"
-            (click)="regenerate('Beginner')"
-            [disabled]="loading() || currentLevel() === 'Beginner'"
-          >
-            {{ 'worksheet.beginner' | translate }}
-          </button>
-          <button
-            type="button"
-            class="border border-gray-300 px-3 py-2 rounded-lg"
-            (click)="regenerate('Intermediate')"
-            [disabled]="loading() || currentLevel() === 'Intermediate'"
-          >
-            {{ 'worksheet.intermediate' | translate }}
-          </button>
-          <button
-            type="button"
-            class="border border-gray-300 px-3 py-2 rounded-lg"
-            (click)="regenerate('Advanced')"
-            [disabled]="loading() || currentLevel() === 'Advanced'"
-          >
-            {{ 'worksheet.advanced' | translate }}
-          </button>
-          <button
-            type="button"
-            class="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
-            (click)="submitWorksheet()"
-            [disabled]="loading() || submitting() || result() !== null"
-          >
-            {{ submitting() ? ('worksheet.submitting' | translate) : ('worksheet.submit' | translate) }}
-          </button>
-        </div>
+                <input
+                  class="w-full border border-gray-300 rounded-md px-3 py-2"
+                  type="number"
+                  data-testid="worksheet-question-input"
+                  [id]="question.id"
+                  [name]="question.id"
+                  [(ngModel)]="answers()[question.id]"
+                  (ngModelChange)="updateAnswer(question.id, $event)"
+                  [disabled]="result() !== null"
+                />
+
+                @if (hasCheckedAnswers() && checkedAnswers()[question.id] === true) {
+                  <p class="mt-1 text-sm text-green-700 font-medium">
+                    ✓ {{ 'worksheet.correct' | translate }}
+                  </p>
+                }
+
+                @if (hasCheckedAnswers() && checkedAnswers()[question.id] === false) {
+                  <p class="mt-1 text-sm text-red-600 font-medium">
+                    ✗ {{ 'worksheet.incorrect' | translate }} – correct answer:
+                    {{ question.answer }}
+                  </p>
+                }
+              </li>
+            }
+          </ol>
+
+          @if (submitError()) {
+            <p class="mb-3 text-sm text-red-600">{{ submitError() }}</p>
+          }
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="border border-gray-300 px-3 py-2 rounded-lg"
+              (click)="regenerate('Beginner')"
+              [disabled]="loading() || currentLevel() === 'Beginner'"
+            >
+              {{ 'worksheet.beginner' | translate }}
+            </button>
+            <button
+              type="button"
+              class="border border-gray-300 px-3 py-2 rounded-lg"
+              (click)="regenerate('Intermediate')"
+              [disabled]="loading() || currentLevel() === 'Intermediate'"
+            >
+              {{ 'worksheet.intermediate' | translate }}
+            </button>
+            <button
+              type="button"
+              class="border border-gray-300 px-3 py-2 rounded-lg"
+              (click)="regenerate('Advanced')"
+              [disabled]="loading() || currentLevel() === 'Advanced'"
+            >
+              {{ 'worksheet.advanced' | translate }}
+            </button>
+            <button
+              type="button"
+              class="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              (click)="submitWorksheet()"
+              [disabled]="loading() || submitting() || result() !== null"
+            >
+              {{
+                submitting()
+                  ? ('worksheet.submitting' | translate)
+                  : ('worksheet.submit' | translate)
+              }}
+            </button>
+          </div>
         }
       }
     </div>
@@ -147,7 +170,9 @@
     <div class="grid gap-6 lg:grid-cols-3">
       <section class="bg-white rounded-xl shadow p-6 lg:col-span-1">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-text">{{ 'worksheet.studentProfile' | translate }}</h2>
+          <h2 class="text-lg font-semibold text-text">
+            {{ 'worksheet.studentProfile' | translate }}
+          </h2>
           @if (intelligenceLoading()) {
             <span class="text-xs text-gray-400">{{ 'worksheet.updating' | translate }}</span>
           }
@@ -177,15 +202,21 @@
             </div>
             <div class="rounded-lg bg-rose-50 p-3">
               <p class="text-gray-500">{{ 'worksheet.grade' | translate }}</p>
-              <p class="text-xl font-bold text-rose-700">{{ profile.grade === 0 ? 'K' : profile.grade }}</p>
+              <p class="text-xl font-bold text-rose-700">
+                {{ profile.grade === 0 ? 'K' : profile.grade }}
+              </p>
             </div>
           </div>
 
           <div class="mb-4">
-            <h3 class="text-sm font-semibold mb-2">{{ 'worksheet.masteryByOperation' | translate }}</h3>
+            <h3 class="text-sm font-semibold mb-2">
+              {{ 'worksheet.masteryByOperation' | translate }}
+            </h3>
             <div class="space-y-2">
               @for (entry of masteryEntries(); track entry.operation) {
-                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                <div
+                  class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
+                >
                   <span class="capitalize">{{ entry.operation }}</span>
                   <span class="font-semibold">{{ entry.mastery }}%</span>
                 </div>
@@ -197,7 +228,9 @@
             <h3 class="text-sm font-semibold mb-2">{{ 'worksheet.topicMastery' | translate }}</h3>
             <div class="space-y-2 mb-4">
               @for (topicEntry of profile.topicMastery | keyvalue; track topicEntry.key) {
-                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-xs">
+                <div
+                  class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-xs"
+                >
                   <span class="capitalize">{{ topicEntry.key }}</span>
                   <span class="font-semibold">{{ topicEntry.value }}%</span>
                 </div>
@@ -210,7 +243,10 @@
                 <span class="text-sm text-gray-500">{{ 'worksheet.earnBadges' | translate }}</span>
               }
               @for (badge of profile.badges; track badge) {
-                <span class="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">{{ badge }}</span>
+                <span
+                  class="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold"
+                  >{{ badge }}</span
+                >
               }
             </div>
           </div>
@@ -220,7 +256,9 @@
       </section>
 
       <section class="bg-white rounded-xl shadow p-6 lg:col-span-1">
-        <h2 class="text-lg font-semibold text-text mb-4">{{ 'worksheet.analytics' | translate }}</h2>
+        <h2 class="text-lg font-semibold text-text mb-4">
+          {{ 'worksheet.analytics' | translate }}
+        </h2>
         @if (studentAnalytics(); as analytics) {
           <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
             <div class="rounded-lg bg-slate-50 p-3">
@@ -229,7 +267,9 @@
             </div>
             <div class="rounded-lg bg-cyan-50 p-3">
               <p class="text-gray-500">{{ 'worksheet.avgTime' | translate }}</p>
-              <p class="text-xl font-bold text-cyan-700">{{ analytics.averageTimePerWorksheet }}s</p>
+              <p class="text-xl font-bold text-cyan-700">
+                {{ analytics.averageTimePerWorksheet }}s
+              </p>
             </div>
           </div>
 
@@ -240,8 +280,10 @@
                 <p class="text-sm text-gray-500">{{ 'worksheet.completeFirst' | translate }}</p>
               }
               @for (point of accuracyTrend(); track point.worksheetId) {
-                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
-                  <span>{{ point.createdAt | date:'MMM d, h:mm a' }}</span>
+                <div
+                  class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
+                >
+                  <span>{{ point.createdAt | date: 'MMM d, h:mm a' }}</span>
                   <span class="font-semibold">{{ point.accuracy }}%</span>
                 </div>
               }
@@ -252,17 +294,25 @@
             <h3 class="text-sm font-semibold mb-2">{{ 'worksheet.topicAnalytics' | translate }}</h3>
             <div class="space-y-2 mb-4">
               @if (analytics.topicAnalytics.length === 0) {
-                <p class="text-sm text-gray-500">{{ 'worksheet.topicAnalyticsEmpty' | translate }}</p>
+                <p class="text-sm text-gray-500">
+                  {{ 'worksheet.topicAnalyticsEmpty' | translate }}
+                </p>
               }
               @for (topic of analytics.topicAnalytics; track topic.topicId) {
-                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                <div
+                  class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
+                >
                   <span class="capitalize">{{ topic.topicId }}</span>
-                  <span class="font-semibold">{{ topic.averageAccuracy }}% ({{ topic.attempts }})</span>
+                  <span class="font-semibold"
+                    >{{ topic.averageAccuracy }}% ({{ topic.attempts }})</span
+                  >
                 </div>
               }
             </div>
 
-            <h3 class="text-sm font-semibold mb-2">{{ 'worksheet.recommendedNextSteps' | translate }}</h3>
+            <h3 class="text-sm font-semibold mb-2">
+              {{ 'worksheet.recommendedNextSteps' | translate }}
+            </h3>
             <ul class="space-y-2 text-sm text-gray-700 list-disc list-inside">
               @for (step of analytics.recommendedNextSteps; track step) {
                 <li>{{ step }}</li>
@@ -270,26 +320,40 @@
             </ul>
           </div>
         } @else {
-          <p class="text-sm text-gray-500">Analytics will populate after worksheet activity is recorded.</p>
+          <p class="text-sm text-gray-500">
+            Analytics will populate after worksheet activity is recorded.
+          </p>
         }
       </section>
 
       <section class="bg-white rounded-xl shadow p-6 lg:col-span-1">
-        <h2 class="text-lg font-semibold text-text mb-4">{{ 'worksheet.adaptiveRecommendation' | translate }}</h2>
+        <h2 class="text-lg font-semibold text-text mb-4">
+          {{ 'worksheet.adaptiveRecommendation' | translate }}
+        </h2>
 
         @if (recommendation(); as nextWorksheet) {
           <div class="space-y-4">
             <div class="rounded-lg bg-indigo-50 p-4">
               <p class="text-sm text-gray-500">{{ 'worksheet.recommendedLevel' | translate }}</p>
-              <p class="text-2xl font-bold text-indigo-700">{{ recommendedLevelDisplay() ?? nextWorksheet.recommendedLevel }}</p>
-              <p class="text-sm text-gray-600 mt-1">{{ 'worksheet.targetDifficulty' | translate }}: {{ nextWorksheet.targetDifficulty }}/100</p>
+              <p class="text-2xl font-bold text-indigo-700">
+                {{ recommendedLevelDisplay() ?? nextWorksheet.recommendedLevel }}
+              </p>
+              <p class="text-sm text-gray-600 mt-1">
+                {{ 'worksheet.targetDifficulty' | translate }}:
+                {{ nextWorksheet.targetDifficulty }}/100
+              </p>
             </div>
 
             <div>
-              <h3 class="text-sm font-semibold mb-2">{{ 'worksheet.focusOperations' | translate }}</h3>
+              <h3 class="text-sm font-semibold mb-2">
+                {{ 'worksheet.focusOperations' | translate }}
+              </h3>
               <div class="flex flex-wrap gap-2">
                 @for (operation of nextWorksheet.focusOperations; track operation) {
-                  <span class="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-semibold capitalize">{{ operation }}</span>
+                  <span
+                    class="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-semibold capitalize"
+                    >{{ operation }}</span
+                  >
                 }
               </div>
             </div>
@@ -301,11 +365,15 @@
               </div>
               <div class="rounded-lg bg-indigo-50 p-2">
                 <p class="text-gray-500">{{ 'worksheet.recommendedGame' | translate }}</p>
-                <p class="font-semibold">{{ nextWorksheet.recommendedGameMode ?? 'abacus-flash' }}</p>
+                <p class="font-semibold">
+                  {{ nextWorksheet.recommendedGameMode ?? 'abacus-flash' }}
+                </p>
               </div>
               <div class="rounded-lg bg-indigo-50 p-2">
                 <p class="text-gray-500">{{ 'worksheet.worksheetType' | translate }}</p>
-                <p class="font-semibold">{{ nextWorksheet.recommendedWorksheetType ?? 'numeric' }}</p>
+                <p class="font-semibold">
+                  {{ nextWorksheet.recommendedWorksheetType ?? 'numeric' }}
+                </p>
               </div>
               <div class="rounded-lg bg-indigo-50 p-2">
                 <p class="text-gray-500">{{ 'worksheet.subtopic' | translate }}</p>
@@ -314,7 +382,9 @@
             </div>
 
             <div>
-              <h3 class="text-sm font-semibold mb-2">{{ 'worksheet.whyThisWorksheet' | translate }}</h3>
+              <h3 class="text-sm font-semibold mb-2">
+                {{ 'worksheet.whyThisWorksheet' | translate }}
+              </h3>
               <ul class="space-y-2 text-sm text-gray-700 list-disc list-inside">
                 @for (reason of nextWorksheet.rationale; track reason) {
                   <li>{{ reason }}</li>
@@ -328,7 +398,11 @@
               (click)="goToAdaptive()"
               [disabled]="!canOpenRecommendedWorksheet() || adaptiveNavigationLoading()"
             >
-              {{ adaptiveNavigationLoading() ? ('worksheet.opening' | translate) : ('worksheet.openRecommended' | translate) }}
+              {{
+                adaptiveNavigationLoading()
+                  ? ('worksheet.opening' | translate)
+                  : ('worksheet.openRecommended' | translate)
+              }}
             </button>
             @if (!canOpenRecommendedWorksheet()) {
               <p class="text-xs text-gray-500">
@@ -347,56 +421,192 @@
     </div>
 
     <section class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-lg font-semibold text-text mb-4">{{ 'worksheet.aiWorksheetTitle' | translate }}</h2>
+      <h2 class="text-lg font-semibold text-text mb-4">
+        {{ 'worksheet.aiWorksheetTitle' | translate }}
+      </h2>
 
       @if (personalizedPath().length > 0) {
         <div class="mb-4 rounded-lg bg-indigo-50 border border-indigo-200 p-3">
-          <p class="text-sm font-semibold text-indigo-700 mb-2">{{ 'worksheet.personalizedPath' | translate }}</p>
+          <p class="text-sm font-semibold text-indigo-700 mb-2">
+            {{ 'worksheet.personalizedPath' | translate }}
+          </p>
           <div class="flex flex-wrap gap-2">
             @for (topic of personalizedPath(); track topic.id) {
-              <span class="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-semibold">{{ topic.name }}</span>
+              <span
+                class="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-semibold"
+                >{{ topic.name }}</span
+              >
             }
           </div>
         </div>
       }
 
-      <div class="grid gap-3 md:grid-cols-3">
-        <label class="text-sm text-gray-600">
-          {{ 'worksheet.topic' | translate }}
-          <select
-            class="mt-1 w-full border rounded-md px-3 py-2"
-            [ngModel]="selectedTopicId()"
-            (ngModelChange)="selectedTopicId.set($event)"
-          >
-            @for (topic of topics(); track topic.id) {
-              @if (topic.supportsAiWorksheet) {
-                <option [ngValue]="topic.id">{{ topic.name }}</option>
+      <div class="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <div class="space-y-5">
+          <div class="rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">
+                  {{ 'worksheet.topicLibrary' | translate }}
+                </h3>
+                <p class="text-sm text-slate-500">{{ 'worksheet.topicBrowseHelp' | translate }}</p>
+              </div>
+              @if (topicsLoading()) {
+                <span class="text-xs text-slate-400">{{ 'worksheet.updating' | translate }}</span>
               }
-            }
-          </select>
-        </label>
+            </div>
 
-        <label class="text-sm text-gray-600">
-          {{ 'worksheet.difficulty' | translate }}
-          <input
-            class="mt-1 w-full border rounded-md px-3 py-2"
-            type="number"
-            min="0"
-            max="100"
-            [ngModel]="aiDifficulty()"
-            (ngModelChange)="updateAiDifficulty($event)"
-          />
-        </label>
+            <div class="mt-4 grid gap-4 lg:grid-cols-2">
+              <section class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-sm font-semibold text-slate-800">
+                    {{ 'worksheet.k12Track' | translate }}
+                  </h4>
+                  <span class="text-xs text-slate-500"
+                    >{{ k12TopicGroups().length }} {{ 'worksheet.groups' | translate }}</span
+                  >
+                </div>
+                <div class="max-h-80 space-y-3 overflow-y-auto pr-1">
+                  @for (group of k12TopicGroups(); track group.id) {
+                    <div class="rounded-lg border border-slate-200 p-3">
+                      <p class="text-sm font-semibold text-slate-800">{{ group.label }}</p>
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        @for (topic of group.topics; track topic.id) {
+                          <button
+                            type="button"
+                            class="rounded-full border px-3 py-1 text-xs font-medium transition"
+                            [class.border-primary]="selectedTopicId() === topic.id"
+                            [class.bg-primary]="selectedTopicId() === topic.id"
+                            [class.text-white]="selectedTopicId() === topic.id"
+                            [class.border-slate-200]="selectedTopicId() !== topic.id"
+                            [class.text-slate-700]="selectedTopicId() !== topic.id"
+                            (click)="selectTopic(topic.id)"
+                          >
+                            {{ topic.name }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
 
-        <div class="flex items-end">
-          <button
-            type="button"
-            class="w-full bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
-            [disabled]="aiLoading() || topicsLoading()"
-            (click)="generateAdvancedWorksheet()"
-          >
-            {{ aiLoading() ? ('worksheet.generating' | translate) : ('worksheet.generateAI' | translate) }}
-          </button>
+              <section class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-sm font-semibold text-slate-800">
+                    {{ 'worksheet.kumonTrack' | translate }}
+                  </h4>
+                  <span class="text-xs text-slate-500"
+                    >{{ kumonTopicGroups().length }} {{ 'worksheet.groups' | translate }}</span
+                  >
+                </div>
+                <div class="max-h-80 space-y-3 overflow-y-auto pr-1">
+                  @for (group of kumonTopicGroups(); track group.id) {
+                    <div class="rounded-lg border border-slate-200 p-3">
+                      <p class="text-sm font-semibold text-slate-800">{{ group.label }}</p>
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        @for (topic of group.topics; track topic.id) {
+                          <button
+                            type="button"
+                            class="rounded-full border px-3 py-1 text-xs font-medium transition"
+                            [class.border-primary]="selectedTopicId() === topic.id"
+                            [class.bg-primary]="selectedTopicId() === topic.id"
+                            [class.text-white]="selectedTopicId() === topic.id"
+                            [class.border-slate-200]="selectedTopicId() !== topic.id"
+                            [class.text-slate-700]="selectedTopicId() !== topic.id"
+                            (click)="selectTopic(topic.id)"
+                          >
+                            {{ topic.name }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <label class="text-sm text-gray-600">
+            {{ 'worksheet.topic' | translate }}
+            <select
+              class="mt-1 w-full border rounded-md px-3 py-2"
+              [ngModel]="selectedTopicId()"
+              (ngModelChange)="selectTopic($event)"
+            >
+              @for (group of k12TopicGroups(); track group.id) {
+                <optgroup [label]="group.label">
+                  @for (topic of group.topics; track topic.id) {
+                    <option [ngValue]="topic.id">{{ topic.name }}</option>
+                  }
+                </optgroup>
+              }
+              @for (group of kumonTopicGroups(); track group.id) {
+                <optgroup [label]="group.label">
+                  @for (topic of group.topics; track topic.id) {
+                    <option [ngValue]="topic.id">{{ topic.name }}</option>
+                  }
+                </optgroup>
+              }
+            </select>
+          </label>
+
+          @if (selectedTopic(); as topic) {
+            <div
+              class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900"
+            >
+              <p class="font-semibold">{{ topic.name }}</p>
+              <p class="mt-1 text-xs text-indigo-700">{{ topic.groupLabel }}</p>
+              <p class="mt-2 text-xs text-indigo-700">
+                {{ 'worksheet.questionTypes' | translate }}: {{ selectedTopicQuestionTypes() }}
+              </p>
+            </div>
+          }
+
+          <label class="text-sm text-gray-600">
+            {{ 'worksheet.difficulty' | translate }}
+            <input
+              class="mt-1 w-full border rounded-md px-3 py-2"
+              type="number"
+              min="0"
+              max="100"
+              [ngModel]="aiDifficulty()"
+              (ngModelChange)="updateAiDifficulty($event)"
+            />
+          </label>
+
+          <div class="grid gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              class="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              [disabled]="aiLoading() || topicsLoading() || !selectedTopic()"
+              (click)="generateAdvancedWorksheet()"
+            >
+              {{
+                aiLoading()
+                  ? ('worksheet.generating' | translate)
+                  : ('worksheet.generateAI' | translate)
+              }}
+            </button>
+            <button
+              type="button"
+              class="border border-slate-300 px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              [disabled]="!aiWorksheet()"
+              (click)="printAiWorksheet()"
+            >
+              {{ 'worksheet.print' | translate }}
+            </button>
+            <button
+              type="button"
+              class="border border-slate-300 px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              [disabled]="!aiWorksheet()"
+              (click)="exportAiWorksheet()"
+            >
+              {{ 'worksheet.export' | translate }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -407,15 +617,31 @@
       @if (aiWorksheet(); as generated) {
         <div class="mt-4 rounded-lg border border-gray-200 p-4">
           <p class="text-sm text-gray-500">
-            Topic: <span class="font-semibold text-gray-700 capitalize">{{ generated.topic }}</span>
-            • Difficulty: <span class="font-semibold text-gray-700">{{ generated.difficulty }}</span>
+            Topic:
+            <span class="font-semibold text-gray-700">{{
+              selectedTopicName() || generated.topic
+            }}</span>
+            • Difficulty:
+            <span class="font-semibold text-gray-700">{{ generated.difficulty }}</span>
           </p>
+          @if (generated.downloadUrl) {
+            <a
+              class="mt-2 inline-flex text-sm font-medium text-primary underline"
+              [href]="generated.downloadUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ 'worksheet.download' | translate }}
+            </a>
+          }
 
           <ol class="mt-3 space-y-2">
             @for (question of generated.questions; track question.id) {
               <li class="rounded-md bg-gray-50 p-3 text-sm">
                 <p class="font-medium">{{ question.prompt }}</p>
-                <p class="text-xs text-gray-500 mt-1">Type: {{ question.type }} • Subtopic: {{ question.subtopic }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Type: {{ question.type }} • Subtopic: {{ question.subtopic }}
+                </p>
                 <p class="text-xs text-gray-600 mt-1">Expected form: {{ question.answer }}</p>
               </li>
             }

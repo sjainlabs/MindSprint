@@ -76,7 +76,8 @@ const EN: Record<string, string> = {
   'parentGuide.startLearning': 'Start Learning',
 
   'parentGuide.section0.title': 'What is MindSprint?',
-  'parentGuide.section0.point0': 'MindSprint is a personalized math practice platform for grades K–8.',
+  'parentGuide.section0.point0':
+    'MindSprint is a personalized math practice platform for grades K–8.',
   'parentGuide.section0.point1':
     'It supports MAP-aligned skill development with adaptive learning and daily mastery practice.',
 
@@ -251,13 +252,24 @@ const EN: Record<string, string> = {
   'worksheet.opening': 'Opening…',
   'worksheet.recommendationUnavailable':
     'Recommendation is unavailable or matches your current worksheet level.',
-  'worksheet.noRecommendation': 'Submit the worksheet to generate an adaptive next-step recommendation.',
-  'worksheet.aiWorksheetTitle': 'Advanced AI Worksheet (Algebra I → Calculus)',
+  'worksheet.noRecommendation':
+    'Submit the worksheet to generate an adaptive next-step recommendation.',
+  'worksheet.aiWorksheetTitle': 'Practice Sheet Topic Map',
   'worksheet.personalizedPath': 'Personalized Learning Path Engine',
+  'worksheet.topicLibrary': 'Topic Library',
+  'worksheet.topicBrowseHelp':
+    'Browse every K–12 grade topic and every Kumon level from the shared topic map.',
+  'worksheet.k12Track': 'K–12 Grades',
+  'worksheet.kumonTrack': 'Kumon Levels',
+  'worksheet.groups': 'groups',
   'worksheet.topic': 'Topic',
   'worksheet.difficulty': 'Difficulty (0-100)',
+  'worksheet.questionTypes': 'Question types',
   'worksheet.generating': 'Generating…',
   'worksheet.generateAI': 'Generate AI Worksheet',
+  'worksheet.print': 'Print',
+  'worksheet.export': 'Export',
+  'worksheet.download': 'Download',
 
   // ── Game Mode page ───────────────────────────────────────────────────────────
   'game.title': 'AI Game Challenge',
@@ -383,7 +395,8 @@ const HI: Record<string, string> = {
   'kidGuide.slide0.title': 'MindSprint में आपका स्वागत है!',
   'kidGuide.slide0.message': 'यह आपकी जगह है जहाँ आप हर दिन गणित में बेहतर बन सकते हैं!',
   'kidGuide.slide1.title': 'MAP तैयारी मोड',
-  'kidGuide.slide1.message': 'ऐसे प्रश्नों का अभ्यास करें जो आपके MAP स्कोर को बढ़ाने में मदद करें।',
+  'kidGuide.slide1.message':
+    'ऐसे प्रश्नों का अभ्यास करें जो आपके MAP स्कोर को बढ़ाने में मदद करें।',
   'kidGuide.slide2.title': 'कौशल अभ्यास',
   'kidGuide.slide2.message': 'कदम-दर-कदम नई गणित कौशल सीखें।',
   'kidGuide.slide3.title': 'दैनिक अभ्यास पत्रक',
@@ -404,8 +417,7 @@ const HI: Record<string, string> = {
   'parentGuide.startLearning': 'सीखना शुरू करें',
 
   'parentGuide.section0.title': 'MindSprint क्या है?',
-  'parentGuide.section0.point0':
-    'MindSprint K–8 कक्षाओं के लिए एक व्यक्तिगत गणित अभ्यास मंच है।',
+  'parentGuide.section0.point0': 'MindSprint K–8 कक्षाओं के लिए एक व्यक्तिगत गणित अभ्यास मंच है।',
   'parentGuide.section0.point1':
     'यह अनुकूली शिक्षण और दैनिक महारत अभ्यास के साथ MAP-संरेखित कौशल विकास का समर्थन करता है।',
 
@@ -525,8 +537,7 @@ const HI: Record<string, string> = {
   'topicBrowser.refreshing': 'रीफ्रेश हो रहा है...',
   'topicBrowser.explorationGuidance': 'अन्वेषण मार्गदर्शन',
   'topicBrowser.loading': 'विषय ब्राउज़र लोड हो रहा है...',
-  'topicBrowser.noTopics':
-    'चयनित फ़िल्टर से कोई विषय मेल नहीं खाता। एक अलग अन्वेषण मोड आज़माएं।',
+  'topicBrowser.noTopics': 'चयनित फ़िल्टर से कोई विषय मेल नहीं खाता। एक अलग अन्वेषण मोड आज़माएं।',
   'topicBrowser.prerequisites': 'पूर्वापेक्षाएँ',
   'topicBrowser.none': 'कोई नहीं',
   'topicBrowser.difficultyTiers': 'कठिनाई स्तर',
@@ -581,14 +592,23 @@ const HI: Record<string, string> = {
   'worksheet.opening': 'खुल रहा है…',
   'worksheet.recommendationUnavailable':
     'सिफारिश उपलब्ध नहीं है या आपके वर्तमान वर्कशीट स्तर से मेल खाती है।',
-  'worksheet.noRecommendation':
-    'अनुकूली अगले-चरण सिफारिश उत्पन्न करने के लिए वर्कशीट सबमिट करें।',
-  'worksheet.aiWorksheetTitle': 'उन्नत AI वर्कशीट (बीजगणित I → कलन)',
+  'worksheet.noRecommendation': 'अनुकूली अगले-चरण सिफारिश उत्पन्न करने के लिए वर्कशीट सबमिट करें।',
+  'worksheet.aiWorksheetTitle': 'प्रैक्टिस शीट विषय मानचित्र',
   'worksheet.personalizedPath': 'व्यक्तिगत शिक्षण पथ इंजन',
+  'worksheet.topicLibrary': 'विषय पुस्तकालय',
+  'worksheet.topicBrowseHelp':
+    'साझा विषय मानचित्र से सभी K–12 कक्षाओं और सभी Kumon स्तरों को देखें।',
+  'worksheet.k12Track': 'K–12 कक्षाएं',
+  'worksheet.kumonTrack': 'Kumon स्तर',
+  'worksheet.groups': 'समूह',
   'worksheet.topic': 'विषय',
   'worksheet.difficulty': 'कठिनाई (0-100)',
+  'worksheet.questionTypes': 'प्रश्न प्रकार',
   'worksheet.generating': 'बन रहा है…',
   'worksheet.generateAI': 'AI वर्कशीट बनाएं',
+  'worksheet.print': 'प्रिंट',
+  'worksheet.export': 'एक्सपोर्ट',
+  'worksheet.download': 'डाउनलोड',
 
   // ── Game Mode page ───────────────────────────────────────────────────────────
   'game.title': 'AI गेम चुनौती',
