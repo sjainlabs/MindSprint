@@ -41,10 +41,20 @@ import {
   MAP_DIFFICULTY_ADVANCED_THRESHOLD,
   MAP_DIFFICULTY_READY_THRESHOLD,
 } from '../../constants/ui.constants';
+import {
+  applyMapStepSubmission,
+  createInitialMapChallengeState,
+  deserializeMapChallengeState,
+  serializeMapChallengeState,
+  validateMapMove,
+  type MapChallengeState,
+  type MapEngineEvent,
+} from './map-challenge/map-challenge.engine';
 
 const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
 const DEFAULT_FLASH_SPEED_MS = 600;
+const MAP_CHALLENGE_STORAGE_KEY_PREFIX = 'mindsprint.map.challenge';
 const GAME_STATE = {
   START: 'START',
   NEXT: 'NEXT',
@@ -118,8 +128,11 @@ export class GameModeComponent implements OnDestroy {
   currentStepIndex = signal(0);
   stepDirection = signal<'left' | 'right'>('left');
   mapHintsOpen = signal(false);
-  mapStepAnswers = signal<Record<number, ChallengeOption[]>>({});
-  mapStepTextAnswers = signal<Record<number, string>>({});
+  mapState = signal<MapChallengeState | null>(null);
+  mapEvents = signal<MapEngineEvent[]>([]);
+  mapAudioCue = signal('');
+  mapFxCue = signal('');
+  mapLastValidationError = signal('');
   mapPartialCredit = signal(0);
   /** The API-compatible mode used for the currently loaded challenge */
   private activeChallengeApiMode: GameMode = 'abacus-flash';
@@ -351,11 +364,11 @@ export class GameModeComponent implements OnDestroy {
   }
 
   mapSelectionForStep(index: number): ChallengeOption[] {
-    return this.mapStepAnswers()[index] ?? [];
+    return this.mapState()?.selectionsByStep[index] ?? [];
   }
 
   mapTextAnswerForStep(index: number): string {
-    return this.mapStepTextAnswers()[index] ?? '';
+    return this.mapState()?.textAnswersByStep[index] ?? '';
   }
 
   isMapStepAnswered(index = this.currentStepIndex()): boolean {
@@ -370,7 +383,15 @@ export class GameModeComponent implements OnDestroy {
 
   updateMapTextAnswer(value: string): void {
     const stepIndex = this.currentStepIndex();
-    this.mapStepTextAnswers.update((state) => ({ ...state, [stepIndex]: value }));
+    this.mapState.update((state) =>
+      state
+        ? {
+          ...state,
+          textAnswersByStep: { ...state.textAnswersByStep, [stepIndex]: value },
+        }
+        : state,
+    );
+    this.persistMapState();
     if (value.trim().length > 0) {
       this.queueAutoAdvance();
     }
@@ -388,7 +409,15 @@ export class GameModeComponent implements OnDestroy {
       next = [option];
       this.selectedAnswer.set(option);
     }
-    this.mapStepAnswers.update((state) => ({ ...state, [stepIndex]: next }));
+    this.mapState.update((state) =>
+      state
+        ? {
+          ...state,
+          selectionsByStep: { ...state.selectionsByStep, [stepIndex]: next },
+        }
+        : state,
+    );
+    this.persistMapState();
     this.selectedAnswers.set(next);
     if (answerType === 'single') {
       this.queueAutoAdvance();
@@ -402,14 +431,19 @@ export class GameModeComponent implements OnDestroy {
       this.submitChallenge();
       return;
     }
-    this.stepDirection.set('left');
-    this.currentStepIndex.update((index) => Math.min(index + 1, this.totalMapSteps() - 1));
+    if (!this.applyMapProgressForCurrentStep()) {
+      return;
+    }
+    const nextIndex = Math.min(this.currentStepIndex() + 1, this.totalMapSteps() - 1);
+    this.selectMapNode(nextIndex);
+    this.persistMapState();
   }
 
   previousMapStep(): void {
     this.clearMapAutoAdvanceTimeout();
-    this.stepDirection.set('right');
-    this.currentStepIndex.update((index) => Math.max(index - 1, 0));
+    const previousIndex = Math.max(this.currentStepIndex() - 1, 0);
+    this.selectMapNode(previousIndex);
+    this.persistMapState();
   }
 
   private queueAutoAdvance(): void {
@@ -468,37 +502,110 @@ export class GameModeComponent implements OnDestroy {
     return `Step ${stepNumber}, ${selectionType} option ${option}, ${selectionState}`;
   }
 
+  mapNodes() {
+    return this.mapState()?.nodes ?? [];
+  }
+
+  mapRegions() {
+    return this.mapState()?.regions ?? [];
+  }
+
+  mapProgressPercent(): number {
+    return this.mapState()?.progressPercent ?? 0;
+  }
+
+  mapScore(): number {
+    return this.mapState()?.score ?? 0;
+  }
+
+  mapPenaltyTotal(): number {
+    return this.mapState()?.penalties ?? 0;
+  }
+
+  mapOutcomeLabel(): string {
+    const outcome = this.mapState()?.outcome ?? 'in_progress';
+    if (outcome === 'success') return 'Success';
+    if (outcome === 'partial') return 'Partial Progress';
+    if (outcome === 'fail') return 'Failed';
+    return 'In Progress';
+  }
+
+  mapNodeClass(stepIndex: number): string {
+    const node = this.mapNodes().find((candidate) => candidate.stepIndex === stepIndex);
+    if (!node) return 'border-gray-200 bg-gray-50';
+    if (node.completed) return 'border-emerald-300 bg-emerald-50';
+    if (!node.unlocked) return 'border-gray-200 bg-gray-100 opacity-60';
+    if (node.cooldownUntilMs > 0) return 'border-amber-300 bg-amber-50';
+    return 'border-violet-300 bg-violet-50';
+  }
+
+  selectMapNode(stepIndex: number): void {
+    const state = this.mapState();
+    if (!state) {
+      this.mapLastValidationError.set('MAP state unavailable.');
+      return;
+    }
+    const validation = validateMapMove(state, stepIndex, Date.now());
+    if (!validation.valid) {
+      this.mapLastValidationError.set(validation.reason ?? 'Illegal move.');
+      return;
+    }
+    this.mapLastValidationError.set('');
+    this.stepDirection.set(stepIndex >= this.currentStepIndex() ? 'left' : 'right');
+    this.currentStepIndex.set(stepIndex);
+    this.mapState.update((current) =>
+      current
+        ? {
+          ...current,
+          currentStepIndex: stepIndex,
+          currentNodeId: `node-${stepIndex}`,
+        }
+        : current,
+    );
+  }
+
   mapPartialCreditPercent(): number {
     return Math.round(this.mapPartialCredit() * 100);
   }
 
+  private applyMapProgressForCurrentStep(): boolean {
+    const challenge = this.getMapChallenge();
+    const state = this.mapState();
+    if (!challenge || !state) {
+      this.mapLastValidationError.set('MAP state unavailable.');
+      return false;
+    }
+    if (!this.isMapStepAnswered()) {
+      const message = 'Answer required before submitting this step.';
+      this.mapLastValidationError.set(message);
+      this.mapEvents.update((events) => [...events, { type: 'map:invalid-move', message }]);
+      return false;
+    }
+
+    const result = applyMapStepSubmission(challenge, state, this.currentStepIndex(), Date.now());
+    this.mapEvents.set(result.events);
+    this.mapState.set(result.state);
+    this.mapAudioCue.set(
+      result.events.find((event) => event.type === 'audio:play')?.message ?? '',
+    );
+    this.mapFxCue.set(
+      result.events.find((event) => event.type === 'fx:trigger')?.message ?? '',
+    );
+    this.mapLastValidationError.set(
+      result.valid ? '' : result.events.find((event) => event.type === 'map:invalid-move')?.message ?? 'Invalid move.',
+    );
+    this.mapPartialCredit.set(result.evaluation?.credit ?? 0);
+    this.persistMapState();
+    return result.valid;
+  }
+
   private evaluateMapChallenge(): boolean {
-    const correctAnswers = this.mapCorrectAnswers();
-    if (correctAnswers.length === 0) {
+    const wasApplied = this.applyMapProgressForCurrentStep();
+    if (!wasApplied) {
       this.mapPartialCredit.set(0);
       return false;
     }
-    const step = this.currentMapStep();
-    const stepSelections = this.mapSelectionForStep(this.currentStepIndex());
-    let selectedAnswers = stepSelections;
-    if (selectedAnswers.length === 0 && this.selectedAnswers().length > 0) {
-      selectedAnswers = this.selectedAnswers();
-    }
-    if (selectedAnswers.length === 0 && step && this.mapOptionsForStep(step).length === 0) {
-      const textAnswer = this.mapTextAnswerForStep(this.currentStepIndex()).trim().toLowerCase();
-      const matched = correctAnswers.some((answer) => String(answer).trim().toLowerCase() === textAnswer);
-      this.mapPartialCredit.set(matched ? 1 : 0);
-      return matched;
-    }
-
-    const selectedSet = new Set(selectedAnswers);
-    const correctSet = new Set(correctAnswers);
-    const matchedCount = [...selectedSet].filter((answer) => correctSet.has(answer)).length;
-    const partialCredit = matchedCount / correctAnswers.length;
-    this.mapPartialCredit.set(Math.max(0, Math.min(1, partialCredit)));
-    const noExtras = [...selectedSet].every((answer) => correctSet.has(answer));
-    const allCorrectSelected = matchedCount === correctSet.size;
-    return allCorrectSelected && noExtras;
+    return this.mapPartialCredit() >= 1;
   }
 
   mapShowGraph(): boolean {
@@ -507,6 +614,49 @@ export class GameModeComponent implements OnDestroy {
 
   mapShowTable(): boolean {
     return !!this.getMapChallenge()?.tablePayload;
+  }
+
+  private mapStorageKey(challenge: MapChallenge): string {
+    return `${MAP_CHALLENGE_STORAGE_KEY_PREFIX}:${this.studentId()}:${challenge.challengeId}`;
+  }
+
+  private persistMapState(): void {
+    const challenge = this.getMapChallenge();
+    const state = this.mapState();
+    if (!challenge || !state) {
+      return;
+    }
+    localStorage.setItem(this.mapStorageKey(challenge), serializeMapChallengeState(state));
+    this.mapEvents.update((events) => [
+      ...events,
+      { type: 'map:state-saved', message: 'MAP challenge state saved.' },
+    ]);
+  }
+
+  private restoreMapState(challenge: MapChallenge): MapChallengeState {
+    const key = this.mapStorageKey(challenge);
+    const serialized = localStorage.getItem(key);
+    if (!serialized) {
+      return createInitialMapChallengeState(challenge);
+    }
+    const restored = deserializeMapChallengeState(serialized, challenge.challengeId);
+    if (!restored) {
+      return createInitialMapChallengeState(challenge);
+    }
+    this.mapEvents.update((events) => [
+      ...events,
+      { type: 'map:state-loaded', message: 'MAP challenge state restored.' },
+    ]);
+    return restored;
+  }
+
+  private initializeMapState(challenge: MapChallenge): void {
+    // restoreMapState always returns a valid state (restored snapshot or fresh initial state).
+    const restored = this.restoreMapState(challenge);
+    this.mapState.set(restored);
+    this.currentStepIndex.set(restored.currentStepIndex);
+    this.mapPartialCredit.set(restored.lastStepCredit);
+    this.mapLastValidationError.set('');
   }
 
   getModeSpecificPrompt(challenge: LegacyChallenge): string {
@@ -769,8 +919,11 @@ export class GameModeComponent implements OnDestroy {
     this.currentStepIndex.set(0);
     this.stepDirection.set('left');
     this.mapHintsOpen.set(false);
-    this.mapStepAnswers.set({});
-    this.mapStepTextAnswers.set({});
+    this.mapState.set(null);
+    this.mapEvents.set([]);
+    this.mapAudioCue.set('');
+    this.mapFxCue.set('');
+    this.mapLastValidationError.set('');
     this.mapPartialCredit.set(0);
 
     // Reset Abacus Flash state
@@ -834,6 +987,9 @@ export class GameModeComponent implements OnDestroy {
       .subscribe({
         next: (challenge) => {
           this.challenge.set(challenge);
+          if (this.isMapChallenge(challenge) && this.selectedMode() === 'map') {
+            this.initializeMapState(challenge);
+          }
           this.completedQuests.set(
             this.isLegacyChallenge(challenge) ? challenge.dailyQuest.progress : 0,
           );
@@ -930,6 +1086,10 @@ export class GameModeComponent implements OnDestroy {
     let correct = false;
     if (isMapChallenge) {
       correct = this.evaluateMapChallenge();
+      if (this.mapLastValidationError().length > 0) {
+        this.challengeSubmitted.set(false);
+        return;
+      }
     } else if (isReasoningPuzzle) {
       correct = this.reasoningPuzzleEngine.isCorrect() === true;
     } else if (isAiPuzzle) {
@@ -985,12 +1145,16 @@ export class GameModeComponent implements OnDestroy {
           },
         });
     } else {
+      const mapScore = this.mapScore();
+      const mapAccuracy = this.mapProgressPercent();
+      const submittedScore = isMapChallenge ? Math.max(0, mapScore) : 100;
+      const submittedAccuracy = isMapChallenge ? mapAccuracy : 100;
       this.gameService
         .submitChallenge({
           studentId: this.studentId(),
           mode: this.activeChallengeApiMode,
-          score: 100,
-          accuracy: 100,
+          score: submittedScore,
+          accuracy: submittedAccuracy,
           streak: this.streakTotal(),
         })
         .subscribe({
