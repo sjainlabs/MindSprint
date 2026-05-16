@@ -34,6 +34,10 @@ export class ReasoningPuzzleEngine {
 
   private config: ReasoningPuzzleConfig = { ...DEFAULT_CONFIG };
 
+  /**
+   * Configures a new puzzle and resets all current state.
+   * `prompt` and `answer` are required and must come from backend payload.
+   */
   configure(
     config: Partial<ReasoningPuzzleConfig> & Pick<ReasoningPuzzleConfig, 'prompt' | 'answer'>,
   ): void {
@@ -69,6 +73,10 @@ export class ReasoningPuzzleEngine {
     this.isRunning.set(false);
   }
 
+  /**
+   * Processes a player answer.
+   * Returns false if the submission is invalid for current state; true when processed.
+   */
   submitAnswer(answer: string): boolean {
     if (!this.isRunning() || this.isCompleted()) {
       return false;

@@ -30,6 +30,8 @@
       <input
         id="reasoning-puzzle-answer"
         type="text"
+        placeholder="Type your reasoning answer"
+        aria-label="Reasoning puzzle answer"
         class="mt-1 w-full border rounded-md px-3 py-2"
         [ngModel]="textAnswer()"
         (ngModelChange)="textAnswer.set($event)"
