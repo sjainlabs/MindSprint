@@ -113,6 +113,21 @@ const mockReasoningPuzzleChallenge = {
   },
 };
 
+const mockCompetitionBossChallenge = {
+  ...mockAiPuzzleChallenge,
+  challengeId: 'cb-1',
+  mode: 'competition-boss' as const,
+  gamePayload: {
+    bossId: 'cb-boss',
+    title: 'Tournament Tyrant',
+    maxHp: 180,
+    difficulty: 74,
+    phaseCount: 4,
+    specialAttackIntervalMs: 6000,
+    competitorDps: 18,
+  },
+};
+
 const mockAbacusFlashSubmitResponse = {
   correct: true,
   xpEarned: 15,
@@ -124,7 +139,13 @@ const mockAbacusFlashSubmitResponse = {
 describe('GameModeComponent', () => {
   const gameServiceMock = {
     getChallenge: vi.fn((payload?: { mode?: string }) =>
-      of(payload?.mode === 'map' ? mockMapChallenge : mockChallenge),
+      of(
+        payload?.mode === 'map'
+          ? mockMapChallenge
+          : payload?.mode === 'competition-boss'
+            ? mockCompetitionBossChallenge
+            : mockChallenge,
+      ),
     ),
     submitChallenge: vi.fn(() => of({ saved: true, xpEarned: 15 })),
     getAbacusFlashChallenge: vi.fn(() => of(mockChallenge)),
@@ -256,6 +277,21 @@ describe('GameModeComponent', () => {
     expect(gameServiceMock.getChallenge).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'ai-puzzle' }),
     );
+  });
+
+  it('requests competition-boss challenges with the competition-boss mode', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.selectedMode.set('competition-boss');
+    comp.loadChallenge();
+
+    expect(gameServiceMock.getChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'competition-boss' }),
+    );
+    expect(comp.competitionBossEngine.bossTitle()).toBe('Tournament Tyrant');
+    expect(comp.competitionBossEngine.competitorAttackRate()).toBeGreaterThan(18);
   });
 
   it('loads MAP challenge payload when map mode is selected', () => {
@@ -441,6 +477,24 @@ describe('GameModeComponent', () => {
     comp.submitChallenge();
 
     expect(comp.localXp()).toBeGreaterThan(initialLocalXp);
+  });
+
+  it('submits competition boss results using the competition boss outcome', () => {
+    const fixture = TestBed.createComponent(GameModeComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.selectedMode.set('competition-boss');
+    comp.loadChallenge();
+    gameServiceMock.submitChallenge.mockClear();
+
+    comp.competitionBossEngine.outcome.set('player-victory');
+    comp.submitChallenge();
+
+    expect(comp.challengeSubmitted()).toBe(true);
+    expect(gameServiceMock.submitChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'competition-boss', score: 100, accuracy: 100 }),
+    );
   });
 
   // ── Abacus Flash specific tests ────────────────────────────────────────────

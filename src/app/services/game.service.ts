@@ -27,6 +27,10 @@ export interface BossBattlePayload {
   specialAttackIntervalMs: number;
 }
 
+export interface CompetitionBossPayload extends BossBattlePayload {
+  competitorDps: number;
+}
+
 export interface FluencyPayload {
   questionId?: string;
   prompt?: string;
@@ -123,7 +127,7 @@ export interface AbacusFlashChallenge extends BaseGameChallenge {
 }
 
 export interface ArithmeticChallenge extends BaseGameChallenge {
-  mode: 'arithmetic' | 'boss-battle' | 'ai-puzzle';
+  mode: 'arithmetic' | 'boss-battle' | 'competition-boss' | 'ai-puzzle';
   prompt: string;
   operation: MathOperation;
   options: ChallengeOption[];

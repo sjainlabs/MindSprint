@@ -1,0 +1,135 @@
+<div class="cb-card rounded-xl border bg-white p-4 text-sm space-y-4 animate-fade-in animate-slide-up">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <p class="font-semibold text-base">🏆 Competition Boss</p>
+      <p class="text-xs text-gray-500">Race the rival to finish the boss first.</p>
+    </div>
+    <span class="cb-phase-badge" [class.cb-phase-badge--enraged]="engine().enraged()">
+      {{ engine().phaseLabel() }}
+      @if (engine().enraged()) {
+        · ENRAGED
+      }
+    </span>
+  </div>
+
+  <div class="rounded-xl border border-amber-100 bg-gradient-to-r from-amber-50 to-rose-50 px-4 py-3">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-rose-700">Boss</p>
+        <p class="text-lg font-bold text-rose-900">{{ engine().bossTitle() }}</p>
+      </div>
+      <div class="text-right text-xs text-rose-700">
+        <p>Next special in</p>
+        <p class="text-lg font-bold text-rose-900">{{ engine().nextSpecialAttackSeconds() }}s</p>
+      </div>
+    </div>
+  </div>
+
+  @if (engine().specialAttackWarning()) {
+    <div class="cb-warning animate-cb-warning">⚡ Special attack incoming!</div>
+  }
+
+  <div class="space-y-3">
+    <div>
+      <div class="mb-1 flex items-center justify-between text-xs text-gray-500">
+        <span>Boss HP</span>
+        <span>{{ engine().bossHp() }} / {{ engine().bossMaxHp() }}</span>
+      </div>
+      <div class="cb-hp-track">
+        <div class="cb-hp-fill" [class]="engine().bossHpBarClass()" [style.width.%]="engine().bossHpPercent()"></div>
+      </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-2">
+      <div>
+        <div class="mb-1 flex items-center justify-between text-xs text-gray-500">
+          <span>Your HP</span>
+          <span>{{ engine().playerHp() }} / {{ engine().playerMaxHp() }}</span>
+        </div>
+        <div class="cb-hp-track">
+          <div class="cb-hp-fill cb-hp-fill--player" [class]="engine().playerHpBarClass()" [style.width.%]="engine().playerHpPercent()"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="mb-1 flex items-center justify-between text-xs text-gray-500">
+          <span>Competitor HP</span>
+          <span>{{ engine().competitorHp() }} / {{ engine().competitorMaxHp() }}</span>
+        </div>
+        <div class="cb-hp-track">
+          <div class="cb-hp-fill cb-hp-fill--competitor" [class]="engine().competitorHpBarClass()" [style.width.%]="engine().competitorHpPercent()"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cb-race-card rounded-xl border border-slate-200 bg-slate-50 p-4">
+    <div class="mb-3 flex items-center justify-between text-xs text-slate-500">
+      <span>Boss race progress</span>
+      <span>AI DPS {{ engine().competitorAttackRate().toFixed(1) }}</span>
+    </div>
+
+    <div class="cb-race-track">
+      <div class="cb-race-lane cb-race-lane--player" [style.width.%]="engine().playerRacePercent()"></div>
+      <div class="cb-race-lane cb-race-lane--competitor" [style.width.%]="engine().competitorRacePercent()"></div>
+
+      <div class="cb-runner cb-runner--player" [style.left.%]="runnerOffset(engine().playerRacePercent())">
+        <span>🧠</span>
+        <small>You</small>
+      </div>
+      <div class="cb-runner cb-runner--competitor" [style.left.%]="runnerOffset(engine().competitorRacePercent())">
+        <span>🤖</span>
+        <small>AI</small>
+      </div>
+      <div class="cb-finish-line">👹</div>
+    </div>
+  </div>
+
+  @if (!engine().isFinished()) {
+    <button
+      type="button"
+      class="cb-attack-btn w-full"
+      [disabled]="loading() || !engine().isRunning()"
+      (click)="onAttack()"
+    >
+      ⚔️ Attack Boss
+    </button>
+  }
+
+  @if (engine().isFinished()) {
+    <div
+      class="cb-result rounded-xl p-4 text-center"
+      [ngClass]="{
+        'cb-result--victory': engine().isPlayerVictory(),
+        'cb-result--competitor': engine().isCompetitorVictory(),
+        'cb-result--defeat': engine().isPlayerDefeat()
+      }"
+    >
+      <p class="text-3xl mb-2">
+        {{ engine().isPlayerVictory() ? '🏆' : engine().isCompetitorVictory() ? '🤖' : '💀' }}
+      </p>
+      <p class="font-bold text-lg">
+        {{
+          engine().isPlayerVictory()
+            ? 'You defeated the boss!'
+            : engine().isCompetitorVictory()
+              ? 'Competitor defeated the boss first'
+              : 'You were defeated'
+        }}
+      </p>
+      <p class="mt-2 text-xs opacity-80">
+        {{
+          engine().isPlayerVictory()
+            ? 'Your attacks finished the boss before the rival could.'
+            : engine().isCompetitorVictory()
+              ? 'The rival landed the final blow before you could close it out.'
+              : 'The boss knocked you out before the race ended.'
+        }}
+      </p>
+    </div>
+
+    <button type="button" class="cb-next-btn w-full" (click)="onNextChallenge()">
+      Next Challenge
+    </button>
+  }
+</div>
