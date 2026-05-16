@@ -10,6 +10,8 @@ const KEYPAD_ROWS = [
   ['-', '0', '⌫'],
 ];
 
+const MAX_INPUT_LENGTH = 6;
+
 @Component({
   selector: 'app-fluency-mode',
   standalone: true,
@@ -41,7 +43,7 @@ export class FluencyModeComponent implements OnDestroy {
       return;
     }
 
-    this.inputValue.update((v) => (v.length < 6 ? v + digit : v));
+    this.inputValue.update((v) => (v.length < MAX_INPUT_LENGTH ? v + digit : v));
   }
 
   onSubmit(): void {

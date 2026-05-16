@@ -183,7 +183,7 @@ export class FluencyEngine {
     const operation = pickOne(this.config.operations);
     const difficulty = this.config.difficulty;
 
-    const maxSmall = clamp(Math.round(2 + difficulty * 0.1), 2, 12);
+    const maxSmall = clamp(Math.round(5 + difficulty * 0.15), 5, 20);
     const maxLarge = clamp(Math.round(5 + difficulty * 0.95), 5, 100);
 
     let a: number, b: number, answer: number, prompt: string;
