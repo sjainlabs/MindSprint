@@ -965,7 +965,6 @@ export class GameModeComponent implements OnDestroy {
     this.stopModeEngines();
     this.loading.set(true);
     this.errorMessage.set('');
-    this.challenge.set(null);
     this.challengeSubmitted.set(false);
     this.selectedAnswer.set(null);
     this.selectedAnswers.set([]);
@@ -1046,7 +1045,6 @@ export class GameModeComponent implements OnDestroy {
           this.completedQuests.set(
             this.isLegacyChallenge(challenge) ? challenge.dailyQuest.progress : 0,
           );
-          this.loading.set(false);
 
           // ⭐ FALLING NUMBERS — START ENGINE HERE ONLY
           if (this.selectedMode() === 'falling-numbers'
@@ -1114,6 +1112,8 @@ export class GameModeComponent implements OnDestroy {
           } else {
             this.fluencyEngine.stop();
           }
+
+          this.loading.set(false);
         },
         error: () => {
           this.errorMessage.set('Unable to load game challenge.');
