@@ -221,7 +221,7 @@ export class MasteryEngineService {
 
   private normalizeSkillId(skillId: string): string {
     const raw = String(skillId ?? '').trim().toLowerCase();
-    return this.operationToSkill[raw] ?? raw || 'general-skill';
+    return (this.operationToSkill[raw] ?? raw) || 'general-skill';
   }
 
   private toSkillDisplayName(skillId: string): string {
