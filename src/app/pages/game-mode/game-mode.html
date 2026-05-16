@@ -128,7 +128,7 @@
           <div class="space-y-4 animate-slide-up">
 
             <!-- ⭐ Abacus Flash -->
-            @if (selectedMode() === 'abacus-flash' || selectedMode() === 'fluency-speed') {
+            @if (selectedMode() === 'abacus-flash') {
               <div class="rounded-lg border bg-white p-4 text-sm animate-fade-in">
                 <p class="font-semibold mb-2">⚡ Abacus Flash</p>
                 <p class="text-xs text-gray-600 mb-3">
@@ -212,6 +212,15 @@
                 [loading]="loading()"
                 (submitAnswer)="onAiPuzzleSubmit($event)"
                 (nextPuzzle)="loadChallenge()"
+              />
+            }
+
+            <!-- ⭐ FLUENCY GAME MODE -->
+            @if (selectedMode() === 'fluency') {
+              <app-fluency-mode
+                [engine]="fluencyEngine"
+                [loading]="loading()"
+                (nextChallenge)="loadChallenge()"
               />
             }
 

@@ -27,6 +27,15 @@ export interface BossBattlePayload {
   specialAttackIntervalMs: number;
 }
 
+export interface FluencyPayload {
+  questionId?: string;
+  prompt?: string;
+  answer?: number;
+  difficulty?: number;
+  timeLimitSeconds?: number;
+  operations?: Array<'addition' | 'subtraction' | 'multiplication' | 'division'>;
+}
+
 export interface ChallengeRewards {
   xp: number;
   streakBonus: number;
