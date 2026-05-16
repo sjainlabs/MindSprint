@@ -10,6 +10,11 @@ import {
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { TranslationService } from '../../services/translation.service';
+import {
+  MasteryEngineService,
+  type MasterySkillState,
+} from '../../core/mastery/mastery-engine.service';
+import { MasteryBadgeComponent } from '../../components/mastery-badge/mastery-badge.component';
 
 export interface SuperSyllabusScores {
   fluencyScore: number;
@@ -37,7 +42,14 @@ function deriveScores(profile: StudentProfile): SuperSyllabusScores {
 @Component({
   selector: 'app-student-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    LanguageToggleComponent,
+    TranslatePipe,
+    MasteryBadgeComponent,
+  ],
   templateUrl: './student-profile.html',
   styleUrl: './student-profile.css',
 })
@@ -46,10 +58,14 @@ export class StudentProfileComponent implements OnInit {
   studentId = signal(DEFAULT_STUDENT_ID);
   profile = signal<StudentProfile | null>(null);
   scores = signal<SuperSyllabusScores | null>(null);
+  weakSkills = signal<MasterySkillState[]>([]);
   loading = signal(false);
   errorMessage = signal('');
 
-  constructor(private readonly studentIntelligenceService: StudentIntelligenceService) {}
+  constructor(
+    private readonly studentIntelligenceService: StudentIntelligenceService,
+    private readonly masteryEngine: MasteryEngineService,
+  ) {}
 
   ngOnInit(): void {
     this.loadProfile();
@@ -62,6 +78,7 @@ export class StudentProfileComponent implements OnInit {
       next: (profile) => {
         this.profile.set(profile);
         this.scores.set(deriveScores(profile));
+        this.loadWeakSkills();
         this.loading.set(false);
       },
       error: () => {
@@ -85,5 +102,23 @@ export class StudentProfileComponent implements OnInit {
 
   operationKeys(): Array<'addition' | 'subtraction' | 'multiplication' | 'division'> {
     return ['addition', 'subtraction', 'multiplication', 'division'];
+  }
+
+  masteryLabel(level: MasterySkillState['level']): string {
+    if (level === 'mastered') return 'Mastered';
+    if (level === 'proficient') return 'Proficient';
+    if (level === 'developing') return 'Developing';
+    return 'Not started';
+  }
+
+  private loadWeakSkills(): void {
+    this.masteryEngine.fetchMasteryState(this.studentId()).subscribe({
+      next: (state) => {
+        this.weakSkills.set(state.weakSkills);
+      },
+      error: () => {
+        this.weakSkills.set([]);
+      },
+    });
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { type LearningLevel } from './diagnostic.service';
@@ -98,8 +98,12 @@ export class PracticeService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getPractice(level: LearningLevel): Observable<Worksheet> {
-    return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
+  getPractice(level: LearningLevel, skillId?: string): Observable<Worksheet> {
+    if (!skillId?.trim()) {
+      return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
+    }
+    const params = new HttpParams().set('skillId', skillId.trim());
+    return this.http.get<Worksheet>(`${this.baseUrl}/${level}`, { params });
   }
 
   submitWorksheet(payload: WorksheetSubmission): Observable<WorksheetResult> {

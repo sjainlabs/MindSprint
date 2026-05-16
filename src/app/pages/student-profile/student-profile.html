@@ -148,6 +148,33 @@
           }
         </div>
 
+        <div class="bg-white rounded-xl shadow p-5">
+          <h2 class="text-lg font-bold text-primary mb-3">Skills to Improve</h2>
+          @if (weakSkills().length === 0) {
+            <p class="text-sm text-gray-500">No weak skills identified yet. Keep practicing!</p>
+          }
+          <div class="space-y-2">
+            @for (skill of weakSkills(); track skill.skillId) {
+              <div class="rounded-lg border border-slate-200 p-3">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-800">{{ skill.skillName }}</p>
+                    <div class="mt-1">
+                      <app-mastery-badge [level]="skill.level" [label]="masteryLabel(skill.level)" />
+                    </div>
+                  </div>
+                  <a
+                    routerLink="/worksheet/Intermediate"
+                    class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
+                  >
+                    Quick Practice
+                  </a>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
         <!-- Goals -->
         @if (p.goals && p.goals.length > 0) {
           <div class="bg-white rounded-xl shadow p-5">
