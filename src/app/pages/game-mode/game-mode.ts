@@ -148,6 +148,7 @@ export class GameModeComponent implements OnDestroy {
   flashState = signal<AbacusGameState>(GAME_STATE.START);
   showQuestion = signal(false);
   isFlashing = signal(false);
+  private competitionBossSubmissionArmed = signal(false);
   private flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private flashSequenceToken = 0;
   private mapAutoAdvanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -217,10 +218,11 @@ export class GameModeComponent implements OnDestroy {
       const isCompetitionBoss = this.selectedMode() === 'competition-boss';
       const challenge = this.challenge();
       const outcome = this.competitionBossEngine.outcome();
+      const isCompetitionBossSubmissionArmed = this.competitionBossSubmissionArmed();
 
       if (
         !isCompetitionBoss
-        || this.loading()
+        || !isCompetitionBossSubmissionArmed
         || !challenge
         || !this.isLegacyChallenge(challenge)
         || outcome === 'in-progress'
@@ -229,8 +231,13 @@ export class GameModeComponent implements OnDestroy {
         return;
       }
 
+      const challengeId = challenge.challengeId;
       queueMicrotask(() => {
-        if (this.selectedMode() === 'competition-boss' && !this.challengeSubmitted()) {
+        if (
+          this.competitionBossSubmissionArmed()
+          && this.challenge()?.challengeId === challengeId
+          && !this.challengeSubmitted()
+        ) {
           this.submitChallenge();
         }
       });
@@ -720,6 +727,7 @@ export class GameModeComponent implements OnDestroy {
     this.fallingEngine.stop();
     this.bossBattleEngine.stop();
     this.competitionBossEngine.stop();
+    this.competitionBossSubmissionArmed.set(false);
     this.aiPuzzleEngine.stop();
     this.fluencyEngine.stop();
     this.reasoningPuzzleEngine.stop();
@@ -966,6 +974,7 @@ export class GameModeComponent implements OnDestroy {
     this.loading.set(true);
     this.errorMessage.set('');
     this.challengeSubmitted.set(false);
+    this.competitionBossSubmissionArmed.set(false);
     this.selectedAnswer.set(null);
     this.selectedAnswers.set([]);
     this.currentStepIndex.set(0);
@@ -1045,6 +1054,7 @@ export class GameModeComponent implements OnDestroy {
           this.completedQuests.set(
             this.isLegacyChallenge(challenge) ? challenge.dailyQuest.progress : 0,
           );
+          this.loading.set(false);
 
           // ⭐ FALLING NUMBERS — START ENGINE HERE ONLY
           if (this.selectedMode() === 'falling-numbers'
@@ -1079,8 +1089,10 @@ export class GameModeComponent implements OnDestroy {
             const competitionBossPayload = this.getCompetitionBossPayload(challenge);
             this.competitionBossEngine.configure(competitionBossPayload);
             this.competitionBossEngine.start();
+            this.competitionBossSubmissionArmed.set(true);
           } else {
             this.competitionBossEngine.stop();
+            this.competitionBossSubmissionArmed.set(false);
           }
 
           const isAiPuzzle = this.isAiPuzzleSelectedMode();
@@ -1113,7 +1125,6 @@ export class GameModeComponent implements OnDestroy {
             this.fluencyEngine.stop();
           }
 
-          this.loading.set(false);
         },
         error: () => {
           this.errorMessage.set('Unable to load game challenge.');
