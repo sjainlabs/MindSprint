@@ -40,6 +40,13 @@ import { LanguageToggleComponent } from '../../components/language-toggle/langua
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { TranslationService } from '../../services/translation.service';
 import {
+  MasteryEngineService,
+  type MasteryLevel,
+  type MasterySkillState,
+} from '../../core/mastery/mastery-engine.service';
+import { MasteryBadgeComponent } from '../../components/mastery-badge/mastery-badge.component';
+import { RecommendedSkillCardComponent } from '../../components/recommended-skill-card/recommended-skill-card.component';
+import {
   MAP_AUTO_ADVANCE_DELAY_MS,
   MAP_DIFFICULTY_ADVANCED_THRESHOLD,
   MAP_DIFFICULTY_READY_THRESHOLD,
@@ -103,6 +110,8 @@ export type SuperGameMode =
     MapTableComponent,
     LanguageToggleComponent,
     TranslatePipe,
+    MasteryBadgeComponent,
+    RecommendedSkillCardComponent,
     FallingNumbersComponent,
     BossBattleComponent,
     CompetitionBossModeComponent,
@@ -125,6 +134,9 @@ export class GameModeComponent implements OnDestroy {
   challengeSubmitted = signal(false);
   completedQuests = signal(0);
   adaptiveDifficulty = signal<number | null>(null);
+  masteryRecommendedSkill = signal<MasterySkillState | null>(null);
+  masteryWeakSkills = signal<MasterySkillState[]>([]);
+  currentModeSkillId = signal('general-skill');
   localXp = signal(0);
   localStreak = signal(0);
   unlockedBadges = signal<string[]>([]);
@@ -209,10 +221,14 @@ export class GameModeComponent implements OnDestroy {
     };
     return info[mode] ?? null;
   });
+  modeMasteryLevel = computed<MasteryLevel>(() => {
+    return this.masteryEngine.getMasteryLevel(this.currentModeSkillId(), this.studentId());
+  });
 
   constructor(
     private readonly gameService: GameService,
     private readonly studentIntelligenceService: StudentIntelligenceService,
+    private readonly masteryEngine: MasteryEngineService,
   ) {
     effect(() => {
       const isCompetitionBoss = this.selectedMode() === 'competition-boss';
@@ -243,6 +259,7 @@ export class GameModeComponent implements OnDestroy {
 
   ngOnInit(): void {
     this.refreshAdaptiveDifficulty();
+    this.refreshMasteryContext();
     this.loadChallenge();
   }
 
@@ -1001,6 +1018,9 @@ export class GameModeComponent implements OnDestroy {
     this.clearMapAutoAdvanceTimeout();
 
     const apiMode = this.toApiMode(this.selectedMode());
+    const modeSkillId = this.resolveSkillIdForMode(this.selectedMode());
+    this.currentModeSkillId.set(modeSkillId);
+    const effectiveDifficulty = this.getModeAdaptiveDifficulty(this.selectedMode(), modeSkillId);
     this.activeChallengeApiMode = apiMode;
 
     // ───────────────────────────────────────────────
@@ -1010,7 +1030,7 @@ export class GameModeComponent implements OnDestroy {
       this.gameService
         .getAbacusFlashChallenge({
           studentId: this.studentId(),
-          difficulty: this.adaptiveDifficulty() ?? undefined,
+          difficulty: effectiveDifficulty ?? undefined,
           streak: this.streakTotal(),
         })
         .subscribe({
@@ -1038,9 +1058,10 @@ export class GameModeComponent implements OnDestroy {
       .getChallenge({
         studentId: this.studentId(),
         mode: apiMode,
-        difficulty: this.adaptiveDifficulty() ?? undefined,
+        difficulty: effectiveDifficulty ?? undefined,
         streak: this.streakTotal(),
         completedDailyQuestCount: this.completedQuests(),
+        skillId: modeSkillId,
       })
       .subscribe({
         next: (challenge) => {
@@ -1112,10 +1133,11 @@ export class GameModeComponent implements OnDestroy {
           // ⭐ FLUENCY — START ENGINE HERE ONLY
           if (this.selectedMode() === 'fluency' && this.isLegacyChallenge(challenge)) {
             const fluencyPayload = this.getFluencyPayload(challenge);
+            const weakOps = this.getWeakFoundationalOperations();
             this.fluencyEngine.configure({
               difficulty: fluencyPayload.difficulty,
               timeLimitSeconds: fluencyPayload.timeLimitSeconds,
-              operations: fluencyPayload.operations,
+              operations: weakOps.length > 0 ? weakOps : fluencyPayload.operations,
             });
             this.fluencyEngine.start();
           } else {
@@ -1267,6 +1289,76 @@ export class GameModeComponent implements OnDestroy {
         this.adaptiveDifficulty.set(null);
       },
     });
+  }
+
+  refreshMasteryContext(): void {
+    this.masteryEngine.fetchMasteryState(this.studentId()).subscribe({
+      next: (state) => {
+        this.masteryWeakSkills.set(state.weakSkills);
+        const recommendedId = state.recommendedNextSkill?.skillId;
+        const recommended = recommendedId
+          ? this.masteryEngine.getMastery(recommendedId, this.studentId())
+          : null;
+        this.masteryRecommendedSkill.set(recommended);
+      },
+      error: () => {
+        this.masteryWeakSkills.set([]);
+        this.masteryRecommendedSkill.set(null);
+      },
+    });
+  }
+
+  startRecommendedGamePractice(): void {
+    this.selectedMode.set('reasoning-puzzle');
+    this.refreshMasteryContext();
+    this.loadChallenge();
+  }
+
+  masteryLabel(level: MasteryLevel): string {
+    if (level === 'mastered') return 'Mastered';
+    if (level === 'proficient') return 'Proficient';
+    if (level === 'developing') return 'Developing';
+    return 'Not started';
+  }
+
+  private resolveSkillIdForMode(mode: SuperGameMode): string {
+    if (mode === 'reasoning-puzzle') {
+      return this.masteryEngine.getRecommendedNextSkill(this.studentId())?.skillId ?? 'reasoning-logic';
+    }
+    if (mode === 'fluency') {
+      return this.masteryWeakSkills()[0]?.skillId ?? 'addition';
+    }
+    if (mode === 'boss-battle') {
+      return this.currentModeSkillId() || 'boss-battle';
+    }
+    return mode;
+  }
+
+  private getModeAdaptiveDifficulty(mode: SuperGameMode, skillId: string): number | null {
+    const base = this.adaptiveDifficulty();
+    const mastery = this.masteryEngine.getMastery(skillId, this.studentId());
+    if (mode !== 'boss-battle') {
+      return base;
+    }
+    const masteryAccuracy = mastery?.accuracy ?? 50;
+    const blendedBase = base ?? 50;
+    return Math.max(20, Math.min(100, Math.round(blendedBase * 0.4 + masteryAccuracy * 0.6)));
+  }
+
+  private getWeakFoundationalOperations(): FluencyOperation[] {
+    const weak = this.masteryWeakSkills();
+    if (weak.length === 0) return [];
+    const operations = weak
+      .map((skill) => skill.skillId.toLowerCase())
+      .map((skillId) => {
+        if (skillId.includes('addition')) return 'addition';
+        if (skillId.includes('subtraction')) return 'subtraction';
+        if (skillId.includes('multiplication')) return 'multiplication';
+        if (skillId.includes('division')) return 'division';
+        return null;
+      })
+      .filter((value): value is FluencyOperation => value !== null);
+    return [...new Set(operations)];
   }
 
   onAiPuzzleSubmit(answer: string): void {

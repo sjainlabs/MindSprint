@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { StudentProfileComponent } from './student-profile';
 import { StudentIntelligenceService } from '../../services/student-intelligence.service';
+import { MasteryEngineService } from '../../core/mastery/mastery-engine.service';
 
 const mockProfile = {
   studentId: 'student-demo',
@@ -23,6 +24,27 @@ describe('StudentProfileComponent', () => {
   const studentIntelligenceServiceMock = {
     getStudentProfile: vi.fn(() => of(mockProfile)),
   };
+  const masteryEngineMock = {
+    fetchMasteryState: vi.fn(() =>
+      of({
+        studentId: 'student-demo',
+        updatedAt: new Date().toISOString(),
+        skills: [],
+        weakSkills: [
+          {
+            skillId: 'division',
+            skillName: 'Division Facts',
+            level: 'developing',
+            accuracy: 52,
+            attempts: 6,
+            lastPracticed: new Date().toISOString(),
+            progressToNextLevel: 40,
+          },
+        ],
+        recommendedNextSkill: null,
+      }),
+    ),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -31,6 +53,7 @@ describe('StudentProfileComponent', () => {
       providers: [
         provideRouter([]),
         { provide: StudentIntelligenceService, useValue: studentIntelligenceServiceMock },
+        { provide: MasteryEngineService, useValue: masteryEngineMock },
       ],
     }).compileComponents();
   });
@@ -159,5 +182,15 @@ describe('StudentProfileComponent', () => {
     comp.loadProfile();
 
     expect(studentIntelligenceServiceMock.getStudentProfile).toHaveBeenCalledWith('another-student');
+  });
+
+  it('renders skills to improve from mastery engine', () => {
+    const fixture = TestBed.createComponent(StudentProfileComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(masteryEngineMock.fetchMasteryState).toHaveBeenCalledWith('student-demo');
+    expect(compiled.textContent).toContain('Skills to Improve');
+    expect(compiled.textContent).toContain('Division Facts');
   });
 });

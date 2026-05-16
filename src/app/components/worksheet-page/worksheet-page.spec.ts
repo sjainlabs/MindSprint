@@ -11,6 +11,7 @@ import { StudentIntelligenceService } from '../../services/student-intelligence.
 import { TopicService } from '../../services/topic.service';
 import { AiWorksheetService } from '../../services/ai-worksheet.service';
 import { PRACTICE_TOPIC_CATALOG } from '../../services/practice-topic-catalog';
+import { MasteryEngineService } from '../../core/mastery/mastery-engine.service';
 
 const worksheet: Worksheet = {
   worksheetId: 'ws-1',
@@ -145,6 +146,51 @@ describe('WorksheetPageComponent', () => {
     ),
   };
 
+  const masteryState = {
+    studentId: 'student-demo',
+    updatedAt: new Date().toISOString(),
+    skills: [
+      {
+        skillId: PRACTICE_TOPIC_CATALOG[0].id,
+        skillName: PRACTICE_TOPIC_CATALOG[0].name,
+        level: 'developing' as const,
+        accuracy: 62,
+        attempts: 8,
+        lastPracticed: new Date().toISOString(),
+        progressToNextLevel: 55,
+      },
+    ],
+    weakSkills: [
+      {
+        skillId: PRACTICE_TOPIC_CATALOG[0].id,
+        skillName: PRACTICE_TOPIC_CATALOG[0].name,
+        level: 'developing' as const,
+        accuracy: 62,
+        attempts: 8,
+        lastPracticed: new Date().toISOString(),
+        progressToNextLevel: 55,
+      },
+    ],
+    recommendedNextSkill: {
+      skillId: PRACTICE_TOPIC_CATALOG[0].id,
+      skillName: PRACTICE_TOPIC_CATALOG[0].name,
+      reason: 'weak-skill' as const,
+      action: 'Practice foundations',
+    },
+  };
+
+  const masteryEngineMock = {
+    fetchMasteryState: vi.fn(() => of(masteryState)),
+    updateMastery: vi.fn(() => of(masteryState)),
+    getMastery: vi.fn((skillId: string) =>
+      masteryState.skills.find((entry) => entry.skillId === skillId) ?? null,
+    ),
+    getMasteryLevel: vi.fn(() => 'developing'),
+    getWeakSkills: vi.fn(() => masteryState.weakSkills),
+    getRecommendedNextSkill: vi.fn(() => masteryState.recommendedNextSkill),
+    getRecommendedNextAction: vi.fn(() => masteryState.recommendedNextSkill.action),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -155,6 +201,7 @@ describe('WorksheetPageComponent', () => {
         { provide: StudentIntelligenceService, useValue: studentIntelligenceServiceMock },
         { provide: TopicService, useValue: topicServiceMock },
         { provide: AiWorksheetService, useValue: aiWorksheetServiceMock },
+        { provide: MasteryEngineService, useValue: masteryEngineMock },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -171,7 +218,10 @@ describe('WorksheetPageComponent', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
 
-    expect(practiceServiceMock.getPractice).toHaveBeenCalledWith('Intermediate');
+    expect(practiceServiceMock.getPractice).toHaveBeenCalledWith(
+      'Intermediate',
+      PRACTICE_TOPIC_CATALOG[0].id,
+    );
     expect(studentIntelligenceServiceMock.getStudentProfile).toHaveBeenCalled();
     expect(studentIntelligenceServiceMock.getStudentAnalytics).toHaveBeenCalled();
   });
@@ -266,5 +316,27 @@ describe('WorksheetPageComponent', () => {
         questionTypes: selectedTopic.questionTypes,
       }),
     );
+  });
+
+  it('shows recommended skill card when mastery recommendation is available', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).toContain('Recommended for You');
+    expect(compiled.textContent).toContain(PRACTICE_TOPIC_CATALOG[0].name);
+  });
+
+  it('updates mastery progress after each question answer', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const initialProgress = component.selectedTopicMasteryProgress();
+
+    const firstQuestion = worksheet.questions[0];
+    component.updateAnswer(firstQuestion.id, firstQuestion.answer);
+
+    expect(masteryEngineMock.updateMastery).toHaveBeenCalled();
+    expect(component.selectedTopicMasteryProgress()).toBeGreaterThanOrEqual(initialProgress);
   });
 });

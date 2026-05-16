@@ -24,9 +24,24 @@
           class="mt-1 w-full border rounded-md px-3 py-2"
           [ngModel]="studentId()"
           (ngModelChange)="studentId.set($event)"
-          (blur)="refreshAdaptiveDifficulty(); loadChallenge()"
+          (blur)="refreshAdaptiveDifficulty(); refreshMasteryContext(); loadChallenge()"
         />
       </label>
+
+      <div class="mb-4">
+        <app-recommended-skill-card
+          title="Recommended for You"
+          [skillName]="masteryRecommendedSkill()?.skillName ?? ''"
+          [reason]="'Reasoning mode recommended next skill'"
+          actionLabel="Start Practice"
+          (startPractice)="startRecommendedGamePractice()"
+        />
+      </div>
+
+      <div class="mb-4 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <p class="text-sm text-slate-700">Active mode mastery</p>
+        <app-mastery-badge [level]="modeMasteryLevel()" [label]="masteryLabel(modeMasteryLevel())" />
+      </div>
 
       <!-- Core Game Modes -->
       <section class="mb-2">

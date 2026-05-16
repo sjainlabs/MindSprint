@@ -98,8 +98,12 @@ export class PracticeService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getPractice(level: LearningLevel): Observable<Worksheet> {
-    return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
+  getPractice(level: LearningLevel, skillId?: string): Observable<Worksheet> {
+    if (!skillId?.trim()) {
+      return this.http.get<Worksheet>(`${this.baseUrl}/${level}`);
+    }
+    const params = new URLSearchParams({ skillId: skillId.trim() });
+    return this.http.get<Worksheet>(`${this.baseUrl}/${level}?${params.toString()}`);
   }
 
   submitWorksheet(payload: WorksheetSubmission): Observable<WorksheetResult> {

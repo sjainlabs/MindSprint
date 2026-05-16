@@ -190,6 +190,7 @@ export class GameService {
     difficulty?: number;
     streak?: number;
     completedDailyQuestCount?: number;
+    skillId?: string;
   }): Observable<GameChallenge> {
     const params = new URLSearchParams({ studentId: payload.studentId });
     if (payload.mode) {
@@ -203,6 +204,9 @@ export class GameService {
     }
     if (typeof payload.completedDailyQuestCount === 'number') {
       params.set('completedDailyQuestCount', String(payload.completedDailyQuestCount));
+    }
+    if (payload.skillId?.trim()) {
+      params.set('skillId', payload.skillId.trim());
     }
     return this.http.get<GameChallenge>(`${this.apiRoot}/game/challenge?${params.toString()}`);
   }

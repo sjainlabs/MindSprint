@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { GameModeComponent } from './game-mode';
 import { GameService } from '../../services/game.service';
 import { StudentIntelligenceService } from '../../services/student-intelligence.service';
+import { MasteryEngineService } from '../../core/mastery/mastery-engine.service';
 
 const mockProfile = {
   studentId: 'student-demo',
@@ -155,6 +156,58 @@ describe('GameModeComponent', () => {
   const studentIntelligenceServiceMock = {
     getStudentProfile: vi.fn(() => of(mockProfile)),
   };
+  const masteryEngineMock = {
+    fetchMasteryState: vi.fn(() =>
+      of({
+        studentId: 'student-demo',
+        updatedAt: new Date().toISOString(),
+        skills: [
+          {
+            skillId: 'addition',
+            skillName: 'Addition',
+            level: 'developing',
+            accuracy: 62,
+            attempts: 10,
+            lastPracticed: new Date().toISOString(),
+            progressToNextLevel: 58,
+          },
+        ],
+        weakSkills: [
+          {
+            skillId: 'addition',
+            skillName: 'Addition',
+            level: 'developing',
+            accuracy: 62,
+            attempts: 10,
+            lastPracticed: new Date().toISOString(),
+            progressToNextLevel: 58,
+          },
+        ],
+        recommendedNextSkill: {
+          skillId: 'addition',
+          skillName: 'Addition',
+          reason: 'weak-skill',
+          action: 'Practice addition',
+        },
+      }),
+    ),
+    getMasteryLevel: vi.fn(() => 'developing'),
+    getRecommendedNextSkill: vi.fn(() => ({
+      skillId: 'addition',
+      skillName: 'Addition',
+      reason: 'weak-skill',
+      action: 'Practice addition',
+    })),
+    getMastery: vi.fn(() => ({
+      skillId: 'addition',
+      skillName: 'Addition',
+      level: 'developing',
+      accuracy: 62,
+      attempts: 10,
+      lastPracticed: new Date().toISOString(),
+      progressToNextLevel: 58,
+    })),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -166,6 +219,7 @@ describe('GameModeComponent', () => {
         provideRouter([]),
         { provide: GameService, useValue: gameServiceMock },
         { provide: StudentIntelligenceService, useValue: studentIntelligenceServiceMock },
+        { provide: MasteryEngineService, useValue: masteryEngineMock },
       ],
     }).compileComponents();
   });

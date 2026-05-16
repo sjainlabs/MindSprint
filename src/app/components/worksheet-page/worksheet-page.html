@@ -40,6 +40,30 @@
                 • {{ 'worksheet.accuracy' | translate }}: {{ accuracyPercentage() }}%
               }
             </p>
+
+            <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <p class="text-sm font-semibold text-slate-800">Current skill mastery</p>
+                <app-mastery-badge
+                  [level]="selectedTopicMasteryLevel()"
+                  [label]="masteryLabel(selectedTopicMasteryLevel())"
+                />
+              </div>
+              <div class="mt-2">
+                <app-mastery-progress
+                  [progressPercent]="selectedTopicMasteryProgress()"
+                  label="Progress toward next mastery level"
+                />
+              </div>
+              @if (shouldCelebrateMastery()) {
+                <p class="mt-2 text-xs font-semibold text-emerald-700">
+                  You’re close to mastering this skill!
+                </p>
+              }
+              @if (shouldReviewPrerequisite()) {
+                <p class="mt-2 text-xs font-semibold text-amber-700">Let’s review a prerequisite.</p>
+              }
+            </div>
           </div>
 
           @if (result() !== null) {
@@ -425,6 +449,17 @@
         {{ 'worksheet.aiWorksheetTitle' | translate }}
       </h2>
 
+      @if (masteryReady()) {
+        <div class="mb-4">
+          <app-recommended-skill-card
+            [skillName]="recommendedSkill()?.skillName ?? ''"
+            [reason]="recommendedReasonText()"
+            actionLabel="Start Practice"
+            (startPractice)="startRecommendedPractice()"
+          />
+        </div>
+      }
+
       @if (personalizedPath().length > 0) {
         <div class="mb-4 rounded-lg bg-indigo-50 border border-indigo-200 p-3">
           <p class="text-sm font-semibold text-indigo-700 mb-2">
@@ -472,7 +507,7 @@
                       <p class="text-sm font-semibold text-slate-800">{{ group.label }}</p>
                       <div class="mt-2 flex flex-wrap gap-2">
                         @for (topic of group.topics; track topic.id) {
-                          <button
+                         <button
                             type="button"
                             class="rounded-full border px-3 py-1 text-xs font-medium transition"
                             [class.border-primary]="selectedTopicId() === topic.id"
@@ -481,8 +516,20 @@
                             [class.border-slate-200]="selectedTopicId() !== topic.id"
                             [class.text-slate-700]="selectedTopicId() !== topic.id"
                             (click)="selectTopic(topic.id)"
+                            [attr.title]="topicMasteryTooltip(topic.id)"
                           >
                             {{ topic.name }}
+                            @if (recommendedSkill()?.skillId === topic.id) {
+                              <span class="ml-1 rounded bg-indigo-100 px-1 py-0.5 text-[10px] text-indigo-700"
+                                >Recommended</span
+                              >
+                            }
+                            <span class="ml-1 inline-flex">
+                              <app-mastery-badge
+                                [level]="getSkillMastery(topic.id)?.level ?? 'not-started'"
+                                [label]="masteryLabel(getSkillMastery(topic.id)?.level ?? 'not-started')"
+                              />
+                            </span>
                           </button>
                         }
                       </div>
@@ -515,8 +562,20 @@
                             [class.border-slate-200]="selectedTopicId() !== topic.id"
                             [class.text-slate-700]="selectedTopicId() !== topic.id"
                             (click)="selectTopic(topic.id)"
+                            [attr.title]="topicMasteryTooltip(topic.id)"
                           >
                             {{ topic.name }}
+                            @if (recommendedSkill()?.skillId === topic.id) {
+                              <span class="ml-1 rounded bg-indigo-100 px-1 py-0.5 text-[10px] text-indigo-700"
+                                >Recommended</span
+                              >
+                            }
+                            <span class="ml-1 inline-flex">
+                              <app-mastery-badge
+                                [level]="getSkillMastery(topic.id)?.level ?? 'not-started'"
+                                [label]="masteryLabel(getSkillMastery(topic.id)?.level ?? 'not-started')"
+                              />
+                            </span>
                           </button>
                         }
                       </div>
@@ -557,11 +616,23 @@
             <div
               class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900"
             >
-              <p class="font-semibold">{{ topic.name }}</p>
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold">{{ topic.name }}</p>
+                <app-mastery-badge
+                  [level]="selectedTopicMasteryLevel()"
+                  [label]="masteryLabel(selectedTopicMasteryLevel())"
+                />
+              </div>
               <p class="mt-1 text-xs text-indigo-700">{{ topic.groupLabel }}</p>
               <p class="mt-2 text-xs text-indigo-700">
                 {{ 'worksheet.questionTypes' | translate }}: {{ selectedTopicQuestionTypes() }}
               </p>
+              <div class="mt-2">
+                <app-mastery-progress
+                  [progressPercent]="selectedTopicMasteryProgress()"
+                  label="Progress toward next level"
+                />
+              </div>
             </div>
           }
 

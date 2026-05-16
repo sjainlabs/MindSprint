@@ -26,13 +26,31 @@ import {
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { TranslationService } from '../../services/translation.service';
+import {
+  MasteryEngineService,
+  type MasteryLevel,
+  type MasteryRecommendation,
+  type MasterySkillState,
+} from '../../core/mastery/mastery-engine.service';
+import { MasteryBadgeComponent } from '../../components/mastery-badge/mastery-badge.component';
+import { MasteryProgressComponent } from '../../components/mastery-progress/mastery-progress.component';
+import { RecommendedSkillCardComponent } from '../../components/recommended-skill-card/recommended-skill-card.component';
 
 const VALID_IDENTIFIER_PATTERN = /^[a-z0-9][a-z0-9-_]*$/i;
 
 @Component({
   selector: 'app-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    LanguageToggleComponent,
+    TranslatePipe,
+    MasteryBadgeComponent,
+    MasteryProgressComponent,
+    RecommendedSkillCardComponent,
+  ],
   templateUrl: './worksheet-page.html',
   styleUrl: './worksheet-page.css',
 })
@@ -71,6 +89,9 @@ export class WorksheetPageComponent implements OnInit {
   aiWorksheet = signal<AiWorksheet | null>(null);
   aiLoading = signal(false);
   aiError = signal('');
+  masteryReady = signal(false);
+  weakSkills = signal<MasterySkillState[]>([]);
+  recommendedSkill = signal<MasteryRecommendation | null>(null);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -78,6 +99,7 @@ export class WorksheetPageComponent implements OnInit {
     private readonly studentIntelligenceService: StudentIntelligenceService,
     private readonly topicService: TopicService,
     private readonly aiWorksheetService: AiWorksheetService,
+    private readonly masteryEngine: MasteryEngineService,
     private readonly router: Router,
   ) {}
 
@@ -92,6 +114,7 @@ export class WorksheetPageComponent implements OnInit {
     }
 
     this.currentLevel.set(level);
+    this.loadMasteryState();
     this.refreshStudentInsights();
     this.loadWorksheet(level);
     this.loadTopicTaxonomy();
@@ -111,7 +134,8 @@ export class WorksheetPageComponent implements OnInit {
     this.answers.set({});
     this.worksheetStartedAt.set(new Date().toISOString());
 
-    this.practiceService.getPractice(level).subscribe({
+    const recommendedSkillId = this.recommendedSkill()?.skillId;
+    this.practiceService.getPractice(level, recommendedSkillId).subscribe({
       next: (data) => {
         if (!data?.questions) {
           this.errorMessage.set('Invalid worksheet data received.');
@@ -162,6 +186,21 @@ export class WorksheetPageComponent implements OnInit {
   );
   selectedTopicName = computed(() => this.selectedTopic()?.name ?? '');
   selectedTopicQuestionTypes = computed(() => this.selectedTopic()?.questionTypes.join(', ') ?? '');
+  selectedTopicMastery = computed(() => this.getSkillMastery(this.selectedTopicId()));
+  selectedTopicMasteryLevel = computed<MasteryLevel>(
+    () => this.selectedTopicMastery()?.level ?? 'not-started',
+  );
+  selectedTopicMasteryProgress = computed(
+    () => this.selectedTopicMastery()?.progressToNextLevel ?? 0,
+  );
+  shouldCelebrateMastery = computed(() => {
+    const accuracy = this.accuracyPercentage();
+    return accuracy !== null && accuracy > 80;
+  });
+  shouldReviewPrerequisite = computed(() => {
+    const accuracy = this.accuracyPercentage();
+    return accuracy !== null && accuracy < 50;
+  });
   recommendedLevel = computed(() => this.getNormalizedRecommendedLevel(this.recommendation()));
   recommendedLevelDisplay = computed(() => {
     const recommendation = this.recommendation();
@@ -230,6 +269,7 @@ export class WorksheetPageComponent implements OnInit {
 
   updateAnswer(questionId: string, value: number | null): void {
     this.answers.update((answers) => ({ ...answers, [questionId]: value }));
+    this.trackQuestionMastery(questionId, value);
   }
 
   async goToAdaptive(): Promise<void> {
@@ -256,6 +296,11 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   generateAdvancedWorksheet(): void {
+    const recommended = this.masteryEngine.getRecommendedNextSkill(this.studentId());
+    if (recommended?.skillId && !this.selectedTopicId()) {
+      this.selectTopic(recommended.skillId);
+    }
+
     const topic = this.selectedTopic();
     if (!topic || this.aiLoading()) {
       return;
@@ -297,6 +342,42 @@ export class WorksheetPageComponent implements OnInit {
       ? Math.round((topic.subtopics[0].difficulty.min + topic.subtopics[0].difficulty.max) / 2)
       : 75;
     this.aiDifficulty.set(suggestedDifficulty);
+  }
+
+  startRecommendedPractice(): void {
+    const recommended = this.recommendedSkill();
+    if (recommended?.skillId) {
+      this.selectTopic(recommended.skillId);
+    }
+    this.loadWorksheet(this.currentLevel());
+  }
+
+  getSkillMastery(skillId: string): MasterySkillState | null {
+    if (!skillId) return null;
+    return this.masteryEngine.getMastery(skillId, this.studentId());
+  }
+
+  topicMasteryTooltip(skillId: string): string {
+    const mastery = this.getSkillMastery(skillId);
+    if (!mastery) {
+      return 'Accuracy: 0% • Attempts: 0 • Last practiced: Never';
+    }
+    return `Accuracy: ${mastery.accuracy}% • Attempts: ${mastery.attempts} • Last practiced: ${mastery.lastPracticed ?? 'Never'}`;
+  }
+
+  masteryLabel(level: MasteryLevel): string {
+    if (level === 'mastered') return 'Mastered';
+    if (level === 'proficient') return 'Proficient';
+    if (level === 'developing') return 'Developing';
+    return 'Not started';
+  }
+
+  recommendedReasonText(): string {
+    const reason = this.recommendedSkill()?.reason;
+    if (reason === 'weak-skill') return 'Reason: weak skill';
+    if (reason === 'next-progression') return 'Reason: next progression';
+    if (reason === 'review-needed') return 'Reason: review needed';
+    return this.masteryEngine.getRecommendedNextAction(this.studentId());
   }
 
   printAiWorksheet(): void {
@@ -442,6 +523,46 @@ export class WorksheetPageComponent implements OnInit {
         this.intelligenceLoading.set(false);
       },
     });
+  }
+
+  private loadMasteryState(): void {
+    this.masteryEngine.fetchMasteryState(this.studentId()).subscribe({
+      next: (state) => {
+        this.weakSkills.set(state.weakSkills);
+        this.recommendedSkill.set(state.recommendedNextSkill);
+        if (!this.selectedTopicId() && state.recommendedNextSkill?.skillId) {
+          this.selectedTopicId.set(state.recommendedNextSkill.skillId);
+        }
+        this.masteryReady.set(true);
+      },
+      error: () => {
+        this.weakSkills.set([]);
+        this.recommendedSkill.set(null);
+        this.masteryReady.set(true);
+      },
+    });
+  }
+
+  private trackQuestionMastery(questionId: string, submittedValue: number | null): void {
+    if (submittedValue === null) return;
+    const worksheet = this.worksheet();
+    if (!worksheet) return;
+    const question = worksheet.questions.find((entry) => entry.id === questionId);
+    if (!question) return;
+    const skillId = this.selectedTopicId() || question.operation;
+    this.masteryEngine
+      .updateMastery({
+        studentId: this.studentId(),
+        skillId,
+        skillName: this.selectedTopic()?.name,
+        isCorrect: submittedValue === question.answer,
+      })
+      .subscribe({
+        next: (state) => {
+          this.weakSkills.set(state.weakSkills);
+          this.recommendedSkill.set(state.recommendedNextSkill);
+        },
+      });
   }
 
   private normalizeConfidence(confidence?: 'low' | 'medium' | 'high'): number {
