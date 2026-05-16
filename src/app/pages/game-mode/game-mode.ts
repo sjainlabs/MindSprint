@@ -927,17 +927,18 @@ export class GameModeComponent implements OnDestroy {
     }
 
     this.challengeSubmitted.set(true);
-    const correct = isMapChallenge
-      ? this.evaluateMapChallenge()
-      : isAiPuzzle
-        ? (isReasoningPuzzle
-            ? this.reasoningPuzzleEngine.isCorrect() === true
-            : this.aiPuzzleEngine.isCorrect() === true)
-      : hasAnswerOptions
-        ? selected === challenge.answer
-        : isAbacusFlash
-          ? selected === this.getAbacusExpectedAnswer()
-          : false;
+    let correct = false;
+    if (isMapChallenge) {
+      correct = this.evaluateMapChallenge();
+    } else if (isReasoningPuzzle) {
+      correct = this.reasoningPuzzleEngine.isCorrect() === true;
+    } else if (isAiPuzzle) {
+      correct = this.aiPuzzleEngine.isCorrect() === true;
+    } else if (hasAnswerOptions) {
+      correct = selected === challenge.answer;
+    } else if (isAbacusFlash) {
+      correct = selected === this.getAbacusExpectedAnswer();
+    }
 
     if (correct) {
       const totalXp = challenge.rewards.xp + challenge.rewards.streakBonus;
