@@ -162,6 +162,11 @@
   animation: cbResultIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+.cb-result-icon {
+  font-size: 1.875rem;
+  margin-bottom: 0.5rem;
+}
+
 .cb-result--victory {
   background: linear-gradient(135deg, #dcfce7, #bbf7d0);
   border-color: #86efac;

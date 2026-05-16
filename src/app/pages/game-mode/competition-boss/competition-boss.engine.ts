@@ -72,8 +72,14 @@ export class CompetitionBossEngine {
   private specialAttackWarnTimeout: ReturnType<typeof setTimeout> | null = null;
   private specialAttackCountdownTimer: ReturnType<typeof setInterval> | null = null;
 
-  configure(config: Partial<CompetitionBossConfig> & Pick<CompetitionBossConfig, 'bossId' | 'title' | 'maxHp'>): void {
-    const maxHp = clamp(Math.round(config.maxHp), 1, 10_000);
+  configure(config: Partial<CompetitionBossConfig> & Pick<CompetitionBossConfig, 'bossId' | 'title'>): void {
+    const maxHp = clamp(
+      typeof config.maxHp === 'number' && Number.isFinite(config.maxHp)
+        ? Math.round(config.maxHp)
+        : DEFAULT_CONFIG.maxHp,
+      1,
+      10_000,
+    );
     const difficulty = clamp(Math.round(config.difficulty ?? DEFAULT_CONFIG.difficulty), 1, 100);
     const phaseCount = clamp(Math.round(config.phaseCount ?? DEFAULT_CONFIG.phaseCount), 1, 10);
     const specialAttackIntervalMs = clamp(

@@ -1213,8 +1213,17 @@ export class GameModeComponent implements OnDestroy {
       const mapScore = this.mapScore();
       const mapAccuracy = this.mapProgressPercent();
       const competitionBossScore = correct ? 100 : 0;
-      const submittedScore = isMapChallenge ? Math.max(0, mapScore) : isCompetitionBoss ? competitionBossScore : 100;
-      const submittedAccuracy = isMapChallenge ? mapAccuracy : isCompetitionBoss ? competitionBossScore : 100;
+      let submittedScore = 100;
+      let submittedAccuracy = 100;
+
+      if (isMapChallenge) {
+        submittedScore = Math.max(0, mapScore);
+        submittedAccuracy = mapAccuracy;
+      } else if (isCompetitionBoss) {
+        submittedScore = competitionBossScore;
+        submittedAccuracy = competitionBossScore;
+      }
+
       this.gameService
         .submitChallenge({
           studentId: this.studentId(),
