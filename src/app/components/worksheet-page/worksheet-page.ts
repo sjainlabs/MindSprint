@@ -94,6 +94,10 @@ export class WorksheetPageComponent implements OnInit {
   aiWorksheet = signal<AiWorksheet | null>(null);
   aiLoading = signal(false);
   aiError = signal('');
+  aiAnswers = signal<string[]>([]);
+  aiCheckedAnswers = signal<Record<string, boolean>>({});
+  aiHasCheckedAnswers = signal(false);
+  aiShowAnswers = signal(false);
   masteryReady = signal(false);
   weakSkills = signal<MasterySkillState[]>([]);
   recommendedSkill = signal<MasteryRecommendation | null>(null);
@@ -241,6 +245,37 @@ export class WorksheetPageComponent implements OnInit {
     return !!nextLevel && nextLevel !== this.currentLevel();
   });
 
+  aiAttemptedCount = computed(() =>
+    this.aiAnswers().filter((value) => value.trim().length > 0).length,
+  );
+  aiAllQuestionsAnswered = computed(() => {
+    const worksheet = this.aiWorksheet();
+    if (!worksheet) {
+      return false;
+    }
+    return (
+      this.aiAnswers().length === worksheet.questions.length &&
+      this.aiAttemptedCount() === worksheet.questions.length
+    );
+  });
+  aiTotalCorrect = computed(() =>
+    Object.values(this.aiCheckedAnswers()).filter((isCorrect) => isCorrect === true).length,
+  );
+  aiTotalIncorrect = computed(() => {
+    const worksheet = this.aiWorksheet();
+    if (!worksheet || !this.aiHasCheckedAnswers()) {
+      return 0;
+    }
+    return worksheet.questions.length - this.aiTotalCorrect();
+  });
+  aiScorePercentage = computed(() => {
+    const worksheet = this.aiWorksheet();
+    if (!worksheet || !this.aiHasCheckedAnswers() || worksheet.questions.length === 0) {
+      return 0;
+    }
+    return Math.round((this.aiTotalCorrect() / worksheet.questions.length) * 100);
+  });
+
   submitWorksheet(): void {
     const worksheet = this.worksheet();
     if (!worksheet || this.submitting() || !this.allQuestionsAnswered()) {
@@ -320,6 +355,40 @@ export class WorksheetPageComponent implements OnInit {
     });
   }
 
+  updateAiAnswer(index: number, value: string): void {
+    this.aiAnswers.update((answers) => {
+      const nextAnswers = [...answers];
+      nextAnswers[index] = value;
+      return nextAnswers;
+    });
+  }
+
+  submitAiWorksheet(): void {
+    const worksheet = this.aiWorksheet();
+    if (!worksheet || !this.aiAllQuestionsAnswered()) {
+      return;
+    }
+
+    const checked = worksheet.questions.reduce<Record<string, boolean>>(
+      (accumulator, question, index) => {
+        accumulator[question.id] = this.isAnswerCorrect(this.aiAnswers()[index], question.answer);
+        return accumulator;
+      },
+      {},
+    );
+
+    this.aiCheckedAnswers.set(checked);
+    this.aiHasCheckedAnswers.set(true);
+  }
+
+  tryAgainAiWorksheet(): void {
+    const worksheet = this.aiWorksheet();
+    this.aiCheckedAnswers.set({});
+    this.aiHasCheckedAnswers.set(false);
+    this.aiShowAnswers.set(false);
+    this.aiAnswers.set(Array.from({ length: worksheet?.questions.length ?? 0 }, () => ''));
+  }
+
   async goToAdaptive(): Promise<void> {
     const nextLevel = this.recommendedLevel();
     if (!nextLevel || nextLevel === this.currentLevel() || this.adaptiveNavigationLoading()) {
@@ -357,6 +426,10 @@ export class WorksheetPageComponent implements OnInit {
     this.aiLoading.set(true);
     this.aiError.set('');
     this.aiWorksheet.set(null);
+    this.aiAnswers.set([]);
+    this.aiCheckedAnswers.set({});
+    this.aiHasCheckedAnswers.set(false);
+    this.aiShowAnswers.set(false);
 
     this.aiWorksheetService
       .generateWorksheet({
@@ -369,6 +442,7 @@ export class WorksheetPageComponent implements OnInit {
       .subscribe({
         next: (worksheet) => {
           this.aiWorksheet.set(worksheet);
+          this.aiAnswers.set(Array.from({ length: worksheet.questions.length }, () => ''));
           this.aiLoading.set(false);
         },
         error: () => {

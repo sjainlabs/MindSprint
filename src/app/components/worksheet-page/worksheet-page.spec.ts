@@ -9,7 +9,7 @@ import {
 } from '../../services/practice.service';
 import { StudentIntelligenceService } from '../../services/student-intelligence.service';
 import { TopicService } from '../../services/topic.service';
-import { AiWorksheetService } from '../../services/ai-worksheet.service';
+import { AiWorksheetService, type AiWorksheet } from '../../services/ai-worksheet.service';
 import { PRACTICE_TOPIC_CATALOG } from '../../services/practice-topic-catalog';
 import { MasteryEngineService } from '../../core/mastery/mastery-engine.service';
 
@@ -136,13 +136,13 @@ describe('WorksheetPageComponent', () => {
         difficulty: 30,
         generatedAt: new Date().toISOString(),
         questionTypes: ['numeric'],
-        questions: [],
+        questions: [] as AiWorksheet['questions'],
         validation: {
           allQuestionsHaveAnswers: true,
           hasSupportedQuestionTypes: true,
           topicSupported: true,
         },
-      }),
+      } as AiWorksheet),
     ),
   };
 
@@ -341,6 +341,122 @@ describe('WorksheetPageComponent', () => {
         questionTypes: selectedTopic.questionTypes,
       }),
     );
+  });
+
+  it('renders answer inputs for each AI worksheet question', () => {
+    const aiQuestions = [
+      { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25 and count forward by 1. What number comes next?', answer: '26', difficulty: 30, hints: [] },
+      { id: 'ai-q2', type: 'word-problem', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 32 and count forward by 1. What number comes next?', answer: '33', difficulty: 30, hints: [] },
+    ];
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
+      worksheetId: 'ai-test',
+      topic: PRACTICE_TOPIC_CATALOG[0].id,
+      difficulty: 30,
+      generatedAt: new Date().toISOString(),
+      questionTypes: ['numeric', 'word-problem'],
+      questions: aiQuestions,
+      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
+    } as AiWorksheet));
+
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.generateAdvancedWorksheet();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelectorAll('[data-testid="ai-worksheet-question-input"]').length).toBe(2);
+  });
+
+  it('disables AI worksheet submit button until all questions are answered', () => {
+    const aiQuestions = [
+      { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25?', answer: '26', difficulty: 30, hints: [] },
+    ];
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
+      worksheetId: 'ai-test',
+      topic: PRACTICE_TOPIC_CATALOG[0].id,
+      difficulty: 30,
+      generatedAt: new Date().toISOString(),
+      questionTypes: ['numeric'],
+      questions: aiQuestions,
+      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
+    } as AiWorksheet));
+
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.generateAdvancedWorksheet();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const submitButton = compiled.querySelector('[data-testid="ai-worksheet-submit-button"]') as HTMLButtonElement;
+    expect(submitButton.disabled).toBe(true);
+
+    component.updateAiAnswer(0, '26');
+    fixture.detectChanges();
+
+    expect(submitButton.disabled).toBe(false);
+  });
+
+  it('marks AI worksheet answers correct and incorrect after submit', () => {
+    const aiQuestions = [
+      { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25?', answer: '26', difficulty: 30, hints: [] },
+      { id: 'ai-q2', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 32?', answer: '33', difficulty: 30, hints: [] },
+    ];
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
+      worksheetId: 'ai-test',
+      topic: PRACTICE_TOPIC_CATALOG[0].id,
+      difficulty: 30,
+      generatedAt: new Date().toISOString(),
+      questionTypes: ['numeric'],
+      questions: aiQuestions,
+      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
+    } as AiWorksheet));
+
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.generateAdvancedWorksheet();
+    fixture.detectChanges();
+
+    component.updateAiAnswer(0, '999');
+    component.updateAiAnswer(1, '33');
+    component.submitAiWorksheet();
+    fixture.detectChanges();
+
+    expect(component.aiCheckedAnswers()['ai-q1']).toBe(false);
+    expect(component.aiCheckedAnswers()['ai-q2']).toBe(true);
+    expect(component.aiTotalCorrect()).toBe(1);
+    expect(component.aiTotalIncorrect()).toBe(1);
+  });
+
+  it('resets AI worksheet state on try again', () => {
+    const aiQuestions = [
+      { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25?', answer: '26', difficulty: 30, hints: [] },
+    ];
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
+      worksheetId: 'ai-test',
+      topic: PRACTICE_TOPIC_CATALOG[0].id,
+      difficulty: 30,
+      generatedAt: new Date().toISOString(),
+      questionTypes: ['numeric'],
+      questions: aiQuestions,
+      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
+    } as AiWorksheet));
+
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.generateAdvancedWorksheet();
+    fixture.detectChanges();
+
+    component.updateAiAnswer(0, '26');
+    component.submitAiWorksheet();
+    expect(component.aiHasCheckedAnswers()).toBe(true);
+
+    component.tryAgainAiWorksheet();
+    expect(component.aiHasCheckedAnswers()).toBe(false);
+    expect(component.aiAnswers()).toEqual(['']);
   });
 
   it('shows recommended skill card when mastery recommendation is available', () => {

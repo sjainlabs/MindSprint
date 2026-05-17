@@ -719,18 +719,104 @@
           }
 
           <ol class="mt-3 space-y-2">
-            @for (question of generated.questions; track question.id) {
-              <li class="rounded-md bg-gray-50 p-3 text-sm">
-                <p class="font-medium">{{ question.prompt }}</p>
+            @for (question of generated.questions; track question.id; let i = $index) {
+              <li
+                class="rounded-md p-3 text-sm border"
+                [class.border-green-400]="
+                  aiHasCheckedAnswers() && aiCheckedAnswers()[question.id] === true
+                "
+                [class.bg-green-50]="
+                  aiHasCheckedAnswers() && aiCheckedAnswers()[question.id] === true
+                "
+                [class.border-red-400]="
+                  aiHasCheckedAnswers() && aiCheckedAnswers()[question.id] === false
+                "
+                [class.bg-red-50]="
+                  aiHasCheckedAnswers() && aiCheckedAnswers()[question.id] === false
+                "
+                [class.bg-gray-50]="!aiHasCheckedAnswers()"
+              >
+                <label class="block font-medium mb-2" [for]="question.id">
+                  {{ question.prompt }}
+                </label>
                 <p class="text-xs text-gray-500 mt-1">
                   Type: {{ question.type }} • Subtopic: {{ question.subtopic }}
                 </p>
-                @if (showAnswers()) {
-                  <p class="text-xs text-gray-600 mt-1">Expected form: {{ question.answer }}</p>
-                }
+                <input
+                  class="mt-2 w-full border border-gray-300 rounded-md px-3 py-2"
+                  type="text"
+                  inputmode="text"
+                  data-testid="ai-worksheet-question-input"
+                  [id]="question.id"
+                  [name]="question.id"
+                  [ngModel]="aiAnswers()[i]"
+                  (ngModelChange)="updateAiAnswer(i, $event)"
+                  [disabled]="aiHasCheckedAnswers()"
+                />
+                <app-worksheet-result-card
+                  [checked]="aiHasCheckedAnswers()"
+                  [isCorrect]="aiCheckedAnswers()[question.id] === true"
+                  [correctAnswer]="question.answer"
+                  [showAnswer]="aiShowAnswers()"
+                />
               </li>
             }
           </ol>
+
+          @if (aiHasCheckedAnswers()) {
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 class="text-base font-semibold text-blue-800 mb-2">Results</h3>
+              <div class="grid grid-cols-3 gap-2 text-sm">
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-green-600">{{ 'worksheet.correct' | translate }}</p>
+                  <p class="text-xl font-bold text-green-700">{{ aiTotalCorrect() }}</p>
+                </div>
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-red-500">{{ 'worksheet.incorrect' | translate }}</p>
+                  <p class="text-xl font-bold text-red-600">{{ aiTotalIncorrect() }}</p>
+                </div>
+                <div class="bg-white rounded p-2 text-center shadow-sm">
+                  <p class="text-gray-500">{{ 'worksheet.accuracy' | translate }}</p>
+                  <p class="text-xl font-bold">{{ aiScorePercentage() }}%</p>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            @if (aiHasCheckedAnswers()) {
+              <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  data-testid="ai-worksheet-show-answers-toggle"
+                  [ngModel]="aiShowAnswers()"
+                  (ngModelChange)="aiShowAnswers.set(!!$event)"
+                />
+                Show Answers
+              </label>
+            }
+            @if (!aiHasCheckedAnswers()) {
+              <button
+                type="button"
+                class="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                data-testid="ai-worksheet-submit-button"
+                [disabled]="aiLoading() || !aiAllQuestionsAnswered()"
+                (click)="submitAiWorksheet()"
+              >
+                {{ 'worksheet.submit' | translate }}
+              </button>
+            }
+            @if (aiHasCheckedAnswers()) {
+              <button
+                type="button"
+                class="border border-primary text-primary px-4 py-2 rounded-lg font-semibold"
+                data-testid="ai-worksheet-try-again-button"
+                (click)="tryAgainAiWorksheet()"
+              >
+                Try Again
+              </button>
+            }
+          </div>
         </div>
       }
     </section>
