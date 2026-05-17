@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
-import { forkJoin } from 'rxjs';
+import { forkJoin, type Observable } from 'rxjs';
 import { MasteryBadgeComponent } from '../../../components/mastery-badge/mastery-badge.component';
 import {
   MasteryEngineService,
   type MasteryLevel,
   type MasteryRecommendation,
+  type MasteryState,
   type MasterySkillState,
 } from '../../../core/mastery/mastery-engine.service';
 import {
@@ -112,7 +113,10 @@ export class PuzzleGameComponent implements OnInit {
           }
 
           this.currentPuzzles.set(puzzles);
-          this.sessionId.set(response?.sessionId?.trim() || this.sessionId() || crypto.randomUUID());
+          const resolvedSessionId = response?.sessionId?.trim()
+            || this.sessionId()
+            || `session-${this.studentId()}`;
+          this.sessionId.set(resolvedSessionId);
           this.difficulty.set(this.clampDifficulty(response?.difficulty ?? this.difficulty()));
 
           const initialAnswers: Record<string, string[]> = {};
@@ -198,11 +202,12 @@ export class PuzzleGameComponent implements OnInit {
 
   blankCount(puzzle: DynamicPuzzle): number {
     const rawCount = puzzle.metadata?.numberOfBlanks ?? puzzle.metadata?.blanks ?? 1;
-    const count = Number(rawCount);
-    if (!Number.isFinite(count)) {
+    const normalizedCount = Number(rawCount);
+    if (!Number.isFinite(normalizedCount) || Number.isNaN(normalizedCount)) {
       return 1;
     }
-    return Math.max(1, Math.floor(count));
+    const flooredCount = Math.floor(normalizedCount);
+    return Number.isFinite(flooredCount) ? Math.max(1, flooredCount) : 1;
   }
 
   blankIndexes(puzzle: DynamicPuzzle): number[] {
@@ -300,7 +305,7 @@ export class PuzzleGameComponent implements OnInit {
           isCorrect: result.correct,
         });
       })
-      .filter((update): update is ReturnType<MasteryEngineService['updateMastery']> => update !== null);
+      .filter((update): update is Observable<MasteryState> => update !== null);
 
     if (updates.length === 0) {
       this.refreshMasteryContext();
@@ -335,7 +340,7 @@ export class PuzzleGameComponent implements OnInit {
     if (this.inputType(puzzle) !== 'numeric') {
       return true;
     }
-    return /^-?\d+(\.\d+)?$/.test(value);
+    return /^-?(\d+(\.\d+)?|\.\d+)$/.test(value);
   }
 
   private clampDifficulty(value: number): number {
@@ -349,7 +354,7 @@ export class PuzzleGameComponent implements OnInit {
     return skillId
       .split(/[-_]+/g)
       .filter(Boolean)
-      .map((part) => part[0].toUpperCase() + part.slice(1))
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
   }
 }

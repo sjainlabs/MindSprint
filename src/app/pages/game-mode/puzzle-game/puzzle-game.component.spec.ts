@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { PuzzleGameComponent } from './puzzle-game.component';
 import { PuzzleEngineService } from '../../../services/puzzle-engine.service';
 import { MasteryEngineService } from '../../../core/mastery/mastery-engine.service';
@@ -84,5 +84,22 @@ describe('PuzzleGameComponent', () => {
     expect(comp.hasSubmitted()).toBe(true);
     expect(comp.solvedCount()).toBe(1);
     expect(masteryEngineMock.updateMastery).toHaveBeenCalled();
+  });
+
+  it('shows submission error when submit fails', () => {
+    puzzleEngineMock.submitPuzzleAnswers.mockReturnValueOnce(
+      throwError(() => new Error('submit failed')),
+    );
+
+    const fixture = TestBed.createComponent(PuzzleGameComponent);
+    fixture.componentRef.setInput('studentId', 'student-demo');
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.updateTextAnswer('p-1', 0, '3');
+    comp.submitAnswers();
+
+    expect(comp.hasSubmitted()).toBe(false);
+    expect(comp.loadError()).toContain('Failed to submit answers');
   });
 });

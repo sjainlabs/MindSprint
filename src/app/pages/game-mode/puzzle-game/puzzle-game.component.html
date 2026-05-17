@@ -59,6 +59,8 @@
             @for (blankIndex of blankIndexes(puzzle); track blankIndex) {
               <input
                 [type]="inputType(puzzle) === 'numeric' ? 'number' : 'text'"
+                [attr.inputmode]="inputType(puzzle) === 'numeric' ? 'decimal' : null"
+                [attr.step]="inputType(puzzle) === 'numeric' ? 'any' : null"
                 class="rounded-md border px-3 py-2 text-sm"
                 [placeholder]="blankCount(puzzle) > 1 ? 'Blank ' + (blankIndex + 1) : 'Answer'"
                 [disabled]="submittingAnswers() || hasSubmitted()"
