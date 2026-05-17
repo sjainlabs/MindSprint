@@ -65,9 +65,10 @@ export class WorksheetPageComponent implements OnInit {
   studentId = signal(DEFAULT_STUDENT_ID);
   worksheetStartedAt = signal(new Date().toISOString());
 
-  answers = signal<Record<string, number | null>>({});
+  studentAnswers = signal<string[]>([]);
   checkedAnswers = signal<Record<string, boolean>>({});
   hasCheckedAnswers = signal(false);
+  showAnswers = signal(false);
   accuracyPercentage = signal<number | null>(null);
 
   submitting = signal(false);
@@ -92,7 +93,6 @@ export class WorksheetPageComponent implements OnInit {
   masteryReady = signal(false);
   weakSkills = signal<MasterySkillState[]>([]);
   recommendedSkill = signal<MasteryRecommendation | null>(null);
-  private readonly trackedQuestionSubmissions = new Set<string>();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -121,7 +121,7 @@ export class WorksheetPageComponent implements OnInit {
     this.loadTopicTaxonomy();
   }
 
-  loadWorksheet(level: LearningLevel): void {
+  loadWorksheet(level: LearningLevel, skillId?: string): void {
     this.loading.set(true);
     this.ready.set(false);
     this.errorMessage.set('');
@@ -130,14 +130,14 @@ export class WorksheetPageComponent implements OnInit {
     this.recommendation.set(null);
     this.hasCheckedAnswers.set(false);
     this.checkedAnswers.set({});
+    this.showAnswers.set(false);
     this.accuracyPercentage.set(null);
     this.submitError.set('');
-    this.answers.set({});
-    this.trackedQuestionSubmissions.clear();
+    this.studentAnswers.set([]);
     this.worksheetStartedAt.set(new Date().toISOString());
 
-    const recommendedSkillId = this.recommendedSkill()?.skillId;
-    this.practiceService.getPractice(level, recommendedSkillId).subscribe({
+    const targetSkillId = skillId ?? this.selectedTopicId() || this.recommendedSkill()?.skillId;
+    this.practiceService.getPractice(level, targetSkillId).subscribe({
       next: (data) => {
         if (!data?.questions) {
           this.errorMessage.set('Invalid worksheet data received.');
@@ -146,12 +146,7 @@ export class WorksheetPageComponent implements OnInit {
         }
 
         this.worksheet.set(data);
-
-        const answerMap: Record<string, number | null> = {};
-        for (const question of data.questions) {
-          answerMap[question.id] = null;
-        }
-        this.answers.set(answerMap);
+        this.studentAnswers.set(Array.from({ length: data.questions.length }, () => ''));
 
         this.loading.set(false);
         this.ready.set(true);
@@ -163,9 +158,31 @@ export class WorksheetPageComponent implements OnInit {
     });
   }
 
-  attemptedCount = computed(
-    () => Object.values(this.answers()).filter((value) => value !== null).length,
+  attemptedCount = computed(() => this.studentAnswers().filter((value) => value.trim().length > 0).length);
+  allQuestionsAnswered = computed(() => {
+    const worksheet = this.worksheet();
+    if (!worksheet) {
+      return false;
+    }
+    return this.studentAnswers().length === worksheet.questions.length && this.attemptedCount() === worksheet.questions.length;
+  });
+  totalCorrect = computed(() =>
+    Object.values(this.checkedAnswers()).filter((isCorrect) => isCorrect === true).length,
   );
+  totalIncorrect = computed(() => {
+    const worksheet = this.worksheet();
+    if (!worksheet || !this.hasCheckedAnswers()) {
+      return 0;
+    }
+    return worksheet.questions.length - this.totalCorrect();
+  });
+  scorePercentage = computed(() => {
+    const worksheet = this.worksheet();
+    if (!worksheet || !this.hasCheckedAnswers() || worksheet.questions.length === 0) {
+      return 0;
+    }
+    return Math.round((this.totalCorrect() / worksheet.questions.length) * 100);
+  });
 
   masteryEntries = computed(() => {
     const profile = this.studentProfile();
@@ -222,9 +239,14 @@ export class WorksheetPageComponent implements OnInit {
 
   submitWorksheet(): void {
     const worksheet = this.worksheet();
-    if (!worksheet || this.submitting()) {
+    if (!worksheet || this.submitting() || !this.allQuestionsAnswered()) {
       return;
     }
+
+    const answerCheckResults = this.evaluateAnswers();
+    this.hasCheckedAnswers.set(true);
+    this.checkedAnswers.set(answerCheckResults);
+    this.accuracyPercentage.set(this.scorePercentage());
 
     this.submitting.set(true);
     this.submitError.set('');
@@ -235,26 +257,36 @@ export class WorksheetPageComponent implements OnInit {
       level: this.currentLevel(),
       startedAt: this.worksheetStartedAt(),
       submittedAt: new Date().toISOString(),
-      answers: Object.entries(this.answers())
-        .filter(([, answer]) => answer !== null)
-        .map(([questionId, answer]) => ({
-          questionId,
-          answer,
-        })),
+      answers: worksheet.questions.map((question, index) => ({
+        questionId: question.id,
+        answer: this.toSubmissionAnswer(this.studentAnswers()[index]),
+      })),
     };
+
+    for (const [index, question] of worksheet.questions.entries()) {
+      const studentAnswer = this.studentAnswers()[index];
+      if (!studentAnswer?.trim()) {
+        continue;
+      }
+      const skillId = this.selectedTopicId() || question.operation;
+      this.masteryEngine
+        .updateMastery({
+          studentId: this.studentId(),
+          skillId,
+          skillName: this.selectedTopic()?.name,
+          isCorrect: answerCheckResults[question.id] === true,
+        })
+        .subscribe({
+          next: (state) => {
+            this.weakSkills.set(state.weakSkills);
+            this.recommendedSkill.set(state.recommendedNextSkill);
+          },
+        });
+    }
 
     this.practiceService.submitWorksheet(payload).subscribe({
       next: (result) => {
         this.result.set(result);
-        this.accuracyPercentage.set(result.accuracy);
-        this.hasCheckedAnswers.set(true);
-        this.checkedAnswers.set(
-          result.questionResults.reduce<Record<string, boolean>>((accumulator, questionResult) => {
-            accumulator[questionResult.questionId] = questionResult.isCorrect;
-            return accumulator;
-          }, {}),
-        );
-
         this.refreshStudentInsights(result);
         this.submitting.set(false);
       },
@@ -269,9 +301,16 @@ export class WorksheetPageComponent implements OnInit {
     void this.router.navigate(['/worksheet', level]);
   }
 
-  updateAnswer(questionId: string, value: number | null): void {
-    this.answers.update((answers) => ({ ...answers, [questionId]: value }));
-    this.trackQuestionMastery(questionId, value);
+  tryAgain(): void {
+    this.loadWorksheet(this.currentLevel(), this.selectedTopicId() || this.recommendedSkill()?.skillId);
+  }
+
+  updateAnswer(index: number, value: string): void {
+    this.studentAnswers.update((answers) => {
+      const nextAnswers = [...answers];
+      nextAnswers[index] = value ?? '';
+      return nextAnswers;
+    });
   }
 
   async goToAdaptive(): Promise<void> {
@@ -351,7 +390,7 @@ export class WorksheetPageComponent implements OnInit {
     if (recommended?.skillId) {
       this.selectTopic(recommended.skillId);
     }
-    this.loadWorksheet(this.currentLevel());
+    this.loadWorksheet(this.currentLevel(), this.selectedTopicId() || recommended?.skillId);
   }
 
   getSkillMastery(skillId: string): MasterySkillState | null {
@@ -545,28 +584,61 @@ export class WorksheetPageComponent implements OnInit {
     });
   }
 
-  private trackQuestionMastery(questionId: string, submittedValue: number | null): void {
-    if (submittedValue === null) return;
-    if (this.trackedQuestionSubmissions.has(questionId)) return;
-    this.trackedQuestionSubmissions.add(questionId);
+  evaluateAnswers(): Record<string, boolean> {
     const worksheet = this.worksheet();
-    if (!worksheet) return;
-    const question = worksheet.questions.find((entry) => entry.id === questionId);
-    if (!question) return;
-    const skillId = this.selectedTopicId() || question.operation;
-    this.masteryEngine
-      .updateMastery({
-        studentId: this.studentId(),
-        skillId,
-        skillName: this.selectedTopic()?.name,
-        isCorrect: submittedValue === question.answer,
-      })
-      .subscribe({
-        next: (state) => {
-          this.weakSkills.set(state.weakSkills);
-          this.recommendedSkill.set(state.recommendedNextSkill);
-        },
-      });
+    if (!worksheet) {
+      return {};
+    }
+
+    return worksheet.questions.reduce<Record<string, boolean>>((accumulator, question, index) => {
+      accumulator[question.id] = this.isAnswerCorrect(this.studentAnswers()[index], question.answer);
+      return accumulator;
+    }, {});
+  }
+
+  private isAnswerCorrect(studentAnswer: string | undefined, correctAnswer: number | string): boolean {
+    const normalizedStudentAnswer = this.normalizeAnswer(studentAnswer);
+    if (!normalizedStudentAnswer) {
+      return false;
+    }
+
+    if (typeof correctAnswer === 'number') {
+      const parsedStudentAnswer = this.parseAnswerToNumber(normalizedStudentAnswer);
+      return parsedStudentAnswer !== null && Math.abs(parsedStudentAnswer - correctAnswer) < 1e-9;
+    }
+
+    return normalizedStudentAnswer === this.normalizeAnswer(correctAnswer);
+  }
+
+  private toSubmissionAnswer(answer: string | undefined): number | string | null {
+    const normalizedAnswer = this.normalizeAnswer(answer);
+    if (!normalizedAnswer) {
+      return null;
+    }
+    const numericAnswer = this.parseAnswerToNumber(normalizedAnswer);
+    return numericAnswer ?? normalizedAnswer;
+  }
+
+  private normalizeAnswer(answer: string | number | undefined): string {
+    if (answer === undefined || answer === null) {
+      return '';
+    }
+    return String(answer).trim().replace(/\s+/g, '').toLowerCase();
+  }
+
+  private parseAnswerToNumber(answer: string): number | null {
+    if (!answer) {
+      return null;
+    }
+    if (/^-?\d+\/-?\d+$/.test(answer)) {
+      const [numerator, denominator] = answer.split('/').map(Number);
+      if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
+        return null;
+      }
+      return numerator / denominator;
+    }
+    const parsed = Number(answer);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   private normalizeConfidence(confidence?: 'low' | 'medium' | 'high'): number {

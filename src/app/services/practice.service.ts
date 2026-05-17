@@ -9,7 +9,7 @@ export interface WorksheetQuestion {
   id: string;
   operation: MathOperation;
   prompt: string;
-  answer: number;
+  answer: number | string;
 }
 
 export interface Worksheet {
@@ -23,7 +23,7 @@ export interface Worksheet {
 
 export interface WorksheetAnswerInput {
   questionId: string;
-  answer: number | null;
+  answer: number | string | null;
 }
 
 export interface WorksheetSubmission {
@@ -38,8 +38,8 @@ export interface WorksheetSubmission {
 export interface WorksheetQuestionResult {
   questionId: string;
   operation: MathOperation;
-  expectedAnswer: number;
-  submittedAnswer: number | null;
+  expectedAnswer: number | string;
+  submittedAnswer: number | string | null;
   isCorrect: boolean;
 }
 

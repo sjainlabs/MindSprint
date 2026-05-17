@@ -214,6 +214,11 @@ describe('WorksheetPageComponent', () => {
     }).compileComponents();
   });
 
+  const buildStudentAnswers = (mapper?: (answer: number, index: number) => string): string[] =>
+    worksheet.questions.map((question, index) =>
+      mapper ? mapper(question.answer, index) : String(question.answer),
+    );
+
   it('loads worksheet questions using the level route param', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
@@ -234,6 +239,36 @@ describe('WorksheetPageComponent', () => {
     expect(compiled.querySelectorAll('[data-testid="worksheet-question-input"]').length).toBe(10);
   });
 
+  it('keeps answers hidden by default after submission', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.studentAnswers.set(buildStudentAnswers());
+    component.submitWorksheet();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('Answer:');
+  });
+
+  it('disables submit button until all questions are answered', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const compiled = fixture.nativeElement as HTMLElement;
+    const submitButton = compiled.querySelector(
+      '[data-testid="worksheet-submit-button"]',
+    ) as HTMLButtonElement;
+
+    expect(submitButton.disabled).toBe(true);
+
+    component.studentAnswers.set(buildStudentAnswers());
+    fixture.detectChanges();
+
+    expect(submitButton.disabled).toBe(false);
+  });
+
   it('renders grouped K-12 and Kumon topic sections', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
@@ -248,12 +283,7 @@ describe('WorksheetPageComponent', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.answers.set(
-      worksheet.questions.reduce<Record<string, number | null>>((accumulator, question) => {
-        accumulator[question.id] = question.answer;
-        return accumulator;
-      }, {}),
-    );
+    component.studentAnswers.set(buildStudentAnswers());
 
     component.submitWorksheet();
 
@@ -289,12 +319,7 @@ describe('WorksheetPageComponent', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.answers.set(
-      worksheet.questions.reduce<Record<string, number | null>>((accumulator, question) => {
-        accumulator[question.id] = question.answer;
-        return accumulator;
-      }, {}),
-    );
+    component.studentAnswers.set(buildStudentAnswers());
     component.submitWorksheet();
 
     expect(component.recommendedLevel()).toBe('Advanced');
@@ -327,16 +352,50 @@ describe('WorksheetPageComponent', () => {
     expect(compiled.textContent).toContain(PRACTICE_TOPIC_CATALOG[0].name);
   });
 
-  it('updates mastery progress after each question answer', () => {
+  it('marks incorrect and correct answers after submit', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    const initialProgress = component.selectedTopicMasteryProgress();
+    component.studentAnswers.set(buildStudentAnswers((answer, index) => (index === 0 ? '999' : String(answer))));
 
-    const firstQuestion = worksheet.questions[0];
-    component.updateAnswer(firstQuestion.id, firstQuestion.answer);
+    component.submitWorksheet();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const questionCards = compiled.querySelectorAll('ol > li');
+    expect(questionCards[0].classList.contains('border-red-400')).toBe(true);
+    expect(questionCards[1].classList.contains('border-green-400')).toBe(true);
+  });
+
+  it('reveals answers only when show answers toggle is enabled', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.studentAnswers.set(buildStudentAnswers());
+
+    component.submitWorksheet();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('Answer: 2');
+
+    const toggle = compiled.querySelector(
+      '[data-testid="worksheet-show-answers-toggle"]',
+    ) as HTMLInputElement;
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(compiled.textContent).toContain('Answer: 2');
+  });
+
+  it('updates mastery after worksheet submission', () => {
+    const fixture = TestBed.createComponent(WorksheetPageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.studentAnswers.set(buildStudentAnswers());
+
+    component.submitWorksheet();
 
     expect(masteryEngineMock.updateMastery).toHaveBeenCalled();
-    expect(component.selectedTopicMasteryProgress()).toBeGreaterThanOrEqual(initialProgress);
   });
 });
