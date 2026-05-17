@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs/operators';
-import { forkJoin, type Observable } from 'rxjs';
+import { forkJoin, of, type Observable } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
 import { MasteryBadgeComponent } from '../../../components/mastery-badge/mastery-badge.component';
 import {
   MasteryEngineService,
@@ -16,7 +16,6 @@ import {
   type DynamicPuzzle,
   type PuzzleInputType,
   type PuzzleSubmitResult,
-  type PuzzleType,
 } from '../../../services/puzzle-engine.service';
 
 @Component({
@@ -28,21 +27,28 @@ import {
 })
 export class PuzzleGameComponent implements OnInit {
   readonly studentId = input.required<string>();
+  readonly skillId = input('ai-puzzle');
   readonly initialDifficulty = input(50);
   readonly masterySynced = output<void>();
 
   readonly currentPuzzles = signal<DynamicPuzzle[]>([]);
-  readonly studentAnswers = signal<Record<string, string[]>>({});
+  readonly studentAnswers = signal<Record<string, string>>({});
+
   readonly loadingPuzzles = signal(false);
   readonly submittingAnswers = signal(false);
   readonly loadError = signal('');
   readonly hasSubmitted = signal(false);
-  readonly sessionId = signal('');
+
+  readonly puzzleSessionId = signal('');
   readonly difficulty = signal(50);
+  readonly score = signal(0);
+  readonly total = signal(0);
+  readonly streak = signal(0);
   readonly puzzleResults = signal<Record<string, PuzzleSubmitResult>>({});
 
   readonly masteryWeakSkills = signal<MasterySkillState[]>([]);
   readonly masteryRecommendedSkill = signal<MasteryRecommendation | null>(null);
+  readonly masteryBadges = signal<string[]>([]);
 
   readonly canSubmit = computed(() => {
     if (this.loadingPuzzles() || this.submittingAnswers() || this.hasSubmitted()) {
@@ -55,23 +61,7 @@ export class PuzzleGameComponent implements OnInit {
     }
 
     const answers = this.studentAnswers();
-    return puzzles.every((puzzle) => {
-      const values = answers[puzzle.puzzleId] ?? [];
-      const blanks = this.blankCount(puzzle);
-      if (values.length < blanks) {
-        return false;
-      }
-      for (let index = 0; index < blanks; index += 1) {
-        const value = String(values[index] ?? '').trim();
-        if (!value) {
-          return false;
-        }
-        if (!this.isValidInput(puzzle, value)) {
-          return false;
-        }
-      }
-      return true;
-    });
+    return puzzles.every((puzzle) => String(answers[puzzle.puzzleId] ?? '').trim().length > 0);
   });
 
   readonly solvedCount = computed(
@@ -84,114 +74,138 @@ export class PuzzleGameComponent implements OnInit {
   ngOnInit(): void {
     this.difficulty.set(this.clampDifficulty(this.initialDifficulty()));
     this.refreshMasteryContext();
-    this.generatePuzzles();
+    this.loadPuzzles();
   }
 
-  generatePuzzles(): void {
+  loadPuzzles(): void {
     this.loadingPuzzles.set(true);
     this.loadError.set('');
     this.hasSubmitted.set(false);
+    this.score.set(0);
+    this.total.set(0);
     this.puzzleResults.set({});
     this.studentAnswers.set({});
 
     this.puzzleEngineService
-      .generatePuzzles({
-        studentId: this.studentId(),
-        difficulty: this.difficulty(),
-        sessionId: this.sessionId() || undefined,
-      })
+      .generatePuzzles(this.skillId(), this.difficulty())
       .pipe(finalize(() => this.loadingPuzzles.set(false)))
       .subscribe({
         next: (response) => {
-          const rawPuzzles = Array.isArray(response?.puzzles) ? response.puzzles : [];
-          const puzzles = rawPuzzles.map((puzzle, index) => this.normalizePuzzle(puzzle, index));
-
+          const puzzles = Array.isArray(response?.puzzles) ? response.puzzles : [];
           if (puzzles.length === 0) {
-            this.loadError.set('Unable to load puzzles right now. Please try again.');
             this.currentPuzzles.set([]);
+            this.loadError.set('Unable to load puzzles. Please try again.');
             return;
           }
 
           this.currentPuzzles.set(puzzles);
-          const resolvedSessionId = response?.sessionId?.trim()
-            || this.sessionId()
-            || `session-${this.studentId()}`;
-          this.sessionId.set(resolvedSessionId);
-          this.difficulty.set(this.clampDifficulty(response?.difficulty ?? this.difficulty()));
+          this.puzzleSessionId.set(String(response.puzzleSessionId ?? '').trim());
 
-          const initialAnswers: Record<string, string[]> = {};
+          const initialAnswers: Record<string, string> = {};
           puzzles.forEach((puzzle) => {
-            initialAnswers[puzzle.puzzleId] = Array.from({ length: this.blankCount(puzzle) }, () => '');
+            initialAnswers[puzzle.puzzleId] = '';
           });
           this.studentAnswers.set(initialAnswers);
         },
         error: () => {
           this.currentPuzzles.set([]);
-          this.loadError.set('Unable to load puzzles right now. Please try again.');
+          this.loadError.set('Unable to load puzzles. Please try again.');
         },
       });
   }
 
-  updateTextAnswer(puzzleId: string, blankIndex: number, value: string): void {
-    this.studentAnswers.update((answers) => {
-      const next = { ...answers };
-      const blanks = [...(next[puzzleId] ?? [])];
-      blanks[blankIndex] = value;
-      next[puzzleId] = blanks;
-      return next;
-    });
-  }
-
-  selectOption(puzzleId: string, option: string): void {
-    this.studentAnswers.update((answers) => ({
-      ...answers,
-      [puzzleId]: [option],
-    }));
-  }
-
-  answerValue(puzzleId: string, blankIndex = 0): string {
-    return this.studentAnswers()[puzzleId]?.[blankIndex] ?? '';
-  }
-
-  submitAnswers(): void {
+  handleSubmit(): void {
     if (!this.canSubmit()) {
       return;
     }
 
-    const payload: Record<string, string | string[]> = {};
-    const answers = this.studentAnswers();
-    this.currentPuzzles().forEach((puzzle) => {
-      const values = (answers[puzzle.puzzleId] ?? []).map((value) => value.trim());
-      payload[puzzle.puzzleId] = this.blankCount(puzzle) > 1 ? values : (values[0] ?? '');
-    });
+    const evaluation = this.evaluateAnswers();
+    this.puzzleResults.set(evaluation.results);
+    this.score.set(evaluation.score);
+    this.total.set(evaluation.total);
+    this.hasSubmitted.set(true);
+
+    if (evaluation.total > 0 && evaluation.score === evaluation.total) {
+      this.streak.update((value) => value + 1);
+    } else {
+      this.streak.set(0);
+    }
+
+    this.applyAdaptiveDifficulty(evaluation.score, evaluation.total);
 
     this.submittingAnswers.set(true);
+    this.loadError.set('');
+
     this.puzzleEngineService
-      .submitPuzzleAnswers(this.sessionId(), payload)
+      .submitPuzzleAnswers({
+        studentId: this.studentId(),
+        mode: 'ai-puzzle',
+        score: evaluation.accuracy,
+        accuracy: evaluation.accuracy,
+        streak: this.streak(),
+      })
       .pipe(finalize(() => this.submittingAnswers.set(false)))
       .subscribe({
         next: (response) => {
-          const results = this.toResultMap(response?.results ?? []);
-          this.puzzleResults.set(results);
-          this.hasSubmitted.set(true);
-          this.difficulty.set(this.clampDifficulty(response?.difficulty ?? this.difficulty()));
-          this.syncMastery(results);
+          if (response?.mastery) {
+            this.applyMasteryState(response.mastery);
+            return;
+          }
+
+          this.syncMastery(evaluation.results).subscribe({
+            error: () => {
+              this.refreshMasteryContext();
+            },
+          });
         },
         error: () => {
-          this.loadError.set('Failed to submit answers. Please try again.');
+          this.loadError.set('Unable to load puzzles. Please try again.');
+          this.syncMastery(evaluation.results).subscribe({
+            error: () => {
+              this.refreshMasteryContext();
+            },
+          });
         },
       });
   }
 
+  handleRetry(): void {
+    this.loadPuzzles();
+  }
+
+  // Keep aliases for existing callers/tests in nearby modules.
+  generatePuzzles(): void {
+    this.loadPuzzles();
+  }
+
+  submitAnswers(): void {
+    this.handleSubmit();
+  }
+
   tryNewPuzzleSet(): void {
-    this.generatePuzzles();
+    this.handleRetry();
+  }
+
+  updateTextAnswer(puzzleId: string, value: string): void {
+    this.studentAnswers.update((answers) => ({
+      ...answers,
+      [puzzleId]: value,
+    }));
+  }
+
+  selectOption(puzzleId: string, option: string): void {
+    this.updateTextAnswer(puzzleId, option);
+  }
+
+  answerValue(puzzleId: string): string {
+    return this.studentAnswers()[puzzleId] ?? '';
   }
 
   inputType(puzzle: DynamicPuzzle): PuzzleInputType {
     if (puzzle.metadata?.inputType) {
       return puzzle.metadata.inputType;
     }
-    if (Array.isArray(puzzle.options) && puzzle.options.length > 0) {
+    if ((puzzle.metadata?.options ?? []).length > 0 || puzzle.type === 'mcq') {
       return 'mcq';
     }
     if (puzzle.type === 'arithmetic' || puzzle.type === 'missing-number' || puzzle.type === 'sequence') {
@@ -200,18 +214,8 @@ export class PuzzleGameComponent implements OnInit {
     return 'text';
   }
 
-  blankCount(puzzle: DynamicPuzzle): number {
-    const rawCount = puzzle.metadata?.numberOfBlanks ?? puzzle.metadata?.blanks ?? 1;
-    const normalizedCount = Number(rawCount);
-    if (!Number.isFinite(normalizedCount)) {
-      return 1;
-    }
-    const flooredCount = Math.floor(normalizedCount);
-    return Number.isFinite(flooredCount) ? Math.max(1, flooredCount) : 1;
-  }
-
-  blankIndexes(puzzle: DynamicPuzzle): number[] {
-    return Array.from({ length: this.blankCount(puzzle) }, (_, index) => index);
+  optionsFor(puzzle: DynamicPuzzle): string[] {
+    return puzzle.metadata?.options ?? [];
   }
 
   puzzleCardClass(puzzleId: string): string {
@@ -226,13 +230,6 @@ export class PuzzleGameComponent implements OnInit {
     return this.puzzleResults()[puzzleId] ?? null;
   }
 
-  correctAnswerLabel(result: PuzzleSubmitResult): string {
-    if (Array.isArray(result.correctAnswer)) {
-      return result.correctAnswer.join(', ');
-    }
-    return String(result.correctAnswer ?? '');
-  }
-
   masteryLabel(level: MasteryLevel): string {
     if (level === 'mastered') return 'Mastered';
     if (level === 'proficient') return 'Proficient';
@@ -240,64 +237,60 @@ export class PuzzleGameComponent implements OnInit {
     return 'Not started';
   }
 
-  private normalizePuzzle(rawPuzzle: DynamicPuzzle, index: number): DynamicPuzzle {
-    const puzzle = rawPuzzle as Partial<DynamicPuzzle>;
-    const type = this.normalizeType(puzzle.type);
-    const puzzleId = String(puzzle.puzzleId ?? '').trim() || `puzzle-${index + 1}`;
-    const prompt = String(puzzle.prompt ?? '').trim();
-    const options = Array.isArray(puzzle.options)
-      ? puzzle.options.map((option) => String(option).trim()).filter(Boolean)
-      : [];
-
-    return {
-      puzzleId,
-      type,
-      prompt,
-      options,
-      metadata: puzzle.metadata ?? {},
-      correctAnswer: puzzle.correctAnswer,
-    };
-  }
-
-  private normalizeType(type: unknown): PuzzleType {
-    if (
-      type === 'pattern'
-      || type === 'missing-number'
-      || type === 'sequence'
-      || type === 'comparison'
-      || type === 'arithmetic'
-      || type === 'logic'
-    ) {
-      return type;
-    }
-    return 'logic';
-  }
-
-  private toResultMap(results: PuzzleSubmitResult[]): Record<string, PuzzleSubmitResult> {
+  private evaluateAnswers(): {
+    results: Record<string, PuzzleSubmitResult>;
+    score: number;
+    total: number;
+    accuracy: number;
+  } {
+    const answers = this.studentAnswers();
     const map: Record<string, PuzzleSubmitResult> = {};
-    results.forEach((result) => {
-      const puzzleId = String(result.puzzleId ?? '').trim();
-      if (!puzzleId) {
-        return;
-      }
-      map[puzzleId] = {
-        puzzleId,
-        correct: Boolean(result.correct),
-        correctAnswer: result.correctAnswer,
-        skillId: result.skillId,
+
+    this.currentPuzzles().forEach((puzzle) => {
+      const studentAnswer = String(answers[puzzle.puzzleId] ?? '').trim();
+      const correctAnswer = String(puzzle.metadata?.correctAnswer ?? '').trim();
+      const correct = this.isAnswerCorrect(studentAnswer, correctAnswer, this.inputType(puzzle));
+
+      map[puzzle.puzzleId] = {
+        puzzleId: puzzle.puzzleId,
+        correct,
+        studentAnswer,
+        correctAnswer,
       };
     });
-    return map;
+
+    const total = this.currentPuzzles().length;
+    const score = Object.values(map).filter((result) => result.correct).length;
+    const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+
+    return { results: map, score, total, accuracy };
   }
 
-  private syncMastery(results: Record<string, PuzzleSubmitResult>): void {
+  private isAnswerCorrect(studentAnswer: string, correctAnswer: string, inputType: PuzzleInputType): boolean {
+    if (!correctAnswer) {
+      return false;
+    }
+
+    if (inputType === 'numeric') {
+      const studentNumber = Number(studentAnswer);
+      const correctNumber = Number(correctAnswer);
+      return Number.isFinite(studentNumber) && Number.isFinite(correctNumber)
+        ? Math.abs(studentNumber - correctNumber) < 1e-9
+        : false;
+    }
+
+    return studentAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+  }
+
+  private syncMastery(results: Record<string, PuzzleSubmitResult>): Observable<void> {
     const updates = this.currentPuzzles()
       .map((puzzle) => {
         const result = results[puzzle.puzzleId];
         if (!result) {
           return null;
         }
-        const skillId = result.skillId ?? puzzle.metadata?.skillId ?? puzzle.type;
+
+        const skillId = puzzle.metadata?.skillId ?? this.skillId();
         return this.masteryEngine.updateMastery({
           studentId: this.studentId(),
           skillId,
@@ -309,38 +302,66 @@ export class PuzzleGameComponent implements OnInit {
 
     if (updates.length === 0) {
       this.refreshMasteryContext();
-      return;
+      return of(undefined);
     }
 
-    forkJoin(updates).subscribe({
-      next: () => {
+    return forkJoin(updates).pipe(
+      map((states) => {
+        const latest = states[states.length - 1];
+        if (latest) {
+          this.applyMasteryState(latest);
+          return;
+        }
         this.refreshMasteryContext();
-      },
-      error: () => {
-        this.refreshMasteryContext();
-      },
-    });
+      }),
+    );
+  }
+
+  private applyMasteryState(state: MasteryState): void {
+    this.masteryWeakSkills.set(state.weakSkills ?? []);
+    this.masteryRecommendedSkill.set(state.recommendedNextSkill ?? null);
+
+    const skills = state.skills ?? [];
+    const mastered = skills.filter((skill) => skill.level === 'mastered').length;
+    const proficient = skills.filter((skill) => skill.level === 'proficient').length;
+    const developing = skills.filter((skill) => skill.level === 'developing').length;
+
+    this.masteryBadges.set([
+      `🏅 Mastered: ${mastered}`,
+      `✅ Proficient: ${proficient}`,
+      `📈 Developing: ${developing}`,
+    ]);
+
+    this.masterySynced.emit();
   }
 
   private refreshMasteryContext(): void {
     this.masteryEngine.fetchMasteryState(this.studentId()).subscribe({
       next: (state) => {
-        this.masteryWeakSkills.set(state.weakSkills);
-        this.masteryRecommendedSkill.set(state.recommendedNextSkill);
-        this.masterySynced.emit();
+        this.applyMasteryState(state);
       },
       error: () => {
         this.masteryWeakSkills.set([]);
         this.masteryRecommendedSkill.set(null);
+        this.masteryBadges.set([]);
       },
     });
   }
 
-  private isValidInput(puzzle: DynamicPuzzle, value: string): boolean {
-    if (this.inputType(puzzle) !== 'numeric') {
-      return true;
+  private applyAdaptiveDifficulty(score: number, total: number): void {
+    if (total <= 0) {
+      return;
     }
-    return /^-?(\d+(\.\d+)?|\.\d+)$/.test(value);
+
+    const accuracy = score / total;
+    if (accuracy >= 0.8) {
+      this.difficulty.set(this.clampDifficulty(this.difficulty() + 5));
+      return;
+    }
+
+    if (accuracy < 0.5) {
+      this.difficulty.set(this.clampDifficulty(this.difficulty() - 5));
+    }
   }
 
   private clampDifficulty(value: number): number {

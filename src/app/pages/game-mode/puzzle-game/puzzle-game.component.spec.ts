@@ -8,22 +8,26 @@ describe('PuzzleGameComponent', () => {
   const puzzleEngineMock = {
     generatePuzzles: vi.fn(() =>
       of({
-        sessionId: 'session-1',
-        difficulty: 60,
+        puzzleSessionId: 'session-1',
         puzzles: [
           {
             puzzleId: 'p-1',
-            type: 'missing-number',
-            prompt: '1, 2, __, 4',
-            metadata: { inputType: 'numeric' },
+            puzzleText: 'What number comes next: 2, 4, 6, ?',
+            type: 'mcq',
+            metadata: {
+              inputType: 'mcq',
+              skillId: 'sequence',
+              options: ['7', '8', '9'],
+              correctAnswer: '8',
+            },
           },
         ],
       }),
     ),
     submitPuzzleAnswers: vi.fn(() =>
       of({
-        difficulty: 62,
-        results: [{ puzzleId: 'p-1', correct: true, correctAnswer: '3', skillId: 'sequence' }],
+        saved: true,
+        xpEarned: 20,
       }),
     ),
   };
@@ -61,32 +65,59 @@ describe('PuzzleGameComponent', () => {
     }).compileComponents();
   });
 
-  it('loads generated puzzles on init', () => {
+  it('loads puzzles via generatePuzzles on init', () => {
     const fixture = TestBed.createComponent(PuzzleGameComponent);
     fixture.componentRef.setInput('studentId', 'student-demo');
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
+    expect(puzzleEngineMock.generatePuzzles).toHaveBeenCalledWith('ai-puzzle', 50);
     expect(comp.currentPuzzles().length).toBe(1);
-    expect(comp.sessionId()).toBe('session-1');
+    expect(comp.puzzleSessionId()).toBe('session-1');
   });
 
-  it('submits answers and stores results', () => {
+  it('binds dynamic answers and enables submit flow', () => {
     const fixture = TestBed.createComponent(PuzzleGameComponent);
     fixture.componentRef.setInput('studentId', 'student-demo');
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    comp.updateTextAnswer('p-1', 0, '3');
-    comp.submitAnswers();
+    expect(comp.canSubmit()).toBe(false);
 
-    expect(puzzleEngineMock.submitPuzzleAnswers).toHaveBeenCalled();
-    expect(comp.hasSubmitted()).toBe(true);
-    expect(comp.solvedCount()).toBe(1);
-    expect(masteryEngineMock.updateMastery).toHaveBeenCalled();
+    comp.selectOption('p-1', '8');
+    expect(comp.answerValue('p-1')).toBe('8');
+    expect(comp.canSubmit()).toBe(true);
   });
 
-  it('shows submission error when submit fails', () => {
+  it('evaluates answers locally and submits aggregate ai-puzzle payload', () => {
+    const fixture = TestBed.createComponent(PuzzleGameComponent);
+    fixture.componentRef.setInput('studentId', 'student-demo');
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.selectOption('p-1', '8');
+    comp.handleSubmit();
+    fixture.detectChanges();
+
+    expect(puzzleEngineMock.submitPuzzleAnswers).toHaveBeenCalledWith({
+      studentId: 'student-demo',
+      mode: 'ai-puzzle',
+      score: 100,
+      accuracy: 100,
+      streak: 1,
+    });
+    expect(comp.hasSubmitted()).toBe(true);
+    expect(comp.score()).toBe(1);
+    expect(comp.total()).toBe(1);
+    expect(comp.resultFor('p-1')?.correct).toBe(true);
+    expect(masteryEngineMock.updateMastery).toHaveBeenCalled();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Score: 1/1');
+    expect(text).toContain('Correct');
+  });
+
+  it('shows load error message when submit fails', () => {
     puzzleEngineMock.submitPuzzleAnswers.mockReturnValueOnce(
       throwError(() => new Error('submit failed')),
     );
@@ -96,10 +127,21 @@ describe('PuzzleGameComponent', () => {
     fixture.detectChanges();
 
     const comp = fixture.componentInstance;
-    comp.updateTextAnswer('p-1', 0, '3');
-    comp.submitAnswers();
+    comp.selectOption('p-1', '8');
+    comp.handleSubmit();
 
-    expect(comp.hasSubmitted()).toBe(false);
-    expect(comp.loadError()).toContain('Failed to submit answers');
+    expect(comp.loadError()).toBe('Unable to load puzzles. Please try again.');
+    expect(comp.resultFor('p-1')?.correct).toBe(true);
+  });
+
+  it('loads a new puzzle set from retry action', () => {
+    const fixture = TestBed.createComponent(PuzzleGameComponent);
+    fixture.componentRef.setInput('studentId', 'student-demo');
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.handleRetry();
+
+    expect(puzzleEngineMock.generatePuzzles).toHaveBeenCalledTimes(2);
   });
 });
