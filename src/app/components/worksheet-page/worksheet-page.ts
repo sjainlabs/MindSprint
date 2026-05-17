@@ -37,6 +37,8 @@ import { MasteryProgressComponent } from '../../components/mastery-progress/mast
 import { RecommendedSkillCardComponent } from '../../components/recommended-skill-card/recommended-skill-card.component';
 
 const VALID_IDENTIFIER_PATTERN = /^[a-z0-9][a-z0-9-_]*$/i;
+const NUMERIC_ANSWER_EPSILON = 1e-9;
+const FRACTION_ANSWER_PATTERN = /^-?\d+\/\d+$/;
 
 @Component({
   selector: 'app-worksheet-page',
@@ -136,8 +138,8 @@ export class WorksheetPageComponent implements OnInit {
     this.studentAnswers.set([]);
     this.worksheetStartedAt.set(new Date().toISOString());
 
-    const targetSkillId = skillId ?? this.selectedTopicId() || this.recommendedSkill()?.skillId;
-    this.practiceService.getPractice(level, targetSkillId).subscribe({
+    const resolvedSkillId = skillId ?? (this.selectedTopicId() || this.recommendedSkill()?.skillId);
+    this.practiceService.getPractice(level, resolvedSkillId).subscribe({
       next: (data) => {
         if (!data?.questions) {
           this.errorMessage.set('Invalid worksheet data received.');
@@ -273,7 +275,7 @@ export class WorksheetPageComponent implements OnInit {
         .updateMastery({
           studentId: this.studentId(),
           skillId,
-          skillName: this.selectedTopic()?.name,
+          skillName: this.selectedTopic()?.name ?? question.operation,
           isCorrect: answerCheckResults[question.id] === true,
         })
         .subscribe({
@@ -302,13 +304,16 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   tryAgain(): void {
-    this.loadWorksheet(this.currentLevel(), this.selectedTopicId() || this.recommendedSkill()?.skillId);
+    this.loadWorksheet(
+      this.currentLevel(),
+      this.selectedTopicId() || this.recommendedSkill()?.skillId,
+    );
   }
 
   updateAnswer(index: number, value: string): void {
     this.studentAnswers.update((answers) => {
       const nextAnswers = [...answers];
-      nextAnswers[index] = value ?? '';
+      nextAnswers[index] = value;
       return nextAnswers;
     });
   }
@@ -604,7 +609,10 @@ export class WorksheetPageComponent implements OnInit {
 
     if (typeof correctAnswer === 'number') {
       const parsedStudentAnswer = this.parseAnswerToNumber(normalizedStudentAnswer);
-      return parsedStudentAnswer !== null && Math.abs(parsedStudentAnswer - correctAnswer) < 1e-9;
+      return (
+        parsedStudentAnswer !== null
+        && Math.abs(parsedStudentAnswer - correctAnswer) < NUMERIC_ANSWER_EPSILON
+      );
     }
 
     return normalizedStudentAnswer === this.normalizeAnswer(correctAnswer);
@@ -620,7 +628,7 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   private normalizeAnswer(answer: string | number | undefined): string {
-    if (answer === undefined || answer === null) {
+    if (answer === undefined) {
       return '';
     }
     return String(answer).trim().replace(/\s+/g, '').toLowerCase();
@@ -630,7 +638,7 @@ export class WorksheetPageComponent implements OnInit {
     if (!answer) {
       return null;
     }
-    if (/^-?\d+\/-?\d+$/.test(answer)) {
+    if (FRACTION_ANSWER_PATTERN.test(answer)) {
       const [numerator, denominator] = answer.split('/').map(Number);
       if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
         return null;

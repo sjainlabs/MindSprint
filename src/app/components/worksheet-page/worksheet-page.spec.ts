@@ -214,9 +214,9 @@ describe('WorksheetPageComponent', () => {
     }).compileComponents();
   });
 
-  const buildStudentAnswers = (mapper?: (answer: number, index: number) => string): string[] =>
+  const buildAnswersFromWorksheet = (mapper?: (answer: string, index: number) => string): string[] =>
     worksheet.questions.map((question, index) =>
-      mapper ? mapper(question.answer, index) : String(question.answer),
+      mapper ? mapper(String(question.answer), index) : String(question.answer),
     );
 
   it('loads worksheet questions using the level route param', () => {
@@ -244,7 +244,7 @@ describe('WorksheetPageComponent', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.studentAnswers.set(buildStudentAnswers());
+    component.studentAnswers.set(buildAnswersFromWorksheet());
     component.submitWorksheet();
     fixture.detectChanges();
 
@@ -263,7 +263,7 @@ describe('WorksheetPageComponent', () => {
 
     expect(submitButton.disabled).toBe(true);
 
-    component.studentAnswers.set(buildStudentAnswers());
+    component.studentAnswers.set(buildAnswersFromWorksheet());
     fixture.detectChanges();
 
     expect(submitButton.disabled).toBe(false);
@@ -283,7 +283,7 @@ describe('WorksheetPageComponent', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.studentAnswers.set(buildStudentAnswers());
+    component.studentAnswers.set(buildAnswersFromWorksheet());
 
     component.submitWorksheet();
 
@@ -319,7 +319,7 @@ describe('WorksheetPageComponent', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.studentAnswers.set(buildStudentAnswers());
+    component.studentAnswers.set(buildAnswersFromWorksheet());
     component.submitWorksheet();
 
     expect(component.recommendedLevel()).toBe('Advanced');
@@ -356,7 +356,9 @@ describe('WorksheetPageComponent', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    component.studentAnswers.set(buildStudentAnswers((answer, index) => (index === 0 ? '999' : String(answer))));
+    component.studentAnswers.set(
+      buildAnswersFromWorksheet((answer, index) => (index === 0 ? '999' : String(answer))),
+    );
 
     component.submitWorksheet();
     fixture.detectChanges();
@@ -371,7 +373,7 @@ describe('WorksheetPageComponent', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    component.studentAnswers.set(buildStudentAnswers());
+    component.studentAnswers.set(buildAnswersFromWorksheet());
 
     component.submitWorksheet();
     fixture.detectChanges();
@@ -392,7 +394,7 @@ describe('WorksheetPageComponent', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    component.studentAnswers.set(buildStudentAnswers());
+    component.studentAnswers.set(buildAnswersFromWorksheet());
 
     component.submitWorksheet();
 
