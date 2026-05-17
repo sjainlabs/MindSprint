@@ -35,6 +35,7 @@ import {
 import { MasteryBadgeComponent } from '../../components/mastery-badge/mastery-badge.component';
 import { MasteryProgressComponent } from '../../components/mastery-progress/mastery-progress.component';
 import { RecommendedSkillCardComponent } from '../../components/recommended-skill-card/recommended-skill-card.component';
+import { WorksheetResultCardComponent } from '../../components/worksheet-result-card/worksheet-result-card.component';
 
 const VALID_IDENTIFIER_PATTERN = /^[a-z0-9][a-z0-9-_]*$/i;
 const NUMERIC_ANSWER_EPSILON = 1e-9;
@@ -52,6 +53,7 @@ const FRACTION_ANSWER_PATTERN = /^-?\d+\/\d+$/;
     MasteryBadgeComponent,
     MasteryProgressComponent,
     RecommendedSkillCardComponent,
+    WorksheetResultCardComponent,
   ],
   templateUrl: './worksheet-page.html',
   styleUrl: './worksheet-page.css',

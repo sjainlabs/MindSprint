@@ -72,6 +72,10 @@
                 {{ 'worksheet.results' | translate }}
               </h3>
 
+              <p class="mb-3 text-sm font-semibold text-blue-700">
+                You got {{ totalCorrect() }} out of {{ activeWorksheet.questions.length }} correct
+              </p>
+
               <div class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
                 <div class="bg-white rounded p-2 text-center shadow-sm">
                   <p class="text-green-600">{{ 'worksheet.correct' | translate }}</p>
@@ -118,20 +122,12 @@
                   [disabled]="hasCheckedAnswers()"
                 />
 
-                @if (hasCheckedAnswers() && checkedAnswers()[question.id] === true) {
-                  <p class="mt-1 text-sm text-green-700 font-medium">
-                    ✓ {{ 'worksheet.correct' | translate }}
-                  </p>
-                }
-
-                @if (hasCheckedAnswers() && checkedAnswers()[question.id] === false) {
-                  <p class="mt-1 text-sm text-red-600 font-medium">
-                    ✗ {{ 'worksheet.incorrect' | translate }}
-                  </p>
-                }
-                @if (hasCheckedAnswers() && showAnswers()) {
-                  <p class="mt-1 text-sm text-slate-600">Answer: {{ question.answer }}</p>
-                }
+                <app-worksheet-result-card
+                  [checked]="hasCheckedAnswers()"
+                  [isCorrect]="checkedAnswers()[question.id] === true"
+                  [correctAnswer]="question.answer"
+                  [showAnswer]="showAnswers()"
+                />
               </li>
             }
           </ol>
