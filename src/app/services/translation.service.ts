@@ -270,6 +270,8 @@ const EN: Record<string, string> = {
   'worksheet.print': 'Print',
   'worksheet.export': 'Export',
   'worksheet.download': 'Download',
+  'worksheet.scoreSummary': 'You got {correct} out of {total} correct',
+  'worksheet.answer': 'Answer',
 
   // ── Game Mode page ───────────────────────────────────────────────────────────
   'game.title': 'AI Game Challenge',
@@ -609,6 +611,8 @@ const HI: Record<string, string> = {
   'worksheet.print': 'प्रिंट',
   'worksheet.export': 'एक्सपोर्ट',
   'worksheet.download': 'डाउनलोड',
+  'worksheet.scoreSummary': '{total} में से {correct} सही उत्तर दिए',
+  'worksheet.answer': 'उत्तर',
 
   // ── Game Mode page ───────────────────────────────────────────────────────────
   'game.title': 'AI गेम चुनौती',
