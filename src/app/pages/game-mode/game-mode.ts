@@ -987,7 +987,7 @@ export class GameModeComponent implements OnDestroy {
     const effectiveDifficulty = this.getModeAdaptiveDifficulty(this.selectedMode(), modeSkillId);
     this.activeChallengeApiMode = apiMode;
 
-    if (apiMode === 'ai-puzzle') {
+    if (this.isAiPuzzleSelectedMode()) {
       this.challenge.set(null);
       this.loading.set(false);
       return;

@@ -254,7 +254,7 @@ export class PuzzleGameComponent implements OnInit {
     };
   }
 
-  private normalizeType(type: DynamicPuzzle['type']): PuzzleType {
+  private normalizeType(type: unknown): PuzzleType {
     if (
       type === 'pattern'
       || type === 'missing-number'
