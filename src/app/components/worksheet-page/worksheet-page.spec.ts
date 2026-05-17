@@ -219,6 +219,18 @@ describe('WorksheetPageComponent', () => {
       mapper ? mapper(String(question.answer), index) : String(question.answer),
     );
 
+  const buildAiWorksheetWithQuestions = (
+    questions: AiWorksheet['questions'],
+  ): AiWorksheet => ({
+    worksheetId: 'ai-test',
+    topic: PRACTICE_TOPIC_CATALOG[0].id,
+    difficulty: 30,
+    generatedAt: new Date().toISOString(),
+    questionTypes: ['numeric'],
+    questions,
+    validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
+  });
+
   it('loads worksheet questions using the level route param', () => {
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
@@ -344,19 +356,10 @@ describe('WorksheetPageComponent', () => {
   });
 
   it('renders answer inputs for each AI worksheet question', () => {
-    const aiQuestions = [
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of(buildAiWorksheetWithQuestions([
       { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25 and count forward by 1. What number comes next?', answer: '26', difficulty: 30, hints: [] },
       { id: 'ai-q2', type: 'word-problem', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 32 and count forward by 1. What number comes next?', answer: '33', difficulty: 30, hints: [] },
-    ];
-    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
-      worksheetId: 'ai-test',
-      topic: PRACTICE_TOPIC_CATALOG[0].id,
-      difficulty: 30,
-      generatedAt: new Date().toISOString(),
-      questionTypes: ['numeric', 'word-problem'],
-      questions: aiQuestions,
-      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
-    } as AiWorksheet));
+    ])));
 
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
@@ -369,18 +372,9 @@ describe('WorksheetPageComponent', () => {
   });
 
   it('disables AI worksheet submit button until all questions are answered', () => {
-    const aiQuestions = [
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of(buildAiWorksheetWithQuestions([
       { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25?', answer: '26', difficulty: 30, hints: [] },
-    ];
-    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
-      worksheetId: 'ai-test',
-      topic: PRACTICE_TOPIC_CATALOG[0].id,
-      difficulty: 30,
-      generatedAt: new Date().toISOString(),
-      questionTypes: ['numeric'],
-      questions: aiQuestions,
-      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
-    } as AiWorksheet));
+    ])));
 
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
@@ -399,19 +393,10 @@ describe('WorksheetPageComponent', () => {
   });
 
   it('marks AI worksheet answers correct and incorrect after submit', () => {
-    const aiQuestions = [
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of(buildAiWorksheetWithQuestions([
       { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25?', answer: '26', difficulty: 30, hints: [] },
       { id: 'ai-q2', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 32?', answer: '33', difficulty: 30, hints: [] },
-    ];
-    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
-      worksheetId: 'ai-test',
-      topic: PRACTICE_TOPIC_CATALOG[0].id,
-      difficulty: 30,
-      generatedAt: new Date().toISOString(),
-      questionTypes: ['numeric'],
-      questions: aiQuestions,
-      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
-    } as AiWorksheet));
+    ])));
 
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
@@ -431,18 +416,9 @@ describe('WorksheetPageComponent', () => {
   });
 
   it('resets AI worksheet state on try again', () => {
-    const aiQuestions = [
+    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of(buildAiWorksheetWithQuestions([
       { id: 'ai-q1', type: 'numeric', topic: 'counting', subtopic: 'Counting 1-20', prompt: 'Start at 25?', answer: '26', difficulty: 30, hints: [] },
-    ];
-    aiWorksheetServiceMock.generateWorksheet.mockReturnValueOnce(of({
-      worksheetId: 'ai-test',
-      topic: PRACTICE_TOPIC_CATALOG[0].id,
-      difficulty: 30,
-      generatedAt: new Date().toISOString(),
-      questionTypes: ['numeric'],
-      questions: aiQuestions,
-      validation: { allQuestionsHaveAnswers: true, hasSupportedQuestionTypes: true, topicSupported: true },
-    } as AiWorksheet));
+    ])));
 
     const fixture = TestBed.createComponent(WorksheetPageComponent);
     fixture.detectChanges();
