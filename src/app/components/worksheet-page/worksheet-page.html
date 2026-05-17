@@ -73,7 +73,10 @@
               </h3>
 
               <p class="mb-3 text-sm font-semibold text-blue-700">
-                You got {{ totalCorrect() }} out of {{ activeWorksheet.questions.length }} correct
+                {{
+                  'worksheet.scoreSummary'
+                    | translate: { correct: totalCorrect(), total: activeWorksheet.questions.length }
+                }}
               </p>
 
               <div class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">

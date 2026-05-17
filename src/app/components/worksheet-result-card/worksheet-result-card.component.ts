@@ -14,7 +14,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
         <p class="mt-1 text-sm text-red-600 font-medium">✗ {{ 'worksheet.incorrect' | translate }}</p>
       }
       @if (showAnswer()) {
-        <p class="mt-1 text-sm text-slate-600">Answer: {{ correctAnswer() }}</p>
+        <p class="mt-1 text-sm text-slate-600">{{ 'worksheet.answer' | translate }}: {{ correctAnswer() }}</p>
       }
     }
   `,
