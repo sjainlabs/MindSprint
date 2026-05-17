@@ -203,7 +203,7 @@ export class PuzzleGameComponent implements OnInit {
   blankCount(puzzle: DynamicPuzzle): number {
     const rawCount = puzzle.metadata?.numberOfBlanks ?? puzzle.metadata?.blanks ?? 1;
     const normalizedCount = Number(rawCount);
-    if (!Number.isFinite(normalizedCount) || Number.isNaN(normalizedCount)) {
+    if (!Number.isFinite(normalizedCount)) {
       return 1;
     }
     const flooredCount = Math.floor(normalizedCount);
