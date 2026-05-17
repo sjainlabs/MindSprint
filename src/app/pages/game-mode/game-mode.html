@@ -129,8 +129,16 @@
         </div>
       }
 
+      @if (isAiPuzzleSelectedMode()) {
+        <app-puzzle-game
+          [studentId]="studentId()"
+          [initialDifficulty]="adaptiveDifficulty() ?? 50"
+          (masterySynced)="refreshMasteryContext()"
+        />
+      }
+
       <!-- Challenge Content -->
-      @if (challenge()) {
+      @if (!isAiPuzzleSelectedMode() && challenge()) {
 
         <!-- MAP MODE -->
         @if (isMapActive() && getMapChallenge(); as mapChallenge) {
@@ -366,16 +374,6 @@
                 [engine]="competitionBossEngine"
                 [loading]="loading()"
                 (nextChallenge)="loadChallenge()"
-              />
-            }
-
-            <!-- ⭐ AI PUZZLE GAME MODE -->
-            @if (isAiPuzzleSelectedMode()) {
-              <app-ai-puzzle-mode
-                [engine]="aiPuzzleEngine"
-                [loading]="loading()"
-                (submitAnswer)="onAiPuzzleSubmit($event)"
-                (nextPuzzle)="loadChallenge()"
               />
             }
 

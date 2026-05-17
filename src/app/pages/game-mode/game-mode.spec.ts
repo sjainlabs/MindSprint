@@ -5,6 +5,7 @@ import { GameModeComponent } from './game-mode';
 import { GameService } from '../../services/game.service';
 import { StudentIntelligenceService } from '../../services/student-intelligence.service';
 import { MasteryEngineService } from '../../core/mastery/mastery-engine.service';
+import { PuzzleEngineService } from '../../services/puzzle-engine.service';
 
 const mockProfile = {
   studentId: 'student-demo',
@@ -208,6 +209,28 @@ describe('GameModeComponent', () => {
       progressToNextLevel: 58,
     })),
   };
+  const puzzleEngineServiceMock = {
+    generatePuzzles: vi.fn(() =>
+      of({
+        sessionId: 'session-1',
+        difficulty: 62,
+        puzzles: [
+          {
+            puzzleId: 'p-1',
+            type: 'sequence',
+            prompt: '2, 4, 6, ?',
+            metadata: { inputType: 'numeric' },
+          },
+        ],
+      }),
+    ),
+    submitPuzzleAnswers: vi.fn(() =>
+      of({
+        difficulty: 64,
+        results: [{ puzzleId: 'p-1', correct: true, correctAnswer: '8' }],
+      }),
+    ),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -220,6 +243,7 @@ describe('GameModeComponent', () => {
         { provide: GameService, useValue: gameServiceMock },
         { provide: StudentIntelligenceService, useValue: studentIntelligenceServiceMock },
         { provide: MasteryEngineService, useValue: masteryEngineMock },
+        { provide: PuzzleEngineService, useValue: puzzleEngineServiceMock },
       ],
     }).compileComponents();
   });
@@ -829,35 +853,29 @@ describe('GameModeComponent', () => {
     expect(gameServiceMock.submitAbacusFlash.mock.calls.length).toBe(1);
   });
 
-  it('configures and starts AI puzzle engine when ai-puzzle mode is loaded', () => {
-    gameServiceMock.getChallenge.mockReturnValueOnce(of(mockAiPuzzleChallenge as any));
+  it('loads dynamic puzzle component data when ai-puzzle mode is selected', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
+    gameServiceMock.getChallenge.mockClear();
     comp.selectedMode.set('ai-puzzle');
     comp.loadChallenge();
 
-    expect(comp.aiPuzzleEngine.prompt()).toContain('Which number comes next');
-    expect(comp.aiPuzzleEngine.options()).toEqual(['24', '32', '30', '18']);
-    expect(comp.aiPuzzleEngine.isRunning()).toBe(true);
+    fixture.detectChanges();
+    expect(gameServiceMock.getChallenge).not.toHaveBeenCalled();
+    expect(puzzleEngineServiceMock.generatePuzzles).toHaveBeenCalled();
   });
 
-  it('submits AI puzzle answers and updates challenge submission state', () => {
-    gameServiceMock.getChallenge.mockReturnValueOnce(of(mockAiPuzzleChallenge as any));
+  it('keeps ai-puzzle mode outside legacy challenge state', () => {
     const fixture = TestBed.createComponent(GameModeComponent);
     fixture.detectChanges();
     const comp = fixture.componentInstance;
 
     comp.selectedMode.set('ai-puzzle');
     comp.loadChallenge();
-    comp.onAiPuzzleSubmit('32');
-
-    expect(comp.challengeSubmitted()).toBe(true);
-    expect(comp.aiPuzzleEngine.isCorrect()).toBe(true);
-    expect(gameServiceMock.submitChallenge).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'ai-puzzle' }),
-    );
+    expect(comp.challenge()).toBeNull();
+    expect(comp.loading()).toBe(false);
   });
 
   it('configures and starts reasoning puzzle engine when reasoning-puzzle mode is loaded', () => {
