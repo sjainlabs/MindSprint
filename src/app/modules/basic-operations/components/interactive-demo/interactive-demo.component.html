@@ -1,0 +1,89 @@
+<section class="min-h-screen bg-amber-50 px-4 py-8">
+  <div class="mx-auto max-w-4xl rounded-2xl bg-white p-6 shadow">
+    <h1 class="mb-6 text-2xl font-bold text-amber-700">Interactive Demo</h1>
+
+    @switch (operation()) {
+      @case ('add') {
+        <h2 class="mb-3 text-xl font-semibold">➕ Addition: combining blocks</h2>
+        <p class="mb-3">Tap to add blocks and see the total grow.</p>
+        <div class="mb-3 flex flex-wrap gap-2">
+          @for (block of blocksArray(); track block) {
+            <div class="h-8 w-8 rounded bg-sky-400"></div>
+          }
+        </div>
+        <button type="button" class="demo-btn" (click)="increment()" data-testid="demo-add-action">Add block</button>
+      }
+      @case ('sub') {
+        <h2 class="mb-3 text-xl font-semibold">➖ Subtraction: removing blocks</h2>
+        <p class="mb-3">Tap to remove blocks from the group.</p>
+        <div class="mb-3 flex flex-wrap gap-2">
+          @for (block of blocksArray(); track block) {
+            <div class="h-8 w-8 rounded bg-rose-400"></div>
+          }
+        </div>
+        <button type="button" class="demo-btn" (click)="decrement()" data-testid="demo-sub-action">Remove block</button>
+      }
+      @case ('mul') {
+        <h2 class="mb-3 text-xl font-semibold">✖️ Multiplication: groups of items</h2>
+        <p class="mb-3">Build equal groups to see repeated addition.</p>
+        <div class="mb-3 grid gap-2" [style.gridTemplateColumns]="'repeat(' + groupSize() + ', minmax(0, 1fr))'">
+          @for (cell of multiplicationCells(); track cell) {
+            <div class="h-8 rounded bg-emerald-400"></div>
+          }
+        </div>
+        <div class="flex gap-2">
+          <button type="button" class="demo-btn" (click)="incrementGroupCount()" data-testid="demo-mul-groups">More groups</button>
+          <button type="button" class="demo-btn" (click)="incrementGroupSize()">More per group</button>
+        </div>
+      }
+      @case ('div') {
+        <h2 class="mb-3 text-xl font-semibold">➗ Division: sharing items</h2>
+        <p class="mb-3">Tap to change groups and share equally.</p>
+        <div class="mb-3 grid gap-2" [style.gridTemplateColumns]="'repeat(' + groupCount() + ', minmax(0, 1fr))'">
+          @for (cell of multiplicationCells(); track cell) {
+            <div class="h-8 rounded bg-indigo-300"></div>
+          }
+        </div>
+        <div class="flex gap-2">
+          <button type="button" class="demo-btn" (click)="decrementGroupCount()" data-testid="demo-div-groups">Fewer groups</button>
+          <button type="button" class="demo-btn" (click)="decrementGroupSize()">Fewer per group</button>
+        </div>
+      }
+      @case ('fraction') {
+        <h2 class="mb-3 text-xl font-semibold">½ Fractions: shaded shapes</h2>
+        <p class="mb-3">Tap to shade parts and form a fraction.</p>
+        <div class="mb-3 grid grid-cols-4 gap-2">
+          @for (cell of fractionCells(); track cell) {
+            <div
+              class="h-10 rounded border"
+              [class.bg-violet-400]="cell < shadedParts()"
+              [class.bg-white]="cell >= shadedParts()"
+            ></div>
+          }
+        </div>
+        <p class="mb-3 font-semibold">{{ shadedParts() }}/{{ parts() }}</p>
+        <button type="button" class="demo-btn" (click)="incrementShaded()" data-testid="demo-fraction-action">Shade more</button>
+      }
+      @case ('decimal') {
+        <h2 class="mb-3 text-xl font-semibold">0.1 Decimals: place value grid</h2>
+        <p class="mb-3">Tap to fill tenths in the grid.</p>
+        <div class="mb-3 grid grid-cols-5 gap-2">
+          @for (cell of decimalCells(); track cell) {
+            <div
+              class="h-10 rounded border"
+              [class.bg-cyan-400]="cell < tenths()"
+              [class.bg-white]="cell >= tenths()"
+            ></div>
+          }
+        </div>
+        <p class="mb-3 font-semibold">{{ tenths() / 10 }}</p>
+        <button type="button" class="demo-btn" (click)="incrementTenths()" data-testid="demo-decimal-action">Fill tenths</button>
+      }
+    }
+
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a class="demo-btn-secondary" [routerLink]="['/operations', operation(), 'concept']">Back to Concept</a>
+      <a class="demo-btn" [routerLink]="['/operations', operation(), 'practice']">Go to Practice</a>
+    </div>
+  </div>
+</section>

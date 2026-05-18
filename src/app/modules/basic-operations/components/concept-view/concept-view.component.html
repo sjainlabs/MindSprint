@@ -1,0 +1,58 @@
+<section class="min-h-screen bg-sky-50 px-4 py-8">
+  <div class="mx-auto max-w-4xl rounded-2xl bg-white p-6 shadow">
+    @if (loading()) {
+      <p class="text-center text-lg font-semibold text-sky-700">Loading concept...</p>
+    }
+
+    @if (error()) {
+      <p class="rounded-lg bg-red-50 p-3 text-red-600">{{ error() }}</p>
+    }
+
+    @if (concept(); as item) {
+      <header class="mb-6 flex items-center gap-3">
+        <span class="text-3xl" aria-hidden="true">{{ iconFor(operation()) }}</span>
+        <h1 class="text-2xl font-bold text-sky-800">{{ item.operation | titlecase }} Concept</h1>
+      </header>
+
+      <div class="space-y-4 text-slate-700">
+        <p><strong>Definition:</strong> {{ item.definition }}</p>
+        <p><strong>Kid-friendly explanation:</strong> {{ item.kidFriendlyExplanation }}</p>
+        <p><strong>Visual explanation:</strong> {{ item.visualExplanation }}</p>
+
+        <div>
+          <h2 class="mb-2 text-lg font-semibold text-sky-700">Examples</h2>
+          <ul class="list-disc pl-6">
+            @for (example of item.examples; track example) {
+              <li>{{ example }}</li>
+            }
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="mb-2 text-lg font-semibold text-sky-700">Common mistakes</h2>
+          <ul class="list-disc pl-6">
+            @for (mistake of item.commonMistakes; track mistake) {
+              <li>{{ mistake }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          class="rounded-xl bg-violet-500 px-5 py-3 text-lg font-semibold text-white"
+          [routerLink]="['/operations', operation(), 'demo']"
+        >
+          Try Demo
+        </a>
+        <a
+          class="rounded-xl bg-sky-600 px-5 py-3 text-lg font-semibold text-white"
+          [routerLink]="['/operations', operation(), 'practice']"
+          data-testid="concept-start-practice"
+        >
+          Start Practice
+        </a>
+      </div>
+    }
+  </div>
+</section>
