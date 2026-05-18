@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   type OperationType,
   type OperationConcept,
+  OPERATION_ICON_MAP,
 } from '../../models/operation-concept.model';
 import { OperationsService } from '../../operations.service';
 
@@ -49,11 +50,6 @@ export class ConceptViewComponent implements OnInit {
   }
 
   iconFor(operation: OperationType): string {
-    if (operation === 'add') return '➕';
-    if (operation === 'sub') return '➖';
-    if (operation === 'mul') return '✖️';
-    if (operation === 'div') return '➗';
-    if (operation === 'fraction') return '½';
-    return '0.1';
+    return OPERATION_ICON_MAP[operation];
   }
 }

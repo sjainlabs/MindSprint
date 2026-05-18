@@ -11,7 +11,7 @@ import {
   type MasteryState,
 } from '../../../../core/mastery/mastery-engine.service';
 import { OperationsService } from '../../operations.service';
-import { type OperationType } from '../../models/operation-concept.model';
+import { type OperationType, OPERATION_SKILL_MAP } from '../../models/operation-concept.model';
 
 @Component({
   selector: 'app-mastery-check',
@@ -27,11 +27,7 @@ export class MasteryCheckComponent implements OnInit {
   readonly masteryState = signal<MasteryState | null>(null);
 
   readonly operationSkill = computed(() => {
-    if (this.operation() === 'add') return 'addition';
-    if (this.operation() === 'sub') return 'subtraction';
-    if (this.operation() === 'mul') return 'multiplication';
-    if (this.operation() === 'div') return 'division';
-    return this.operation();
+    return OPERATION_SKILL_MAP[this.operation()] ?? this.operation();
   });
 
   readonly selectedSkill = computed(() =>

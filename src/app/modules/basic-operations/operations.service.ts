@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { forkJoin, Observable, of, switchMap, tap } from 'rxjs';
+import { forkJoin, Observable, of, switchMap, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   type MasteryState,
@@ -9,6 +9,9 @@ import {
 import {
   type OperationConcept,
   type OperationType,
+  OPERATION_DIFFICULTY_BOUNDS,
+  OPERATION_DISPLAY_NAME_MAP,
+  OPERATION_SKILL_MAP,
 } from './models/operation-concept.model';
 import {
   type OperationPracticeSession,
@@ -19,10 +22,53 @@ import {
   type OperationAnswerResult,
 } from './models/operation-result.model';
 
+interface OperationPracticeApiProblem {
+  problemId?: string | number;
+  id?: string | number;
+  prompt?: string;
+  question?: string;
+  metadata?: Record<string, unknown>;
+  correctAnswer?: string | number;
+  answer?: string | number;
+}
+
+interface OperationPracticeApiResponse {
+  sessionId?: string;
+  difficulty?: number;
+  problems?: OperationPracticeApiProblem[];
+  questions?: OperationPracticeApiProblem[];
+}
+
+interface OperationSubmitApiResult {
+  problemId?: string | number;
+  questionId?: string | number;
+  studentAnswer?: string | number;
+  submittedAnswer?: string | number;
+  correctAnswer?: string | number;
+  expectedAnswer?: string | number;
+  isCorrect?: boolean;
+}
+
+interface OperationSubmitApiResponse {
+  sessionId?: string;
+  totalProblems?: number;
+  totalQuestions?: number;
+  correctCount?: number;
+  correct?: number;
+  incorrectCount?: number;
+  incorrect?: number;
+  scorePercentage?: number;
+  accuracy?: number;
+  results?: OperationSubmitApiResult[];
+  questionResults?: OperationSubmitApiResult[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class OperationsService {
+  private readonly minDifficulty = OPERATION_DIFFICULTY_BOUNDS.min;
+  private readonly maxDifficulty = OPERATION_DIFFICULTY_BOUNDS.max;
   private readonly operationsApiUrl = `${environment.apiUrl}/operations`;
   private readonly defaultStudentId = 'student-demo';
   private readonly latestResultState = signal<OperationSubmissionResult | null>(null);
@@ -37,23 +83,26 @@ export class OperationsService {
     const params = new HttpParams().set('operation', operation);
     return this.http
       .get<Partial<OperationConcept>>(`${this.operationsApiUrl}/concept`, { params })
-      .pipe(tap(() => undefined), switchMap((data) => of(this.normalizeConcept(operation, data))));
+      .pipe(map((data) => this.normalizeConcept(operation, data)));
   }
 
   getPractice(operation: OperationType, difficulty: number): Observable<OperationPracticeSession> {
     const params = new HttpParams()
       .set('operation', operation)
-      .set('difficulty', this.clampDifficulty(difficulty));
+      .set('difficulty', this.clampAndStringifyDifficulty(difficulty));
 
-    return this.http.get<any>(`${this.operationsApiUrl}/practice`, { params }).pipe(
-      switchMap((payload) => of(this.normalizePractice(operation, difficulty, payload))),
-    );
+    return this.http
+      .get<OperationPracticeApiResponse>(`${this.operationsApiUrl}/practice`, { params })
+      .pipe(map((payload) => this.normalizePractice(operation, difficulty, payload)));
   }
 
   submitPractice(payload: OperationSubmitPayload): Observable<OperationSubmissionResult> {
     return this.http
-      .post<any>(`${this.operationsApiUrl}/submit`, payload)
-      .pipe(switchMap((response) => of(this.normalizeSubmission(payload, response))), tap((result) => this.latestResultState.set(result)));
+      .post<OperationSubmitApiResponse>(`${this.operationsApiUrl}/submit`, payload)
+      .pipe(
+        map((response) => this.normalizeSubmission(payload, response)),
+        tap((result) => this.latestResultState.set(result)),
+      );
   }
 
   syncMasteryState(
@@ -109,32 +158,32 @@ export class OperationsService {
   private normalizePractice(
     operation: OperationType,
     difficulty: number,
-    payload: any,
+    payload: OperationPracticeApiResponse,
   ): OperationPracticeSession {
-    const problems = (payload?.problems ?? payload?.questions ?? []).map((problem: any, index: number) => ({
-      problemId: String(problem?.problemId ?? problem?.id ?? `problem-${index + 1}`),
-      prompt: String(problem?.prompt ?? problem?.question ?? 'Solve this problem.'),
+    const problems = (payload?.problems ?? payload?.questions ?? []).map((problem, index) => ({
+      problemId: String(problem.problemId ?? problem.id ?? `problem-${index + 1}`),
+      prompt: String(problem.prompt ?? problem.question ?? 'Solve this problem.'),
       metadata:
-        typeof problem?.metadata === 'object' && problem?.metadata !== null ? problem.metadata : {},
-      correctAnswer: problem?.correctAnswer ?? problem?.answer,
+        typeof problem.metadata === 'object' && problem.metadata !== null ? problem.metadata : {},
+      correctAnswer: problem.correctAnswer ?? problem.answer,
     }));
 
     return {
       sessionId: String(payload?.sessionId ?? `ops-${Date.now()}`),
       operation,
-      difficulty: Number(payload?.difficulty ?? this.clampDifficulty(difficulty)),
+      difficulty: Number(payload?.difficulty ?? this.clampAndStringifyDifficulty(difficulty)),
       problems,
     };
   }
 
   private normalizeSubmission(
     payload: OperationSubmitPayload,
-    response: any,
+    response: OperationSubmitApiResponse,
   ): OperationSubmissionResult {
     const submittedById = new Map(payload.answers.map((entry) => [entry.problemId, String(entry.studentAnswer)]));
 
     const results: OperationAnswerResult[] = (response?.results ?? response?.questionResults ?? []).map(
-      (item: any) => {
+      (item) => {
         const problemId = String(item?.problemId ?? item?.questionId ?? '');
         const studentAnswer = String(item?.studentAnswer ?? item?.submittedAnswer ?? submittedById.get(problemId) ?? '');
         const correctAnswer = String(item?.correctAnswer ?? item?.expectedAnswer ?? '');
@@ -173,25 +222,16 @@ export class OperationsService {
     };
   }
 
-  private clampDifficulty(value: number): string {
+  private clampAndStringifyDifficulty(value: number): string {
     const difficulty = Number.isFinite(value) ? Math.round(value) : 1;
-    return String(Math.max(1, Math.min(50, difficulty)));
+    return String(Math.max(this.minDifficulty, Math.min(this.maxDifficulty, difficulty)));
   }
 
   private toMasterySkill(operation: OperationType): string {
-    if (operation === 'add') return 'addition';
-    if (operation === 'sub') return 'subtraction';
-    if (operation === 'mul') return 'multiplication';
-    if (operation === 'div') return 'division';
-    return operation;
+    return OPERATION_SKILL_MAP[operation] ?? operation;
   }
 
   private toSkillDisplayName(operation: OperationType): string {
-    if (operation === 'add') return 'Addition';
-    if (operation === 'sub') return 'Subtraction';
-    if (operation === 'mul') return 'Multiplication';
-    if (operation === 'div') return 'Division';
-    if (operation === 'fraction') return 'Fractions';
-    return 'Decimals';
+    return OPERATION_DISPLAY_NAME_MAP[operation];
   }
 }

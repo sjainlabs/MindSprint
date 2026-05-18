@@ -10,6 +10,10 @@
       <p class="mb-4 rounded-lg bg-red-50 p-3 text-red-600">{{ error() }}</p>
     }
 
+    @if (masteryWarning()) {
+      <p class="mb-4 rounded-lg bg-amber-50 p-3 text-amber-700">{{ masteryWarning() }}</p>
+    }
+
     @if (session(); as activeSession) {
       <p class="mb-3 text-sm text-slate-500">Difficulty: {{ activeSession.difficulty }}</p>
 
@@ -27,8 +31,8 @@
               [disabled]="!!result()"
             />
 
-            @if (result(); as submission) {
-              @if (submission.results.find((item) => item.problemId === problem.problemId); as answerResult) {
+            @if (result()) {
+              @if (getResultFor(problem.problemId); as answerResult) {
                 <p
                   class="mt-2 text-sm font-semibold"
                   [class.text-green-700]="answerResult.isCorrect"

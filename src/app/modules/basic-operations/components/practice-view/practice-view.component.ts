@@ -6,9 +6,18 @@ import {
   type OperationPracticeSession,
   type OperationSubmitPayload,
 } from '../../models/operation-practice.model';
-import { type OperationType } from '../../models/operation-concept.model';
-import { type OperationSubmissionResult } from '../../models/operation-result.model';
+import {
+  type OperationType,
+  OPERATION_DIFFICULTY_BOUNDS,
+} from '../../models/operation-concept.model';
+import {
+  type OperationSubmissionResult,
+  type OperationAnswerResult,
+} from '../../models/operation-result.model';
 import { OperationsService } from '../../operations.service';
+
+const MIN_DIFFICULTY = OPERATION_DIFFICULTY_BOUNDS.min;
+const MAX_DIFFICULTY = OPERATION_DIFFICULTY_BOUNDS.max;
 
 @Component({
   selector: 'app-practice-view',
@@ -26,6 +35,7 @@ export class PracticeViewComponent implements OnInit {
   readonly session = signal<OperationPracticeSession | null>(null);
   readonly studentAnswers = signal<Record<string, string>>({});
   readonly result = signal<OperationSubmissionResult | null>(null);
+  readonly masteryWarning = signal('');
 
   readonly allAnswersFilled = computed(() => {
     const currentSession = this.session();
@@ -51,6 +61,7 @@ export class PracticeViewComponent implements OnInit {
   loadPractice(): void {
     this.loading.set(true);
     this.error.set('');
+    this.masteryWarning.set('');
     this.result.set(null);
     this.operationsService.clearLatestResult();
 
@@ -94,7 +105,11 @@ export class PracticeViewComponent implements OnInit {
       next: (result) => {
         this.result.set(result);
         this.operationsService.syncMasteryState(this.operation(), result).subscribe({
-          error: () => undefined,
+          error: () => {
+            this.masteryWarning.set(
+              "Your answers were submitted, but we couldn't update mastery progress right now.",
+            );
+          },
         });
         this.submitting.set(false);
       },
@@ -106,8 +121,11 @@ export class PracticeViewComponent implements OnInit {
   }
 
   tryAgain(): void {
-    const nextDifficulty = this.difficulty() >= 50 ? 1 : this.difficulty() + 1;
-    this.difficulty.set(nextDifficulty);
+    this.difficulty.set(Math.min(MAX_DIFFICULTY, Math.max(MIN_DIFFICULTY, this.difficulty())));
     this.loadPractice();
+  }
+
+  getResultFor(problemId: string): OperationAnswerResult | null {
+    return this.result()?.results.find((entry) => entry.problemId === problemId) ?? null;
   }
 }
