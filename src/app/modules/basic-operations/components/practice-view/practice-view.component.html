@@ -1,0 +1,86 @@
+<section class="min-h-screen bg-emerald-50 px-4 py-8">
+  <div class="mx-auto max-w-4xl rounded-2xl bg-white p-6 shadow">
+    <h1 class="mb-4 text-2xl font-bold text-emerald-700">Guided Practice</h1>
+
+    @if (loading()) {
+      <p class="text-lg font-semibold text-emerald-700">Loading practice problems...</p>
+    }
+
+    @if (error()) {
+      <p class="mb-4 rounded-lg bg-red-50 p-3 text-red-600">{{ error() }}</p>
+    }
+
+    @if (masteryWarning()) {
+      <p class="mb-4 rounded-lg bg-amber-50 p-3 text-amber-700">{{ masteryWarning() }}</p>
+    }
+
+    @if (session(); as activeSession) {
+      <p class="mb-3 text-sm text-slate-500">Difficulty: {{ activeSession.difficulty }}</p>
+
+      <ol class="mb-6 space-y-3">
+        @for (problem of activeSession.problems; track problem.problemId) {
+          <li class="rounded-xl border border-slate-200 p-4">
+            <label [for]="problem.problemId" class="mb-2 block font-semibold">{{ problem.prompt }}</label>
+            <input
+              class="w-full rounded-lg border border-slate-300 px-3 py-2"
+              type="text"
+              [id]="problem.problemId"
+              [ngModel]="studentAnswers()[problem.problemId]"
+              (ngModelChange)="updateAnswer(problem.problemId, $event)"
+              data-testid="practice-answer-input"
+              [disabled]="!!result()"
+            />
+
+            @if (result()) {
+              @if (getResultFor(problem.problemId); as answerResult) {
+                <p
+                  class="mt-2 text-sm font-semibold"
+                  [class.text-green-700]="answerResult.isCorrect"
+                  [class.text-red-700]="!answerResult.isCorrect"
+                  data-testid="practice-marking"
+                >
+                  {{ answerResult.isCorrect ? 'Correct' : 'Incorrect' }}
+                </p>
+                @if (!answerResult.isCorrect) {
+                  <p class="text-sm text-slate-600">Correct answer: {{ answerResult.correctAnswer }}</p>
+                }
+              }
+            }
+          </li>
+        }
+      </ol>
+
+      <div class="flex flex-wrap gap-3">
+        <button
+          type="button"
+          class="ops-primary-btn"
+          data-testid="practice-submit"
+          [disabled]="!allAnswersFilled() || submitting() || !!result()"
+          (click)="submit()"
+        >
+          {{ submitting() ? 'Submitting...' : 'Submit' }}
+        </button>
+        <button type="button" class="ops-secondary-btn" (click)="tryAgain()" data-testid="practice-try-again">
+          Try Again
+        </button>
+        <a class="ops-secondary-btn" [routerLink]="['/operations', operation(), 'demo']">Back to Demo</a>
+      </div>
+
+      @if (result(); as summary) {
+        <div class="mt-5 rounded-xl bg-emerald-100 p-4" data-testid="practice-score-summary">
+          <h2 class="text-lg font-bold text-emerald-800">Score Summary</h2>
+          <p>Correct: {{ summary.correctCount }}</p>
+          <p>Incorrect: {{ summary.incorrectCount }}</p>
+          <p>Score: {{ summary.scorePercentage }}%</p>
+          <a
+            class="mt-3 inline-block rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
+            [routerLink]="['/operations', operation(), 'mastery-check']"
+            data-testid="practice-go-mastery"
+          >
+            Go to Mastery Check
+          </a>
+        </div>
+      }
+    }
+  </div>
+</section>

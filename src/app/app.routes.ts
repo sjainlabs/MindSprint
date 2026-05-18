@@ -38,5 +38,12 @@ export const routes: Routes = [
   { path: 'profile', component: StudentProfileComponent },
   { path: 'worksheet', redirectTo: '/worksheet/Beginner', pathMatch: 'full' },
   { path: 'worksheet/:level', component: WorksheetPageComponent },
+  {
+    path: 'operations',
+    loadChildren: () =>
+      import('./modules/basic-operations/basic-operations.module').then(
+        (module) => module.basicOperationsRoutes,
+      ),
+  },
   { path: 'game', component: GameModeComponent },
 ];

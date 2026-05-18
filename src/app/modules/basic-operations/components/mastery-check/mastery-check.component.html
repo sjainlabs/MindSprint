@@ -1,0 +1,51 @@
+<section class="min-h-screen bg-violet-50 px-4 py-8">
+  <div class="mx-auto max-w-4xl rounded-2xl bg-white p-6 shadow">
+    <h1 class="mb-4 text-2xl font-bold text-violet-700">Mastery Check</h1>
+
+    @if (loading()) {
+      <p class="text-lg font-semibold text-violet-700">Updating mastery...</p>
+    }
+
+    @if (error()) {
+      <p class="rounded-lg bg-red-50 p-3 text-red-600">{{ error() }}</p>
+    }
+
+    @if (masteryState(); as state) {
+      <div class="mb-5 rounded-xl border border-violet-200 bg-violet-50 p-4">
+        <h2 class="mb-2 text-lg font-semibold text-violet-800">Updated mastery badge</h2>
+        @if (selectedSkill(); as skill) {
+          <div class="flex items-center gap-3">
+            <span class="font-semibold">{{ skill.skillName }}</span>
+            <app-mastery-badge [level]="skill.level" [label]="labelFor(skill.level)" />
+          </div>
+        } @else {
+          <p>No mastery data yet for this operation.</p>
+        }
+      </div>
+
+      <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <h2 class="mb-2 text-lg font-semibold text-amber-800">Weak skills</h2>
+        @if (state.weakSkills.length) {
+          <ul class="list-disc pl-6">
+            @for (skill of state.weakSkills; track skill.skillId) {
+              <li>{{ skill.skillName }} ({{ skill.accuracy }}%)</li>
+            }
+          </ul>
+        } @else {
+          <p>No weak skills right now.</p>
+        }
+      </div>
+
+      <app-recommended-skill-card
+        [skillName]="state.recommendedNextSkill?.skillName ?? ''"
+        [reason]="state.recommendedNextSkill?.action ?? ''"
+        actionLabel="Start Next Skill"
+      />
+
+      <div class="mt-5 flex flex-wrap gap-3">
+        <a class="ops-btn" [routerLink]="['/operations', operation(), 'concept']">Back to Concept</a>
+        <a class="ops-btn" [routerLink]="['/operations', operation(), 'practice']">Practice Again</a>
+      </div>
+    }
+  </div>
+</section>
