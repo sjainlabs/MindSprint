@@ -5,7 +5,12 @@
     <p>Use your Google account to access your dashboard.</p>
 
     <button type="button" class="google-btn" [disabled]="loading()" (click)="loginWithGoogle()">
-      {{ loading() ? 'Signing in...' : 'Login with Google' }}
+      @if (loading()) {
+        <span class="spinner"></span>
+        Signing in...
+      } @else {
+        Login with Google
+      }
     </button>
 
     @if (errorMessage()) {

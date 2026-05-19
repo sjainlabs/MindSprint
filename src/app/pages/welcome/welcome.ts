@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { I18nService, type AppLanguage } from '../../services/i18n.service';
 import { AuthService } from '../../services/auth.service';
@@ -33,6 +33,11 @@ export class Welcome implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+
+  readonly studentLoggedIn = signal(false);
+  readonly studentDisplayName = signal('');
+  readonly parentLoggedIn = signal(false);
+  readonly parentEmail = signal('');
 
   readonly visualGuideItems: VisualGuideItem[] = [
     {
@@ -134,7 +139,40 @@ export class Welcome implements OnInit {
   private async redirectIfLoggedIn(): Promise<void> {
     const user = await this.authService.handleRedirectLogin();
     if (user) {
-      await this.router.navigate(['/parent/dashboard']);
+      this.parentLoggedIn.set(true);
+      this.parentEmail.set(user.email ?? 'Parent');
+      this.studentLoggedIn.set(false);
+      this.studentDisplayName.set('');
+      return;
     }
+
+    this.parentLoggedIn.set(false);
+    this.parentEmail.set('');
+
+    const studentId = this.authService.getStoredStudentId();
+    if (!studentId) {
+      this.studentLoggedIn.set(false);
+      this.studentDisplayName.set('');
+      return;
+    }
+
+    this.studentLoggedIn.set(true);
+    const student = await this.authService.getStudentProfile(studentId);
+    this.studentDisplayName.set(student?.name ?? 'Student');
+  }
+
+  async returnToStudentHome(): Promise<void> {
+    await this.router.navigate(['/student/home']);
+  }
+
+  async returnToParentDashboard(): Promise<void> {
+    await this.router.navigate(['/parent/dashboard']);
+  }
+
+  async logoutStudent(): Promise<void> {
+    this.authService.logoutStudent();
+    this.studentLoggedIn.set(false);
+    this.studentDisplayName.set('');
+    await this.router.navigate(['/login/student']);
   }
 }

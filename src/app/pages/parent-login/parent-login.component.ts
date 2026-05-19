@@ -18,34 +18,42 @@ export class ParentLoginComponent implements OnInit {
   readonly errorMessage = signal('');
 
   ngOnInit(): void {
-    void this.handleRedirectLogin();
+    console.log('[ParentLogin] Component initialized');
+
+    // Listen for auth state changes AND trigger redirect
+    this.authService.onAuthStateChanged(async (user) => {
+      console.log('[ParentLogin] Auth state changed:', user?.email ?? 'no user');
+      if (user) {
+        console.log('[ParentLogin] User authenticated, navigating to dashboard');
+        try {
+          await this.router.navigate(['/parent/dashboard']);
+          console.log('[ParentLogin] Navigation succeeded');
+        } catch (err) {
+          console.error('[ParentLogin] Navigation failed:', err);
+        }
+      }
+    });
+
+    // Check for redirect result immediately
+    console.log('[ParentLogin] Calling handleRedirectLogin...');
+    void this.authService.handleRedirectLogin().then((user) => {
+      console.log('[ParentLogin] handleRedirectLogin resolved with user:', user?.email ?? 'no user');
+    });
   }
+
 
   async loginWithGoogle(): Promise<void> {
+    console.log('[ParentLogin] Login with Google clicked');
     this.loading.set(true);
     this.errorMessage.set('');
 
     try {
+      console.log('[ParentLogin] Calling startGoogleRedirectLogin...');
       await this.authService.startGoogleRedirectLogin();
-    } catch {
+      console.log('[ParentLogin] Redirecting to Google (if you see this, something is wrong)');
+    } catch (error) {
+      console.error('[ParentLogin] Login error:', error);
       this.errorMessage.set('Unable to login with Google. Please try again.');
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  private async handleRedirectLogin(): Promise<void> {
-    this.loading.set(true);
-    this.errorMessage.set('');
-
-    try {
-      const user = await this.authService.handleRedirectLogin();
-      if (user) {
-        await this.router.navigate(['/parent/dashboard']);
-      }
-    } catch {
-      this.errorMessage.set('Unable to complete Google login. Please try again.');
-    } finally {
       this.loading.set(false);
     }
   }

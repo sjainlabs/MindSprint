@@ -9,9 +9,15 @@
     </div>
 
     @if (loading()) {
-      <p class="muted">Loading parent profile...</p>
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading parent profile...</p>
+      </div>
     } @else if (errorMessage()) {
       <p class="error-text">{{ errorMessage() }}</p>
+      <button type="button" class="btn btn-primary" (click)="loadDashboard()" style="margin-top: 1rem;">
+        Retry
+      </button>
     } @else {
       @if (profile(); as parent) {
         <div class="profile-card">

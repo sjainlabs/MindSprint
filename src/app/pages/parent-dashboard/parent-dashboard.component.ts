@@ -32,30 +32,78 @@ export class ParentDashboardComponent implements OnInit {
   readonly accessCodeSuccessMessage = signal('');
 
   ngOnInit(): void {
+    console.log('[ParentDashboard] Component initialized');
     void this.loadDashboard();
   }
 
   async loadDashboard(): Promise<void> {
+    console.log('[ParentDashboard] Loading dashboard...');
     this.loading.set(true);
     this.errorMessage.set('');
 
     try {
+      console.log('[ParentDashboard] Current user:', this.authService.getCurrentUser()?.email);
+
+      // Wait briefly for network to be ready
+      console.log('[ParentDashboard] Ensuring network is ready...');
+      await this.waitForNetworkReady();
+
       const profile = await this.authService.getParentProfile();
+      console.log('[ParentDashboard] Parent profile result:', profile?.email ?? 'null');
+
       if (!profile) {
-        throw new Error('Parent profile not found.');
+        console.error('[ParentDashboard] Parent profile is null');
+        const errorMsg = 'Unable to load profile. Please check your internet connection and try again.';
+        this.errorMessage.set(errorMsg);
+        this.loading.set(false);
+        return;
       }
 
       this.profile.set(profile);
-      this.students.set(await this.authService.getStudentsForParent(profile.id));
-    } catch {
-      this.errorMessage.set('Unable to load parent dashboard.');
+      console.log('[ParentDashboard] Profile set, loading students...');
+      const students = await this.authService.getStudentsForParent(profile.id);
+      console.log('[ParentDashboard] Students loaded:', students.length);
+      this.students.set(students);
+      console.log('[ParentDashboard] Dashboard loaded successfully');
+    } catch (error) {
+      console.error('[ParentDashboard] Error loading dashboard:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unable to load parent dashboard.';
+
+      // Check if it's an offline error
+      if (errorMsg.includes('offline')) {
+        this.errorMessage.set('You appear to be offline. Please check your internet connection.');
+      } else {
+        this.errorMessage.set(errorMsg);
+      }
     } finally {
       this.loading.set(false);
     }
   }
 
+  private async waitForNetworkReady(): Promise<void> {
+    // Check if browser is online
+    if (!navigator.onLine) {
+      console.log('[ParentDashboard] Browser is offline, waiting for connection...');
+      await new Promise<void>(resolve => {
+        const handler = () => {
+          console.log('[ParentDashboard] Browser came online');
+          window.removeEventListener('online', handler);
+          resolve();
+        };
+        window.addEventListener('online', handler);
+        // Timeout after 5 seconds
+        setTimeout(resolve, 5000);
+      });
+    }
+
+    // Small delay to ensure Firestore is ready
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
   async addStudent(): Promise<void> {
+    console.log('[ParentDashboard] Add student clicked');
     if (!this.newStudentName().trim() || !this.newStudentGrade().trim()) {
+      console.log('[ParentDashboard] Invalid input - name or grade missing');
       this.errorMessage.set('Please enter student name and grade.');
       return;
     }
@@ -64,16 +112,19 @@ export class ParentDashboardComponent implements OnInit {
     this.errorMessage.set('');
 
     try {
+      console.log('[ParentDashboard] Creating student:', this.newStudentName(), this.newStudentGrade());
       const student = await this.authService.addStudentForParent({
         name: this.newStudentName(),
         grade: this.newStudentGrade(),
         avatar: this.newStudentAvatar(),
       });
+      console.log('[ParentDashboard] Student created:', student.name, 'Code:', student.loginCode);
       this.students.update((list) => [...list, student]);
       this.newStudentName.set('');
       this.newStudentGrade.set('');
       this.newStudentAvatar.set('🧠');
-    } catch {
+    } catch (error) {
+      console.error('[ParentDashboard] Error adding student:', error);
       this.errorMessage.set('Unable to add student. Please try again.');
     } finally {
       this.savingStudent.set(false);
