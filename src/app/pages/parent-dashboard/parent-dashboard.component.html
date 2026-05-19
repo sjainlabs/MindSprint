@@ -67,6 +67,34 @@
         </div>
       </div>
 
+      <div class="student-access-card">
+        <h2>Unlock Student Materials</h2>
+        <p class="muted">Enter a student access code to unlock available materials.</p>
+        <div class="access-code-row">
+          <input
+            type="text"
+            maxlength="20"
+            placeholder="Student access code"
+            [ngModel]="accessCode()"
+            (ngModelChange)="accessCode.set($event)"
+          />
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="validatingAccessCode()"
+            (click)="unlockStudentMaterials()"
+          >
+            {{ validatingAccessCode() ? 'Unlocking...' : 'Unlock Materials' }}
+          </button>
+        </div>
+        @if (accessCodeSuccessMessage()) {
+          <p class="success-text">{{ accessCodeSuccessMessage() }}</p>
+        }
+        @if (accessCodeErrorMessage()) {
+          <p class="error-text">{{ accessCodeErrorMessage() }}</p>
+        }
+      </div>
+
       <a routerLink="/login" class="back-link">Back to login options</a>
     }
   </div>

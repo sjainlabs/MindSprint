@@ -13,6 +13,7 @@ import { TopicBrowserComponent } from './pages/topic-browser/topic-browser';
 import { MapPrepComponent } from './pages/map-prep/map-prep';
 import { StudentProfileComponent } from './pages/student-profile/student-profile';
 import { parentAuthGuard } from './guards/parent-auth.guard';
+import { parentMaterialsGuard } from './guards/parent-materials.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 
 export const routes: Routes = [
@@ -37,6 +38,12 @@ export const routes: Routes = [
     canActivate: [parentAuthGuard],
     loadComponent: () =>
       import('./pages/parent-dashboard/parent-dashboard.component').then((module) => module.ParentDashboardComponent),
+  },
+  {
+    path: 'parent/materials',
+    canActivate: [parentAuthGuard, parentMaterialsGuard],
+    loadComponent: () =>
+      import('./pages/parent-materials/parent-materials.component').then((module) => module.ParentMaterialsComponent),
   },
   {
     path: 'student/home',

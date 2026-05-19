@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import {
   User,
+  getRedirectResult,
   onAuthStateChanged as firebaseOnAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
 } from 'firebase/auth';
 import {
@@ -47,11 +48,24 @@ export class AuthService {
   private readonly studentStorageKey = 'studentId';
   private readonly minStudentCode = 100000;
   private readonly maxStudentCode = 999999;
+  private readonly restoredSessionWaitMs = 2000;
+  private redirectHandled = false;
+  private sessionRestorePromise: Promise<User | null> | null = null;
 
-  async loginWithGoogle(): Promise<User> {
-    const result = await signInWithPopup(auth, googleProvider);
-    await this.ensureParentProfile(result.user);
-    return result.user;
+  async loginWithGoogle(): Promise<void> {
+    await signInWithRedirect(auth, googleProvider);
+  }
+
+  async handleRedirectLogin(): Promise<User | null> {
+    if (this.sessionRestorePromise) {
+      return this.sessionRestorePromise;
+    }
+
+    this.sessionRestorePromise = this.restoreSession().finally(() => {
+      this.sessionRestorePromise = null;
+    });
+
+    return this.sessionRestorePromise;
   }
 
   async logout(): Promise<void> {
@@ -298,5 +312,58 @@ export class AuthService {
       chunks.push(items.slice(index, index + size));
     }
     return chunks;
+  }
+
+  private async restoreSession(): Promise<User | null> {
+    if (!this.redirectHandled) {
+      this.redirectHandled = true;
+      const redirectResult = await getRedirectResult(auth);
+      const redirectUser = redirectResult?.user ?? null;
+      if (redirectUser) {
+        await this.ensureParentProfile(redirectUser);
+        return redirectUser;
+      }
+    }
+
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await this.ensureParentProfile(currentUser);
+      return currentUser;
+    }
+
+    const restoredUser = await this.waitForRestoredUser();
+    if (restoredUser) {
+      await this.ensureParentProfile(restoredUser);
+    }
+    return restoredUser;
+  }
+
+  private waitForRestoredUser(): Promise<User | null> {
+    return new Promise<User | null>((resolve) => {
+      let settled = false;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      let unsubscribe: () => void = () => {};
+      const finalize = (user: User | null) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        unsubscribe();
+        resolve(user);
+      };
+
+      unsubscribe = firebaseOnAuthStateChanged(auth, (user) => {
+        if (user) {
+          finalize(user);
+        }
+      });
+
+      timeoutId = setTimeout(() => {
+        finalize(auth.currentUser);
+      }, this.restoredSessionWaitMs);
+    });
   }
 }

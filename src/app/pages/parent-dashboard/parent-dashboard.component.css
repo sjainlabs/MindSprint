@@ -30,7 +30,8 @@ h1 {
 
 .profile-card,
 .student-add-card,
-.student-list-card {
+.student-list-card,
+.student-access-card {
   background: #fff;
   border-radius: 1rem;
   padding: 1rem;
@@ -75,6 +76,13 @@ input {
   gap: 0.6rem;
 }
 
+.access-code-row {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.6rem;
+}
+
 .student-row {
   border: 1px solid #dbeafe;
   border-radius: 0.9rem;
@@ -114,6 +122,11 @@ input {
   color: #dc2626;
 }
 
+.success-text {
+  margin-top: 0.6rem;
+  color: #16a34a;
+}
+
 .back-link {
   color: #1d4ed8;
   text-decoration: none;
@@ -121,6 +134,10 @@ input {
 
 @media (max-width: 900px) {
   .student-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .access-code-row {
     grid-template-columns: 1fr;
   }
 }
