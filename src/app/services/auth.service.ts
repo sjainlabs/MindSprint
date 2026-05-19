@@ -10,6 +10,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  documentId,
   getDoc,
   getDocs,
   limit,
@@ -126,8 +127,7 @@ export class AuthService {
       return [];
     }
 
-    const studentsByIds = await Promise.all(parentProfile.students.map((id) => this.getStudentProfile(id)));
-    const mapped = studentsByIds.filter((student): student is StudentProfile => !!student);
+    const mapped = await this.getStudentsByIds(parentProfile.students);
     if (parentProfile.students.length > 0 && mapped.length === parentProfile.students.length) {
       return mapped;
     }
@@ -235,12 +235,51 @@ export class AuthService {
   }
 
   private generateLoginCode(): string {
-    if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
-      const randomArray = new Uint32Array(1);
-      globalThis.crypto.getRandomValues(randomArray);
-      return (100000 + (randomArray[0] % 900000)).toString();
+    if (typeof globalThis === 'undefined' || !globalThis.crypto?.getRandomValues) {
+      throw new Error('Secure random generator is not available for login code generation.');
     }
 
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    const randomArray = new Uint32Array(1);
+    const codeSpace = 900000;
+    const maxUnbiased = Math.floor(0x100000000 / codeSpace) * codeSpace;
+
+    let randomValue = 0;
+    do {
+      globalThis.crypto.getRandomValues(randomArray);
+      randomValue = randomArray[0];
+    } while (randomValue >= maxUnbiased);
+
+    return String(100000 + (randomValue % codeSpace));
+  }
+
+  private async getStudentsByIds(studentIds: string[]): Promise<StudentProfile[]> {
+    if (studentIds.length === 0) {
+      return [];
+    }
+
+    const studentsRef = collection(db, 'students');
+    const chunks = this.chunk(studentIds, 30);
+    const fetched = new Map<string, StudentProfile>();
+
+    for (const idsChunk of chunks) {
+      const snapshot = await getDocs(query(studentsRef, where(documentId(), 'in', idsChunk)));
+      for (const studentDoc of snapshot.docs) {
+        const student = this.mapStudent(studentDoc.id, studentDoc.data());
+        fetched.set(student.id, student);
+      }
+    }
+
+    return studentIds.flatMap((studentId) => {
+      const student = fetched.get(studentId);
+      return student ? [student] : [];
+    });
+  }
+
+  private chunk<T>(items: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let index = 0; index < items.length; index += size) {
+      chunks.push(items.slice(index, index + size));
+    }
+    return chunks;
   }
 }
