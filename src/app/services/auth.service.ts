@@ -45,6 +45,8 @@ export interface StudentProfile {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly studentStorageKey = 'studentId';
+  private readonly minStudentCode = 100000;
+  private readonly maxStudentCode = 999999;
 
   async loginWithGoogle(): Promise<User> {
     const result = await signInWithPopup(auth, googleProvider);
@@ -240,7 +242,7 @@ export class AuthService {
     }
 
     const randomArray = new Uint32Array(1);
-    const codeSpace = 900000;
+    const codeSpace = this.maxStudentCode - this.minStudentCode + 1;
     const maxUnbiased = Math.floor(0x100000000 / codeSpace) * codeSpace;
 
     let randomValue = 0;
@@ -249,7 +251,7 @@ export class AuthService {
       randomValue = randomArray[0];
     } while (randomValue >= maxUnbiased);
 
-    return String(100000 + (randomValue % codeSpace));
+    return String(this.minStudentCode + (randomValue % codeSpace));
   }
 
   private async getStudentsByIds(studentIds: string[]): Promise<StudentProfile[]> {
