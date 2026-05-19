@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 import { ParentAccessService } from '../services/parent-access.service';
 import { parentMaterialsGuard } from './parent-materials.guard';
 
@@ -17,17 +18,21 @@ describe('parentMaterialsGuard', () => {
     });
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('allows navigation with validated access', () => {
-    spyOn(parentAccessServiceMock, 'hasValidatedAccess').and.returnValue(true);
+    vi.spyOn(parentAccessServiceMock, 'hasValidatedAccess').mockReturnValue(true);
 
     const result = TestBed.runInInjectionContext(() => parentMaterialsGuard({} as never, {} as never));
 
-    expect(result).toBeTrue();
+    expect(result).toBe(true);
   });
 
   it('redirects to dashboard without validated access', () => {
     const router = TestBed.inject(Router);
-    spyOn(parentAccessServiceMock, 'hasValidatedAccess').and.returnValue(false);
+    vi.spyOn(parentAccessServiceMock, 'hasValidatedAccess').mockReturnValue(false);
 
     const result = TestBed.runInInjectionContext(() => parentMaterialsGuard({} as never, {} as never));
 
