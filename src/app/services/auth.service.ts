@@ -154,12 +154,13 @@ export class AuthService {
       throw new Error('Parent is not logged in.');
     }
 
+    const loginCode = await this.generateUniqueLoginCode();
     const studentPayload = {
       parentId: parent.uid,
       name: payload.name.trim(),
       grade: payload.grade.trim(),
       avatar: payload.avatar?.trim() || '🧠',
-      loginCode: this.generateLoginCode(),
+      loginCode,
       masteryMap: {},
       createdAt: serverTimestamp(),
     };
@@ -252,6 +253,20 @@ export class AuthService {
     } while (randomValue >= maxUnbiased);
 
     return String(this.minStudentCode + (randomValue % codeSpace));
+  }
+
+  private async generateUniqueLoginCode(maxAttempts = 10): Promise<string> {
+    const studentsRef = collection(db, 'students');
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const candidate = this.generateLoginCode();
+      const snapshot = await getDocs(query(studentsRef, where('loginCode', '==', candidate), limit(1)));
+      if (snapshot.empty) {
+        return candidate;
+      }
+    }
+
+    throw new Error('Unable to generate a unique login code. Please try again.');
   }
 
   private async getStudentsByIds(studentIds: string[]): Promise<StudentProfile[]> {
