@@ -1,0 +1,26 @@
+<section class="auth-shell">
+  <div class="auth-card">
+    <a routerLink="/login" class="back-link">← Back</a>
+    <h1>Student Login</h1>
+    <p>Enter your 6-digit login code.</p>
+
+    <label class="input-label" for="studentCode">Login Code</label>
+    <input
+      id="studentCode"
+      class="code-input"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="123456"
+      [ngModel]="code()"
+      (ngModelChange)="code.set($event)"
+    />
+
+    <button type="button" class="login-btn" [disabled]="loading()" (click)="login()">
+      {{ loading() ? 'Logging in...' : 'Login' }}
+    </button>
+
+    @if (errorMessage()) {
+      <p class="error-text">{{ errorMessage() }}</p>
+    }
+  </div>
+</section>
