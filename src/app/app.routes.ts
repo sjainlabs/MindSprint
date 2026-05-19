@@ -12,10 +12,37 @@ import { OnboardingComponent } from './pages/onboarding/onboarding';
 import { TopicBrowserComponent } from './pages/topic-browser/topic-browser';
 import { MapPrepComponent } from './pages/map-prep/map-prep';
 import { StudentProfileComponent } from './pages/student-profile/student-profile';
+import { parentAuthGuard } from './guards/parent-auth.guard';
+import { studentAuthGuard } from './guards/student-auth.guard';
 
 export const routes: Routes = [
   { path: '', component: Welcome },
   { path: 'welcome', redirectTo: '/', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./pages/login-selection/login-selection.component').then((module) => module.LoginSelectionComponent),
+  },
+  {
+    path: 'login/parent',
+    loadComponent: () => import('./pages/parent-login/parent-login.component').then((module) => module.ParentLoginComponent),
+  },
+  {
+    path: 'login/student',
+    loadComponent: () =>
+      import('./pages/student-login/student-login.component').then((module) => module.StudentLoginComponent),
+  },
+  {
+    path: 'parent/dashboard',
+    canActivate: [parentAuthGuard],
+    loadComponent: () =>
+      import('./pages/parent-dashboard/parent-dashboard.component').then((module) => module.ParentDashboardComponent),
+  },
+  {
+    path: 'student/home',
+    canActivate: [studentAuthGuard],
+    loadComponent: () => import('./pages/student-home/student-home.component').then((module) => module.StudentHomeComponent),
+  },
   { path: 'assessment/math', component: AssessmentMath },
   { path: 'assessment/english', component: AssessmentEnglish },
   { path: 'assessment/science', component: AssessmentScience },

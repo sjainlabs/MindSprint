@@ -1,0 +1,73 @@
+<section class="dashboard-shell">
+  <div class="dashboard-card">
+    <div class="head-row">
+      <div>
+        <h1>Parent Dashboard</h1>
+        <p class="subtitle">Manage your learners and monitor access.</p>
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
+    </div>
+
+    @if (loading()) {
+      <p class="muted">Loading parent profile...</p>
+    } @else if (errorMessage()) {
+      <p class="error-text">{{ errorMessage() }}</p>
+    } @else {
+      @if (profile(); as parent) {
+        <div class="profile-card">
+          <p><strong>Email:</strong> {{ parent.email || 'Not available' }}</p>
+          <p><strong>Subscription:</strong> {{ parent.subscriptionStatus }}</p>
+        </div>
+      }
+
+      <div class="student-add-card">
+        <h2>Add Student</h2>
+        <div class="student-form-grid">
+          <input
+            type="text"
+            placeholder="Student name"
+            [ngModel]="newStudentName()"
+            (ngModelChange)="newStudentName.set($event)"
+          />
+          <input
+            type="text"
+            placeholder="Grade"
+            [ngModel]="newStudentGrade()"
+            (ngModelChange)="newStudentGrade.set($event)"
+          />
+          <input
+            type="text"
+            maxlength="2"
+            placeholder="Avatar"
+            [ngModel]="newStudentAvatar()"
+            (ngModelChange)="newStudentAvatar.set($event)"
+          />
+          <button type="button" class="btn btn-primary" [disabled]="savingStudent()" (click)="addStudent()">
+            {{ savingStudent() ? 'Adding...' : 'Add Student' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="student-list-card">
+        <h2>Students</h2>
+        @if (students().length === 0) {
+          <p class="muted">No students added yet.</p>
+        }
+        <div class="student-list">
+          @for (student of students(); track student.id) {
+            <button type="button" class="student-row" (click)="viewStudent(student.id)">
+              <span class="avatar">{{ student.avatar || '🧠' }}</span>
+              <span class="student-meta">
+                <strong>{{ student.name }}</strong>
+                <small>Grade {{ student.grade }} · Code {{ student.loginCode }}</small>
+              </span>
+              <span class="open-arrow">→</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <a routerLink="/login" class="back-link">Back to login options</a>
+    }
+  </div>
+</section>

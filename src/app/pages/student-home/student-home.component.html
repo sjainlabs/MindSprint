@@ -1,0 +1,42 @@
+<section class="student-shell">
+  <div class="student-card">
+    <div class="head-row">
+      <h1>Student Home</h1>
+      <button type="button" class="logout-btn" (click)="logout()">
+        {{ parentView() ? 'Back to Dashboard' : 'Logout' }}
+      </button>
+    </div>
+
+    @if (loading()) {
+      <p class="muted">Loading student profile...</p>
+    } @else if (errorMessage()) {
+      <p class="error-text">{{ errorMessage() }}</p>
+    } @else if (student(); as currentStudent) {
+      <div class="hero-card">
+        <span class="avatar">{{ currentStudent.avatar || '🧠' }}</span>
+        <div>
+          <h2>{{ currentStudent.name }}</h2>
+          <p>Grade {{ currentStudent.grade }}</p>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3>Mastery Summary</h3>
+        <p class="muted">Placeholder summary based on current mastery map.</p>
+        @if (!hasMasteryEntries(currentStudent)) {
+          <p>No mastery entries yet. Start Learning to build progress.</p>
+        } @else {
+          <ul>
+            @for (entry of currentStudent.masteryMap | keyvalue; track entry.key) {
+              <li>{{ entry.key }}: {{ entry.value }}%</li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="action-row">
+        <a routerLink="/topics" class="start-btn">Start Learning</a>
+      </div>
+    }
+  </div>
+</section>

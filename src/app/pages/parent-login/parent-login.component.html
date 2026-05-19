@@ -1,0 +1,15 @@
+<section class="auth-shell">
+  <div class="auth-card">
+    <a routerLink="/login" class="back-link">← Back</a>
+    <h1>Parent Login</h1>
+    <p>Use your Google account to access your dashboard.</p>
+
+    <button type="button" class="google-btn" [disabled]="loading()" (click)="loginWithGoogle()">
+      {{ loading() ? 'Signing in...' : 'Login with Google' }}
+    </button>
+
+    @if (errorMessage()) {
+      <p class="error-text">{{ errorMessage() }}</p>
+    }
+  </div>
+</section>
