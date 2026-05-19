@@ -1,0 +1,41 @@
+<section class="materials-shell">
+  <div class="materials-card">
+    <div class="materials-head">
+      <div>
+        <h1>Unlocked Materials</h1>
+        @if (validatedStudent(); as student) {
+          <p class="subtitle">
+            {{ student.avatar }} {{ student.name }} @if (student.grade) {
+              · Grade {{ student.grade }}
+            }
+          </p>
+        }
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="backToDashboard()">Back to Dashboard</button>
+    </div>
+
+    @if (unlockedMaterials().length === 0) {
+      <p class="muted">No materials unlocked yet for this student.</p>
+    } @else {
+      <div class="materials-list">
+        @for (material of unlockedMaterials(); track material.id) {
+          <article class="material-item">
+            <h2>{{ material.title }}</h2>
+            @if (material.description) {
+              <p>{{ material.description }}</p>
+            }
+            <div class="meta-row">
+              <span class="type-pill">{{ material.type }}</span>
+              @if (material.url) {
+                <a class="material-link" [href]="material.url" target="_blank" rel="noopener noreferrer">
+                  Open
+                </a>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+  </div>
+</section>

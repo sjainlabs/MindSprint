@@ -9,9 +9,15 @@
     </div>
 
     @if (loading()) {
-      <p class="muted">Loading parent profile...</p>
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading parent profile...</p>
+      </div>
     } @else if (errorMessage()) {
       <p class="error-text">{{ errorMessage() }}</p>
+      <button type="button" class="btn btn-primary" (click)="loadDashboard()" style="margin-top: 1rem;">
+        Retry
+      </button>
     } @else {
       @if (profile(); as parent) {
         <div class="profile-card">
@@ -65,6 +71,33 @@
             </button>
           }
         </div>
+      </div>
+
+      <div class="student-access-card">
+        <h2>Unlock Student Materials</h2>
+        <p class="muted">Enter a student access code to unlock available materials.</p>
+        <div class="access-code-row">
+          <input
+            type="text"
+            placeholder="Student access code"
+            [ngModel]="accessCode()"
+            (ngModelChange)="accessCode.set($event)"
+          />
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="validatingAccessCode()"
+            (click)="unlockStudentMaterials()"
+          >
+            {{ validatingAccessCode() ? 'Unlocking...' : 'Unlock Materials' }}
+          </button>
+        </div>
+        @if (accessCodeSuccessMessage()) {
+          <p class="success-text">{{ accessCodeSuccessMessage() }}</p>
+        }
+        @if (accessCodeErrorMessage()) {
+          <p class="error-text">{{ accessCodeErrorMessage() }}</p>
+        }
       </div>
 
       <a routerLink="/login" class="back-link">Back to login options</a>

@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - feature/**
+      - copilot/**
 
 permissions:
   contents: read
@@ -65,7 +67,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: github-pages
+      name: ${{ github.ref_name == 'main' && 'github-pages' || 'github-pages-preview' }}
       url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       pages: write
