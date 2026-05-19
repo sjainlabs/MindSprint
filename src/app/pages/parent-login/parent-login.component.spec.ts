@@ -9,7 +9,7 @@ describe('ParentLoginComponent', () => {
   let fixture: ComponentFixture<ParentLoginComponent>;
 
   const authServiceMock = {
-    loginWithGoogle: async () => undefined,
+    startGoogleRedirectLogin: async () => undefined,
     handleRedirectLogin: async () => null,
   };
 
@@ -59,7 +59,7 @@ describe('ParentLoginComponent', () => {
 
   it('starts google redirect login when button is clicked', async () => {
     vi.spyOn(authServiceMock, 'handleRedirectLogin').mockResolvedValue(null);
-    const loginSpy = vi.spyOn(authServiceMock, 'loginWithGoogle').mockResolvedValue(undefined);
+    const loginSpy = vi.spyOn(authServiceMock, 'startGoogleRedirectLogin').mockResolvedValue(undefined);
 
     fixture = TestBed.createComponent(ParentLoginComponent);
     fixture.detectChanges();

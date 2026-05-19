@@ -61,10 +61,10 @@ export class ParentAccessService {
     }
 
     const student: ParentAccessStudentProfile = {
-      id: String(response.student.id),
-      name: String(response.student.name ?? 'Student'),
-      grade: String(response.student.grade ?? ''),
-      avatar: String(response.student.avatar ?? '🧠'),
+      id: response.student.id,
+      name: response.student.name ?? 'Student',
+      grade: response.student.grade ?? '',
+      avatar: response.student.avatar ?? '🧠',
     };
 
     this.validatedStudentState.set(student);
@@ -85,11 +85,11 @@ export class ParentAccessService {
     );
 
     const materials = (response.materials ?? []).map((material, index) => ({
-      id: String(material.id ?? `material-${index + 1}`),
-      title: String(material.title ?? 'Untitled Material'),
-      description: String(material.description ?? ''),
-      type: String(material.type ?? 'material'),
-      url: String(material.url ?? ''),
+      id: material.id ?? this.createFallbackMaterialId(material, index),
+      title: material.title ?? 'Untitled Material',
+      description: material.description ?? '',
+      type: material.type ?? 'material',
+      url: material.url ?? '',
     }));
 
     this.unlockedMaterialsState.set(materials);
@@ -140,10 +140,10 @@ export class ParentAccessService {
         return null;
       }
       return {
-        id: String(parsed.id),
-        name: String(parsed.name ?? 'Student'),
-        grade: String(parsed.grade ?? ''),
-        avatar: String(parsed.avatar ?? '🧠'),
+        id: parsed.id,
+        name: parsed.name ?? 'Student',
+        grade: parsed.grade ?? '',
+        avatar: parsed.avatar ?? '🧠',
       };
     } catch {
       return null;
@@ -162,11 +162,11 @@ export class ParentAccessService {
     try {
       const parsed = JSON.parse(raw) as Array<Partial<ParentUnlockedMaterial>>;
       return parsed.map((material, index) => ({
-        id: String(material.id ?? `material-${index + 1}`),
-        title: String(material.title ?? 'Untitled Material'),
-        description: String(material.description ?? ''),
-        type: String(material.type ?? 'material'),
-        url: String(material.url ?? ''),
+        id: material.id ?? this.createFallbackMaterialId(material, index),
+        title: material.title ?? 'Untitled Material',
+        description: material.description ?? '',
+        type: material.type ?? 'material',
+        url: material.url ?? '',
       }));
     } catch {
       return [];
@@ -175,5 +175,14 @@ export class ParentAccessService {
 
   private hasStorage(): boolean {
     return typeof window !== 'undefined' && !!window.sessionStorage;
+  }
+
+  private createFallbackMaterialId(material: Partial<ParentUnlockedMaterial>, index: number): string {
+    const seed = `${material.title ?? 'material'}|${material.type ?? 'material'}|${material.url ?? ''}`;
+    const normalized = seed.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (normalized) {
+      return `material-${normalized}`;
+    }
+    return `material-${index + 1}`;
   }
 }

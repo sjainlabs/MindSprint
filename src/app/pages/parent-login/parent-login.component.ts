@@ -26,7 +26,7 @@ export class ParentLoginComponent implements OnInit {
     this.errorMessage.set('');
 
     try {
-      await this.authService.loginWithGoogle();
+      await this.authService.startGoogleRedirectLogin();
     } catch {
       this.errorMessage.set('Unable to login with Google. Please try again.');
     } finally {

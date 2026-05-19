@@ -48,11 +48,11 @@ export class AuthService {
   private readonly studentStorageKey = 'studentId';
   private readonly minStudentCode = 100000;
   private readonly maxStudentCode = 999999;
-  private readonly restoredSessionWaitMs = 2000;
+  private readonly authStateRestorationTimeoutMs = 2000;
   private redirectHandled = false;
   private sessionRestorePromise: Promise<User | null> | null = null;
 
-  async loginWithGoogle(): Promise<void> {
+  async startGoogleRedirectLogin(): Promise<void> {
     await signInWithRedirect(auth, googleProvider);
   }
 
@@ -363,7 +363,7 @@ export class AuthService {
 
       timeoutId = setTimeout(() => {
         finalize(auth.currentUser);
-      }, this.restoredSessionWaitMs);
+      }, this.authStateRestorationTimeoutMs);
     });
   }
 }

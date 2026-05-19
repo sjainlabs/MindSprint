@@ -92,11 +92,6 @@ h1 {
   color: #64748b;
 }
 
-.back-link {
-  color: #1d4ed8;
-  text-decoration: none;
-}
-
 @media (max-width: 700px) {
   .materials-head {
     flex-direction: column;

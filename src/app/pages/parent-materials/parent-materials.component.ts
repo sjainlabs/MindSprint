@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ParentAccessService } from '../../services/parent-access.service';
 
 @Component({
   selector: 'app-parent-materials',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './parent-materials.component.html',
   styleUrl: './parent-materials.component.css',
 })
