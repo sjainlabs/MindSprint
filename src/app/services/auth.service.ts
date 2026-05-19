@@ -128,13 +128,22 @@ export class AuthService {
 
     const studentsByIds = await Promise.all(parentProfile.students.map((id) => this.getStudentProfile(id)));
     const mapped = studentsByIds.filter((student): student is StudentProfile => !!student);
-    if (mapped.length > 0 || parentProfile.students.length > 0) {
+    if (parentProfile.students.length > 0 && mapped.length === parentProfile.students.length) {
       return mapped;
     }
 
     const studentsRef = collection(db, 'students');
     const snapshot = await getDocs(query(studentsRef, where('parentId', '==', parentProfile.id)));
-    return snapshot.docs.map((studentDoc) => this.mapStudent(studentDoc.id, studentDoc.data()));
+    const queried = snapshot.docs.map((studentDoc) => this.mapStudent(studentDoc.id, studentDoc.data()));
+    if (mapped.length === 0) {
+      return queried;
+    }
+
+    const merged = new Map<string, StudentProfile>(mapped.map((student) => [student.id, student]));
+    for (const student of queried) {
+      merged.set(student.id, student);
+    }
+    return Array.from(merged.values());
   }
 
   async addStudentForParent(payload: { name: string; grade: string; avatar?: string }): Promise<StudentProfile> {
@@ -226,6 +235,12 @@ export class AuthService {
   }
 
   private generateLoginCode(): string {
+    if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+      const randomArray = new Uint32Array(1);
+      globalThis.crypto.getRandomValues(randomArray);
+      return (100000 + (randomArray[0] % 900000)).toString();
+    }
+
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }
