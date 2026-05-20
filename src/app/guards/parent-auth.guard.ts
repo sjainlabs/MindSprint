@@ -8,9 +8,16 @@ export const parentAuthGuard: CanActivateFn = async () => {
 
   console.log('[ParentAuthGuard] Checking parent auth...');
   try {
+    // Check if already logged in first (faster path)
+    if (authService.isParentLoggedIn()) {
+      console.log('[ParentAuthGuard] User already logged in, allowing access');
+      return true;
+    }
+
+    // If not logged in, try to restore from redirect
     const user = await authService.handleRedirectLogin();
     console.log('[ParentAuthGuard] handleRedirectLogin returned:', user?.email ?? 'no user');
-    // If we got a user (from redirect or existing session), allow access
+
     if (user || authService.isParentLoggedIn()) {
       console.log('[ParentAuthGuard] User authenticated, allowing access');
       return true;

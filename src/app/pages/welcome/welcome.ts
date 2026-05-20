@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { I18nService, type AppLanguage } from '../../services/i18n.service';
 import { AuthService } from '../../services/auth.service';
@@ -29,10 +29,11 @@ interface FeatureItem {
   templateUrl: './welcome.html',
   styleUrl: './welcome.css',
 })
-export class Welcome implements OnInit {
+export class Welcome implements OnInit, OnDestroy {
   private readonly i18n = inject(I18nService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private authStateUnsubscribe: (() => void) | null = null;
 
   readonly studentLoggedIn = signal(false);
   readonly studentDisplayName = signal('');
@@ -125,7 +126,20 @@ export class Welcome implements OnInit {
   readonly language = this.i18n.language;
 
   ngOnInit(): void {
-    void this.redirectIfLoggedIn();
+    void this.syncLoggedInState();
+    this.authStateUnsubscribe = this.authService.onAuthStateChanged((user) => {
+      this.parentLoggedIn.set(!!user);
+      this.parentEmail.set(user?.email ?? '');
+      if (user) {
+        this.studentLoggedIn.set(false);
+        this.studentDisplayName.set('');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.authStateUnsubscribe?.();
+    this.authStateUnsubscribe = null;
   }
 
   setLanguage(language: AppLanguage): void {
@@ -136,8 +150,8 @@ export class Welcome implements OnInit {
     return this.i18n.t(key);
   }
 
-  private async redirectIfLoggedIn(): Promise<void> {
-    const user = await this.authService.handleRedirectLogin();
+  private async syncLoggedInState(): Promise<void> {
+    const user = this.authService.getCurrentUser();
     if (user) {
       this.parentLoggedIn.set(true);
       this.parentEmail.set(user.email ?? 'Parent');

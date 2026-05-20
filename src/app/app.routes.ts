@@ -17,8 +17,8 @@ import { parentMaterialsGuard } from './guards/parent-materials.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: Welcome },
-  { path: 'welcome', redirectTo: '/', pathMatch: 'full' },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'welcome', component: Welcome },
   {
     path: 'login',
     loadComponent: () =>

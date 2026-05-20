@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import {
+  AuthError,
   User,
   onAuthStateChanged as firebaseOnAuthStateChanged,
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -21,7 +23,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { auth, db, googleProvider } from '../firebase/firebase.config';
+import { auth, authPersistenceReady, db, googleProvider } from '../firebase/firebase.config';
 
 export interface ParentProfile {
   id: string;
@@ -48,10 +50,13 @@ export class AuthService {
   private readonly studentStorageKey = 'studentId';
   private readonly parentProfilesStorageKey = 'parentProfiles';
   private readonly studentProfilesStorageKey = 'studentProfiles';
+  private readonly parentRedirectPendingStorageKey = 'parent-google-redirect-pending';
+  private readonly parentRedirectPendingMaxAgeMs = 10 * 60 * 1000;
   private readonly minStudentCode = 100000;
   private readonly maxStudentCode = 999999;
 
   private sessionRestorePromise: Promise<User | null> | null = null;
+  private cachedUser: User | null = null;
 
   // -------------------------------------------------------
   // GOOGLE LOGIN (REDIRECT)
@@ -59,58 +64,58 @@ export class AuthService {
 
   async startGoogleRedirectLogin(): Promise<void> {
     console.log('[Auth] Starting Google redirect login...');
+    await authPersistenceReady;
+    this.setParentRedirectPending();
     await signInWithRedirect(auth, googleProvider);
   }
 
+  async loginParentWithGoogle(): Promise<User | null> {
+    await authPersistenceReady;
+
+    try {
+      console.log('[Auth] Trying Google popup sign-in...');
+      const result = await signInWithPopup(auth, googleProvider);
+      if (!result.user) {
+        return null;
+      }
+
+      await this.ensureParentProfile(result.user);
+      this.cachedUser = result.user;
+      this.clearParentRedirectPending();
+      return result.user;
+    } catch (error) {
+      if (!this.isPopupBlockedError(error)) {
+        throw error;
+      }
+
+      console.warn('[Auth] Popup blocked. Falling back to redirect sign-in.');
+      this.setParentRedirectPending();
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+  }
+
   async handleRedirectLogin(): Promise<User | null> {
-    console.log('[Auth] Handling redirect login...');
+    console.log('[Auth] handleRedirectLogin called');
+
+    // If we have a cached user, return it
+    if (this.cachedUser) {
+      console.log('[Auth] Returning cached user:', this.cachedUser.email);
+      return this.cachedUser;
+    }
+
     if (this.sessionRestorePromise) {
-      console.log('[Auth] Using cached session restore promise');
+      console.log('[Auth] Session restore already in progress, waiting for existing promise...');
       return this.sessionRestorePromise;
     }
 
-    this.sessionRestorePromise = (async () => {
-      try {
-        // Wait for Firebase to initialize auth state
-        console.log('[Auth] Waiting for Firebase auth initialization...');
-        await this.waitForFirebaseInit();
-        console.log('[Auth] Firebase auth initialized');
+    this.sessionRestorePromise = this.restoreParentSession();
 
-        // Check if we  are returning from a Google redirect
-        try {
-          console.log('[Auth] Checking redirect result...');
-          const result = await getRedirectResult(auth);
-          if (result?.user) {
-            console.log('[Auth] Redirect result found, user:', result.user.email);
-            await this.ensureParentProfile(result.user);
-            console.log('[Auth] Parent profile ensured');
-            return result.user;
-          }
-          console.log('[Auth] No redirect result');
-        } catch (redirectErr) {
-          console.warn('[Auth] getRedirectResult failed:', redirectErr);
-        }
-
-        // If no redirect result, check if already signed in
-        if (auth.currentUser) {
-          console.log('[Auth] User already signed in:', auth.currentUser.email);
-          console.log('[Auth] Calling ensureParentProfile...');
-          await this.ensureParentProfile(auth.currentUser);
-          console.log('[Auth] ensureParentProfile completed, returning user:', auth.currentUser.email);
-          return auth.currentUser;
-        }
-
-        console.log('[Auth] No user found');
-        return null;
-      } catch (error) {
-        console.error('[Auth] handleRedirectLogin failed:', error);
-        return null;
-      }
-    })().finally(() => {
+    try {
+      return await this.sessionRestorePromise;
+    } finally {
       this.sessionRestorePromise = null;
-    });
-
-    return this.sessionRestorePromise;
+    }
   }
 
 
@@ -119,6 +124,8 @@ export class AuthService {
   // -------------------------------------------------------
 
   async logout(): Promise<void> {
+    this.cachedUser = null;
+    this.clearParentRedirectPending();
     await signOut(auth);
   }
 
@@ -131,11 +138,42 @@ export class AuthService {
   }
 
   onAuthStateChanged(nextOrObserver: (user: User | null) => void): () => void {
-    return firebaseOnAuthStateChanged(auth, nextOrObserver);
+    return firebaseOnAuthStateChanged(auth, (user) => {
+      this.cachedUser = user;
+      if (user) {
+        this.clearParentRedirectPending();
+      }
+      nextOrObserver(user);
+    });
   }
 
   isParentLoggedIn(): boolean {
-    return !!auth.currentUser;
+    return !!(this.cachedUser ?? auth.currentUser);
+  }
+
+  isParentRedirectPending(): boolean {
+    if (!this.hasSessionStorage()) {
+      return false;
+    }
+
+    const raw = window.sessionStorage.getItem(this.parentRedirectPendingStorageKey);
+    if (!raw) {
+      return false;
+    }
+
+    const timestamp = Number(raw);
+    if (!Number.isFinite(timestamp)) {
+      this.clearParentRedirectPending();
+      return false;
+    }
+
+    const isFresh = Date.now() - timestamp <= this.parentRedirectPendingMaxAgeMs;
+    if (!isFresh) {
+      console.log('[Auth] Redirect pending flag expired, clearing stale state');
+      this.clearParentRedirectPending();
+    }
+
+    return isFresh;
   }
 
   isStudentLoggedIn(): boolean {
@@ -212,30 +250,53 @@ export class AuthService {
       return null;
     }
 
-    try {
-      console.log('[Auth] Firestore query for parent:', uid);
-      const parentDoc = await getDoc(doc(db, 'parents', uid));
-      console.log('[Auth] Firestore query for parent:', uid, 'exists:', parentDoc.exists());
-      if (!parentDoc.exists()) {
-        console.warn('[Auth] Parent document does not exist:', uid);
-        return this.getLocalParent(uid);
-      }
+    // Try up to 3 times with backoff if parent not found (in case Firestore is syncing)
+    const maxRetries = 3;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        console.log('[Auth] Firestore query for parent:', uid, 'attempt:', attempt + 1);
+        const parentDoc = await getDoc(doc(db, 'parents', uid));
+        console.log('[Auth] Firestore query for parent:', uid, 'exists:', parentDoc.exists());
 
-      return this.mapParent(parentDoc.id, parentDoc.data());
-    } catch (error) {
-      console.error('[Auth] Error fetching parent profile:', error);
-      const localParent = this.getLocalParent(uid);
-      if (localParent) {
-        console.warn('[Auth] Using local parent profile fallback');
-        return localParent;
+        if (parentDoc.exists()) {
+          return this.mapParent(parentDoc.id, parentDoc.data());
+        }
+
+        // If not found and not last attempt, wait and retry
+        if (attempt < maxRetries - 1) {
+          console.log('[Auth] Parent profile not found, retrying in 500ms...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          continue;
+        }
+
+        // Last attempt, try local fallback
+        console.warn('[Auth] Parent document does not exist after retries:', uid);
+        return this.getLocalParent(uid);
+      } catch (error) {
+        console.error('[Auth] Error fetching parent profile (attempt', attempt + 1 + '):', error);
+
+        // If this is the last attempt, try local fallback
+        if (attempt === maxRetries - 1) {
+          const localParent = this.getLocalParent(uid);
+          if (localParent) {
+            console.warn('[Auth] Using local parent profile fallback');
+            return localParent;
+          }
+
+          // If offline, return null gracefully (will retry on next load)
+          if (error instanceof Error && error.message.includes('offline')) {
+            console.warn('[Auth] Offline - returning null. Will retry when online.');
+            return null;
+          }
+          throw error;
+        }
+
+        // Not last attempt, wait and retry
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-      // If offline, return null gracefully (will retry on next load)
-      if (error instanceof Error && error.message.includes('offline')) {
-        console.warn('[Auth] Offline - returning null. Will retry when online.');
-        return null;
-      }
-      throw error;
     }
+
+    return null;
   }
 
   private async ensureParentProfile(user: User): Promise<void> {
@@ -245,7 +306,7 @@ export class AuthService {
     try {
       console.log('[Auth] Checking if parent profile exists in Firestore...');
       const existing = await getDoc(parentRef);
-      console.log('[Auth] Firestore check completed');
+      console.log('[Auth] Firestore check completed, exists:', existing.exists());
 
       if (existing.exists()) {
         console.log('[Auth] Parent profile already exists');
@@ -261,6 +322,9 @@ export class AuthService {
         students: [],
       });
       console.log('[Auth] Parent profile created successfully');
+
+      // Wait a brief moment for Firestore to sync
+      await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error('[Auth] Error ensuring parent profile:', error);
       // If offline, don't throw - Firebase will sync when online
@@ -570,14 +634,136 @@ export class AuthService {
   }
 
   private async waitForFirebaseInit(): Promise<void> {
+    await authPersistenceReady;
     console.log('[Auth] Setting up Firebase init listener...');
-    await new Promise<void>(resolve => {
+
+    if (typeof auth.authStateReady === 'function') {
+      await auth.authStateReady();
+      console.log('[Auth] authStateReady resolved');
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      let timeoutId: ReturnType<typeof setTimeout>;
+
       const unsub = auth.onAuthStateChanged((user) => {
-        console.log('[Auth] Auth state changed:', user?.email ?? 'no user');
+        console.log('[Auth] Initial auth state received:', user?.email ?? 'no user');
+        clearTimeout(timeoutId);
         unsub();
         resolve();
       });
+
+      // Timeout safety net - resolve after 8 seconds anyway
+      timeoutId = setTimeout(() => {
+        console.log('[Auth] Firebase init timeout reached');
+        unsub();
+        resolve();
+      }, 8000);
     });
+  }
+
+  private async restoreParentSession(): Promise<User | null> {
+    try {
+      console.log('[Auth] Waiting for Firebase auth initialization...');
+      await this.waitForFirebaseInit();
+      console.log('[Auth] Firebase auth initialized');
+
+      if (auth.currentUser) {
+        console.log('[Auth] User already signed in:', auth.currentUser.email);
+        await this.ensureParentProfile(auth.currentUser);
+        this.cachedUser = auth.currentUser;
+        this.clearParentRedirectPending();
+        return auth.currentUser;
+      }
+
+      const redirectWasExpected = this.isParentRedirectPending();
+      if (!redirectWasExpected) {
+        console.log('[Auth] No redirect pending and no current user');
+        return null;
+      }
+
+      // Redirect restore can complete through auth state without a redirect result payload.
+      const restoredUser = await this.waitForSignedInUser(12000);
+      if (restoredUser) {
+        console.log('[Auth] User restored from auth state after redirect:', restoredUser.email);
+        await this.ensureParentProfile(restoredUser);
+        this.cachedUser = restoredUser;
+        this.clearParentRedirectPending();
+        return restoredUser;
+      }
+
+      // Fallback probe for diagnosability if auth state did not produce a user.
+      try {
+        console.log('[Auth] Checking redirect result fallback...');
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          console.log('[Auth] Redirect result found via fallback, user:', result.user.email);
+          await this.ensureParentProfile(result.user);
+          this.cachedUser = result.user;
+          this.clearParentRedirectPending();
+          return result.user;
+        }
+        console.log('[Auth] No redirect result returned in fallback probe');
+      } catch (redirectErr) {
+        console.warn('[Auth] getRedirectResult fallback failed:', redirectErr);
+      }
+
+      console.log('[Auth] No user found after redirect restoration attempt');
+      this.clearParentRedirectPending();
+      return null;
+    } catch (error) {
+      console.error('[Auth] handleRedirectLogin failed:', error);
+      this.clearParentRedirectPending();
+      return null;
+    }
+  }
+
+  private waitForSignedInUser(timeoutMs: number): Promise<User | null> {
+    if (auth.currentUser) {
+      return Promise.resolve(auth.currentUser);
+    }
+
+    return new Promise<User | null>((resolve) => {
+      const timeoutId = setTimeout(() => {
+        unsubscribe();
+        resolve(auth.currentUser);
+      }, timeoutMs);
+
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (!user) {
+          return;
+        }
+
+        clearTimeout(timeoutId);
+        unsubscribe();
+        resolve(user);
+      });
+    });
+  }
+
+  private setParentRedirectPending(): void {
+    if (!this.hasSessionStorage()) {
+      return;
+    }
+
+    window.sessionStorage.setItem(this.parentRedirectPendingStorageKey, String(Date.now()));
+  }
+
+  private clearParentRedirectPending(): void {
+    if (!this.hasSessionStorage()) {
+      return;
+    }
+
+    window.sessionStorage.removeItem(this.parentRedirectPendingStorageKey);
+  }
+
+  private hasSessionStorage(): boolean {
+    return typeof window !== 'undefined' && !!window.sessionStorage;
+  }
+
+  private isPopupBlockedError(error: unknown): boolean {
+    const code = (error as Partial<AuthError> | null)?.code;
+    return code === 'auth/popup-blocked' || code === 'auth/web-storage-unsupported';
   }
 
 
