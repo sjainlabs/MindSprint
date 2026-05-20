@@ -1,5 +1,8 @@
 export const environment = {
   apiUrl: 'https://mindsprint-5a5a0849665d.herokuapp.com/api',
+  googleOAuthClientId:
+    (globalThis as { __MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__?: string })
+      .__MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__ ?? '',
   firebaseConfig: {
     apiKey: 'AIzaSyAOnUZYbQXtHWnS3xMrc9k5K1w8peuAzAg',
     authDomain: 'mindsprint-b2805.firebaseapp.com',
