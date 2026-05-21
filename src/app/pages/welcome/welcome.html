@@ -73,67 +73,67 @@
       </div>
     </div>
 
-    <section class="guide-shell">
-      <div class="guide-head">
-        <h2>{{ t('welcome.visual.title') }}</h2>
-        <p>{{ t('welcome.visual.subtitle') }}</p>
-      </div>
-      <div class="visual-grid">
-        @for (item of visualGuideItems; track item.titleKey) {
-          <article class="visual-card">
-            <div class="visual-card__header">
-              <span class="visual-card__icon">{{ item.icon }}</span>
-              <h3>{{ t(item.titleKey) }}</h3>
-            </div>
-            <p>{{ t(item.messageKey) }}</p>
-            @if (item.illustration === 'diagnostic') {
-              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.ariaKey)">
-                <rect x="8" y="8" width="96" height="64" rx="10"></rect>
-                <line x1="26" y1="28" x2="84" y2="28"></line>
-                <line x1="26" y1="42" x2="74" y2="42"></line>
-                <line x1="26" y1="56" x2="66" y2="56"></line>
-                <circle cx="128" cy="40" r="18"></circle>
-                <line x1="141" y1="53" x2="162" y2="70"></line>
-              </svg>
-            } @else if (item.illustration === 'adaptive') {
-              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.ariaKey)">
-                <rect x="10" y="10" width="72" height="56" rx="8"></rect>
-                <line x1="22" y1="28" x2="70" y2="28"></line>
-                <line x1="22" y1="42" x2="64" y2="42"></line>
-                <path d="M102 58L122 38L136 50L160 22"></path>
-                <polyline points="150,22 160,22 160,32"></polyline>
-              </svg>
-            }
-          </article>
-        }
-      </div>
-    </section>
+<!--    <section class="guide-shell">-->
+<!--      <div class="guide-head">-->
+<!--        <h2>{{ t('welcome.visual.title') }}</h2>-->
+<!--        <p>{{ t('welcome.visual.subtitle') }}</p>-->
+<!--      </div>-->
+<!--      <div class="visual-grid">-->
+<!--        @for (item of visualGuideItems; track item.titleKey) {-->
+<!--          <article class="visual-card">-->
+<!--            <div class="visual-card__header">-->
+<!--              <span class="visual-card__icon">{{ item.icon }}</span>-->
+<!--              <h3>{{ t(item.titleKey) }}</h3>-->
+<!--            </div>-->
+<!--            <p>{{ t(item.messageKey) }}</p>-->
+<!--            @if (item.illustration === 'diagnostic') {-->
+<!--              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.ariaKey)">-->
+<!--                <rect x="8" y="8" width="96" height="64" rx="10"></rect>-->
+<!--                <line x1="26" y1="28" x2="84" y2="28"></line>-->
+<!--                <line x1="26" y1="42" x2="74" y2="42"></line>-->
+<!--                <line x1="26" y1="56" x2="66" y2="56"></line>-->
+<!--                <circle cx="128" cy="40" r="18"></circle>-->
+<!--                <line x1="141" y1="53" x2="162" y2="70"></line>-->
+<!--              </svg>-->
+<!--            } @else if (item.illustration === 'adaptive') {-->
+<!--              <svg class="placeholder-svg" viewBox="0 0 180 80" role="img" [attr.aria-label]="t(item.ariaKey)">-->
+<!--                <rect x="10" y="10" width="72" height="56" rx="8"></rect>-->
+<!--                <line x1="22" y1="28" x2="70" y2="28"></line>-->
+<!--                <line x1="22" y1="42" x2="64" y2="42"></line>-->
+<!--                <path d="M102 58L122 38L136 50L160 22"></path>-->
+<!--                <polyline points="150,22 160,22 160,32"></polyline>-->
+<!--              </svg>-->
+<!--            }-->
+<!--          </article>-->
+<!--        }-->
+<!--      </div>-->
+<!--    </section>-->
 
-    <section class="difference-shell">
-      <div class="guide-head">
-        <h2>{{ t('welcome.different.title') }}</h2>
-        <p>{{ t('welcome.different.subtitle') }}</p>
-      </div>
-      <div class="difference-list">
-        @for (item of differences; track item.titleKey) {
-          <article class="difference-card">
-            <h3><span>{{ item.icon }}</span> {{ t(item.titleKey) }}</h3>
-            <p><strong>{{ t('welcome.different.labelTraditional') }}:</strong> {{ t(item.traditionalKey) }}</p>
-            <p><strong>{{ t('welcome.different.labelMindSprint') }}:</strong> {{ t(item.mindsprintKey) }}</p>
-          </article>
-        }
-      </div>
-      <div class="combined-shell">
-        <h3>{{ t('welcome.different.combine.title') }}</h3>
-        <div class="feature-grid">
-          @for (feature of combinedFeatures; track feature.labelKey) {
-            <p class="feature-chip">
-              <span>{{ feature.icon }}</span>
-              {{ t(feature.labelKey) }}
-            </p>
-          }
-        </div>
-      </div>
-    </section>
+<!--    <section class="difference-shell">-->
+<!--      <div class="guide-head">-->
+<!--        <h2>{{ t('welcome.different.title') }}</h2>-->
+<!--        <p>{{ t('welcome.different.subtitle') }}</p>-->
+<!--      </div>-->
+<!--      <div class="difference-list">-->
+<!--        @for (item of differences; track item.titleKey) {-->
+<!--          <article class="difference-card">-->
+<!--            <h3><span>{{ item.icon }}</span> {{ t(item.titleKey) }}</h3>-->
+<!--            <p><strong>{{ t('welcome.different.labelTraditional') }}:</strong> {{ t(item.traditionalKey) }}</p>-->
+<!--            <p><strong>{{ t('welcome.different.labelMindSprint') }}:</strong> {{ t(item.mindsprintKey) }}</p>-->
+<!--          </article>-->
+<!--        }-->
+<!--      </div>-->
+<!--      <div class="combined-shell">-->
+<!--        <h3>{{ t('welcome.different.combine.title') }}</h3>-->
+<!--        <div class="feature-grid">-->
+<!--          @for (feature of combinedFeatures; track feature.labelKey) {-->
+<!--            <p class="feature-chip">-->
+<!--              <span>{{ feature.icon }}</span>-->
+<!--              {{ t(feature.labelKey) }}-->
+<!--            </p>-->
+<!--          }-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </section>-->
   </div>
 </section>
