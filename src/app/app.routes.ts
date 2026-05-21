@@ -8,16 +8,14 @@ import { DiagnosticStartComponent } from './pages/diagnostic-start/diagnostic-st
 import { DiagnosticTestComponent } from './components/diagnostic-test/diagnostic-test';
 import { WorksheetPageComponent } from './components/worksheet-page/worksheet-page';
 import { GameModeComponent } from './pages/game-mode/game-mode';
-import { OnboardingComponent } from './pages/onboarding/onboarding';
 import { TopicBrowserComponent } from './pages/topic-browser/topic-browser';
 import { MapPrepComponent } from './pages/map-prep/map-prep';
-import { StudentProfileComponent } from './pages/student-profile/student-profile';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { parentMaterialsGuard } from './guards/parent-materials.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '', component: Welcome },
   { path: 'welcome', component: Welcome },
   {
     path: 'login',
@@ -56,7 +54,6 @@ export const routes: Routes = [
   { path: 'results', component: Results },
   { path: 'diagnostic', component: DiagnosticStartComponent },
   { path: 'diagnostic/test', component: DiagnosticTestComponent },
-  { path: 'onboarding', component: OnboardingComponent },
   {
     path: 'guide/kids',
     loadComponent: () =>
@@ -69,7 +66,6 @@ export const routes: Routes = [
   },
   { path: 'topics', component: TopicBrowserComponent },
   { path: 'map-prep', component: MapPrepComponent },
-  { path: 'profile', component: StudentProfileComponent },
   { path: 'worksheet', redirectTo: '/worksheet/Beginner', pathMatch: 'full' },
   { path: 'worksheet/:level', component: WorksheetPageComponent },
   {
@@ -80,4 +76,5 @@ export const routes: Routes = [
       ),
   },
   { path: 'game', component: GameModeComponent },
+  { path: '**', redirectTo: '' },
 ];

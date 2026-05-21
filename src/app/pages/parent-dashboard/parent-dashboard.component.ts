@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, ParentProfile, StudentProfile } from '../../services/auth.service';
 import { ParentAccessService } from '../../services/parent-access.service';
+import { AddChildModalComponent, AddChildPayload } from './add-child-modal.component';
+import { EditChildModalComponent, EditChildPayload } from './edit-child-modal.component';
 
 @Component({
   selector: 'app-parent-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AddChildModalComponent, EditChildModalComponent],
   templateUrl: './parent-dashboard.component.html',
   styleUrl: './parent-dashboard.component.css',
 })
@@ -20,12 +22,14 @@ export class ParentDashboardComponent implements OnInit {
   readonly loading = signal(true);
   readonly savingStudent = signal(false);
   readonly errorMessage = signal('');
+  readonly statusMessage = signal('');
   readonly profile = signal<ParentProfile | null>(null);
   readonly students = signal<StudentProfile[]>([]);
 
-  readonly newStudentName = signal('');
-  readonly newStudentGrade = signal('');
-  readonly newStudentAvatar = signal('🧠');
+  readonly addChildModalOpen = signal(false);
+  readonly editChildModalOpen = signal(false);
+  readonly selectedStudent = signal<StudentProfile | null>(null);
+
   readonly accessCode = signal('');
   readonly validatingAccessCode = signal(false);
   readonly accessCodeErrorMessage = signal('');
@@ -40,6 +44,7 @@ export class ParentDashboardComponent implements OnInit {
     console.log('[ParentDashboard] Loading dashboard...');
     this.loading.set(true);
     this.errorMessage.set('');
+    this.statusMessage.set('');
 
     try {
       console.log('[ParentDashboard] Current user:', this.authService.getCurrentUser()?.email);
@@ -100,32 +105,94 @@ export class ParentDashboardComponent implements OnInit {
     await new Promise(resolve => setTimeout(resolve, 500));
   }
 
-  async addStudent(): Promise<void> {
-    console.log('[ParentDashboard] Add student clicked');
-    if (!this.newStudentName().trim() || !this.newStudentGrade().trim()) {
-      console.log('[ParentDashboard] Invalid input - name or grade missing');
-      this.errorMessage.set('Please enter student name and grade.');
+  openAddChildModal(): void {
+    this.errorMessage.set('');
+    this.statusMessage.set('');
+    this.addChildModalOpen.set(true);
+  }
+
+  closeAddChildModal(): void {
+    this.addChildModalOpen.set(false);
+  }
+
+  openEditChildModal(student: StudentProfile): void {
+    this.errorMessage.set('');
+    this.statusMessage.set('');
+    this.selectedStudent.set(student);
+    this.editChildModalOpen.set(true);
+  }
+
+  closeEditChildModal(): void {
+    this.editChildModalOpen.set(false);
+    this.selectedStudent.set(null);
+  }
+
+  async addStudent(payload: AddChildPayload): Promise<void> {
+    if (!payload.name.trim() || !payload.grade.trim()) {
+      this.errorMessage.set('Please enter child name and grade.');
       return;
     }
 
     this.savingStudent.set(true);
     this.errorMessage.set('');
+    this.statusMessage.set('');
 
     try {
-      console.log('[ParentDashboard] Creating student:', this.newStudentName(), this.newStudentGrade());
       const student = await this.authService.addStudentForParent({
-        name: this.newStudentName(),
-        grade: this.newStudentGrade(),
-        avatar: this.newStudentAvatar(),
+        name: payload.name,
+        grade: payload.grade,
+        avatar: payload.avatar,
       });
-      console.log('[ParentDashboard] Student created:', student.name, 'Code:', student.loginCode);
-      this.students.update((list) => [...list, student]);
-      this.newStudentName.set('');
-      this.newStudentGrade.set('');
-      this.newStudentAvatar.set('🧠');
+      await this.loadDashboard();
+      this.statusMessage.set(`Added ${student.name}. Login code: ${student.loginCode}`);
+      this.addChildModalOpen.set(false);
     } catch (error) {
-      console.error('[ParentDashboard] Error adding student:', error);
-      this.errorMessage.set('Unable to add student. Please try again.');
+      this.errorMessage.set(error instanceof Error ? error.message : 'Unable to add child. Please try again.');
+    } finally {
+      this.savingStudent.set(false);
+    }
+  }
+
+  async saveStudentEdits(payload: EditChildPayload): Promise<void> {
+    if (!payload.name.trim() || !payload.grade.trim()) {
+      this.errorMessage.set('Please enter child name and grade.');
+      return;
+    }
+
+    this.savingStudent.set(true);
+    this.errorMessage.set('');
+    this.statusMessage.set('');
+
+    try {
+      const updated = await this.authService.updateStudentForParent(payload.id, {
+        name: payload.name,
+        grade: payload.grade,
+        avatar: payload.avatar,
+      });
+
+      await this.loadDashboard();
+      this.statusMessage.set(`Saved updates for ${updated.name}.`);
+      this.closeEditChildModal();
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Unable to update child profile.');
+    } finally {
+      this.savingStudent.set(false);
+    }
+  }
+
+  async deleteStudent(studentId: string): Promise<void> {
+    this.savingStudent.set(true);
+    this.errorMessage.set('');
+    this.statusMessage.set('');
+
+    try {
+      const student = this.students().find((entry) => entry.id === studentId) ?? null;
+      await this.authService.deleteStudentForParent(studentId);
+      await this.loadDashboard();
+      this.statusMessage.set(student ? `Removed ${student.name}.` : 'Child removed.');
+      this.closeEditChildModal();
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Unable to remove child.');
     } finally {
       this.savingStudent.set(false);
     }
@@ -158,8 +225,17 @@ export class ParentDashboardComponent implements OnInit {
     }
   }
 
-  viewStudent(studentId: string): void {
+  startLearning(studentId: string): void {
     void this.router.navigate(['/student/home'], { queryParams: { studentId } });
+  }
+
+  getMasteryPercent(student: StudentProfile): number {
+    const values = Object.values(student.masteryMap ?? {});
+    if (values.length === 0) {
+      return 0;
+    }
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return Math.round(total / values.length);
   }
 
   async logout(): Promise<void> {

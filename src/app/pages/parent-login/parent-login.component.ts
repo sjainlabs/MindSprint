@@ -22,7 +22,12 @@ export class ParentLoginComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     console.log('[ParentLogin] Component initialized');
 
-    const shouldAttemptRestore = this.authService.isParentRedirectPending() || !!this.authService.getCurrentUser();
+    if (this.authService.shouldRedirectParentFromLogin()) {
+      void this.router.navigate(['/parent/dashboard']);
+      return;
+    }
+
+    const shouldAttemptRestore = this.authService.shouldAttemptParentSessionRestore();
     this.restoringSession.set(shouldAttemptRestore);
     this.loading.set(this.restoringSession());
 

@@ -10,8 +10,10 @@ import {
 } from 'firebase/auth';
 import {
   addDoc,
+  arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   documentId,
   getDoc,
@@ -149,6 +151,14 @@ export class AuthService {
 
   isParentLoggedIn(): boolean {
     return !!(this.cachedUser ?? auth.currentUser);
+  }
+
+  shouldRedirectParentFromLogin(): boolean {
+    return this.isParentLoggedIn();
+  }
+
+  shouldAttemptParentSessionRestore(): boolean {
+    return this.isParentRedirectPending() || !!auth.currentUser;
   }
 
   isParentRedirectPending(): boolean {
@@ -427,6 +437,62 @@ export class AuthService {
     } catch (error) {
       console.warn('[Auth] Falling back to local student creation:', error);
       return localStudent;
+    }
+  }
+
+  async updateStudentForParent(
+    studentId: string,
+    payload: { name: string; grade: string; avatar?: string },
+  ): Promise<StudentProfile> {
+    const parent = auth.currentUser;
+    if (!parent) throw new Error('Parent is not logged in.');
+
+    const existing = await this.getStudentProfile(studentId);
+    if (!existing || existing.parentId !== parent.uid) {
+      throw new Error('Student not found for this parent.');
+    }
+
+    const updatedLocal: StudentProfile = {
+      ...existing,
+      name: payload.name.trim(),
+      grade: payload.grade.trim(),
+      avatar: payload.avatar?.trim() || '🧠',
+    };
+    this.saveLocalStudent(updatedLocal);
+
+    try {
+      await updateDoc(doc(db, 'students', studentId), {
+        name: updatedLocal.name,
+        grade: updatedLocal.grade,
+        avatar: updatedLocal.avatar,
+      });
+
+      const refreshed = await this.getStudentProfile(studentId);
+      if (refreshed) {
+        this.saveLocalStudent(refreshed);
+        return refreshed;
+      }
+      return updatedLocal;
+    } catch (error) {
+      console.warn('[Auth] Falling back to local student update:', error);
+      return updatedLocal;
+    }
+  }
+
+  async deleteStudentForParent(studentId: string): Promise<void> {
+    const parent = auth.currentUser;
+    if (!parent) throw new Error('Parent is not logged in.');
+
+    this.removeLocalStudent(studentId);
+    this.removeStudentIdFromLocalParent(parent.uid, studentId);
+
+    try {
+      await deleteDoc(doc(db, 'students', studentId));
+      await updateDoc(doc(db, 'parents', parent.uid), {
+        students: arrayRemove(studentId),
+      });
+    } catch (error) {
+      console.warn('[Auth] Falling back to local student deletion:', error);
     }
   }
 

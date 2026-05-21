@@ -46,14 +46,14 @@
           @if (!studentLoggedIn() && !parentLoggedIn()) {
             <a routerLink="/login/parent" class="btn btn-primary">Parent Login</a>
           }
-          <a routerLink="/onboarding" class="btn btn-primary">{{ t('welcome.action.startOnboarding') }}</a>
+<!--          <a routerLink="/parent/dashboard" class="btn btn-primary">{{ t('welcome.action.startOnboarding') }}</a>-->
           <a routerLink="/diagnostic" class="btn btn-primary">{{ t('welcome.action.startDiagnostic') }}</a>
-          <a routerLink="/topics" class="btn btn-secondary">{{ t('welcome.action.topicBrowser') }}</a>
-          <a routerLink="/operations/add" class="btn btn-secondary">{{ t('welcome.action.operationsConcept') }}</a>
+<!--          <a routerLink="/topics" class="btn btn-secondary">{{ t('welcome.action.topicBrowser') }}</a>-->
+<!--          <a routerLink="/operations/add" class="btn btn-secondary">{{ t('welcome.action.operationsConcept') }}</a>-->
           <a routerLink="/worksheet/Beginner" class="btn btn-secondary">{{ t('welcome.action.worksheets') }}</a>
           <a routerLink="/game" class="btn btn-secondary">{{ t('welcome.action.games') }}</a>
           <a routerLink="/map-prep" class="btn btn-secondary">{{ t('welcome.action.mapPrep') }}</a>
-          <a routerLink="/profile" class="btn btn-secondary">{{ t('welcome.action.profile') }}</a>
+<!--          <a routerLink="/parent/dashboard" class="btn btn-secondary">{{ t('welcome.action.profile') }}</a>-->
         </div>
 
         <div class="help-card mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">

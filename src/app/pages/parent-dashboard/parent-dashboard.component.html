@@ -3,9 +3,12 @@
     <div class="head-row">
       <div>
         <h1>Parent Dashboard</h1>
-        <p class="subtitle">Manage your learners and monitor access.</p>
+        <p class="subtitle">Everything for child setup and progress lives here.</p>
       </div>
-      <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
+      <div class="header-actions">
+        <button type="button" class="btn btn-primary" (click)="openAddChildModal()">Add Child</button>
+        <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
+      </div>
     </div>
 
     @if (loading()) {
@@ -26,49 +29,48 @@
         </div>
       }
 
-      <div class="student-add-card">
-        <h2>Add Student</h2>
-        <div class="student-form-grid">
-          <input
-            type="text"
-            placeholder="Student name"
-            [ngModel]="newStudentName()"
-            (ngModelChange)="newStudentName.set($event)"
-          />
-          <input
-            type="text"
-            placeholder="Grade"
-            [ngModel]="newStudentGrade()"
-            (ngModelChange)="newStudentGrade.set($event)"
-          />
-          <input
-            type="text"
-            maxlength="2"
-            placeholder="Avatar"
-            [ngModel]="newStudentAvatar()"
-            (ngModelChange)="newStudentAvatar.set($event)"
-          />
-          <button type="button" class="btn btn-primary" [disabled]="savingStudent()" (click)="addStudent()">
-            {{ savingStudent() ? 'Adding...' : 'Add Student' }}
-          </button>
-        </div>
-      </div>
-
       <div class="student-list-card">
-        <h2>Students</h2>
-        @if (students().length === 0) {
-          <p class="muted">No students added yet.</p>
+        <div class="list-head">
+          <h2>Your Children</h2>
+          <span class="count-chip">{{ students().length }} total</span>
+        </div>
+
+        @if (statusMessage()) {
+          <p class="success-text">{{ statusMessage() }}</p>
         }
-        <div class="student-list">
+
+        @if (students().length === 0) {
+          <p class="muted">No children added yet. Tap Add Child to create the first profile.</p>
+        }
+
+        <div class="student-grid">
           @for (student of students(); track student.id) {
-            <button type="button" class="student-row" (click)="viewStudent(student.id)">
-              <span class="avatar">{{ student.avatar || '🧠' }}</span>
-              <span class="student-meta">
-                <strong>{{ student.name }}</strong>
-                <small>Grade {{ student.grade }} · Code {{ student.loginCode }}</small>
-              </span>
-              <span class="open-arrow">→</span>
-            </button>
+            <article class="student-card">
+              <div class="student-top-row">
+                <span class="avatar">{{ student.avatar || '🧠' }}</span>
+                <div class="student-meta">
+                  <strong>{{ student.name }}</strong>
+                  <small>Grade {{ student.grade }}</small>
+                </div>
+                <button type="button" class="btn btn-ghost" [disabled]="savingStudent()" (click)="openEditChildModal(student)">
+                  Edit Child
+                </button>
+              </div>
+
+              <div class="detail-row">
+                <span class="code-pill">Code {{ student.loginCode }}</span>
+                <span class="progress-pill">Progress {{ getMasteryPercent(student) }}%</span>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-primary start-btn"
+                [disabled]="savingStudent()"
+                (click)="startLearning(student.id)"
+              >
+                Start Learning
+              </button>
+            </article>
           }
         </div>
       </div>
@@ -103,4 +105,24 @@
       <a routerLink="/login" class="back-link">Back to login options</a>
     }
   </div>
+
+  @if (addChildModalOpen()) {
+    <app-add-child-modal
+      [saving]="savingStudent()"
+      [errorMessage]="errorMessage()"
+      (cancel)="closeAddChildModal()"
+      (save)="addStudent($event)"
+    ></app-add-child-modal>
+  }
+
+  @if (editChildModalOpen()) {
+    <app-edit-child-modal
+      [student]="selectedStudent()"
+      [saving]="savingStudent()"
+      [errorMessage]="errorMessage()"
+      (cancel)="closeEditChildModal()"
+      (save)="saveStudentEdits($event)"
+      (delete)="deleteStudent($event)"
+    ></app-edit-child-modal>
+  }
 </section>

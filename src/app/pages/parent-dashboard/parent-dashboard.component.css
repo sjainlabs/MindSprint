@@ -1,11 +1,11 @@
 .dashboard-shell {
   min-height: 100vh;
-  padding: 1.5rem;
+  padding: 1rem;
   background: #f8fafc;
 }
 
 .dashboard-card {
-  width: min(840px, 100%);
+  width: min(960px, 100%);
   margin: 0 auto;
   display: grid;
   gap: 1rem;
@@ -14,8 +14,15 @@
 .head-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 h1 {
@@ -29,20 +36,12 @@ h1 {
 }
 
 .profile-card,
-.student-add-card,
 .student-list-card,
 .student-access-card {
   background: #fff;
   border-radius: 1rem;
   padding: 1rem;
   box-shadow: 0 10px 25px rgb(15 23 42 / 0.08);
-}
-
-.student-form-grid {
-  margin-top: 0.75rem;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.6rem;
 }
 
 input {
@@ -70,10 +69,52 @@ input {
   color: #1d4ed8;
 }
 
-.student-list {
-  margin-top: 0.65rem;
+.btn-ghost {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.count-chip {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.student-grid {
+  margin-top: 0.85rem;
   display: grid;
+  gap: 0.75rem;
+}
+
+.student-card {
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  border-radius: 1rem;
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.student-top-row {
+  display: flex;
+  align-items: center;
   gap: 0.6rem;
+}
+
+.detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .access-code-row {
@@ -81,18 +122,6 @@ input {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 0.6rem;
-}
-
-.student-row {
-  border: 1px solid #dbeafe;
-  border-radius: 0.9rem;
-  padding: 0.7rem;
-  background: #eff6ff;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  text-align: left;
-  cursor: pointer;
 }
 
 .avatar {
@@ -109,9 +138,26 @@ input {
   color: #475569;
 }
 
-.open-arrow {
-  margin-left: auto;
-  color: #1d4ed8;
+.code-pill,
+.progress-pill {
+  border-radius: 999px;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.code-pill {
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.progress-pill {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.start-btn {
+  width: 100%;
 }
 
 .muted {
@@ -165,11 +211,20 @@ input {
 }
 
 @media (max-width: 900px) {
-  .student-form-grid {
+  .access-code-row {
     grid-template-columns: 1fr;
   }
 
-  .access-code-row {
-    grid-template-columns: 1fr;
+  .head-row {
+    flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .student-top-row {
+    flex-wrap: wrap;
   }
 }
