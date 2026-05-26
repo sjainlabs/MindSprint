@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: 'https://mindsprint-5a5a0849665d.herokuapp.com/api',
+  apiUrl: 'https://mindsprint-backend-gcr0.onrender.com/api',
   googleOAuthClientId:
     (globalThis as { __MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__?: string })
       .__MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__ ?? '',
