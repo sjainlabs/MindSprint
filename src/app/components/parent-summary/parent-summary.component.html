@@ -1,0 +1,27 @@
+<div class="bg-white rounded-lg p-4 shadow">
+  <ng-container *ngIf="loading">
+    <div class="text-sm text-gray-500">Loading parent summary...</div>
+  </ng-container>
+
+  <ng-container *ngIf="error">
+    <div class="text-sm text-red-500">{{ error }}</div>
+  </ng-container>
+
+  <ng-container *ngIf="parentSummary">
+    <h4 class="text-lg font-semibold">Parent summary</h4>
+    <p class="text-sm text-gray-700 mt-2">{{ parentSummary.notes || parentSummary.summary || 'No summary available.' }}</p>
+
+    <div *ngIf="parentSummary.recommendedActions && parentSummary.recommendedActions.length > 0" class="mt-3">
+      <div class="text-sm font-medium">Recommended actions</div>
+      <ul class="list-disc list-inside mt-2 space-y-1 text-sm text-gray-700">
+        <li *ngFor="let a of parentSummary.recommendedActions">{{ a }}</li>
+      </ul>
+    </div>
+
+    <div class="mt-3 text-xs text-gray-500">
+      <div *ngIf="parentSummary.suggestedAt">Suggested: {{ parentSummary.suggestedAt }}</div>
+      <div *ngIf="parentSummary.contactNeeded">Contact recommended</div>
+    </div>
+  </ng-container>
+</div>
+

@@ -1,0 +1,38 @@
+<div class="bg-white rounded-lg shadow p-4 w-80">
+  <ng-container *ngIf="loading">
+    <div class="text-sm text-gray-500">Loading profile...</div>
+  </ng-container>
+
+  <ng-container *ngIf="error">
+    <div class="text-sm text-red-500">{{ error }}</div>
+  </ng-container>
+
+  <ng-container *ngIf="!loading && !error">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+        <img *ngIf="avatar" [src]="avatar" alt="avatar" class="w-full h-full object-cover" />
+        <div *ngIf="!avatar" class="text-2xl">👤</div>
+      </div>
+      <div>
+        <div class="text-lg font-semibold">{{ name || 'Student' }}</div>
+        <div class="text-sm text-gray-500">Grade {{ grade || '-' }}</div>
+      </div>
+    </div>
+
+    <div class="mt-3 grid grid-cols-3 gap-2 text-center">
+      <div>
+        <div class="text-xs text-gray-500">Level</div>
+        <div class="font-bold">{{ level ?? '-' }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500">XP</div>
+        <div class="font-bold">{{ xp ?? 0 }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500">Streak</div>
+        <div class="font-bold">{{ streak ?? 0 }}</div>
+      </div>
+    </div>
+  </ng-container>
+</div>
+

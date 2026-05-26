@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, StudentProfile } from '../../services/auth.service';
+import { InsightsService } from '../../services/insights.service';
 
 @Component({
   selector: 'app-student-home',
@@ -19,6 +20,12 @@ export class StudentHomeComponent implements OnInit {
   readonly errorMessage = signal('');
   readonly student = signal<StudentProfile | null>(null);
   readonly parentView = signal(false);
+  // recommendation UI state
+  readonly recommendation = signal<any | null>(null);
+  readonly recommendationLoading = signal(false);
+  readonly recommendationError = signal('');
+  readonly streakIndicator = signal(0);
+  readonly progressPercent = signal(0);
 
   ngOnInit(): void {
     void this.loadStudent();
@@ -43,10 +50,47 @@ export class StudentHomeComponent implements OnInit {
         throw new Error('Student profile not found.');
       }
       this.student.set(student);
+      // load recommendation once student is set
+      void this.loadRecommendation(student);
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Unable to load student profile.');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async loadRecommendation(student: StudentProfile | null): Promise<void> {
+    if (!student) return;
+    this.recommendationLoading.set(true);
+    this.recommendationError.set('');
+    try {
+      const insights = inject(InsightsService);
+      // call recommendation endpoint (topic optional)
+      const sub = await insights.getRecommendation(student.id ?? '').toPromise?.();
+      // Some environments may not have toPromise; fall back to subscribe
+      if (sub === undefined) {
+        insights.getRecommendation(student.id ?? '').subscribe({
+          next: (res) => {
+            this.recommendation.set(res);
+            this.recommendationLoading.set(false);
+            // map UI fields if present
+            this.streakIndicator.set(res?.streak ?? this.streakIndicator());
+            this.progressPercent.set(res?.progressPercent ?? this.progressPercent());
+          },
+          error: (err) => {
+            this.recommendationError.set(err?.message ?? 'Unable to load recommendation');
+            this.recommendationLoading.set(false);
+          },
+        });
+      } else {
+        this.recommendation.set(sub);
+        this.recommendationLoading.set(false);
+        this.streakIndicator.set((sub as any)?.streak ?? this.streakIndicator());
+        this.progressPercent.set((sub as any)?.progressPercent ?? this.progressPercent());
+      }
+    } catch (err: any) {
+      this.recommendationError.set(err?.message ?? 'Unable to load recommendation');
+      this.recommendationLoading.set(false);
     }
   }
 
@@ -62,5 +106,10 @@ export class StudentHomeComponent implements OnInit {
 
   hasMasteryEntries(student: StudentProfile): boolean {
     return Object.keys(student.masteryMap).length > 0;
+  }
+
+  // Template helper used to detect array rationale
+  isArray(v: any): boolean {
+    return Array.isArray(v);
   }
 }

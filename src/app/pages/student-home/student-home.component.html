@@ -13,10 +13,45 @@
       <p class="error-text">{{ errorMessage() }}</p>
     } @else if (student(); as currentStudent) {
       <div class="hero-card">
-        <span class="avatar">{{ currentStudent.avatar || '🧠' }}</span>
-        <div>
-          <h2>{{ currentStudent.name }}</h2>
-          <p>Grade {{ currentStudent.grade }}</p>
+        <div class="hero-left">
+          <span class="avatar">{{ currentStudent.avatar || '🧠' }}</span>
+          <div>
+            <h2>Welcome back, {{ currentStudent.name }}</h2>
+            <p>Grade {{ currentStudent.grade }}</p>
+          </div>
+        </div>
+        <div class="hero-right">
+          <button class="continue-btn" (click)="void 0">Continue Practice</button>
+        </div>
+      </div>
+
+      <!-- Recommendation / progress row -->
+      <div class="recommendation-row">
+        <div class="recommended-skill-card">
+          <h3>Recommended Skill</h3>
+          <div *ngIf="recommendation()" class="mt-2">
+                <div class="text-sm font-medium">{{ recommendation()?.skillName || recommendation()?.topic || 'Skill' }}</div>
+                <div class="text-xs text-gray-500">
+                  Reason:
+                  <ng-container *ngIf="recommendation()?.rationale; else defaultRationale">
+                    <ng-container *ngIf="isArray(recommendation()?.rationale); else showRationaleString">
+                      {{ (recommendation()?.rationale || []).join('; ') }}
+                    </ng-container>
+                    <ng-template #showRationaleString>{{ recommendation()?.rationale }}</ng-template>
+                  </ng-container>
+                  <ng-template #defaultRationale>Adaptive recommendation</ng-template>
+                </div>
+                <div class="mt-2 text-sm">Target difficulty: {{ recommendation()?.targetDifficulty ?? '-' }}</div>
+            <div class="mt-2"><button class="start-btn" (click)="void 0">Start Practice</button></div>
+          </div>
+          <div *ngIf="!recommendation()" class="text-sm text-gray-500 mt-2">No recommendation available.</div>
+        </div>
+
+        <div class="streak-progress">
+          <div class="streak">Streak: {{ streakIndicator() }}</div>
+          <div class="progress-bar">
+            <div class="progress-inner" [style.width.%]="progressPercent()"></div>
+          </div>
         </div>
       </div>
 

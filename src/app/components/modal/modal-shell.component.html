@@ -1,0 +1,44 @@
+<div *ngIf="open" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
+    <!-- header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <div class="flex items-center gap-3">
+        <h3 class="text-lg font-semibold">{{ title || 'Details' }}</h3>
+      </div>
+      <div>
+        <button class="text-gray-600 px-3 py-1" (click)="close()">✕</button>
+      </div>
+    </div>
+
+    <!-- body -->
+    <div class="p-6 overflow-auto" style="max-height: calc(80vh - 96px);">
+      <div *ngIf="loading" class="text-sm text-gray-500">Loading...</div>
+      <div *ngIf="error" class="text-sm text-red-500">{{ error }}</div>
+
+      <div *ngIf="insights">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">{{ insights.avatar || '👩‍🎓' }}</div>
+          <div>
+            <div class="font-semibold">{{ insights.studentName || insights.studentId }}</div>
+            <div class="text-sm text-gray-500">Grade {{ insights.grade || '-' }} · Level {{ insights.level ?? '-' }}</div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <h4 class="font-medium">Topics</h4>
+          <ul class="mt-2 space-y-2">
+            <li *ngFor="let t of insights.topics" class="p-2 border rounded">
+              <div class="flex justify-between items-center">
+                <div>
+                  <div class="font-medium">{{ t.name }}</div>
+                  <div class="text-xs text-gray-500">Attempts: {{ t.attempts }} · Avg time: {{ t.avgTimeSeconds }}s</div>
+                </div>
+                <div class="text-sm font-semibold">Mastery {{ t.mastery }}%</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

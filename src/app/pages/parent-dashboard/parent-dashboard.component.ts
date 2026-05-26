@@ -6,11 +6,14 @@ import { AuthService, ParentProfile, StudentProfile } from '../../services/auth.
 import { ParentAccessService } from '../../services/parent-access.service';
 import { AddChildModalComponent, AddChildPayload } from './add-child-modal.component';
 import { EditChildModalComponent, EditChildPayload } from './edit-child-modal.component';
+import { StudentInsightsComponent } from '../student-profile/student-insights.component';
+import { InsightsService } from '../../services/insights.service';
+import type { TopicInsight } from '../../services/insights.types';
 
 @Component({
   selector: 'app-parent-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AddChildModalComponent, EditChildModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AddChildModalComponent, EditChildModalComponent, StudentInsightsComponent],
   templateUrl: './parent-dashboard.component.html',
   styleUrl: './parent-dashboard.component.css',
 })
@@ -29,6 +32,17 @@ export class ParentDashboardComponent implements OnInit {
   readonly addChildModalOpen = signal(false);
   readonly editChildModalOpen = signal(false);
   readonly selectedStudent = signal<StudentProfile | null>(null);
+  // Insight modal state
+  readonly insightOpen = signal(false);
+  readonly insightStudent = signal<StudentProfile | null>(null);
+  // Topic insight inline state
+  readonly topicInsightLoading = signal(false);
+  readonly topicInsightError = signal('');
+  readonly topicInsightData = signal<TopicInsight | null>(null);
+  readonly topicInsightStudentId = signal<string | null>(null);
+  readonly topicInsightTopicId = signal<string | null>(null);
+
+  private readonly insightsService = inject(InsightsService);
 
   readonly accessCode = signal('');
   readonly validatingAccessCode = signal(false);
@@ -38,6 +52,50 @@ export class ParentDashboardComponent implements OnInit {
   ngOnInit(): void {
     console.log('[ParentDashboard] Component initialized');
     void this.loadDashboard();
+  }
+
+  openInsights(student: StudentProfile): void {
+    this.insightStudent.set(student);
+    this.insightOpen.set(true);
+  }
+
+  closeInsights(): void {
+    this.insightOpen.set(false);
+    this.insightStudent.set(null);
+  }
+
+  async openTopicInsight(studentId: string, topicId: string): Promise<void> {
+    this.topicInsightLoading.set(true);
+    this.topicInsightError.set('');
+    this.topicInsightData.set(null);
+    this.topicInsightStudentId.set(studentId);
+    this.topicInsightTopicId.set(topicId);
+
+    try {
+      const obs = this.insightsService.getTopicInsight(studentId, topicId);
+      // subscribe once
+      obs.subscribe({
+        next: (data) => {
+          this.topicInsightData.set(data);
+          this.topicInsightLoading.set(false);
+        },
+        error: (err) => {
+          this.topicInsightError.set(err?.message ?? 'Unable to load topic insight.');
+          this.topicInsightLoading.set(false);
+        },
+      });
+    } catch (err) {
+      this.topicInsightError.set(err instanceof Error ? err.message : 'Unable to load topic insight.');
+      this.topicInsightLoading.set(false);
+    }
+  }
+
+  closeTopicInsight(): void {
+    this.topicInsightLoading.set(false);
+    this.topicInsightError.set('');
+    this.topicInsightData.set(null);
+    this.topicInsightStudentId.set(null);
+    this.topicInsightTopicId.set(null);
   }
 
   async loadDashboard(): Promise<void> {

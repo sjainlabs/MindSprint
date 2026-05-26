@@ -1,0 +1,82 @@
+<div class="bg-white rounded-lg shadow p-4">
+  <ng-container *ngIf="loading">
+    <div class="text-sm text-gray-500">Loading topic details...</div>
+  </ng-container>
+
+  <ng-container *ngIf="error">
+    <div class="text-sm text-red-500">{{ error }}</div>
+  </ng-container>
+
+  <ng-container *ngIf="insight">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">{{ insight.name }}</h3>
+        <div class="text-sm text-gray-500">Topic ID: {{ insight.topicId }}</div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm text-gray-600">Mastery</div>
+        <div class="text-2xl font-bold">{{ insight.mastery }}%</div>
+      </div>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="p-3 bg-gray-50 rounded">
+        <div class="text-xs text-gray-500">Accuracy</div>
+        <div class="text-xl font-semibold">{{ insight.accuracy }}%</div>
+      </div>
+      <div class="p-3 bg-gray-50 rounded">
+        <div class="text-xs text-gray-500">Avg speed</div>
+        <div class="text-xl font-semibold">{{ insight.avgTimeSeconds }}s</div>
+      </div>
+      <div class="p-3 bg-gray-50 rounded">
+        <div class="text-xs text-gray-500">Attempts</div>
+        <div class="text-xl font-semibold">{{ insight.attempts }}</div>
+      </div>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <h4 class="text-sm font-medium">Error patterns</h4>
+        <div *ngIf="insight.commonErrors && insight.commonErrors.length > 0" class="mt-2 space-y-2">
+          <div *ngFor="let e of insight.commonErrors" class="p-2 bg-red-50 rounded">
+            <div class="flex justify-between items-center">
+              <div class="text-sm font-medium">{{ e.code || e.name || 'Error' }}</div>
+              <div class="text-xs text-gray-600">Count: {{ e.count ?? e['frequency'] ?? '-' }}</div>
+            </div>
+            <div class="text-xs text-gray-700 mt-1">{{ e.description || e['message'] || '' }}</div>
+          </div>
+        </div>
+        <div *ngIf="!insight.commonErrors || insight.commonErrors.length === 0" class="text-sm text-gray-500 mt-2">No common error patterns identified.</div>
+      </div>
+
+      <div>
+        <h4 class="text-sm font-medium">Subtopic breakdown</h4>
+        <div *ngIf="insight.subtopics && insight.subtopics.length > 0" class="mt-2 space-y-2">
+          <div *ngFor="let s of insight.subtopics" class="p-2 bg-gray-50 rounded">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium">{{ s.name }}</div>
+                <div class="text-xs text-gray-500">Attempts: {{ s.attempts }} · Avg time: {{ s.avgTimeSeconds }}s</div>
+              </div>
+              <div class="text-sm font-semibold">{{ s.mastery }}%</div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!insight.subtopics || insight.subtopics.length === 0" class="text-sm text-gray-500 mt-2">No subtopic data available.</div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <h4 class="text-sm font-medium">Parent summary</h4>
+      <div class="mt-2">
+        <app-parent-summary [summary]="insight['parentSummary']" [studentId]="studentId" [topicId]="insight.topicId"></app-parent-summary>
+      </div>
+
+      <h4 class="text-sm font-medium mt-4">Trend</h4>
+      <div class="mt-2 p-4 bg-gray-100 rounded text-center text-sm text-gray-600">
+        <!-- Placeholder for a trend chart (sparkline / chart.js) -->
+        <div class="h-32 flex items-center justify-center">Trend chart placeholder</div>
+      </div>
+    </div>
+  </ng-container>
+</div>

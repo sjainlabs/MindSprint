@@ -1,0 +1,53 @@
+<div class="bg-white rounded-lg shadow p-4">
+  <ng-container *ngIf="loading">
+    <div class="text-sm text-gray-500">Loading recommendation...</div>
+  </ng-container>
+
+  <ng-container *ngIf="error">
+    <div class="text-sm text-red-500">{{ error }}</div>
+  </ng-container>
+
+  <ng-container *ngIf="data">
+    <h3 class="text-lg font-semibold">Adaptive Recommendation</h3>
+
+      <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <div class="text-xs text-gray-500">Recommended level</div>
+        <div class="font-bold">{{ data.recommendedLevel ?? '-' }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500">Target difficulty</div>
+        <div class="font-bold">{{ data.targetDifficulty ?? '-' }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500">Recommended topic</div>
+        <div class="font-bold">{{ data['recommendedTopic'] || data['topic'] || '-' }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500">Recommended subtopic</div>
+        <div class="font-bold">{{ data['recommendedSubtopic'] || '-' }}</div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <div class="text-xs text-gray-500">Focus operations</div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <span *ngFor="let op of (data['focusOperations'] || [])" class="px-2 py-1 bg-gray-100 rounded text-xs">{{ op }}</span>
+        <span *ngIf="!(data['focusOperations'] && data['focusOperations'].length)" class="text-sm text-gray-500">No focus operations suggested</span>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <div class="text-xs text-gray-500">Rationale</div>
+      <ul class="mt-2 list-disc list-inside text-sm">
+        <li *ngFor="let item of normalizedRationale">{{ item }}</li>
+        <li *ngIf="!normalizedRationale" class="text-sm text-gray-500">No rationale provided</li>
+      </ul>
+    </div>
+
+    <div class="mt-4 text-right">
+      <button class="px-4 py-2 bg-blue-600 text-white rounded" (click)="onStart()">Start Recommended Worksheet</button>
+    </div>
+  </ng-container>
+</div>
+

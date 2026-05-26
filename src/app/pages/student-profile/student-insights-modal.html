@@ -1,0 +1,183 @@
+<!-- Student Insights Modal - responsive Tailwind template -->
+<!--
+  Sections included:
+  - Student Profile (level, XP, streak, grade)
+  - Topic Mastery (progress bars)
+  - Detailed Topic Analysis (accuracy, speed, errors)
+  - Subtopic Breakdown (collapsibles)
+  - Recommended Next Steps
+  - Parent Summary
+  Note: This is an HTML-only template; wire up bindings and events in the component TS.
+-->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+  <div class="bg-white dark:bg-slate-800 w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">{{ student?.avatar || '👩‍🎓' }}</div>
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ student?.name || 'Student Name' }}</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">ID: <span class="font-medium">{{ student?.id || '-' }}</span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-300" (click)="onPrint()">Print</button>
+        <button class="rounded-md bg-primary px-3 py-1 text-white text-sm" (click)="onExport()">Export</button>
+        <button class="ml-2 rounded-full text-slate-500 hover:bg-slate-100 p-2" aria-label="Close" (click)="onClose()">✕</button>
+      </div>
+    </div>
+
+    <!-- Content grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+      <!-- Left column: profile summary + topic mastery -->
+      <div class="col-span-1 space-y-4">
+        <!-- Student Profile Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Profile</h3>
+          <div class="mt-3 grid grid-cols-2 gap-3">
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500">Level</p>
+              <p class="text-xl font-bold text-amber-600">{{ student?.level ?? 1 }}</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500">XP</p>
+              <p class="text-xl font-bold text-blue-600">{{ student?.xp ?? 0 }}</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500">Streak</p>
+              <p class="text-xl font-bold text-emerald-600">{{ student?.streak ?? 0 }}</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500">Grade</p>
+              <p class="text-xl font-bold text-slate-800 dark:text-slate-100">{{ student?.grade ?? '-' }}</p>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-slate-500">Age: <span class="font-medium text-slate-700 dark:text-slate-200">{{ student?.age ?? '-' }}</span></div>
+        </div>
+
+        <!-- Topic Mastery Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Topic Mastery</h3>
+          <div class="mt-3 space-y-3">
+            <!-- Example repeated item: bind to topics array -->
+            <ng-container *ngFor="let topic of topics">
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-sm font-medium text-slate-700 dark:text-slate-200 capitalize">{{ topic.name }}</span>
+                  <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ topic.mastery }}%</span>
+                </div>
+                <div class="w-full bg-gray-100 dark:bg-slate-800 rounded-full h-2">
+                  <div class="h-2 rounded-full bg-primary transition-all" [style.width.%]="topic.mastery"></div>
+                </div>
+              </div>
+            </ng-container>
+            <div *ngIf="!topics || topics.length === 0" class="text-sm text-slate-500">No topic data yet.</div>
+          </div>
+        </div>
+
+        <!-- Recommended Next Steps (compact) -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Recommended Next Steps</h3>
+          <ul class="mt-3 space-y-2">
+            <li *ngFor="let r of recommendations" class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center">✓</div>
+              <div class="text-sm text-slate-700 dark:text-slate-200">{{ r }}</div>
+            </li>
+            <li *ngIf="!recommendations || recommendations.length===0" class="text-sm text-slate-500">No recommendations yet.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right column: detailed analysis + subtopics + parent summary -->
+      <div class="col-span-1 md:col-span-2 space-y-4">
+        <!-- Detailed Topic Analysis -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Detailed Topic Analysis</h3>
+          <div class="mt-4 overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="text-slate-500 dark:text-slate-300 text-xs uppercase">
+                  <th class="py-2 pr-6">Topic</th>
+                  <th class="py-2 pr-6">Accuracy</th>
+                  <th class="py-2 pr-6">Avg Time</th>
+                  <th class="py-2 pr-6">Errors</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                <tr *ngFor="let t of topics" class="align-top">
+                  <td class="py-3 pr-6">
+                    <div class="font-medium text-slate-800 dark:text-slate-100">{{ t.name }}</div>
+                    <div class="text-xs text-slate-500">{{ t.attempts }} attempts</div>
+                  </td>
+                  <td class="py-3 pr-6">
+                    <div class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ t.accuracy }}%</div>
+                    <div class="w-36 bg-gray-100 rounded-full h-2 mt-1">
+                      <div class="h-2 rounded-full bg-emerald-500" [style.width.%]="t.accuracy"></div>
+                    </div>
+                  </td>
+                   <td class="py-3 pr-6 text-slate-600 dark:text-slate-300">{{ t.avgTimeSeconds }}s</td>
+                  <td class="py-3 pr-6 text-slate-600 dark:text-slate-300">{{ t.errors }}</td>
+                </tr>
+                <tr *ngIf="!topics || topics.length===0">
+                  <td class="py-3 text-sm text-slate-500" colspan="4">No detailed analytics available yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subtopic Breakdown (collapsible) -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Subtopic Breakdown</h3>
+          <div class="mt-3 space-y-2">
+            <ng-container *ngFor="let t of topics">
+              <details class="group rounded-lg border border-slate-100 dark:border-slate-700 p-3">
+                <summary class="flex justify-between items-center cursor-pointer list-none">
+                  <div class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ t.name }}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-300">{{ t.mastery }}%</div>
+                </summary>
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <ng-container *ngFor="let s of t.subtopics">
+                    <div class="rounded-md p-3 bg-slate-50 dark:bg-slate-800">
+                      <div class="flex justify-between items-center mb-1">
+                        <div class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ s.name }}</div>
+                        <div class="text-xs text-slate-500">{{ s.mastery }}%</div>
+                      </div>
+                      <div class="w-full bg-gray-100 dark:bg-slate-800 rounded-full h-2">
+                        <div class="h-2 rounded-full bg-primary" [style.width.%]="s.mastery"></div>
+                      </div>
+                       <div class="text-xs text-slate-500 mt-2">Accuracy: {{ s.accuracy }}% · Avg time: {{ s.avgTimeSeconds }}s</div>
+                    </div>
+                  </ng-container>
+                  <div *ngIf="!t.subtopics || t.subtopics.length===0" class="text-sm text-slate-500">No subtopic data.</div>
+                </div>
+              </details>
+            </ng-container>
+            <div *ngIf="!topics || topics.length===0" class="text-sm text-slate-500">No subtopic breakdown available.</div>
+          </div>
+        </div>
+
+        <!-- Parent Summary -->
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Parent Summary</h3>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{{ parentSummary || 'No parent summary available. Add notes to track progress and concerns.' }}</p>
+
+          <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-3">
+            <textarea rows="3" class="flex-1 rounded-md border border-slate-200 dark:border-slate-700 p-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" placeholder="Add a quick note for this student" [(ngModel)]="parentNote"></textarea>
+            <button class="rounded-md bg-primary px-4 py-2 text-white" (click)="saveParentNote(parentNote)">Save Note</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer small actions -->
+    <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-700">
+      <div class="text-sm text-slate-500">Last updated: <span class="font-medium text-slate-700 dark:text-slate-200">{{ lastUpdated || '-' }}</span></div>
+      <div class="flex items-center gap-3">
+        <button class="text-sm text-slate-600 hover:text-slate-800" (click)="openLearningPath()">Open Learning Path</button>
+        <button class="text-sm text-primary underline" (click)="openReports()">View full reports</button>
+      </div>
+    </div>
+  </div>
+</div>
+
