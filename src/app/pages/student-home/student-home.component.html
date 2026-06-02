@@ -21,7 +21,7 @@
           </div>
         </div>
         <div class="hero-right">
-          <button class="continue-btn" (click)="void 0">Continue Practice</button>
+          <button class="continue-btn" (click)="goToPracticeHub()">Continue Practice</button>
         </div>
       </div>
 
@@ -42,7 +42,7 @@
                   <ng-template #defaultRationale>Adaptive recommendation</ng-template>
                 </div>
                 <div class="mt-2 text-sm">Target difficulty: {{ recommendation()?.targetDifficulty ?? '-' }}</div>
-            <div class="mt-2"><button class="start-btn" (click)="void 0">Start Practice</button></div>
+            <div class="mt-2"><button class="start-btn" (click)="goToPracticeHub()">Start Practice</button></div>
           </div>
           <div *ngIf="!recommendation()" class="text-sm text-gray-500 mt-2">No recommendation available.</div>
         </div>

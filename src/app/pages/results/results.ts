@@ -31,6 +31,8 @@ export class Results implements OnInit {
 
   startPractice(): void {
     const level = normalizeLearningLevelIdentifier(this.result?.level) ?? 'Beginner';
-    void this.router.navigate(['/worksheet', level]);
+    void this.router.navigate(['/practice-hub'], {
+      queryParams: { level },
+    });
   }
 }

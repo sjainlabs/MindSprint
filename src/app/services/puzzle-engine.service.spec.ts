@@ -1,10 +1,12 @@
 import { of } from 'rxjs';
 import { PuzzleEngineService } from './puzzle-engine.service';
+import { environment } from '../../environments/environment';
 
 describe('PuzzleEngineService', () => {
-  it('calls GET challenge endpoint with ai-puzzle mode', () => {
+  it('calls POST puzzle generate endpoint', () => {
     const httpMock = {
-      get: vi.fn(() =>
+      get: vi.fn(),
+      post: vi.fn(() =>
         of({
           puzzleSessionId: 'session-1',
           puzzles: [
@@ -17,16 +19,16 @@ describe('PuzzleEngineService', () => {
           ],
         }),
       ),
-      post: vi.fn(),
     } as any;
 
     const service = new PuzzleEngineService(httpMock);
     service.generatePuzzles('ai-puzzle', 55).subscribe();
 
-    expect(httpMock.get).toHaveBeenCalled();
-    const [url, config] = httpMock.get.mock.calls[0] as [string, { params: { get: (key: string) => string | null } }];
-    expect(url).toBe('https://mindsprint-5a5a0849665d.herokuapp.com/api/game/challenge');
-    expect(config.params.get('mode')).toBe('ai-puzzle');
+    expect(httpMock.post).toHaveBeenCalled();
+    const [url, config] = httpMock.post.mock.calls[0] as [string, { skillId: string; count: number }];
+    expect(url).toBe(`${environment.apiUrl}/puzzles/generate`);
+    expect(config.skillId).toBe('ai-puzzle');
+    expect(config.count).toBe(3);
   });
 
   it('calls POST submit endpoint with aggregate ai-puzzle payload', () => {
@@ -34,8 +36,9 @@ describe('PuzzleEngineService', () => {
       get: vi.fn(),
       post: vi.fn(() =>
         of({
-          saved: true,
-          xpEarned: 25,
+          score: 2,
+          total: 3,
+          results: [],
         }),
       ),
     } as any;
@@ -44,21 +47,17 @@ describe('PuzzleEngineService', () => {
     service
       .submitPuzzleAnswers({
         studentId: 'student-demo',
-        mode: 'ai-puzzle',
-        score: 85,
-        accuracy: 80,
-        streak: 1,
+          puzzleSessionId: 'session-1',
+          answers: [{ puzzleId: 'p-1', answer: '4' }],
       })
       .subscribe();
 
     expect(httpMock.post).toHaveBeenCalledWith(
-      'https://mindsprint-5a5a0849665d.herokuapp.com/api/game/submit',
+      `${environment.apiUrl}/puzzles/submit`,
       {
         studentId: 'student-demo',
-        mode: 'ai-puzzle',
-        score: 85,
-        accuracy: 80,
-        streak: 1,
+        puzzleSessionId: 'session-1',
+        answers: [{ puzzleId: 'p-1', answer: '4' }],
       },
     );
   });

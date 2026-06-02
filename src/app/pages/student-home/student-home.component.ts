@@ -45,6 +45,7 @@ export class StudentHomeComponent implements OnInit {
       }
 
       this.parentView.set(isParent);
+      this.authService.setActiveStudentId(studentId);
       const student = await this.authService.getStudentProfile(studentId);
       if (!student) {
         throw new Error('Student profile not found.');
@@ -102,6 +103,13 @@ export class StudentHomeComponent implements OnInit {
 
     this.authService.logoutStudent();
     await this.router.navigate(['/login/student']);
+  }
+
+  async goToPracticeHub(): Promise<void> {
+    const studentId = this.student()?.id;
+    await this.router.navigate(['/practice-hub'], {
+      queryParams: studentId ? { studentId } : undefined,
+    });
   }
 
   hasMasteryEntries(student: StudentProfile): boolean {

@@ -1,0 +1,383 @@
+<div class="min-h-screen bg-slate-50 px-4 py-5 sm:px-6">
+  <div class="mx-auto flex max-w-6xl flex-col gap-5">
+    <header class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Practice Hub</p>
+          <h1 class="mt-1 text-3xl font-bold text-slate-900">Choose what to practice next</h1>
+          <p class="mt-2 max-w-2xl text-sm text-slate-600">
+            Pick a level, explore the topic map, browse the K–12 and Kumon library, or generate an AI worksheet.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <app-language-toggle />
+          <a [routerLink]="['/profile']" [queryParams]="{ studentId: studentId() }" class="text-sm font-medium text-primary underline">Profile</a>
+          <a routerLink="/welcome" class="text-sm font-medium text-primary underline">Home</a>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Student</p>
+          <p class="mt-1 text-base font-semibold text-slate-900">{{ studentName() || 'Student' }}</p>
+        </div>
+        <div class="flex items-end">
+          <button
+            type="button"
+            class="w-full rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm sm:w-auto"
+            (click)="loadHub()"
+          >
+            Refresh Hub
+          </button>
+        </div>
+      </div>
+    </header>
+
+    @if (errorMessage()) {
+      <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <section class="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">
+      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">Recommended for you</p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900">Next best practice</h2>
+          </div>
+          @if (loading()) {
+            <span class="text-xs text-slate-400">Loading…</span>
+          }
+        </div>
+
+        @if (recommendation(); as rec) {
+          <div class="mt-4 rounded-3xl border border-indigo-200 bg-indigo-50 p-4">
+            <p class="text-lg font-semibold text-indigo-950">{{ rec.recommendedTopicName }}</p>
+            <p class="mt-1 text-sm text-indigo-800">{{ rec.message }}</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
+                (click)="useRecommendedTopic()"
+              >
+                Use this topic
+              </button>
+              <button
+                type="button"
+                class="rounded-full border border-indigo-300 bg-white px-4 py-2 text-sm font-semibold text-indigo-700"
+                (click)="startPractice(rec.recommendedTopicId)"
+              >
+                Start worksheet
+              </button>
+            </div>
+          </div>
+        } @else {
+          <p class="mt-4 text-sm text-slate-500">Recommendations will appear after the topic map loads.</p>
+        }
+
+        <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          @for (topic of recommendedTopicCards(); track topic.id) {
+            <button
+              type="button"
+              class="rounded-2xl border border-slate-200 p-4 text-left transition hover:border-primary hover:shadow-sm"
+              (click)="selectSkill(topic.skillId ?? topic.id)"
+            >
+              <p class="text-sm font-semibold text-slate-900">{{ topic.title }}</p>
+              <p class="mt-2 text-xs text-slate-500">Mastery {{ topic.masteryPercentage }}%</p>
+              <p class="mt-1 text-xs text-slate-500">
+                {{ topic.subtopics.length }} subtopics • {{ topic.difficultyTiers.length }} difficulty tiers
+              </p>
+            </button>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Practice levels</p>
+        <h2 class="mt-1 text-xl font-bold text-slate-900">Foundation → ACT</h2>
+        <p class="mt-2 text-sm text-slate-600">Choose a level, then launch a worksheet with your selected skill.</p>
+
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          @for (level of levels; track level) {
+            <button
+              type="button"
+              class="rounded-2xl px-4 py-3 text-sm font-semibold transition"
+              [class.bg-primary]="selectedLevel() === level"
+              [class.text-white]="selectedLevel() === level"
+              [class.border]="selectedLevel() !== level"
+              [class.border-slate-200]="selectedLevel() !== level"
+              [class.bg-slate-50]="selectedLevel() !== level"
+              [class.text-slate-700]="selectedLevel() !== level"
+              (click)="selectedLevel.set(level)"
+            >
+              {{ level }}
+            </button>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+          (click)="startPractice()"
+        >
+          Start {{ selectedLevel() }} worksheet
+        </button>
+      </article>
+    </section>
+
+    <section class="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Topic map</p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900">See your practice landscape</h2>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <p class="mt-4 text-sm text-slate-500">Loading topic map…</p>
+        } @else {
+          <div class="mt-4 grid gap-3 md:grid-cols-2">
+            @for (topic of browser()?.browseTopics ?? []; track topic.id) {
+              <div class="rounded-2xl border border-slate-200 p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-900">{{ topic.title }}</p>
+                    <p class="mt-1 text-xs text-slate-500">
+                      {{ topic.prerequisites.length ? topic.prerequisites.join(', ') : 'No prerequisites listed' }}
+                    </p>
+                  </div>
+                  <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    {{ topic.masteryPercentage }}%
+                  </span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  @for (tier of topic.difficultyTiers; track tier.name) {
+                    <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700">
+                      {{ tier.name }} {{ tier.min }}–{{ tier.max }}
+                    </span>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="mt-4 rounded-full border border-primary px-3 py-1.5 text-xs font-semibold text-primary"
+                  (click)="selectSkill(topic.skillId ?? topic.id)"
+                >
+                  Practice this topic
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-600">Selected topic</p>
+        <h2 class="mt-1 text-xl font-bold text-slate-900">Skill detail</h2>
+
+        @if (skillLoading()) {
+          <p class="mt-4 text-sm text-slate-500">Loading skill…</p>
+        } @else if (selectedSkill(); as skill) {
+          <div class="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-4">
+            <p class="text-lg font-semibold text-slate-900">{{ skill.name }}</p>
+            <p class="mt-2 text-sm text-slate-700">{{ skill.description }}</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                Difficulty {{ skill.difficulty }}/100
+              </span>
+              @if (skill.ritBand) {
+                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                  RIT {{ skill.ritBand.min }}–{{ skill.ritBand.max }}
+                </span>
+              }
+              <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                Grades {{ skill.gradeRange.min }}–{{ skill.gradeRange.max }}
+              </span>
+            </div>
+            @if (skill.recommendedNextSteps.length > 0) {
+              <ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                @for (step of skill.recommendedNextSteps; track step) {
+                  <li>{{ step }}</li>
+                }
+              </ul>
+            }
+          </div>
+        } @else {
+          <p class="mt-4 text-sm text-slate-500">Choose a topic from the library or map to see details.</p>
+        }
+      </article>
+    </section>
+
+    <section class="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">Topic library</p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900">K–12 + Kumon library</h2>
+            <p class="mt-2 text-sm text-slate-600">Powered by syllabus, skill, and RIT-band endpoints.</p>
+          </div>
+          @if (syllabusLoading()) {
+            <span class="text-xs text-slate-400">Loading…</span>
+          }
+        </div>
+
+        @if (syllabus(); as library) {
+          <div class="mt-4 space-y-4">
+            @for (domain of library.domains; track domain.domainId) {
+              <section class="rounded-2xl border border-slate-200 p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-900">{{ domain.name }}</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ domain.description }}</p>
+                  </div>
+                  <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    {{ domain.totalSkills }} skills
+                  </span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  @for (skill of domain.skills; track skill.skillId) {
+                    <button
+                      type="button"
+                      class="rounded-full border px-3 py-1.5 text-xs font-semibold transition"
+                      [class.border-primary]="selectedSkillId() === skill.skillId"
+                      [class.bg-primary]="selectedSkillId() === skill.skillId"
+                      [class.text-white]="selectedSkillId() === skill.skillId"
+                      [class.border-slate-200]="selectedSkillId() !== skill.skillId"
+                      [class.text-slate-700]="selectedSkillId() !== skill.skillId"
+                      (click)="selectSkill(skill.skillId)"
+                    >
+                      {{ skill.name }}
+                    </button>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+        }
+      </article>
+
+      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">RIT bands</p>
+        <h2 class="mt-1 text-xl font-bold text-slate-900">MAP-aligned lookup</h2>
+
+        <label class="mt-4 block text-sm font-medium text-slate-700">
+          Band
+          <select
+            class="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white"
+            [ngModel]="selectedRitBand()"
+            (ngModelChange)="updateRitBand($event)"
+          >
+            @for (band of ritBandOptions; track band) {
+              <option [ngValue]="band">RIT {{ band }}</option>
+            }
+          </select>
+        </label>
+
+        @if (ritLoading()) {
+          <p class="mt-4 text-sm text-slate-500">Loading RIT skills…</p>
+        } @else if (ritSkills(); as rit) {
+          <div class="mt-4 rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+            <p class="text-sm font-semibold text-emerald-900">{{ rit.bandLabel }}</p>
+            <p class="mt-1 text-xs text-emerald-800">{{ rit.gradeEquivalent }}</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              @for (skill of rit.skills; track skill.skillId) {
+                <button
+                  type="button"
+                  class="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800"
+                  (click)="selectSkill(skill.skillId)"
+                >
+                  {{ skill.name }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </article>
+    </section>
+
+    <section class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-600">AI worksheet generator</p>
+          <h2 class="mt-1 text-xl font-bold text-slate-900">Create an extra challenge sheet</h2>
+          <p class="mt-2 text-sm text-slate-600">Generate an AI worksheet from the currently selected library skill.</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_auto]">
+        <label class="text-sm font-medium text-slate-700">
+          Topic
+          <select
+            class="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white"
+            [ngModel]="selectedSkillId()"
+            (ngModelChange)="selectSkill($event)"
+          >
+            @for (skill of allSkills(); track trackBySkillId($index, skill)) {
+              <option [ngValue]="skill.skillId">{{ skill.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="text-sm font-medium text-slate-700">
+          Difficulty
+          <input
+            class="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white"
+            type="number"
+            min="0"
+            max="100"
+            [ngModel]="aiDifficulty()"
+            (ngModelChange)="updateAiDifficulty($event)"
+          />
+        </label>
+
+        <div class="flex items-end">
+          <button
+            type="button"
+            class="w-full rounded-2xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            [disabled]="aiLoading() || !selectedSkillId()"
+            (click)="generateAiWorksheet()"
+          >
+            {{ aiLoading() ? 'Generating…' : 'Generate AI Worksheet' }}
+          </button>
+        </div>
+      </div>
+
+      @if (aiError()) {
+        <p class="mt-3 text-sm text-red-600">{{ aiError() }}</p>
+      }
+
+      @if (aiWorksheet(); as worksheet) {
+        <div class="mt-4 rounded-3xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-lg font-semibold text-slate-900">{{ worksheet.topic }}</p>
+              <p class="text-sm text-slate-600">Difficulty {{ worksheet.difficulty }} • {{ worksheet.questions.length }} questions</p>
+            </div>
+            @if (worksheet.downloadUrl) {
+              <a
+                class="text-sm font-semibold text-fuchsia-700 underline"
+                [href]="worksheet.downloadUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download
+              </a>
+            }
+          </div>
+
+          <ol class="mt-4 space-y-2">
+            @for (question of worksheet.questions.slice(0, 3); track question.id) {
+              <li class="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
+                {{ question.prompt }}
+              </li>
+            }
+          </ol>
+
+          <p class="mt-3 text-xs text-slate-500">Previewing the first 3 questions.</p>
+        </div>
+      }
+    </section>
+  </div>
+</div>
+

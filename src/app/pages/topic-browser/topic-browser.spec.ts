@@ -123,7 +123,7 @@ describe('TopicBrowserComponent', () => {
     expect(ids).toContain('fluency');
     expect(ids).toContain('conceptual-mastery');
     expect(ids).toContain('reasoning-logic');
-    expect(ids).toContain('map-skills');
+    expect(ids).toContain('map');
     expect(ids).toContain('competition-math');
   });
 

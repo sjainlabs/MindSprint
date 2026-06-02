@@ -5,12 +5,10 @@ import { environment } from '../../environments/environment';
 
 export type SyllabusDomain =
   | 'fluency'
-  | 'conceptual-mastery'
-  | 'reasoning-logic'
-  | 'map-skills'
-  | 'competition-math'
-  | 'adaptive-pathways'
-  | 'gamified-mastery';
+  | 'conceptual'
+  | 'reasoning'
+  | 'map'
+  | 'competition';
 
 export interface SyllabusSkill {
   skillId: string;

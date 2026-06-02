@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { type GradeLevel } from '../../services/diagnostic.service';
 import { OnboardingService, type ConfidenceLevel, type OnboardingGoal } from '../../services/onboarding.service';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
@@ -36,9 +37,18 @@ export class OnboardingComponent {
   readonly avatars = ['Nova', 'Bolt', 'Iris', 'Zen'];
 
   constructor(
+    private readonly route: ActivatedRoute,
+    private readonly authService: AuthService,
     private readonly onboardingService: OnboardingService,
     private readonly router: Router,
-  ) {}
+  ) {
+    const requestedStudentId = this.route.snapshot.queryParamMap.get('studentId')?.trim() ?? '';
+    const activeStudentId = requestedStudentId || this.authService.getStoredStudentId()?.trim() || '';
+    if (activeStudentId) {
+      this.studentId.set(activeStudentId);
+      this.authService.setActiveStudentId(activeStudentId);
+    }
+  }
 
   toggleGoal(goal: OnboardingGoal): void {
     const next = new Set(this.goals());
@@ -74,7 +84,10 @@ export class OnboardingComponent {
         next: () => {
           this.successMessage.set('Onboarding complete. Personalized learning path unlocked.');
           this.loading.set(false);
-          void this.router.navigate(['/topics']);
+          this.authService.setActiveStudentId(this.studentId());
+          void this.router.navigate(['/practice-hub'], {
+            queryParams: { studentId: this.studentId() },
+          });
         },
         error: () => {
           this.errorMessage.set('Unable to complete onboarding right now.');

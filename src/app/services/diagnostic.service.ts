@@ -3,16 +3,36 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export type LearningLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+export type LearningLevel =
+  | 'Foundation'
+  | 'Beginner'
+  | 'Elementary'
+  | 'Intermediate'
+  | 'PreAlgebra'
+  | 'Algebra'
+  | 'Advanced'
+  | 'ACT';
 export type GradeLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 const LEARNING_LEVEL_NORMALIZATION: Record<string, LearningLevel> = {
+  foundation: 'Foundation',
+  'foundation level': 'Foundation',
   beginner: 'Beginner',
   'beginner level': 'Beginner',
+  elementary: 'Elementary',
+  'elementary level': 'Elementary',
   intermediate: 'Intermediate',
   'intermediate level': 'Intermediate',
+  prealgebra: 'PreAlgebra',
+  'pre-algebra': 'PreAlgebra',
+  'pre algebra': 'PreAlgebra',
+  algebra: 'Algebra',
+  'algebra level': 'Algebra',
   advanced: 'Advanced',
   'advanced level': 'Advanced',
+  act: 'ACT',
+  'act prep': 'ACT',
+  'act level': 'ACT',
   शुरुआती: 'Beginner',
   प्रारंभिक: 'Beginner',
   'शुरुआती स्तर': 'Beginner',

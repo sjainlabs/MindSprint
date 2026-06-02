@@ -1,0 +1,256 @@
+<div class="min-h-screen bg-slate-50 px-4 py-5 sm:px-6">
+  <div class="mx-auto flex max-w-6xl flex-col gap-5">
+    <header class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Insights</p>
+          <h1 class="mt-1 text-3xl font-bold text-slate-900">Progress and learning analytics</h1>
+          <p class="mt-2 text-sm text-slate-600">Analytics stay here so worksheet solving stays fast and focused.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <app-language-toggle />
+          <a [routerLink]="['/practice-hub']" [queryParams]="{ studentId: studentId() }" class="text-sm font-medium text-primary underline">Practice Hub</a>
+          <a [routerLink]="['/profile']" [queryParams]="{ studentId: studentId() }" class="text-sm font-medium text-primary underline">Profile</a>
+        </div>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="rounded-3xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">
+        Loading insights…
+      </div>
+    } @else if (errorMessage()) {
+      <div class="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {{ errorMessage() }}
+      </div>
+    } @else {
+      <section class="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Student profile summary</p>
+          <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-4">
+              <div class="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-3xl">
+                {{ summary().avatar }}
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">{{ summary().name }}</h2>
+                <p class="text-sm text-slate-600">Grade {{ summary().grade }} • Age {{ summary().age }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-center">
+              <div class="rounded-2xl bg-amber-50 px-4 py-3">
+                <p class="text-xs text-slate-500">XP</p>
+                <p class="text-xl font-bold text-amber-700">{{ summary().xp }}</p>
+              </div>
+              <div class="rounded-2xl bg-emerald-50 px-4 py-3">
+                <p class="text-xs text-slate-500">Streak</p>
+                <p class="text-xl font-bold text-emerald-700">{{ summary().streak }}</p>
+              </div>
+              <div class="rounded-2xl bg-blue-50 px-4 py-3">
+                <p class="text-xs text-slate-500">Level</p>
+                <p class="text-xl font-bold text-blue-700">{{ summary().level }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">Adaptive recommendation</p>
+          <h2 class="mt-1 text-xl font-bold text-slate-900">What to practice next</h2>
+
+          @if (adaptiveRecommendation(); as rec) {
+            <div class="mt-4 rounded-3xl border border-indigo-200 bg-indigo-50 p-4">
+              <p class="text-lg font-semibold text-indigo-950">
+                {{ rec['recommendedTopic'] || rec['recommendedTopicId'] || activeTopicId() }}
+              </p>
+              <p class="mt-1 text-sm text-indigo-800">Level {{ rec['recommendedLevel'] || 'Beginner' }}</p>
+              <p class="mt-1 text-sm text-indigo-800">Target difficulty {{ rec['targetDifficulty'] || '—' }}</p>
+
+              @if (rec['focusOperations']; as operations) {
+                <div class="mt-3 flex flex-wrap gap-2">
+                  @for (operation of $any(operations); track operation) {
+                    <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-indigo-700">
+                      {{ operation }}
+                    </span>
+                  }
+                </div>
+              }
+
+              @if (rec['rationale']; as rationale) {
+                <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-indigo-900">
+                  @if (isArray(rationale)) {
+                    @for (line of $any(rationale); track line) {
+                      <li>{{ line }}</li>
+                    }
+                  } @else {
+                    <li>{{ rationale }}</li>
+                  }
+                </ul>
+              }
+
+              <button
+                type="button"
+                class="mt-4 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white"
+                (click)="startRecommendedPractice()"
+              >
+                Open recommended worksheet
+              </button>
+            </div>
+          } @else {
+            <p class="mt-4 text-sm text-slate-500">Adaptive recommendation is not available yet.</p>
+          }
+        </article>
+      </section>
+
+      <section class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
+        <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Operation mastery</p>
+              <h2 class="mt-1 text-xl font-bold text-slate-900">Core operations</h2>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            @for (entry of operationMastery(); track trackByLabel($index, entry)) {
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="font-medium text-slate-700">{{ entry.label }}</span>
+                  <span class="font-semibold text-slate-900">{{ entry.value }}%</span>
+                </div>
+                <div class="h-2.5 rounded-full bg-slate-100">
+                  <div
+                    class="h-2.5 rounded-full bg-primary transition-all"
+                    [style.width.%]="progressWidth(entry.value)"
+                  ></div>
+                </div>
+              </div>
+            }
+            @if (operationMastery().length === 0) {
+              <p class="text-sm text-slate-500">Operation mastery will appear once insights data is available.</p>
+            }
+          </div>
+        </article>
+
+        <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-600">Badges</p>
+          <h2 class="mt-1 text-xl font-bold text-slate-900">Milestones earned</h2>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            @if (badges().length === 0) {
+              <p class="text-sm text-slate-500">Badges will appear here as the student builds momentum.</p>
+            }
+            @for (badge of badges(); track badge) {
+              <span class="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800">
+                {{ badge }}
+              </span>
+            }
+          </div>
+        </article>
+      </section>
+
+      <section class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
+        <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">Topic mastery</p>
+              <h2 class="mt-1 text-xl font-bold text-slate-900">Topics and subtopics</h2>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            @for (topic of fullInsights()?.topics ?? []; track topic.topicId) {
+              <button
+                type="button"
+                class="rounded-full border px-3 py-1.5 text-sm font-semibold transition"
+                [class.border-primary]="activeTopicId() === topic.topicId"
+                [class.bg-primary]="activeTopicId() === topic.topicId"
+                [class.text-white]="activeTopicId() === topic.topicId"
+                [class.border-slate-200]="activeTopicId() !== topic.topicId"
+                [class.text-slate-700]="activeTopicId() !== topic.topicId"
+                (click)="selectTopic(topic.topicId)"
+              >
+                {{ topic.name }}
+              </button>
+            }
+          </div>
+
+          <div class="mt-5 space-y-3">
+            @for (entry of topicMastery(); track trackByLabel($index, entry)) {
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="font-medium text-slate-700">{{ entry.label }}</span>
+                  <span class="font-semibold text-slate-900">{{ entry.value }}%</span>
+                </div>
+                <div class="h-2.5 rounded-full bg-slate-100">
+                  <div class="h-2.5 rounded-full bg-violet-500" [style.width.%]="progressWidth(entry.value)"></div>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (subtopicBreakdown().length > 0) {
+            <div class="mt-5 rounded-3xl border border-violet-200 bg-violet-50 p-4">
+              <p class="text-sm font-semibold text-violet-950">Detailed topic analysis</p>
+              <div class="mt-3 space-y-3">
+                @for (subtopic of subtopicBreakdown(); track trackByLabel($index, subtopic)) {
+                  <div class="rounded-2xl bg-white px-4 py-3">
+                    <div class="flex items-center justify-between gap-3 text-sm">
+                      <span class="font-medium text-slate-800">{{ subtopic.label }}</span>
+                      <span class="text-slate-500">{{ subtopic.mastery }}% mastery • {{ subtopic.accuracy }}% accuracy</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </article>
+
+        <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-600">Analytics</p>
+          <h2 class="mt-1 text-xl font-bold text-slate-900">Performance snapshot</h2>
+
+          <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            @for (card of analyticsCards(); track trackByLabel($index, card)) {
+              <div class="rounded-2xl bg-cyan-50 px-4 py-4 text-center">
+                <p class="text-xs font-medium text-slate-500">{{ card.label }}</p>
+                <p class="mt-1 text-2xl font-bold text-cyan-800">{{ card.value }}</p>
+              </div>
+            }
+          </div>
+
+          @if (commonErrors().length > 0) {
+            <div class="mt-5 rounded-3xl border border-cyan-200 bg-cyan-50 p-4">
+              <p class="text-sm font-semibold text-cyan-950">Common errors</p>
+              <ul class="mt-3 space-y-2 text-sm text-cyan-900">
+                @for (item of commonErrors(); track item.code || item.name || $index) {
+                  <li class="rounded-2xl bg-white px-4 py-3">
+                    {{ item.name || item.code || 'Observed pattern' }}
+                    <span class="text-slate-500">• {{ item.count || 0 }} times</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </article>
+      </section>
+
+      <section class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-rose-600">Recommended next steps</p>
+        <h2 class="mt-1 text-xl font-bold text-slate-900">What to do after this</h2>
+
+        <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          @if (recommendedNextSteps().length === 0) {
+            <p class="text-sm text-slate-500">Recommended next steps will appear once the backend returns guidance.</p>
+          }
+          @for (step of recommendedNextSteps(); track step) {
+            <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-900">
+              {{ step }}
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</div>
+

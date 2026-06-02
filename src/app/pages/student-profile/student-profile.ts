@@ -1,43 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { RouterLink } from '@angular/router';
 import {
   DEFAULT_STUDENT_ID,
   StudentIntelligenceService,
   type StudentProfile,
 } from '../../services/student-intelligence.service';
+import { OnboardingService, type OnboardingProfile } from '../../services/onboarding.service';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
-import { TranslatePipe } from '../../pipes/translate.pipe';
-import { TranslationService } from '../../services/translation.service';
-import {
-  MasteryEngineService,
-  type MasterySkillState,
-} from '../../core/mastery/mastery-engine.service';
-import { MasteryBadgeComponent } from '../../components/mastery-badge/mastery-badge.component';
-
-export interface SuperSyllabusScores {
-  fluencyScore: number;
-  conceptualMasteryScore: number;
-  reasoningScore: number;
-  mapRITEstimate: number;
-  competitionLevel: 'None' | 'AMC-8' | 'AMC-10' | 'MATHCOUNTS' | 'AIME';
-}
-
-function deriveScores(profile: StudentProfile): SuperSyllabusScores {
-  const ops = profile.masteryLevels;
-  const avg = (ops.addition + ops.subtraction + ops.multiplication + ops.division) / 4;
-  const fluencyScore = Math.round((ops.addition + ops.subtraction) / 2);
-  const conceptualMasteryScore = Math.round((ops.multiplication + ops.division) / 2);
-  const reasoningScore = Math.min(100, Math.round(avg * 1.1));
-  const mapRITEstimate = Math.round(180 + avg * 0.9);
-  let competitionLevel: SuperSyllabusScores['competitionLevel'] = 'None';
-  if (avg >= 90) competitionLevel = 'AIME';
-  else if (avg >= 80) competitionLevel = 'MATHCOUNTS';
-  else if (avg >= 65) competitionLevel = 'AMC-10';
-  else if (avg >= 50) competitionLevel = 'AMC-8';
-  return { fluencyScore, conceptualMasteryScore, reasoningScore, mapRITEstimate, competitionLevel };
-}
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-student-profile',
@@ -47,78 +20,89 @@ function deriveScores(profile: StudentProfile): SuperSyllabusScores {
     FormsModule,
     RouterLink,
     LanguageToggleComponent,
-    TranslatePipe,
-    MasteryBadgeComponent,
   ],
   templateUrl: './student-profile.html',
   styleUrl: './student-profile.css',
 })
 export class StudentProfileComponent implements OnInit {
-  readonly t = inject(TranslationService);
   studentId = signal(DEFAULT_STUDENT_ID);
+  studentName = signal('');
   profile = signal<StudentProfile | null>(null);
-  scores = signal<SuperSyllabusScores | null>(null);
-  weakSkills = signal<MasterySkillState[]>([]);
+  onboarding = signal<OnboardingProfile | null>(null);
   loading = signal(false);
+  onboardingLoading = signal(false);
   errorMessage = signal('');
+  onboardingErrorMessage = signal('');
 
   constructor(
+    private readonly route: ActivatedRoute,
+    private readonly authService: AuthService,
     private readonly studentIntelligenceService: StudentIntelligenceService,
-    private readonly masteryEngine: MasteryEngineService,
+    private readonly onboardingService: OnboardingService,
   ) {}
 
   ngOnInit(): void {
+    const requestedStudentId = this.route.snapshot.queryParamMap.get('studentId')?.trim() ?? '';
+    const activeStudentId = requestedStudentId || this.authService.getStoredStudentId()?.trim() || '';
+    if (activeStudentId) {
+      this.studentId.set(activeStudentId);
+      this.authService.setActiveStudentId(activeStudentId);
+      void this.resolveStudentName(activeStudentId);
+    }
+
     this.loadProfile();
   }
 
   loadProfile(): void {
+    const activeStudentId = this.studentId().trim() || this.authService.getStoredStudentId()?.trim() || '';
+    if (!activeStudentId || activeStudentId === DEFAULT_STUDENT_ID) {
+      this.errorMessage.set('Student not found. Select a child from the parent dashboard first.');
+      this.onboarding.set(null);
+      this.profile.set(null);
+      this.loading.set(false);
+      this.onboardingLoading.set(false);
+      return;
+    }
+
+    this.studentId.set(activeStudentId);
+    this.authService.setActiveStudentId(activeStudentId);
+    void this.resolveStudentName(activeStudentId);
     this.loading.set(true);
+    this.onboardingLoading.set(true);
     this.errorMessage.set('');
+    this.onboardingErrorMessage.set('');
+
     this.studentIntelligenceService.getStudentProfile(this.studentId()).subscribe({
       next: (profile) => {
         this.profile.set(profile);
-        this.scores.set(deriveScores(profile));
-        this.loadWeakSkills();
         this.loading.set(false);
       },
       error: () => {
+        this.profile.set(null);
         this.errorMessage.set('Unable to load student profile.');
         this.loading.set(false);
       },
     });
-  }
 
-  scoreColor(value: number): string {
-    if (value >= 80) return 'text-emerald-600';
-    if (value >= 55) return 'text-amber-600';
-    return 'text-red-500';
-  }
-
-  barColor(value: number): string {
-    if (value >= 80) return 'bg-emerald-500';
-    if (value >= 55) return 'bg-amber-500';
-    return 'bg-red-400';
-  }
-
-  operationKeys(): Array<'addition' | 'subtraction' | 'multiplication' | 'division'> {
-    return ['addition', 'subtraction', 'multiplication', 'division'];
-  }
-
-  masteryLabel(level: MasterySkillState['level']): string {
-    if (level === 'mastered') return 'Mastered';
-    if (level === 'proficient') return 'Proficient';
-    if (level === 'developing') return 'Developing';
-    return 'Not started';
-  }
-
-  private loadWeakSkills(): void {
-    this.masteryEngine.fetchMasteryState(this.studentId()).subscribe({
-      next: (state) => {
-        this.weakSkills.set(state.weakSkills);
+    this.onboardingService.getOnboarding(this.studentId()).subscribe({
+      next: (onboarding) => {
+        this.onboarding.set(onboarding);
+        this.onboardingLoading.set(false);
       },
       error: () => {
-        this.weakSkills.set([]);
+        this.onboarding.set(null);
+        this.onboardingErrorMessage.set('Onboarding details are not available yet.');
+        this.onboardingLoading.set(false);
       },
     });
+  }
+
+  private async resolveStudentName(studentId: string): Promise<void> {
+    try {
+      const student = await this.authService.getStudentProfile(studentId);
+      this.studentName.set(student?.name?.trim() || 'Student');
+    } catch {
+      this.studentName.set('Student');
+    }
   }
 }

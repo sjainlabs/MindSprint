@@ -64,9 +64,9 @@ const DAILY_QUEST_TARGET = 3;
 /** Fallback speed (ms per number) used when the payload omits speedMs. */
 const DEFAULT_FLASH_SPEED_MS = 600;
 const MAP_CHALLENGE_STORAGE_KEY_PREFIX = 'mindsprint.map.challenge';
-const DEFAULT_REASONING_SKILL_ID = 'reasoning-logic';
-const DEFAULT_FLUENCY_SKILL_ID = 'addition';
-const DEFAULT_BOSS_SKILL_ID = 'boss-battle';
+const DEFAULT_REASONING_SKILL_ID = 'reasoning-patterns-and-classification';
+const DEFAULT_FLUENCY_SKILL_ID = 'fluency-add-sub-within-100';
+const DEFAULT_BOSS_SKILL_ID = 'competition-amc-algebra-geometry';
 const GAME_STATE = {
   START: 'START',
   NEXT: 'NEXT',

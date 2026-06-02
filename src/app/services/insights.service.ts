@@ -19,7 +19,7 @@ export class InsightsService {
    */
   getFullInsights(studentId: string, topicId?: string): Observable<FullInsightsResponse> {
     const tid = topicId ? `/${encodeURIComponent(topicId)}` : '';
-    return this.http.get<FullInsightsResponse>(`${this.apiRoot}/api/insights/full/${encodeURIComponent(studentId)}${tid}`);
+    return this.http.get<FullInsightsResponse>(`${this.apiRoot}/insights/full/${encodeURIComponent(studentId)}${tid}`);
   }
 
   /**
@@ -27,7 +27,7 @@ export class InsightsService {
    * GET /api/insights/topic/:studentId/:topicId
    */
   getTopicInsight(studentId: string, topicId: string): Observable<TopicInsight> {
-    return this.http.get<TopicInsight>(`${this.apiRoot}/api/insights/topic/${encodeURIComponent(studentId)}/${encodeURIComponent(topicId)}`);
+    return this.http.get<TopicInsight>(`${this.apiRoot}/insights/topic/${encodeURIComponent(studentId)}/${encodeURIComponent(topicId)}`);
   }
 
   /**
@@ -35,7 +35,7 @@ export class InsightsService {
    * GET /api/insights/summary/:studentId/:topicId
    */
   getParentSummary(studentId: string, topicId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiRoot}/api/insights/summary/${encodeURIComponent(studentId)}/${encodeURIComponent(topicId)}`);
+    return this.http.get<any>(`${this.apiRoot}/insights/summary/${encodeURIComponent(studentId)}/${encodeURIComponent(topicId)}`);
   }
 
   /**
@@ -44,7 +44,7 @@ export class InsightsService {
    */
   getRecommendation(studentId: string, topicId?: string): Observable<any> {
     const tid = topicId ? `/${encodeURIComponent(topicId)}` : '';
-    return this.http.get<any>(`${this.apiRoot}/api/insights/recommendation/${encodeURIComponent(studentId)}${tid}`);
+    return this.http.get<any>(`${this.apiRoot}/insights/recommendation/${encodeURIComponent(studentId)}${tid}`);
   }
 
   /**
@@ -53,7 +53,7 @@ export class InsightsService {
    * payload example: { studentId, topicId, worksheetId, answers: [{questionId, answer, correct, timeMs}], metadata: {...} }
    */
   submitWorksheetResults(payload: any): Observable<any> {
-    return this.http.post<any>(`${this.apiRoot}/api/insights/submit`, payload);
+    return this.http.post<any>(`${this.apiRoot}/insights/submit`, payload);
   }
 
   /**

@@ -8,8 +8,11 @@ import { DiagnosticStartComponent } from './pages/diagnostic-start/diagnostic-st
 import { DiagnosticTestComponent } from './components/diagnostic-test/diagnostic-test';
 import { WorksheetPageComponent } from './components/worksheet-page/worksheet-page';
 import { GameModeComponent } from './pages/game-mode/game-mode';
-import { TopicBrowserComponent } from './pages/topic-browser/topic-browser';
 import { MapPrepComponent } from './pages/map-prep/map-prep';
+import { PracticeHubPageComponent } from './pages/practice-hub/practice-hub.component';
+import { InsightsPageComponent } from './pages/insights/insights-page.component';
+import { StudentProfileComponent } from './pages/student-profile/student-profile';
+import { OnboardingComponent } from './pages/onboarding/onboarding';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { parentMaterialsGuard } from './guards/parent-materials.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
@@ -54,6 +57,8 @@ export const routes: Routes = [
   { path: 'results', component: Results },
   { path: 'diagnostic', component: DiagnosticStartComponent },
   { path: 'diagnostic/test', component: DiagnosticTestComponent },
+  { path: 'onboarding', component: OnboardingComponent },
+  { path: 'profile', component: StudentProfileComponent },
   {
     path: 'guide/kids',
     loadComponent: () =>
@@ -64,7 +69,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/parent-guide/parent-guide').then((module) => module.ParentGuideComponent),
   },
-  { path: 'topics', component: TopicBrowserComponent },
+  { path: 'practice-hub', component: PracticeHubPageComponent },
+  { path: 'topics', redirectTo: '/practice-hub', pathMatch: 'full' },
+  { path: 'insights', component: InsightsPageComponent },
+  { path: 'insights/:studentId/:topicId', component: InsightsPageComponent },
+  { path: 'insights/:studentId', component: InsightsPageComponent },
   { path: 'map-prep', component: MapPrepComponent },
   { path: 'worksheet', redirectTo: '/worksheet/Beginner', pathMatch: 'full' },
   { path: 'worksheet/:level', component: WorksheetPageComponent },

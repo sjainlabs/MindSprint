@@ -244,6 +244,16 @@ export class AuthService {
     return this.hasStorage() ? window.localStorage.getItem(this.studentStorageKey) : null;
   }
 
+  setActiveStudentId(studentId: string): void {
+    const normalized = studentId.trim();
+    if (!normalized) {
+      this.clearStudentId();
+      return;
+    }
+
+    this.setStudentId(normalized);
+  }
+
   private hasStorage(): boolean {
     return typeof window !== 'undefined' && !!window.localStorage;
   }

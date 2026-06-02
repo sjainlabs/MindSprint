@@ -125,12 +125,10 @@ describe('SyllabusService', () => {
   it('getDomain supports all Super-Syllabus domain IDs', () => {
     const domains = [
       'fluency',
-      'conceptual-mastery',
-      'reasoning-logic',
-      'map-skills',
-      'competition-math',
-      'adaptive-pathways',
-      'gamified-mastery',
+      'conceptual',
+      'reasoning',
+      'map',
+      'competition',
     ] as const;
 
     for (const domain of domains) {

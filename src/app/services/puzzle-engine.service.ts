@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { type MasteryState } from '../core/mastery/mastery-engine.service';
-
-const AI_PUZZLE_API_ROOT = 'https://mindsprint-5a5a0849665d.herokuapp.com/api';
+import { environment } from '../../environments/environment';
 
 export type PuzzleType =
   | 'pattern'
@@ -45,15 +44,22 @@ export interface PuzzleSubmitResult {
 
 export interface SubmitPuzzleAnswersPayload {
   studentId: string;
-  mode: 'ai-puzzle';
-  score: number;
-  accuracy: number;
-  streak: number;
+  puzzleSessionId: string;
+  answers: Array<{
+    puzzleId: string;
+    answer: string | number;
+  }>;
 }
 
 export interface SubmitPuzzleAnswersResponse {
-  saved?: boolean;
-  xpEarned?: number;
+  score: number;
+  total: number;
+  results: Array<{
+    puzzleId: string;
+    correct: boolean;
+    correctAnswer?: string | number;
+  }>;
+  masterySummary?: Record<string, { level: string; accuracy: number; attempts: number; speed: number }>;
   mastery?: MasteryState;
 }
 
@@ -61,34 +67,32 @@ export interface SubmitPuzzleAnswersResponse {
   providedIn: 'root',
 })
 export class PuzzleEngineService {
+  private readonly apiRoot = environment.apiUrl;
+
   constructor(private readonly http: HttpClient) {}
 
   generatePuzzles(skillId: string, difficulty: number): Observable<GeneratePuzzlesResponse> {
-    let params = new HttpParams().set('mode', 'ai-puzzle');
-
-    if (skillId.trim()) {
-      params = params.set('skillId', skillId.trim());
-    }
-    if (Number.isFinite(difficulty)) {
-      params = params.set('difficulty', String(Math.max(1, Math.min(100, Math.round(difficulty)))));
-    }
-
+    const payload = {
+      skillId: skillId.trim() || 'reasoning-patterns-and-classification',
+      difficulty: Number.isFinite(difficulty)
+        ? Math.max(1, Math.min(100, Math.round(difficulty)))
+        : 50,
+      count: 3,
+    };
     return this.http
-      .get<unknown>(`${AI_PUZZLE_API_ROOT}/game/challenge`, { params })
+      .post<unknown>(`${this.apiRoot}/puzzles/generate`, payload)
       .pipe(map((response) => this.mapPuzzleResponse(response)));
   }
 
   submitPuzzleAnswers(payload: SubmitPuzzleAnswersPayload): Observable<SubmitPuzzleAnswersResponse> {
     const normalizedPayload: SubmitPuzzleAnswersPayload = {
       studentId: String(payload.studentId ?? '').trim(),
-      mode: 'ai-puzzle',
-      score: Math.max(0, Math.min(100, Math.round(Number(payload.score) || 0))),
-      accuracy: Math.max(0, Math.min(100, Math.round(Number(payload.accuracy) || 0))),
-      streak: Math.max(0, Math.floor(Number(payload.streak) || 0)),
+      puzzleSessionId: String(payload.puzzleSessionId ?? '').trim(),
+      answers: Array.isArray(payload.answers) ? payload.answers : [],
     };
 
     return this.http
-      .post<unknown>(`${AI_PUZZLE_API_ROOT}/game/submit`, normalizedPayload)
+      .post<unknown>(`${this.apiRoot}/puzzles/submit`, normalizedPayload)
       .pipe(map((response) => this.mapSubmissionResponse(response)));
   }
 
@@ -142,14 +146,27 @@ export class PuzzleEngineService {
 
   mapSubmissionResponse(raw: unknown): SubmitPuzzleAnswersResponse {
     const response = raw as {
-      saved?: unknown;
-      xpEarned?: unknown;
+      score?: unknown;
+      total?: unknown;
+      results?: Array<{ puzzleId?: unknown; correct?: unknown; correctAnswer?: unknown }>;
+      masterySummary?: Record<string, { level: string; accuracy: number; attempts: number; speed: number }>;
       mastery?: MasteryState;
     };
 
     return {
-      saved: Boolean(response?.saved),
-      xpEarned: Number.isFinite(Number(response?.xpEarned)) ? Number(response?.xpEarned) : 0,
+      score: Number.isFinite(Number(response?.score)) ? Number(response?.score) : 0,
+      total: Number.isFinite(Number(response?.total)) ? Number(response?.total) : 0,
+      results: Array.isArray(response?.results)
+        ? response.results.map((result) => ({
+          puzzleId: String(result?.puzzleId ?? ''),
+          correct: Boolean(result?.correct),
+          correctAnswer:
+            typeof result?.correctAnswer === 'number' || typeof result?.correctAnswer === 'string'
+              ? result.correctAnswer
+              : undefined,
+        }))
+        : [],
+      masterySummary: response?.masterySummary,
       mastery: response?.mastery,
     };
   }

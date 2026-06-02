@@ -16,6 +16,7 @@ import {
   type DynamicPuzzle,
   type PuzzleInputType,
   type PuzzleSubmitResult,
+  type SubmitPuzzleAnswersResponse,
 } from '../../../services/puzzle-engine.service';
 
 @Component({
@@ -139,14 +140,16 @@ export class PuzzleGameComponent implements OnInit {
     this.puzzleEngineService
       .submitPuzzleAnswers({
         studentId: this.studentId(),
-        mode: 'ai-puzzle',
-        score: evaluation.accuracy,
-        accuracy: evaluation.accuracy,
-        streak: this.streak(),
+        puzzleSessionId: this.puzzleSessionId(),
+        answers: this.currentPuzzles().map((puzzle) => ({
+          puzzleId: puzzle.puzzleId,
+          answer: this.studentAnswers()[puzzle.puzzleId] ?? '',
+        })),
       })
       .pipe(finalize(() => this.submittingAnswers.set(false)))
       .subscribe({
         next: (response) => {
+          this.applyBackendSubmitResponse(response);
           if (response?.mastery) {
             this.applyMasteryState(response.mastery);
             return;
@@ -167,6 +170,33 @@ export class PuzzleGameComponent implements OnInit {
           });
         },
       });
+  }
+
+  private applyBackendSubmitResponse(response: SubmitPuzzleAnswersResponse): void {
+    if (!Array.isArray(response?.results) || response.results.length === 0) {
+      return;
+    }
+
+    const localAnswerMap = this.studentAnswers();
+    const normalizedResults: Record<string, PuzzleSubmitResult> = {};
+    response.results.forEach((result) => {
+      const puzzleId = String(result.puzzleId ?? '').trim();
+      if (!puzzleId) {
+        return;
+      }
+      normalizedResults[puzzleId] = {
+        puzzleId,
+        correct: Boolean(result.correct),
+        studentAnswer: String(localAnswerMap[puzzleId] ?? ''),
+        correctAnswer: String(result.correctAnswer ?? ''),
+      };
+    });
+
+    if (Object.keys(normalizedResults).length > 0) {
+      this.puzzleResults.set(normalizedResults);
+      this.score.set(Number.isFinite(response.score) ? response.score : this.score());
+      this.total.set(Number.isFinite(response.total) ? response.total : this.total());
+    }
   }
 
   handleRetry(): void {

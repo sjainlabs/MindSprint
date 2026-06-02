@@ -2,6 +2,10 @@
   display: block;
 }
 
+input[type='text'] {
+  min-height: 3.75rem;
+}
+
 input[type='number'] {
   outline: none;
 }
@@ -9,4 +13,8 @@ input[type='number'] {
 input[type='number']:focus {
   border-color: rgb(59 130 246);
   box-shadow: 0 0 0 2px rgb(59 130 246 / 0.2);
+}
+
+.sticky-submit-bar {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
 }

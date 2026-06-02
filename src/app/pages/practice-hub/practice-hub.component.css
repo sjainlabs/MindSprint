@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+input,
+select,
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+

@@ -1,194 +1,128 @@
-<div class="min-h-screen bg-gray-50 py-8 px-4">
-  <div class="max-w-3xl mx-auto space-y-6">
-    <!-- Header -->
-    <div class="bg-white rounded-xl shadow p-6 flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold text-primary">{{ 'profile.title' | translate }}</h1>
-        <p class="text-sm text-gray-600">{{ 'profile.subtitle' | translate }}</p>
+<div class="min-h-screen bg-slate-50 px-4 py-5 sm:px-6">
+  <div class="mx-auto flex max-w-4xl flex-col gap-5">
+    <header class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Profile</p>
+          <h1 class="mt-1 text-3xl font-bold text-slate-900">Student profile and onboarding</h1>
+          <p class="mt-2 text-sm text-slate-600">Use this page for identity, grade, and setup preferences. Analytics live on Insights.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <app-language-toggle />
+          <a [routerLink]="['/practice-hub']" [queryParams]="{ studentId: studentId() }" class="text-sm font-medium text-primary underline">Practice Hub</a>
+          <a [routerLink]="['/insights', studentId()]" class="text-sm font-medium text-primary underline">Insights</a>
+        </div>
       </div>
-      <div class="flex items-center gap-3">
-        <app-language-toggle />
-        <a routerLink="/welcome" class="text-sm underline text-primary">{{ 'nav.backHome' | translate }}</a>
-      </div>
-    </div>
 
-    <!-- Controls -->
-    <div class="bg-white rounded-xl shadow p-4 flex gap-3">
-      <label class="flex-1 text-sm text-gray-600">{{ 'profile.studentId' | translate }}
-        <input
-          class="mt-1 w-full border rounded px-3 py-2"
-          [ngModel]="studentId()"
-          (ngModelChange)="studentId.set($event)"
-          (blur)="loadProfile()"
-        />
-      </label>
-      <div class="flex items-end">
-        <button type="button" class="bg-primary text-white rounded-lg px-4 py-2 font-semibold" (click)="loadProfile()">
-          {{ 'profile.load' | translate }}
-        </button>
+      <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Student</p>
+          <p class="mt-1 text-base font-semibold text-slate-900">{{ studentName() || 'Student' }}</p>
+        </div>
+        <div class="flex items-end gap-2">
+          <button
+            type="button"
+            class="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm"
+            (click)="loadProfile()"
+          >
+            Load Profile
+          </button>
+          <a [routerLink]="['/onboarding']" [queryParams]="{ studentId: studentId() }" class="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700">
+            Edit Onboarding
+          </a>
+        </div>
       </div>
-    </div>
+    </header>
 
     @if (loading()) {
-      <div class="bg-white rounded-xl shadow p-6 text-sm text-gray-500">{{ 'profile.loading' | translate }}</div>
+      <div class="rounded-3xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">Loading profile…</div>
     } @else if (errorMessage()) {
-      <div class="bg-white rounded-xl shadow p-6 text-sm text-red-600">{{ errorMessage() }}</div>
+      <div class="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage() }}</div>
     } @else if (profile(); as p) {
-      <!-- Core info -->
-      <div class="bg-white rounded-xl shadow p-5">
-        <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-3xl">
-            {{ p.avatar ?? '🎓' }}
-          </div>
-          <div>
-            <p class="font-bold text-lg">{{ p.studentId }}</p>
-            <p class="text-sm text-gray-500">{{ 'profile.grade' | translate }} {{ p.grade }} · {{ 'profile.age' | translate }} {{ p.age }} · {{ 'profile.level' | translate }} {{ p.level }}</p>
-          </div>
-          <div class="ml-auto text-right">
-            <p class="text-xs text-gray-500">{{ 'profile.xp' | translate }}</p>
-            <p class="text-2xl font-bold text-amber-600">{{ p.xp }}</p>
-          </div>
-        </div>
-
-        <div class="mt-4 flex flex-wrap gap-2">
-          @for (badge of p.badges; track badge) {
-            <span class="rounded-full bg-primary/10 text-primary text-xs px-3 py-1 font-semibold">{{ badge }}</span>
-          }
-        </div>
-      </div>
-
-      <!-- Super-Syllabus Scores -->
-      @if (scores(); as s) {
-        <div class="bg-white rounded-xl shadow p-5">
-          <h2 class="text-lg font-bold text-primary mb-4">{{ 'profile.superSyllabusScores' | translate }}</h2>
-
-          <!-- Fluency Score -->
-          <div class="mb-4">
-            <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">{{ 'profile.fluencyScore' | translate }}</span>
-              <span class="text-sm font-bold" [ngClass]="scoreColor(s.fluencyScore)">{{ s.fluencyScore }}/100</span>
+      <section class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Student summary</p>
+        <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-4">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-3xl">
+              {{ p.avatar ?? '🎓' }}
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-2.5">
-              <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.fluencyScore)" [style.width.%]="s.fluencyScore"></div>
-            </div>
-            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.fluencyNote' | translate }}</p>
-          </div>
-
-          <!-- Conceptual Mastery Score -->
-          <div class="mb-4">
-            <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">{{ 'profile.conceptualScore' | translate }}</span>
-              <span class="text-sm font-bold" [ngClass]="scoreColor(s.conceptualMasteryScore)">{{ s.conceptualMasteryScore }}/100</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2.5">
-              <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.conceptualMasteryScore)" [style.width.%]="s.conceptualMasteryScore"></div>
-            </div>
-            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.conceptualNote' | translate }}</p>
-          </div>
-
-          <!-- Reasoning Score -->
-          <div class="mb-4">
-            <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">{{ 'profile.reasoningScore' | translate }}</span>
-              <span class="text-sm font-bold" [ngClass]="scoreColor(s.reasoningScore)">{{ s.reasoningScore }}/100</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2.5">
-              <div class="h-2.5 rounded-full transition-all" [ngClass]="barColor(s.reasoningScore)" [style.width.%]="s.reasoningScore"></div>
-            </div>
-            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.reasoningNote' | translate }}</p>
-          </div>
-
-          <!-- MAP RIT Estimate -->
-          <div class="mb-4">
-            <div class="flex justify-between mb-1">
-              <span class="text-sm font-semibold">{{ 'profile.mapRIT' | translate }}</span>
-              <span class="text-sm font-bold text-blue-600">{{ s.mapRITEstimate }}</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2.5">
-              <div
-                class="bg-blue-500 h-2.5 rounded-full transition-all"
-                [style.width.%]="((s.mapRITEstimate - 180) / 100) * 100"
-              ></div>
-            </div>
-            <p class="text-xs text-gray-400 mt-0.5">{{ 'profile.mapRITNote' | translate }}</p>
-            <a routerLink="/map-prep" class="text-xs text-primary underline mt-1 inline-block">{{ 'profile.practiceMapSkills' | translate }}</a>
-          </div>
-
-          <!-- Competition Math Level -->
-          <div class="rounded-lg border p-3 flex items-center justify-between">
             <div>
-              <p class="text-sm font-semibold">{{ 'profile.competitionLevel' | translate }}</p>
-              <p class="text-xs text-gray-500 mt-0.5">{{ 'profile.competitionNote' | translate }}</p>
+              <h2 class="text-2xl font-bold text-slate-900">{{ studentName() || 'Student' }}</h2>
+              <p class="text-sm text-slate-600">Grade {{ p.grade }} • Age {{ p.age }} • Level {{ p.level }}</p>
             </div>
-            <span class="rounded-full px-3 py-1 text-sm font-bold"
-              [ngClass]="{
-                'bg-gray-100 text-gray-600': s.competitionLevel === 'None',
-                'bg-amber-100 text-amber-700': s.competitionLevel === 'AMC-8',
-                'bg-blue-100 text-blue-700': s.competitionLevel === 'AMC-10',
-                'bg-purple-100 text-purple-700': s.competitionLevel === 'MATHCOUNTS',
-                'bg-red-100 text-red-700': s.competitionLevel === 'AIME'
-              }"
-            >{{ s.competitionLevel }}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="rounded-2xl bg-amber-50 px-4 py-3">
+              <p class="text-xs text-slate-500">XP</p>
+              <p class="text-xl font-bold text-amber-700">{{ p.xp }}</p>
+            </div>
+            <div class="rounded-2xl bg-emerald-50 px-4 py-3">
+              <p class="text-xs text-slate-500">Streak</p>
+              <p class="text-xl font-bold text-emerald-700">{{ p.streak }}</p>
+            </div>
           </div>
         </div>
 
-        <!-- Operation Mastery -->
-        <div class="bg-white rounded-xl shadow p-5">
-          <h2 class="text-lg font-bold text-primary mb-4">{{ 'profile.operationMastery' | translate }}</h2>
-          @for (op of operationKeys(); track op) {
-            <div class="mb-3">
-              <div class="flex justify-between mb-1">
-                <span class="text-sm capitalize">{{ op }}</span>
-                <span class="text-sm font-semibold" [ngClass]="scoreColor(p.masteryLevels[op])">{{ p.masteryLevels[op] }}/100</span>
-              </div>
-              <div class="w-full bg-gray-100 rounded-full h-2">
-                <div class="h-2 rounded-full transition-all" [ngClass]="barColor(p.masteryLevels[op])" [style.width.%]="p.masteryLevels[op]"></div>
-              </div>
-            </div>
-          }
-        </div>
-
-        <div class="bg-white rounded-xl shadow p-5">
-          <h2 class="text-lg font-bold text-primary mb-3">Skills to Improve</h2>
-          @if (weakSkills().length === 0) {
-            <p class="text-sm text-gray-500">No weak skills identified yet. Keep practicing!</p>
-          }
-          <div class="space-y-2">
-            @for (skill of weakSkills(); track skill.skillId) {
-              <div class="rounded-lg border border-slate-200 p-3">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <p class="text-sm font-semibold text-slate-800">{{ skill.skillName }}</p>
-                    <div class="mt-1">
-                      <app-mastery-badge [level]="skill.level" [label]="masteryLabel(skill.level)" />
-                    </div>
-                  </div>
-                  <a
-                    routerLink="/worksheet/Intermediate"
-                    class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
-                  >
-                    Quick Practice
-                  </a>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Goals -->
-        @if (p.goals && p.goals.length > 0) {
-          <div class="bg-white rounded-xl shadow p-5">
-            <h2 class="text-lg font-bold text-primary mb-3">{{ 'profile.learningGoals' | translate }}</h2>
-            <ul class="space-y-2">
+        @if (p.goals?.length) {
+          <div class="mt-4">
+            <p class="text-sm font-semibold text-slate-700">Learning goals</p>
+            <div class="mt-2 flex flex-wrap gap-2">
               @for (goal of p.goals; track goal) {
-                <li class="flex items-center gap-2 text-sm">
-                  <span class="text-primary">🎯</span>{{ goal }}
-                </li>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{{ goal }}</span>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <section class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">Onboarding data</p>
+      <h2 class="mt-1 text-xl font-bold text-slate-900">Current personalization settings</h2>
+
+      @if (onboardingLoading()) {
+        <p class="mt-4 text-sm text-slate-500">Loading onboarding details…</p>
+      } @else if (onboarding(); as profile) {
+        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="rounded-2xl bg-slate-50 px-4 py-3">
+            <p class="text-xs text-slate-500">Confidence</p>
+            <p class="mt-1 text-base font-semibold text-slate-900">{{ profile.confidenceLevel | titlecase }}</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 px-4 py-3">
+            <p class="text-xs text-slate-500">Placement score</p>
+            <p class="mt-1 text-base font-semibold text-slate-900">{{ profile.placementScore }}/100</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 px-4 py-3">
+            <p class="text-xs text-slate-500">Math world</p>
+            <p class="mt-1 text-base font-semibold text-slate-900">{{ profile.mathWorld }}</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 px-4 py-3">
+            <p class="text-xs text-slate-500">Avatar</p>
+            <p class="mt-1 text-base font-semibold text-slate-900">{{ profile.avatar }}</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 px-4 py-3 sm:col-span-2">
+            <p class="text-xs text-slate-500">Goals</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              @for (goal of profile.goals; track goal) {
+                <span class="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800">{{ goal }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (profile.personalizedPath.length) {
+          <div class="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+            <p class="text-sm font-semibold text-violet-900">Personalized path</p>
+            <ul class="mt-2 space-y-1 text-sm text-violet-900">
+              @for (item of profile.personalizedPath; track item) {
+                <li>• {{ item }}</li>
               }
             </ul>
           </div>
         }
+      } @else {
+        <p class="mt-4 text-sm text-slate-500">{{ onboardingErrorMessage() || 'No onboarding data found yet.' }}</p>
       }
-    }
+    </section>
   </div>
 </div>

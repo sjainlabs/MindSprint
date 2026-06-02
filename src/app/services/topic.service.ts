@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { type GradeLevel } from './diagnostic.service';
 import { createPracticeTopicTaxonomy, PRACTICE_TOPIC_CATALOG } from './practice-topic-catalog';
@@ -40,6 +40,7 @@ export interface TopicBrowserResponse {
   studentId: string;
   browseTopics: Array<{
     id: string;
+    skillId?: string;
     title: string;
     sourceTopicId: string;
     subtopics: string[];
@@ -68,14 +69,24 @@ export class TopicService {
   constructor(private readonly http: HttpClient) {}
 
   getTaxonomy(): Observable<TopicTaxonomyResponse> {
-    return of(createPracticeTopicTaxonomy());
+    return this.http
+      .get<TopicTaxonomyResponse>(`${this.apiRoot}/topics/taxonomy`)
+      .pipe(catchError(() => of(createPracticeTopicTaxonomy())));
   }
 
   getTopicsByGrade(grade: GradeLevel): Observable<{ grade: GradeLevel; topics: TopicModel[] }> {
-    return of({
-      grade,
-      topics: PRACTICE_TOPIC_CATALOG.filter((topic) => topic.grades.includes(grade)),
-    });
+    return this.http
+      .get<{ grade: GradeLevel; topics: TopicModel[] }>(
+        `${this.apiRoot}/topics/by-grade?grade=${grade}`,
+      )
+      .pipe(
+        catchError(() =>
+          of({
+            grade,
+            topics: PRACTICE_TOPIC_CATALOG.filter((topic) => topic.grades.includes(grade)),
+          }),
+        ),
+      );
   }
 
   getPersonalizedPath(
