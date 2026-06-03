@@ -5,11 +5,13 @@ import { AuthService } from '../../services/auth.service';
 import { type LearningLevel, normalizeLearningLevelIdentifier } from '../../services/diagnostic.service';
 import { SyllabusService, type SyllabusSkill } from '../../services/syllabus.service';
 import { TopicService, type BrowseTopic } from '../../services/topic.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 
 @Component({
   selector: 'app-topic-detail-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslatePipe, LanguageToggleComponent],
   templateUrl: './topic-detail.page.html',
   styleUrl: './topic-detail.page.css',
 })

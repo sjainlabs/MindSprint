@@ -17,6 +17,7 @@ import {
   type TopicBrowserResponse,
 } from '../../services/topic.service';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { PracticeLevelsComponent } from '../../practice/components/practice-levels.component';
 import { TopicMapComponent } from '../../practice/components/topic-map.component';
 import { TopicLibraryPreviewComponent } from '../../practice/components/topic-library-preview.component';
@@ -28,6 +29,7 @@ import { TopicLibraryPreviewComponent } from '../../practice/components/topic-li
     CommonModule,
     RouterLink,
     LanguageToggleComponent,
+    TranslatePipe,
     PracticeLevelsComponent,
     TopicMapComponent,
     TopicLibraryPreviewComponent,

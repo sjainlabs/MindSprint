@@ -3,23 +3,23 @@
     <header class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Practice Hub</p>
-          <h1 class="mt-1 text-3xl font-bold text-slate-900">Choose what to practice next</h1>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{{ 'practiceHub.badge' | translate }}</p>
+          <h1 class="mt-1 text-3xl font-bold text-slate-900">{{ 'practiceHub.title' | translate }}</h1>
           <p class="mt-2 max-w-2xl text-sm text-slate-600">
-            Pick a level, explore the topic map, browse the K–12 and Kumon library, or generate an AI worksheet.
+            {{ 'practiceHub.subtitle' | translate }}
           </p>
         </div>
         <div class="flex items-center gap-3">
           <app-language-toggle />
-          <a [routerLink]="['/profile']" [queryParams]="{ studentId: studentId() }" class="text-sm font-medium text-primary underline">Profile</a>
-          <a routerLink="/welcome" class="text-sm font-medium text-primary underline">Home</a>
+          <a [routerLink]="['/profile']" [queryParams]="{ studentId: studentId() }" class="text-sm font-medium text-primary underline">{{ 'practiceHub.profile' | translate }}</a>
+          <a routerLink="/welcome" class="text-sm font-medium text-primary underline">{{ 'practiceHub.home' | translate }}</a>
         </div>
       </div>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Student</p>
-          <p class="mt-1 text-base font-semibold text-slate-900">{{ studentName() || 'Student' }}</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{{ 'practiceHub.student' | translate }}</p>
+          <p class="mt-1 text-base font-semibold text-slate-900">{{ studentName() || ('practiceHub.studentDefault' | translate) }}</p>
         </div>
         <div class="flex items-end">
           <button
@@ -27,7 +27,7 @@
             class="w-full rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm sm:w-auto"
             (click)="loadHub()"
           >
-            Refresh Hub
+            {{ 'practiceHub.refresh' | translate }}
           </button>
         </div>
       </div>
@@ -38,21 +38,21 @@
           class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
           (click)="openTopicLibrary()"
         >
-          Full Topic Library
+          {{ 'practiceHub.fullTopicLibrary' | translate }}
         </button>
         <button
           type="button"
           class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
           (click)="openAiWorksheet()"
         >
-          AI Worksheet Generator
+          {{ 'practiceHub.aiWorksheetGenerator' | translate }}
         </button>
         <button
           type="button"
           class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
           (click)="openRitLookup()"
         >
-          RIT Lookup
+          {{ 'practiceHub.ritLookup' | translate }}
         </button>
       </div>
     </header>
@@ -67,11 +67,11 @@
       <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">Recommended for you</p>
-            <h2 class="mt-1 text-xl font-bold text-slate-900">Next best practice</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">{{ 'practiceHub.recommendedForYou' | translate }}</p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900">{{ 'practiceHub.nextBestPractice' | translate }}</h2>
           </div>
           @if (loading()) {
-            <span class="text-xs text-slate-400">Loading…</span>
+            <span class="text-xs text-slate-400">{{ 'practiceHub.loading' | translate }}</span>
           }
         </div>
 
@@ -85,19 +85,19 @@
                 class="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
                 (click)="useRecommendedTopic()"
               >
-                View topic detail
+                {{ 'practiceHub.viewTopicDetail' | translate }}
               </button>
               <button
                 type="button"
                 class="rounded-full border border-indigo-300 bg-white px-4 py-2 text-sm font-semibold text-indigo-700"
                 (click)="startPractice(resolveRecommendedSkillId(rec.recommendedTopicId))"
               >
-                Start worksheet
+                {{ 'practiceHub.startWorksheet' | translate }}
               </button>
             </div>
           </div>
         } @else {
-          <p class="mt-4 text-sm text-slate-500">Recommendations will appear after the topic map loads.</p>
+          <p class="mt-4 text-sm text-slate-500">{{ 'practiceHub.recommendationFallback' | translate }}</p>
         }
 
         <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -108,9 +108,9 @@
               (click)="openTopicDetail(topic.skillId ?? topic.id, topic)"
             >
               <p class="text-sm font-semibold text-slate-900">{{ topic.title }}</p>
-              <p class="mt-2 text-xs text-slate-500">Mastery {{ topic.masteryPercentage }}%</p>
+              <p class="mt-2 text-xs text-slate-500">{{ 'practiceHub.mastery' | translate }} {{ topic.masteryPercentage }}%</p>
               <p class="mt-1 text-xs text-slate-500">
-                {{ topic.subtopics.length }} subtopics • {{ topic.difficultyTiers.length }} difficulty tiers
+                {{ 'practiceHub.topicMeta' | translate:{ subtopics: topic.subtopics.length, tiers: topic.difficultyTiers.length } }}
               </p>
             </button>
           }
@@ -133,10 +133,10 @@
           (click)="toggleSection('topic-map')"
         >
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Topic map</p>
-            <h2 class="mt-1 text-xl font-bold text-slate-900">Collapsed by default</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{{ 'practiceHub.topicMap' | translate }}</p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900">{{ 'practiceHub.collapsedByDefault' | translate }}</h2>
           </div>
-          <span class="text-sm font-semibold text-primary">{{ expandedSection() === 'topic-map' ? 'Hide' : 'Show' }}</span>
+          <span class="text-sm font-semibold text-primary">{{ expandedSection() === 'topic-map' ? ('practiceHub.hide' | translate) : ('practiceHub.show' | translate) }}</span>
         </button>
       </article>
 
@@ -156,10 +156,10 @@
           (click)="toggleSection('topic-library')"
         >
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">Topic library</p>
-            <h2 class="mt-1 text-xl font-bold text-slate-900">Collapsed by default</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">{{ 'practiceHub.topicLibrary' | translate }}</p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900">{{ 'practiceHub.collapsedByDefault' | translate }}</h2>
           </div>
-          <span class="text-sm font-semibold text-primary">{{ expandedSection() === 'topic-library' ? 'Hide' : 'Show' }}</span>
+          <span class="text-sm font-semibold text-primary">{{ expandedSection() === 'topic-library' ? ('practiceHub.hide' | translate) : ('practiceHub.show' | translate) }}</span>
         </button>
       </article>
 

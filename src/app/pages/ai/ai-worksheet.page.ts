@@ -5,11 +5,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AiWorksheetService, type AiWorksheet } from '../../services/ai-worksheet.service';
 import { SyllabusService, type SyllabusSkill } from '../../services/syllabus.service';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-ai-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent, TranslatePipe],
   templateUrl: './ai-worksheet.page.html',
   styleUrl: './ai-worksheet.page.css',
 })

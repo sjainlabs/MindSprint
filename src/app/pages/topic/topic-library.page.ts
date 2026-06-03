@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SyllabusService, type SuperSyllabus } from '../../services/syllabus.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 
 @Component({
   selector: 'app-topic-library-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, LanguageToggleComponent],
   templateUrl: './topic-library.page.html',
   styleUrl: './topic-library.page.css',
 })

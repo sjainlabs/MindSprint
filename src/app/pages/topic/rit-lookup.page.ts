@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SyllabusService, type RITBandSkills } from '../../services/syllabus.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 
 @Component({
   selector: 'app-rit-lookup-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, LanguageToggleComponent],
   templateUrl: './rit-lookup.page.html',
   styleUrl: './rit-lookup.page.css',
 })
