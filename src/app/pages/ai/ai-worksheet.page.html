@@ -2,7 +2,12 @@
   <div class="mx-auto max-w-4xl space-y-5">
     <header class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <div class="flex items-center justify-between gap-3">
-        <a [routerLink]="['/practice-hub']" [queryParams]="{ studentId: studentId() }" class="text-sm font-semibold text-primary underline">{{ 'nav.backPracticeHub' | translate }}</a>
+        <div class="flex flex-wrap items-center gap-3">
+          @if (fromTopicLibrary()) {
+            <a [routerLink]="['/topic/library']" [queryParams]="topicLibraryQueryParams()" class="text-sm font-semibold text-primary underline">{{ 'nav.backTopicLibrary' | translate }}</a>
+          }
+          <a [routerLink]="['/practice-hub']" [queryParams]="practiceHubQueryParams()" class="text-sm font-semibold text-primary underline">{{ 'nav.backPracticeHub' | translate }}</a>
+        </div>
         <app-language-toggle />
       </div>
       <h1 class="mt-3 text-3xl font-bold text-slate-900">{{ 'aiWorksheet.title' | translate }}</h1>
@@ -16,15 +21,12 @@
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_160px_180px_auto]">
           <label class="text-sm font-medium text-slate-700">
             {{ 'aiWorksheet.skill' | translate }}
-            <select
-              class="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white"
-              [ngModel]="selectedSkillId()"
-              (ngModelChange)="$event && selectedSkillId.set($event)"
-            >
-              @for (skill of skills(); track skill.skillId) {
-                <option [value]="skill.skillId">{{ skill.name }}</option>
-              }
-            </select>
+            <div class="mt-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800">
+              {{ selectedSkill()?.name || selectedSkillId() || '-' }}
+            </div>
+            <p class="mt-1 text-xs text-slate-500">
+              Supported AI topics: addition, subtraction, multiplication, division, fractions, decimals, percentages, ratios, algebra, geometry, trigonometry, calculus.
+            </p>
           </label>
 
           <label class="text-sm font-medium text-slate-700">
@@ -52,14 +54,35 @@
           </label>
 
           <div class="flex items-end">
-            <button
-              type="button"
-              class="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-              [disabled]="generating() || !selectedSkillId()"
-              (click)="generate()"
-            >
-              {{ generating() ? ('aiWorksheet.generating' | translate) : ('aiWorksheet.generate' | translate) }}
-            </button>
+            @if (selectedSkill() && !hasGenerated()) {
+              <button
+                type="button"
+                class="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                [disabled]="generating()"
+                (click)="generate()"
+              >
+                {{ generating() ? ('aiWorksheet.generating' | translate) : ('aiWorksheet.generate' | translate) }}
+              </button>
+            } @else if (!selectedSkill()) {
+              <p class="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {{ 'aiWorksheet.selectTopicFirst' | translate }}
+              </p>
+            } @else {
+              <div class="flex flex-wrap gap-2">
+                @if (fromTopicLibrary()) {
+                  <a
+                    [routerLink]="['/topic/library']"
+                    [queryParams]="topicLibraryQueryParams()"
+                    class="rounded-full border border-primary px-4 py-2 text-sm font-semibold text-primary"
+                  >← {{ 'nav.backTopicLibrary' | translate }}</a>
+                }
+                <a
+                  [routerLink]="['/practice-hub']"
+                  [queryParams]="practiceHubQueryParams()"
+                  class="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
+                >← {{ 'nav.backPracticeHub' | translate }}</a>
+              </div>
+            }
           </div>
         </div>
       }
@@ -71,18 +94,20 @@
 
     @if (worksheet(); as generated) {
       <section class="rounded-3xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
-        <p class="text-lg font-semibold text-slate-900">{{ generated.topic }}</p>
+        <p class="text-lg font-semibold text-slate-900">{{ selectedSkill()?.name || generated.topic }}</p>
         <p class="mt-1 text-sm text-slate-600">{{ 'aiWorksheet.summary' | translate:{ difficulty: generated.difficulty, count: generated.questions.length } }}</p>
 
-        <ol class="mt-4 space-y-2">
-          @for (question of generated.questions.slice(0, 5); track question.id) {
-            <li class="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">{{ question.prompt }}</li>
+        @if (generated.downloadUrl) {
+          <a class="mt-3 inline-block text-sm font-semibold text-fuchsia-700 underline" [href]="generated.downloadUrl" target="_blank" rel="noopener noreferrer">{{ 'aiWorksheet.download' | translate }}</a>
+        }
+
+        <ol class="mt-4 list-decimal space-y-2 pl-5">
+          @for (question of generated.questions; track question.id; let i = $index) {
+            <li class="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
+              <span class="mr-1 font-semibold">{{ i + 1 }}.</span>{{ question.prompt }}
+            </li>
           }
         </ol>
-
-        @if (generated.downloadUrl) {
-          <a class="mt-4 inline-block text-sm font-semibold text-fuchsia-700 underline" [href]="generated.downloadUrl" target="_blank" rel="noopener noreferrer">{{ 'aiWorksheet.download' | translate }}</a>
-        }
       </section>
     }
   </div>

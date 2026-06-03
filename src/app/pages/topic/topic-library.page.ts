@@ -3,7 +3,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { SyllabusService, type SuperSyllabus } from '../../services/syllabus.service';
+import { SyllabusService, type SyllabusSkill, type SuperSyllabus } from '../../services/syllabus.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 
@@ -62,7 +62,17 @@ export class TopicLibraryPageComponent implements OnInit {
 
     this.syllabusService.getSyllabus().subscribe({
       next: (response) => {
-        this.syllabus.set(response);
+        const normalizedDomains = response.domains.map((domain) => ({
+          ...domain,
+          skills: domain.skills.map((skill) => ({
+            ...skill,
+            skillId: this.resolveSkillId(skill),
+          })),
+        }));
+        this.syllabus.set({
+          ...response,
+          domains: normalizedDomains,
+        });
         this.loading.set(false);
       },
       error: () => {
@@ -82,12 +92,23 @@ export class TopicLibraryPageComponent implements OnInit {
   }
 
   openAiGenerator(skillId: string): void {
+    const resolvedSkillId = skillId.trim();
+    if (!resolvedSkillId) {
+      this.errorMessage.set('Selected topic is unavailable for AI worksheet generation.');
+      return;
+    }
     void this.router.navigate(['/ai/worksheet'], {
       queryParams: {
         studentId: this.studentId(),
-        skillId,
+        skillId: resolvedSkillId,
+        source: 'topic-library',
       },
     });
+  }
+
+  resolveSkillId(skill: SyllabusSkill): string {
+    const dynamicSkill = skill as SyllabusSkill & { id?: string; topicId?: string };
+    return (skill.skillId || dynamicSkill.id || dynamicSkill.topicId || '').trim();
   }
 }
 

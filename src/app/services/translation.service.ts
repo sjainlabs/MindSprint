@@ -14,6 +14,7 @@ const EN: Record<string, string> = {
   'nav.kidGuide': 'Kid-Friendly Guide',
   'nav.parentGuide': 'Parent Guide',
   'nav.backPracticeHub': 'Back to Practice Hub',
+  'nav.backTopicLibrary': 'Back to Topic Library',
   'nav.load': 'Load',
   'nav.retry': 'Retry',
 
@@ -231,6 +232,9 @@ const EN: Record<string, string> = {
   'aiWorksheet.generating': 'Generating...',
   'aiWorksheet.summary': 'Difficulty {difficulty} • {count} questions',
   'aiWorksheet.download': 'Download worksheet',
+  'aiWorksheet.selectTopicFirst': 'Select a topic from Practice Hub to generate a worksheet.',
+  'aiWorksheet.generatedOnce':
+    'Worksheet already generated for this topic. Go back to Practice Hub to generate another one.',
 
   // ── Practice Hub page ───────────────────────────────────────────────────────
   'practiceHub.badge': 'Practice Hub',
@@ -426,6 +430,7 @@ const HI: Record<string, string> = {
   'nav.kidGuide': 'बच्चों के लिए गाइड',
   'nav.parentGuide': 'माता-पिता गाइड',
   'nav.backPracticeHub': 'प्रैक्टिस हब पर वापस जाएं',
+  'nav.backTopicLibrary': 'टॉपिक लाइब्रेरी पर वापस जाएं',
   'nav.load': 'लोड करें',
   'nav.retry': 'पुनः प्रयास',
 
@@ -643,6 +648,9 @@ const HI: Record<string, string> = {
   'aiWorksheet.generating': 'बनाया जा रहा है...',
   'aiWorksheet.summary': 'कठिनाई {difficulty} • {count} प्रश्न',
   'aiWorksheet.download': 'वर्कशीट डाउनलोड करें',
+  'aiWorksheet.selectTopicFirst': 'वर्कशीट बनाने के लिए पहले Practice Hub से एक टॉपिक चुनें।',
+  'aiWorksheet.generatedOnce':
+    'इस टॉपिक के लिए वर्कशीट पहले ही बन चुकी है। दूसरी वर्कशीट बनाने के लिए Practice Hub पर जाएं।',
 
   // ── Practice Hub page ───────────────────────────────────────────────────────
   'practiceHub.badge': 'प्रैक्टिस हब',
