@@ -13,6 +13,10 @@ import { PracticeHubPageComponent } from './pages/practice-hub/practice-hub.comp
 import { InsightsPageComponent } from './pages/insights/insights-page.component';
 import { StudentProfileComponent } from './pages/student-profile/student-profile';
 import { OnboardingComponent } from './pages/onboarding/onboarding';
+import { TopicDetailPageComponent } from './pages/topic/topic-detail.page';
+import { TopicLibraryPageComponent } from './pages/topic/topic-library.page';
+import { RitLookupPageComponent } from './pages/topic/rit-lookup.page';
+import { AiWorksheetPageComponent } from './pages/ai/ai-worksheet.page';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { parentMaterialsGuard } from './guards/parent-materials.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
@@ -70,7 +74,12 @@ export const routes: Routes = [
       import('./pages/parent-guide/parent-guide').then((module) => module.ParentGuideComponent),
   },
   { path: 'practice-hub', component: PracticeHubPageComponent },
+  { path: 'practice', redirectTo: '/practice-hub', pathMatch: 'full' },
   { path: 'topics', redirectTo: '/practice-hub', pathMatch: 'full' },
+  { path: 'topic/detail', component: TopicDetailPageComponent },
+  { path: 'topic/library', component: TopicLibraryPageComponent },
+  { path: 'topic/rit-lookup', component: RitLookupPageComponent },
+  { path: 'ai/worksheet', component: AiWorksheetPageComponent },
   { path: 'insights', component: InsightsPageComponent },
   { path: 'insights/:studentId/:topicId', component: InsightsPageComponent },
   { path: 'insights/:studentId', component: InsightsPageComponent },

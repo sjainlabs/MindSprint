@@ -36,19 +36,21 @@ export interface TopicTaxonomyResponse {
   }>;
 }
 
+export interface BrowseTopic {
+  id: string;
+  skillId?: string;
+  title: string;
+  sourceTopicId: string;
+  subtopics: string[];
+  difficultyTiers: Array<{ name: string; min: number; max: number }>;
+  prerequisites: string[];
+  masteryPercentage: number;
+  recommendedNextSteps: string[];
+}
+
 export interface TopicBrowserResponse {
   studentId: string;
-  browseTopics: Array<{
-    id: string;
-    skillId?: string;
-    title: string;
-    sourceTopicId: string;
-    subtopics: string[];
-    difficultyTiers: Array<{ name: string; min: number; max: number }>;
-    prerequisites: string[];
-    masteryPercentage: number;
-    recommendedNextSteps: string[];
-  }>;
+  browseTopics: BrowseTopic[];
 }
 
 export interface ExplorationRecommendation {

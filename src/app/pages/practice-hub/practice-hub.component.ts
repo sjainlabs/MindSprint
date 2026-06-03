@@ -1,30 +1,37 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { AiWorksheetService, type AiWorksheet } from '../../services/ai-worksheet.service';
 import {
   type LearningLevel,
   normalizeLearningLevelIdentifier,
 } from '../../services/diagnostic.service';
 import {
   SyllabusService,
-  type RITBandSkills,
   type SuperSyllabus,
-  type SyllabusSkill,
 } from '../../services/syllabus.service';
 import {
   TopicService,
+  type BrowseTopic,
   type ExplorationRecommendation,
   type TopicBrowserResponse,
 } from '../../services/topic.service';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
+import { PracticeLevelsComponent } from '../../practice/components/practice-levels.component';
+import { TopicMapComponent } from '../../practice/components/topic-map.component';
+import { TopicLibraryPreviewComponent } from '../../practice/components/topic-library-preview.component';
 
 @Component({
   selector: 'app-practice-hub-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, LanguageToggleComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    LanguageToggleComponent,
+    PracticeLevelsComponent,
+    TopicMapComponent,
+    TopicLibraryPreviewComponent,
+  ],
   templateUrl: './practice-hub.component.html',
   styleUrl: './practice-hub.component.css',
 })
@@ -33,23 +40,15 @@ export class PracticeHubPageComponent implements OnInit {
   readonly studentName = signal('');
   readonly selectedLevel = signal<LearningLevel>('Beginner');
   readonly selectedSkillId = signal('');
-  readonly selectedRitBand = signal(220);
-  readonly aiDifficulty = signal(70);
+  readonly expandedSection = signal<'topic-map' | 'topic-library' | null>(null);
 
-  readonly syllabus = signal<SuperSyllabus | null>(null);
-  readonly ritSkills = signal<RITBandSkills | null>(null);
-  readonly selectedSkill = signal<SyllabusSkill | null>(null);
+  readonly syllabusPreview = signal<SuperSyllabus | null>(null);
   readonly browser = signal<TopicBrowserResponse | null>(null);
   readonly recommendation = signal<ExplorationRecommendation | null>(null);
-  readonly aiWorksheet = signal<AiWorksheet | null>(null);
 
   readonly loading = signal(false);
   readonly syllabusLoading = signal(false);
-  readonly skillLoading = signal(false);
-  readonly ritLoading = signal(false);
-  readonly aiLoading = signal(false);
   readonly errorMessage = signal('');
-  readonly aiError = signal('');
 
   readonly levels: LearningLevel[] = [
     'Foundation',
@@ -62,12 +61,6 @@ export class PracticeHubPageComponent implements OnInit {
     'ACT',
   ];
 
-  readonly ritBandOptions = [180, 190, 200, 210, 220, 230, 240, 250, 260, 270];
-
-  readonly allSkills = computed(() =>
-    (this.syllabus()?.domains ?? []).flatMap((domain) => domain.skills ?? []),
-  );
-
   readonly recommendedTopicCards = computed(() => (this.browser()?.browseTopics ?? []).slice(0, 6));
 
   constructor(
@@ -76,7 +69,6 @@ export class PracticeHubPageComponent implements OnInit {
     private readonly authService: AuthService,
     private readonly syllabusService: SyllabusService,
     private readonly topicService: TopicService,
-    private readonly aiWorksheetService: AiWorksheetService,
   ) {}
 
   ngOnInit(): void {
@@ -110,8 +102,7 @@ export class PracticeHubPageComponent implements OnInit {
     void this.resolveStudentName();
     this.errorMessage.set('');
     this.loadRecommendationMap();
-    this.loadSyllabus();
-    this.loadRitBand();
+    this.loadSyllabusPreview();
   }
 
   private async resolveStudentName(): Promise<void> {
@@ -165,72 +156,19 @@ export class PracticeHubPageComponent implements OnInit {
     });
   }
 
-  loadSyllabus(): void {
+  loadSyllabusPreview(): void {
     this.syllabusLoading.set(true);
     this.syllabusService.getSyllabus().subscribe({
       next: (response) => {
-        this.syllabus.set(response);
-        const firstSkillId = response.domains.flatMap((domain) => domain.skills)[0]?.skillId ?? '';
-        const targetSkillId = this.selectedSkillId() || firstSkillId;
-        if (targetSkillId) {
-          this.selectSkill(targetSkillId);
-        }
+        this.syllabusPreview.set(response);
         this.syllabusLoading.set(false);
       },
       error: () => {
+        this.syllabusPreview.set(null);
         this.syllabusLoading.set(false);
         this.errorMessage.set('Unable to load the topic library.');
       },
     });
-  }
-
-  loadRitBand(): void {
-    this.ritLoading.set(true);
-    this.syllabusService.getSkillsByRIT(this.selectedRitBand()).subscribe({
-      next: (response) => {
-        this.ritSkills.set(response);
-        this.ritLoading.set(false);
-      },
-      error: () => {
-        this.ritSkills.set(null);
-        this.ritLoading.set(false);
-      },
-    });
-  }
-
-  selectSkill(skillId: string): void {
-    const normalizedSkillId = skillId.trim();
-    if (!normalizedSkillId) {
-      return;
-    }
-
-    this.selectedSkillId.set(normalizedSkillId);
-    this.skillLoading.set(true);
-    this.syllabusService.getSkill(normalizedSkillId).subscribe({
-      next: (skill) => {
-        this.selectedSkill.set(skill);
-        this.skillLoading.set(false);
-        this.loadRecommendation(skill.skillId);
-      },
-      error: () => {
-        this.selectedSkill.set(null);
-        this.skillLoading.set(false);
-      },
-    });
-  }
-
-  updateRitBand(value: number | string): void {
-    const nextBand = typeof value === 'number' ? value : Number(value);
-    if (!Number.isFinite(nextBand)) {
-      return;
-    }
-    this.selectedRitBand.set(nextBand);
-    this.loadRitBand();
-  }
-
-  updateAiDifficulty(value: number | string): void {
-    const parsed = typeof value === 'number' ? value : Number(value);
-    this.aiDifficulty.set(Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 70);
   }
 
   startPractice(skillId?: string, level?: LearningLevel): void {
@@ -244,46 +182,68 @@ export class PracticeHubPageComponent implements OnInit {
     });
   }
 
-  generateAiWorksheet(): void {
-    const skill = this.selectedSkill();
-    if (!skill || this.aiLoading()) {
+  openTopicDetail(skillId: string, browseTopic?: BrowseTopic): void {
+    if (!skillId.trim()) {
       return;
     }
-
-    this.aiLoading.set(true);
-    this.aiError.set('');
-    this.aiWorksheet.set(null);
-
-    this.aiWorksheetService
-      .generateWorksheet({
-        topic: skill.skillId,
-        difficulty: this.aiDifficulty(),
-        questionCount: 6,
+    this.selectedSkillId.set(skillId.trim());
+    void this.router.navigate(['/topic/detail'], {
+      queryParams: {
         studentId: this.studentId(),
-      })
-      .subscribe({
-        next: (worksheet) => {
-          this.aiWorksheet.set(worksheet);
-          this.aiLoading.set(false);
-        },
-        error: () => {
-          this.aiError.set('Unable to generate an AI worksheet right now.');
-          this.aiLoading.set(false);
-        },
-      });
+        skillId: skillId.trim(),
+        level: this.selectedLevel(),
+      },
+      state: { browseTopic: browseTopic ?? null },
+    });
+  }
+
+  openTopicLibrary(): void {
+    void this.router.navigate(['/topic/library'], {
+      queryParams: {
+        studentId: this.studentId(),
+      },
+    });
+  }
+
+  openAiWorksheet(): void {
+    void this.router.navigate(['/ai/worksheet'], {
+      queryParams: {
+        studentId: this.studentId(),
+        ...(this.selectedSkillId() ? { skillId: this.selectedSkillId() } : {}),
+      },
+    });
+  }
+
+  openRitLookup(): void {
+    void this.router.navigate(['/topic/rit-lookup'], {
+      queryParams: {
+        studentId: this.studentId(),
+      },
+    });
   }
 
   useRecommendedTopic(): void {
-    const recommendedTopicId = this.recommendation()?.recommendedTopicId;
-    if (!recommendedTopicId) {
+    const recommendedTopic = this.recommendation()?.recommendedTopicId;
+    if (!recommendedTopic) {
       return;
     }
 
-    this.selectSkill(recommendedTopicId);
+    const matchingTopic = (this.browser()?.browseTopics ?? []).find(
+      (topic) => topic.id === recommendedTopic,
+    );
+    const skillId = matchingTopic?.skillId ?? matchingTopic?.id ?? recommendedTopic;
+    this.openTopicDetail(skillId, matchingTopic);
   }
 
-  trackBySkillId(_: number, skill: SyllabusSkill): string {
-    return skill.skillId;
+  resolveRecommendedSkillId(recommendedTopicId: string): string {
+    const matchingTopic = (this.browser()?.browseTopics ?? []).find(
+      (topic) => topic.id === recommendedTopicId,
+    );
+    return matchingTopic?.skillId ?? matchingTopic?.id ?? recommendedTopicId;
+  }
+
+  toggleSection(section: 'topic-map' | 'topic-library'): void {
+    this.expandedSection.set(this.expandedSection() === section ? null : section);
   }
 }
 
