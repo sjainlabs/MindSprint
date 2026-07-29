@@ -1,0 +1,93 @@
+/* Page Layout */
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+  display: grid;
+  gap: 16px;
+  font-family: system-ui, sans-serif;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #2563eb;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.card h1,
+.card h2,
+.card h3,
+.card p {
+  margin: 0;
+}
+
+.card p {
+  margin-top: 8px;
+  color: #334155;
+}
+
+/* Metrics Grid */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.metric {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.metric h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #0f172a;
+}
+
+.metric p {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+/* Recommendations */
+ul {
+  margin: 12px 0 20px;
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 6px;
+  color: #334155;
+}
+
+/* Fade-in Animation */
+.card {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

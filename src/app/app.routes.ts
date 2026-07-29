@@ -1,98 +1,50 @@
 import { Routes } from '@angular/router';
-import { Welcome } from './pages/welcome/welcome';
-import { AssessmentMath } from './pages/assessment-math/assessment-math';
-import { AssessmentEnglish } from './pages/assessment-english/assessment-english';
-import { AssessmentScience } from './pages/assessment-science/assessment-science';
-import { Results } from './pages/results/results';
-import { DiagnosticStartComponent } from './pages/diagnostic-start/diagnostic-start';
-import { DiagnosticTestComponent } from './components/diagnostic-test/diagnostic-test';
-import { WorksheetPageComponent } from './components/worksheet-page/worksheet-page';
-import { GameModeComponent } from './pages/game-mode/game-mode';
-import { MapPrepComponent } from './pages/map-prep/map-prep';
-import { PracticeHubPageComponent } from './pages/practice-hub/practice-hub.component';
-import { InsightsPageComponent } from './pages/insights/insights-page.component';
-import { StudentProfileComponent } from './pages/student-profile/student-profile';
-import { OnboardingComponent } from './pages/onboarding/onboarding';
-import { TopicDetailPageComponent } from './pages/topic/topic-detail.page';
-import { TopicLibraryPageComponent } from './pages/topic/topic-library.page';
-import { RitLookupPageComponent } from './pages/topic/rit-lookup.page';
-import { AiWorksheetPageComponent } from './pages/ai/ai-worksheet.page';
+import { LandingPageComponent } from './landing/landing-page.component';
+import { ParentLoginPageComponent } from './auth/parent-login-page.component';
+import { AccessCodePageComponent } from './auth/access-code-page.component';
+import { ParentDashboardPageComponent } from './parent/parent-dashboard-page.component';
+import { StudentDashboardPageComponent } from './student/student-dashboard-page.component';
+import { GradeSelectionPageComponent } from './onboarding/grade-selection-page.component';
+import { TopicSelectionPageComponent } from './onboarding/topic-selection-page.component';
+import { DiagnosticPageComponent } from './diagnostic/diagnostic-page.component';
+import { DiagnosticResultPageComponent } from './diagnostic/diagnostic-result-page.component';
+import { PracticeHubPageComponent } from './practice/practice-hub-page.component';
+import { TopicDetailPageComponent } from './topic/topic-detail-page.component';
+import { WorksheetPageComponent } from './worksheet/worksheet-page.component';
+import { InsightsPageComponent } from './insights/insights-page.component';
+import { ScheduledTestsPageComponent } from './tests/scheduled-tests-page.component';
+import { SurpriseTestPageComponent } from './tests/surprise-test-page.component';
 import { parentAuthGuard } from './guards/parent-auth.guard';
-import { parentMaterialsGuard } from './guards/parent-materials.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: Welcome },
-  { path: 'welcome', component: Welcome },
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./pages/login-selection/login-selection.component').then((module) => module.LoginSelectionComponent),
-  },
-  {
-    path: 'login/parent',
-    loadComponent: () => import('./pages/parent-login/parent-login.component').then((module) => module.ParentLoginComponent),
-  },
-  {
-    path: 'login/student',
-    loadComponent: () =>
-      import('./pages/student-login/student-login.component').then((module) => module.StudentLoginComponent),
-  },
-  {
-    path: 'parent/dashboard',
-    canActivate: [parentAuthGuard],
-    loadComponent: () =>
-      import('./pages/parent-dashboard/parent-dashboard.component').then((module) => module.ParentDashboardComponent),
-  },
-  {
-    path: 'parent/materials',
-    canActivate: [parentAuthGuard, parentMaterialsGuard],
-    loadComponent: () =>
-      import('./pages/parent-materials/parent-materials.component').then((module) => module.ParentMaterialsComponent),
-  },
-  {
-    path: 'student/home',
-    canActivate: [studentAuthGuard],
-    loadComponent: () => import('./pages/student-home/student-home.component').then((module) => module.StudentHomeComponent),
-  },
-  { path: 'assessment/math', component: AssessmentMath },
-  { path: 'assessment/english', component: AssessmentEnglish },
-  { path: 'assessment/science', component: AssessmentScience },
-  { path: 'results', component: Results },
-  { path: 'diagnostic', component: DiagnosticStartComponent },
-  { path: 'diagnostic/test', component: DiagnosticTestComponent },
-  { path: 'onboarding', component: OnboardingComponent },
-  { path: 'profile', component: StudentProfileComponent },
-  {
-    path: 'guide/kids',
-    loadComponent: () =>
-      import('./pages/kid-guide/kid-guide').then((module) => module.KidGuideComponent),
-  },
-  {
-    path: 'guide/parents',
-    loadComponent: () =>
-      import('./pages/parent-guide/parent-guide').then((module) => module.ParentGuideComponent),
-  },
-  { path: 'practice-hub', component: PracticeHubPageComponent },
-  { path: 'practice', redirectTo: '/practice-hub', pathMatch: 'full' },
-  { path: 'topics', redirectTo: '/practice-hub', pathMatch: 'full' },
-  { path: 'topic/detail', component: TopicDetailPageComponent },
-  { path: 'topic/library', component: TopicLibraryPageComponent },
-  { path: 'topic/rit-lookup', component: RitLookupPageComponent },
-  { path: 'ai/worksheet', component: AiWorksheetPageComponent },
-  { path: 'insights', component: InsightsPageComponent },
-  { path: 'insights/:studentId/:topicId', component: InsightsPageComponent },
-  { path: 'insights/:studentId', component: InsightsPageComponent },
-  { path: 'map-prep', component: MapPrepComponent },
-  { path: 'worksheet', redirectTo: '/worksheet/Beginner', pathMatch: 'full' },
-  { path: 'worksheet/:level', component: WorksheetPageComponent },
-  {
-    path: 'operations',
-    loadChildren: () =>
-      import('./modules/basic-operations/basic-operations.module').then(
-        (module) => module.basicOperationsRoutes,
-      ),
-  },
-  { path: 'game', component: GameModeComponent },
+  { path: '', component: LandingPageComponent },
+  { path: 'auth/parent-login', component: ParentLoginPageComponent },
+  { path: 'auth/access-code', component: AccessCodePageComponent },
+  { path: 'parent/dashboard', canActivate: [parentAuthGuard], component: ParentDashboardPageComponent },
+  { path: 'student/dashboard', canActivate: [studentAuthGuard], component: StudentDashboardPageComponent },
+  { path: 'onboarding/grade-selection', canActivate: [studentAuthGuard], component: GradeSelectionPageComponent },
+  { path: 'onboarding/topic-selection', canActivate: [studentAuthGuard], component: TopicSelectionPageComponent },
+  { path: 'diagnostic/start', canActivate: [studentAuthGuard], component: DiagnosticPageComponent },
+  { path: 'diagnostic/result', canActivate: [studentAuthGuard], component: DiagnosticResultPageComponent },
+  { path: 'practice/hub', canActivate: [studentAuthGuard], component: PracticeHubPageComponent },
+  { path: 'practice/topic/:topicId', canActivate: [studentAuthGuard], component: TopicDetailPageComponent },
+  { path: 'practice/worksheet', canActivate: [studentAuthGuard], component: WorksheetPageComponent },
+  { path: 'insights', canActivate: [studentAuthGuard], component: InsightsPageComponent },
+  { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
+  { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
+
+  // Legacy aliases.
+  { path: 'parent-login', redirectTo: '/auth/parent-login', pathMatch: 'full' },
+  { path: 'access-code', redirectTo: '/auth/access-code', pathMatch: 'full' },
+  { path: 'onboarding/grade', redirectTo: '/onboarding/grade-selection', pathMatch: 'full' },
+  { path: 'onboarding/topics', redirectTo: '/onboarding/topic-selection', pathMatch: 'full' },
+  { path: 'diagnostic', redirectTo: '/diagnostic/start', pathMatch: 'full' },
+  { path: 'practice-hub', redirectTo: '/practice/hub', pathMatch: 'full' },
+  { path: 'topic/:topicId', redirectTo: '/practice/topic/:topicId', pathMatch: 'full' },
+  { path: 'worksheet', redirectTo: '/practice/worksheet', pathMatch: 'full' },
+  { path: 'login/parent', redirectTo: '/auth/parent-login', pathMatch: 'full' },
+  { path: 'login/student', redirectTo: '/auth/access-code', pathMatch: 'full' },
+  { path: 'student/home', redirectTo: '/student/dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: '' },
 ];

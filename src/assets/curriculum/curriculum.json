@@ -1,0 +1,138 @@
+{
+  "topics": [
+    {
+      "id": "counting-and-place-value",
+      "name": "Counting and Place Value",
+      "description": "Build number sense by counting, comparing, and understanding place value.",
+      "grades": ["K", "1", "2", "3"],
+      "subtopics": [
+        "Counting to 100",
+        "Comparing numbers",
+        "Place value blocks"
+      ],
+      "difficultyTiers": {
+        "beginner": "Count and compare small numbers",
+        "intermediate": "Use place value with 2-3 digit numbers",
+        "expert": "Reason with larger numbers and patterns"
+      }
+    },
+    {
+      "id": "addition-and-subtraction",
+      "name": "Addition and Subtraction",
+      "description": "Learn operations through facts, strategies, and word problems.",
+      "grades": ["1", "2", "3", "4"],
+      "subtopics": [
+        "Fact fluency",
+        "Regrouping",
+        "Word problems"
+      ],
+      "difficultyTiers": {
+        "beginner": "Single-digit operations",
+        "intermediate": "Multi-digit operations",
+        "expert": "Mixed operation reasoning"
+      }
+    },
+    {
+      "id": "fractions-and-decimals",
+      "name": "Fractions and Decimals",
+      "description": "Understand parts of a whole, equivalent forms, and decimal notation.",
+      "grades": ["3", "4", "5", "6"],
+      "subtopics": [
+        "Equivalent fractions",
+        "Fraction operations",
+        "Decimals and place value"
+      ],
+      "difficultyTiers": {
+        "beginner": "Visual fractions",
+        "intermediate": "Equivalent forms and simple operations",
+        "expert": "Complex operations and conversions"
+      }
+    },
+    {
+      "id": "ratios-and-proportions",
+      "name": "Ratios and Proportions",
+      "description": "Use ratios, rates, and proportional reasoning to solve real problems.",
+      "grades": ["6", "7", "8"],
+      "subtopics": [
+        "Ratios",
+        "Unit rates",
+        "Proportional relationships"
+      ],
+      "difficultyTiers": {
+        "beginner": "Basic ratio comparison",
+        "intermediate": "Rates and unit pricing",
+        "expert": "Proportional equations"
+      }
+    },
+    {
+      "id": "algebra-foundations",
+      "name": "Algebra Foundations",
+      "description": "Translate patterns and relationships into algebraic expressions and equations.",
+      "grades": ["7", "8", "9"],
+      "subtopics": [
+        "Expressions",
+        "Linear equations",
+        "Inequalities"
+      ],
+      "difficultyTiers": {
+        "beginner": "Simple expressions",
+        "intermediate": "One-step and two-step equations",
+        "expert": "Systems and inequalities"
+      }
+    },
+    {
+      "id": "geometry-and-measurement",
+      "name": "Geometry and Measurement",
+      "description": "Explore shapes, measurement, area, and volume across grade levels.",
+      "grades": ["3", "4", "5", "6", "7", "8"],
+      "subtopics": [
+        "Perimeter and area",
+        "Volume",
+        "Angles and triangles"
+      ],
+      "difficultyTiers": {
+        "beginner": "Shape properties",
+        "intermediate": "Area and perimeter problems",
+        "expert": "Volume and angle proofs"
+      }
+    },
+    {
+      "id": "statistics-and-probability",
+      "name": "Statistics and Probability",
+      "description": "Interpret data, summarize distributions, and reason with chance.",
+      "grades": ["6", "7", "8", "9", "10"],
+      "subtopics": [
+        "Data displays",
+        "Measures of center",
+        "Basic probability"
+      ],
+      "difficultyTiers": {
+        "beginner": "Read simple charts",
+        "intermediate": "Mean, median, and variability",
+        "expert": "Compound probability"
+      }
+    },
+    {
+      "id": "functions-and-modeling",
+      "name": "Functions and Modeling",
+      "description": "Understand function behavior and model real-world relationships.",
+      "grades": ["9", "10", "11", "12"],
+      "subtopics": [
+        "Function notation",
+        "Linear and quadratic models",
+        "Graph interpretation"
+      ],
+      "difficultyTiers": {
+        "beginner": "Input-output tables",
+        "intermediate": "Graphing and slope",
+        "expert": "Model analysis"
+      }
+    }
+  ],
+  "difficultyMapping": {
+    "beginner": "0-39",
+    "intermediate": "40-74",
+    "expert": "75-100"
+  }
+}
+

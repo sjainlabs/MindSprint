@@ -1,0 +1,45 @@
+/* Shared shell styling for the new grade-first UX. */
+:host {
+  display: block;
+  min-height: 100vh;
+  background:
+	radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 32%),
+	linear-gradient(180deg, #f8fbff 0%, #f3f7ff 100%);
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 12px 12px 24px;
+}
+
+.top-nav {
+  max-width: 960px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nav-button,
+.nav-home {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-button {
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+	padding: 24px;
+  }
+}
+

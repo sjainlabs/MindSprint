@@ -1,1 +1,7 @@
-<router-outlet />
+<div class="app-shell">
+  <header class="top-nav" *ngIf="showSubpageNav()">
+    <button class="nav-button" type="button" (click)="goBack()">← Back</button>
+    <a class="nav-home" routerLink="/">Home</a>
+  </header>
+  <router-outlet />
+</div>

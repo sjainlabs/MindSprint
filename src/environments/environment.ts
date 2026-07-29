@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: 'http://localhost:3000/api',
+  apiUrl: 'http://localhost:3001/api',
   googleOAuthClientId:
     (globalThis as { __MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__?: string })
       .__MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__ ?? '',

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {
   AuthError,
   User,
@@ -26,6 +26,9 @@ import {
   where,
 } from 'firebase/firestore';
 import { auth, authPersistenceReady, db, googleProvider } from '../firebase/firebase.config';
+import {environment} from '../../environments/environment.prod';
+import {firstValueFrom} from 'rxjs';
+import {HttpClient} from '@angular/common/http';
 
 export interface ParentProfile {
   id: string;
@@ -59,6 +62,7 @@ export class AuthService {
 
   private sessionRestorePromise: Promise<User | null> | null = null;
   private cachedUser: User | null = null;
+  private http = inject(HttpClient);
 
   // -------------------------------------------------------
   // GOOGLE LOGIN (REDIRECT)
@@ -374,138 +378,59 @@ export class AuthService {
     }
   }
 
-  async getStudentsForParent(parentId?: string): Promise<StudentProfile[]> {
-    const parentProfile = await this.getParentProfile(parentId);
-    if (!parentProfile) return [];
-
-    try {
-      const mapped = await this.getStudentsByIds(parentProfile.students);
-      if (parentProfile.students.length > 0 && mapped.length === parentProfile.students.length) {
-        return mapped;
-      }
-
-      const studentsRef = collection(db, 'students');
-      const snapshot = await getDocs(query(studentsRef, where('parentId', '==', parentProfile.id)));
-      const queried = snapshot.docs.map((studentDoc) => this.mapStudent(studentDoc.id, studentDoc.data()));
-
-      if (mapped.length === 0) return queried;
-
-      const merged = new Map<string, StudentProfile>(mapped.map((s) => [s.id, s]));
-      for (const s of queried) merged.set(s.id, s);
-
-      return Array.from(merged.values());
-    } catch (error) {
-      console.warn('[Auth] Using local students fallback:', error);
-      return this.getLocalStudents().filter((student) => student.parentId === parentProfile.id);
-    }
+  async getStudentsForParent(): Promise<StudentProfile[]> {
+    const headers = await this.getAuthHeaders();
+    const response = await firstValueFrom(
+      this.http.get<{ students: StudentProfile[] }>(
+        `${environment.apiUrl}/students/parent`,
+        { headers }
+      )
+    );
+    return response.students;
   }
 
   async addStudentForParent(payload: { name: string; grade: string; avatar?: string }): Promise<StudentProfile> {
-    const parent = auth.currentUser;
-    if (!parent) throw new Error('Parent is not logged in.');
-
-    const loginCode = await this.generateUniqueLoginCode();
-    const localStudent: StudentProfile = {
-      id: this.generateLocalId(),
-      parentId: parent.uid,
-      name: payload.name.trim(),
-      grade: payload.grade.trim(),
-      avatar: payload.avatar?.trim() || '🧠',
-      loginCode,
-      masteryMap: {},
-      createdAt: new Date().toISOString(),
-    };
-
-    this.saveLocalStudent(localStudent);
-    this.addStudentIdToLocalParent(parent.uid, localStudent.id);
-
-    try {
-      const studentPayload = {
-        parentId: parent.uid,
-        name: payload.name.trim(),
-        grade: payload.grade.trim(),
-        avatar: payload.avatar?.trim() || '🧠',
-        loginCode,
-        masteryMap: {},
-        createdAt: serverTimestamp(),
-      };
-
-      const studentRef = await addDoc(collection(db, 'students'), studentPayload);
-
-      await updateDoc(doc(db, 'parents', parent.uid), {
-        students: arrayUnion(studentRef.id),
-      });
-
-      const saved = await this.getStudentProfile(studentRef.id);
-      if (!saved) throw new Error('Unable to create student profile.');
-
-      this.removeLocalStudent(localStudent.id);
-      this.removeStudentIdFromLocalParent(parent.uid, localStudent.id);
-      this.saveLocalStudent(saved);
-      this.addStudentIdToLocalParent(parent.uid, saved.id);
-      return saved;
-    } catch (error) {
-      console.warn('[Auth] Falling back to local student creation:', error);
-      return localStudent;
-    }
+    const headers = await this.getAuthHeaders();
+    return await firstValueFrom(
+      this.http.post<StudentProfile>(
+        `${environment.apiUrl}/students/create`,
+        payload,
+        { headers }
+      )
+    );
   }
 
-  async updateStudentForParent(
-    studentId: string,
-    payload: { name: string; grade: string; avatar?: string },
-  ): Promise<StudentProfile> {
-    const parent = auth.currentUser;
-    if (!parent) throw new Error('Parent is not logged in.');
-
-    const existing = await this.getStudentProfile(studentId);
-    if (!existing || existing.parentId !== parent.uid) {
-      throw new Error('Student not found for this parent.');
-    }
-
-    const updatedLocal: StudentProfile = {
-      ...existing,
-      name: payload.name.trim(),
-      grade: payload.grade.trim(),
-      avatar: payload.avatar?.trim() || '🧠',
-    };
-    this.saveLocalStudent(updatedLocal);
-
-    try {
-      await updateDoc(doc(db, 'students', studentId), {
-        name: updatedLocal.name,
-        grade: updatedLocal.grade,
-        avatar: updatedLocal.avatar,
-      });
-
-      const refreshed = await this.getStudentProfile(studentId);
-      if (refreshed) {
-        this.saveLocalStudent(refreshed);
-        return refreshed;
-      }
-      return updatedLocal;
-    } catch (error) {
-      console.warn('[Auth] Falling back to local student update:', error);
-      return updatedLocal;
-    }
+  async updateStudentForParent(studentId: string, payload: { name: string; grade: string; avatar?: string }): Promise<StudentProfile> {
+    const headers = await this.getAuthHeaders();
+    return await firstValueFrom(
+      this.http.patch<StudentProfile>(
+        `${environment.apiUrl}/students/${studentId}`,
+        payload,
+        { headers }
+      )
+    );
   }
 
   async deleteStudentForParent(studentId: string): Promise<void> {
-    const parent = auth.currentUser;
-    if (!parent) throw new Error('Parent is not logged in.');
-
-    this.removeLocalStudent(studentId);
-    this.removeStudentIdFromLocalParent(parent.uid, studentId);
-
-    try {
-      await deleteDoc(doc(db, 'students', studentId));
-      await updateDoc(doc(db, 'parents', parent.uid), {
-        students: arrayRemove(studentId),
-      });
-    } catch (error) {
-      console.warn('[Auth] Falling back to local student deletion:', error);
-    }
+    const headers = await this.getAuthHeaders();
+    await firstValueFrom(
+      this.http.delete(
+        `${environment.apiUrl}/students/${studentId}`,
+        { headers }
+      )
+    );
   }
 
+  async generateAccessCode(studentId: string): Promise<{ accessCode: string }> {
+    const headers = await this.getAuthHeaders();
+    return await firstValueFrom(
+      this.http.post<{ accessCode: string }>(
+        `${environment.apiUrl}/students/${studentId}/generate-access-code`,
+        {},
+        { headers }
+      )
+    );
+  }
   // -------------------------------------------------------
   // MAPPING HELPERS
   // -------------------------------------------------------
@@ -840,6 +765,13 @@ export class AuthService {
   private isPopupBlockedError(error: unknown): boolean {
     const code = (error as Partial<AuthError> | null)?.code;
     return code === 'auth/popup-blocked' || code === 'auth/web-storage-unsupported';
+  }
+
+  private async getAuthHeaders() {
+    const token = await auth.currentUser?.getIdToken();
+    return {
+      Authorization: `Bearer ${token}`,
+    };
   }
 
 

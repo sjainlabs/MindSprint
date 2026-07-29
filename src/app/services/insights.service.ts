@@ -1,17 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import type { FullInsightsResponse } from './insights.types';
 import type { TopicInsight } from './insights.types';
-import { PRACTICE_TOPIC_CATALOG } from './practice-topic-catalog';
+import { CurriculumApiService } from './curriculum-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class InsightsService {
   private readonly apiRoot = environment.apiUrl;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly curriculumApi: CurriculumApiService,
+  ) {}
 
   /**
    * Fetch full insights for a student and an optional topic.
@@ -57,20 +60,20 @@ export class InsightsService {
   }
 
   /**
-   * Fetch topic insights for all known practice topics.
-   * This will call GET /api/insights/topic/:studentId/:topicId for each topic in the local catalog
-   * and return an array of TopicInsight objects.
+   * Fetch topic insights for all curriculum topics from the backend.
+   * First fetches all topics via CurriculumApiService, then queries insights for each.
    */
   getAllTopicInsights(studentId: string): Observable<TopicInsight[]> {
     if (!studentId) return of([]);
 
-    // limit to a reasonable number to avoid flooding the backend in UIs
-    const topicIds = PRACTICE_TOPIC_CATALOG.map((t) => t.id).slice(0, 50);
-
-    const calls = topicIds.map((topicId) => this.getTopicInsight(studentId, topicId));
-
-    return forkJoin(calls).pipe(
-      // ensure result is always an array
+    return this.curriculumApi.getAllTopics().pipe(
+      switchMap((topics) => {
+        // Limit to avoid flooding the backend
+        const topicIds = topics.map((t) => t.id).slice(0, 50);
+        if (topicIds.length === 0) return of([]);
+        const calls = topicIds.map((topicId) => this.getTopicInsight(studentId, topicId));
+        return forkJoin(calls);
+      }),
       map((arr) => arr ?? []),
     );
   }

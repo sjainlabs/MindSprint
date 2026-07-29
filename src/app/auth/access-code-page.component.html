@@ -1,0 +1,33 @@
+<main class="page">
+
+  <div class="header">
+    <button class="back-btn" (click)="goBack()">← Back</button>
+    <h2>Enter Access Code</h2>
+  </div>
+
+  <section class="card">
+    <p class="subtitle">Enter your 6‑digit student access code to begin.</p>
+
+    <input
+      class="code-input"
+      type="text"
+      maxlength="6"
+      pattern="[0-9]*"
+      inputmode="numeric"
+      [(ngModel)]="code"
+      (input)="onCodeChange()"
+      placeholder="123456"
+    />
+
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <button
+      class="submit-btn"
+      [disabled]="!isValid"
+      (click)="submitCode()"
+    >
+      Continue
+    </button>
+  </section>
+
+</main>

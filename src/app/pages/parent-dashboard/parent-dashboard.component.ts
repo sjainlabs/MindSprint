@@ -124,7 +124,7 @@ export class ParentDashboardComponent implements OnInit {
 
       this.profile.set(profile);
       console.log('[ParentDashboard] Profile set, loading students...');
-      const students = await this.authService.getStudentsForParent(profile.id);
+      const students = await this.authService.getStudentsForParent();
       console.log('[ParentDashboard] Students loaded:', students.length);
       this.students.set(students);
       console.log('[ParentDashboard] Dashboard loaded successfully');

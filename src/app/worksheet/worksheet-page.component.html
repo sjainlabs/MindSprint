@@ -1,0 +1,74 @@
+<main class="page">
+
+  <!-- Loading -->
+  <section class="card" *ngIf="loading()">Loading...</section>
+
+  <!-- Error -->
+  <section class="card" *ngIf="errorMessage()">
+    <h1>Error</h1>
+    <p>{{ errorMessage() }}</p>
+    <button class="retry" (click)="loadWorksheet()">Retry</button>
+  </section>
+
+  <!-- Results Screen -->
+  <section class="card results" *ngIf="results() && !loading()">
+    <h1>Great job!</h1>
+    <p>Your worksheet has been submitted.</p>
+
+    <div class="metrics">
+      <div class="metric">
+        <h2>{{ results()?.accuracy }}%</h2>
+        <p>Accuracy</p>
+      </div>
+
+      <div class="metric">
+        <h2>{{ results()?.mastery }}</h2>
+        <p>Mastery</p>
+      </div>
+
+      <div class="metric">
+        <h2>{{ results()?.speed }}%</h2>
+        <p>Speed</p>
+      </div>
+
+      <div class="metric">
+        <h2>{{ results()?.level }}</h2>
+        <p>Level</p>
+      </div>
+    </div>
+
+    <h3>Recommended Next Steps</h3>
+    <ul>
+      <li *ngFor="let rec of results()?.recommendations">{{ rec }}</li>
+    </ul>
+
+    <button class="retry" (click)="loadWorksheet()">Start Another Worksheet</button>
+  </section>
+
+  <!-- Worksheet Screen -->
+  <section *ngIf="!results() && !loading() && !errorMessage()">
+
+    <section class="card">
+      <h1>{{ worksheetTitle() }}</h1>
+      <p>{{ worksheetDescription() }}</p>
+      <p>Progress: {{ answeredCount() }}/{{ questions().length }}</p>
+    </section>
+
+    <section class="card" *ngFor="let question of questions(); let index = index">
+      <h2>Question {{ index + 1 }}</h2>
+      <p>{{ question.prompt }}</p>
+
+      <label class="answer-label" [for]="'answer-' + question.id">Your answer</label>
+      <textarea
+        class="answer-box"
+        [id]="'answer-' + question.id"
+        [ngModel]="answers()[question.id]"
+        (ngModelChange)="setAnswer(question.id, $event)"
+        rows="3"
+      ></textarea>
+    </section>
+
+    <button class="submit" (click)="submitWorksheet()">Submit</button>
+  </section>
+
+</main>

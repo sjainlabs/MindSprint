@@ -1,0 +1,47 @@
+<main class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <button class="back-btn" (click)="goBack()">← Back</button>
+    <h2>Surprise Mastery Check</h2>
+  </div>
+
+  <!-- Loading -->
+  <section class="card" *ngIf="loading()">
+    <h1>Loading...</h1>
+    <p>Please wait while we prepare your surprise test.</p>
+  </section>
+
+  <!-- Error -->
+  <section class="card" *ngIf="errorMessage()">
+    <h1>Error</h1>
+    <p>{{ errorMessage() }}</p>
+  </section>
+
+  <!-- Questions -->
+  <section *ngIf="!loading() && !errorMessage()">
+
+    <section class="card">
+      <p>This short test appears when mastery drops.</p>
+      <p>Questions: {{ questions().length }}</p>
+    </section>
+
+    <section class="card" *ngFor="let q of questions(); let i = index">
+      <div class="question-block">
+        <h2>Question {{ i + 1 }}</h2>
+        <p>{{ q.prompt }}</p>
+
+        <input
+          class="answer-input"
+          type="number"
+          [ngModel]="answers()[q.questionId]"
+          (ngModelChange)="setAnswer(q.questionId, $event)"
+          placeholder="Enter your answer"
+        />
+      </div>
+    </section>
+
+    <button class="submit-btn" (click)="submitSurpriseTest()">Submit</button>
+  </section>
+
+</main>
