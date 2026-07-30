@@ -16,6 +16,7 @@ import { ScheduledTestsPageComponent } from './tests/scheduled-tests-page.compon
 import { SurpriseTestPageComponent } from './tests/surprise-test-page.component';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
+import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -27,7 +28,7 @@ export const routes: Routes = [
   { path: 'onboarding/topic-selection', canActivate: [studentAuthGuard], component: TopicSelectionPageComponent },
   { path: 'diagnostic/start', canActivate: [studentAuthGuard], component: DiagnosticPageComponent },
   { path: 'diagnostic/result', canActivate: [studentAuthGuard], component: DiagnosticResultPageComponent },
-  { path: 'practice/hub', canActivate: [studentAuthGuard], component: PracticeHubPageComponent },
+  { path: 'practice/hub', canActivate: [studentAuthGuard], component: PracticeHubComponent },
   { path: 'practice/topic/:topicId', canActivate: [studentAuthGuard], component: TopicDetailPageComponent },
   { path: 'practice/worksheet', canActivate: [studentAuthGuard], component: WorksheetPageComponent },
   { path: 'insights', canActivate: [studentAuthGuard], component: InsightsPageComponent },

@@ -1,177 +1,81 @@
-<div class="min-h-screen bg-slate-50 px-4 py-5 sm:px-6">
-  <div class="mx-auto flex max-w-6xl flex-col gap-5">
-    <header class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{{ 'practiceHub.badge' | translate }}</p>
-          <h1 class="mt-1 text-3xl font-bold text-slate-900">{{ 'practiceHub.title' | translate }}</h1>
-          <p class="mt-2 max-w-2xl text-sm text-slate-600">
-            {{ 'practiceHub.subtitle' | translate }}
-          </p>
-        </div>
-        <div class="flex items-center gap-3">
-          <app-language-toggle />
-          <a [routerLink]="['/profile']" [queryParams]="{ studentId: studentId() }" class="text-sm font-medium text-primary underline">{{ 'practiceHub.profile' | translate }}</a>
-          <a routerLink="/welcome" class="text-sm font-medium text-primary underline">{{ 'practiceHub.home' | translate }}</a>
-        </div>
-      </div>
+<main class="page">
 
-      <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{{ 'practiceHub.student' | translate }}</p>
-          <p class="mt-1 text-base font-semibold text-slate-900">{{ studentName() || ('practiceHub.studentDefault' | translate) }}</p>
-        </div>
-        <div class="flex items-end">
-          <button
-            type="button"
-            class="w-full rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm sm:w-auto"
-            (click)="loadHub()"
-          >
-            {{ 'practiceHub.refresh' | translate }}
-          </button>
-        </div>
-      </div>
-
-      <div class="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-          (click)="openTopicLibrary()"
-        >
-          {{ 'practiceHub.fullTopicLibrary' | translate }}
-        </button>
-        <button
-          type="button"
-          class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-          (click)="openAiWorksheet()"
-        >
-          {{ 'practiceHub.aiWorksheetGenerator' | translate }}
-        </button>
-        <button
-          type="button"
-          class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-          (click)="openRitLookup()"
-        >
-          {{ 'practiceHub.ritLookup' | translate }}
-        </button>
-      </div>
-    </header>
-
-    @if (errorMessage()) {
-      <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        {{ errorMessage() }}
-      </div>
-    }
-
-    <section class="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">
-      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">{{ 'practiceHub.recommendedForYou' | translate }}</p>
-            <h2 class="mt-1 text-xl font-bold text-slate-900">{{ 'practiceHub.nextBestPractice' | translate }}</h2>
-          </div>
-          @if (loading()) {
-            <span class="text-xs text-slate-400">{{ 'practiceHub.loading' | translate }}</span>
-          }
-        </div>
-
-        @if (recommendation(); as rec) {
-          <div class="mt-4 rounded-3xl border border-indigo-200 bg-indigo-50 p-4">
-            <p class="text-lg font-semibold text-indigo-950">{{ rec.recommendedTopicName }}</p>
-            <p class="mt-1 text-sm text-indigo-800">{{ rec.message }}</p>
-            <div class="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                class="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
-                (click)="useRecommendedTopic()"
-              >
-                {{ 'practiceHub.viewTopicDetail' | translate }}
-              </button>
-              <button
-                type="button"
-                class="rounded-full border border-indigo-300 bg-white px-4 py-2 text-sm font-semibold text-indigo-700"
-                (click)="startPractice(resolveRecommendedSkillId(rec.recommendedTopicId))"
-              >
-                {{ 'practiceHub.startWorksheet' | translate }}
-              </button>
-            </div>
-          </div>
-        } @else {
-          <p class="mt-4 text-sm text-slate-500">{{ 'practiceHub.recommendationFallback' | translate }}</p>
-        }
-
-        <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          @for (topic of recommendedTopicCards(); track topic.id) {
-            <button
-              type="button"
-              class="rounded-2xl border border-slate-200 p-4 text-left transition hover:border-primary hover:shadow-sm"
-              (click)="openTopicDetail(topic.skillId ?? topic.id, topic)"
-            >
-              <p class="text-sm font-semibold text-slate-900">{{ topic.title }}</p>
-              <p class="mt-2 text-xs text-slate-500">{{ 'practiceHub.mastery' | translate }} {{ topic.masteryPercentage }}%</p>
-              <p class="mt-1 text-xs text-slate-500">
-                {{ 'practiceHub.topicMeta' | translate:{ subtopics: topic.subtopics.length, tiers: topic.difficultyTiers.length } }}
-              </p>
-            </button>
-          }
-        </div>
-      </article>
-
-      <app-practice-levels
-        [levels]="levels"
-        [selectedLevel]="selectedLevel()"
-        (selectedLevelChange)="selectedLevel.set($event)"
-        (start)="startPractice()"
-      />
-    </section>
-
-    <section class="space-y-3">
-      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-        <button
-          type="button"
-          class="flex w-full items-center justify-between text-left"
-          (click)="toggleSection('topic-map')"
-        >
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{{ 'practiceHub.topicMap' | translate }}</p>
-            <h2 class="mt-1 text-xl font-bold text-slate-900">{{ 'practiceHub.collapsedByDefault' | translate }}</h2>
-          </div>
-          <span class="text-sm font-semibold text-primary">{{ expandedSection() === 'topic-map' ? ('practiceHub.hide' | translate) : ('practiceHub.show' | translate) }}</span>
-        </button>
-      </article>
-
-      @if (expandedSection() === 'topic-map') {
-        <app-topic-map
-          [loading]="loading()"
-          [topics]="browser()?.browseTopics ?? []"
-          (openDetail)="openTopicDetail($event)"
-          (startPractice)="startPractice($event)"
-        />
-      }
-
-      <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-        <button
-          type="button"
-          class="flex w-full items-center justify-between text-left"
-          (click)="toggleSection('topic-library')"
-        >
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">{{ 'practiceHub.topicLibrary' | translate }}</p>
-            <h2 class="mt-1 text-xl font-bold text-slate-900">{{ 'practiceHub.collapsedByDefault' | translate }}</h2>
-          </div>
-          <span class="text-sm font-semibold text-primary">{{ expandedSection() === 'topic-library' ? ('practiceHub.hide' | translate) : ('practiceHub.show' | translate) }}</span>
-        </button>
-      </article>
-
-      @if (expandedSection() === 'topic-library') {
-        <app-topic-library-preview
-          [loading]="syllabusLoading()"
-          [syllabus]="syllabusPreview()"
-          (openLibrary)="openTopicLibrary()"
-          (openRitLookup)="openRitLookup()"
-        />
-      }
-    </section>
+  <div class="header">
+    <button class="back-btn" (click)="router.navigate(['/student-dashboard'])">← Back</button>
+    <h2>Practice Hub</h2>
   </div>
-</div>
 
+  <!-- Recommended Section -->
+  <section class="card">
+    <h3>Recommended for you:</h3>
+    <p class="recommended">{{ recommendedTopic() }}</p>
+
+    <button class="action-btn" (click)="startRecommendedWorksheet()">
+      Start Recommended Worksheet
+    </button>
+  </section>
+
+  <!-- Level Selection -->
+  <section class="card">
+    <h3>Practice Levels</h3>
+
+    <div class="level-list">
+      <button
+        *ngFor="let lvl of levels"
+        class="level-btn"
+        [class.active]="selectedLevel() === lvl"
+        (click)="selectedLevel.set(lvl)"
+      >
+        {{ lvl }}
+      </button>
+    </div>
+  </section>
+
+  <!-- Grade Selection -->
+  <section class="card">
+    <h3>Select Grade</h3>
+
+    <select class="select-box" [(ngModel)]="selectedGrade" (change)="loadTopics()">
+      <option value="" disabled selected>Select grade</option>
+      <option *ngFor="let g of grades" [value]="g">{{ g }}</option>
+    </select>
+  </section>
+
+  <!-- Topic Selection -->
+  <section class="card">
+    <h3>Select Topic</h3>
+
+    <div *ngIf="loadingTopics()">Loading topics...</div>
+
+    <select class="select-box" [(ngModel)]="selectedTopic" [disabled]="topics().length === 0">
+      <option value="" disabled selected>Select topic</option>
+      <option *ngFor="let t of topics()" [value]="t.id">{{ t.name }}</option>
+    </select>
+
+    <button class="dropdown-btn">Topic Map ▼</button>
+    <button class="dropdown-btn">Topic Library ▼</button>
+  </section>
+
+  <!-- Question Count -->
+  <section class="card">
+    <h3>Number of Questions</h3>
+
+    <input
+      class="number-input"
+      type="number"
+      min="5"
+      max="50"
+      [(ngModel)]="questionCount"
+    />
+  </section>
+
+  <!-- Generate Worksheet -->
+  <button
+    class="action-btn generate-btn"
+    [disabled]="!selectedGrade() || !selectedTopic()"
+    (click)="generatePractice()"
+  >
+    Generate Practice Worksheet
+  </button>
+
+</main>

@@ -9,6 +9,7 @@ import {
 } from '../services/learning-api.service';
 import { AuthService } from '../services/auth.service';
 import { OnboardingFlowService } from '../services/onboarding-flow.service';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-clean-worksheet-page',
@@ -22,8 +23,8 @@ export class WorksheetPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly onboarding = inject(OnboardingFlowService);
 
-  readonly selectedGrade = computed(() => this.onboarding.getState().grade || '4');
-  readonly selectedTopic = computed(() => this.onboarding.getState().topics[0] ?? 'General Practice');
+  // readonly selectedGrade = computed(() => this.onboarding.getState().grade || '4');
+  // readonly selectedTopic = computed(() => this.onboarding.getState().topics[0] ?? 'General Practice');
 
   readonly worksheet = signal<PracticeWorksheetResponse | null>(null);
   readonly loading = signal(true);
@@ -41,6 +42,34 @@ export class WorksheetPageComponent implements OnInit {
   readonly worksheetTitle = computed(() => this.worksheet()?.title ?? 'Worksheet');
   readonly worksheetDescription = computed(() => this.worksheet()?.instructions ?? 'Loading worksheet instructions...');
   readonly questions = computed<PracticeWorksheetQuestion[]>(() => this.worksheet()?.questions ?? []);
+
+  private readonly router = inject(Router);
+
+  readonly incomingState = computed(() => {
+    const nav = this.router.getCurrentNavigation();
+    return nav?.extras?.state ?? {};
+  });
+
+  readonly selectedGrade = computed(() =>
+    this.incomingState()["selectedGrade"] ??
+    this.onboarding.getState().grade ??
+    '4'
+  );
+
+  readonly selectedTopic = computed(() =>
+    this.incomingState()["selectedTopic"] ??
+    this.onboarding.getState().topics[0] ??
+    'General Practice'
+  );
+
+  readonly selectedLevel = computed(() =>
+    this.incomingState()["selectedLevel"]
+  );
+
+  readonly selectedQuestionCount = computed(() =>
+    this.incomingState()["questionCount"]
+  );
+
 
   async ngOnInit(): Promise<void> {
     await this.loadWorksheet();
