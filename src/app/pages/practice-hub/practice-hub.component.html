@@ -5,83 +5,104 @@
     <h2>Practice Hub</h2>
   </div>
 
-  <!-- Recommended Section -->
-  <section class="card">
-    <h3>Recommended for you:</h3>
-    <p class="recommended">{{ recommendedTopic() }}</p>
-
-    <button class="action-btn" (click)="startRecommendedWorksheet()">
-      Start Recommended Worksheet
-    </button>
-  </section>
-
-  <!-- Level Selection -->
-  <section class="card">
-    <h3>Practice Levels</h3>
-
-    <div class="level-list">
-      <button
-        *ngFor="let lvl of levels"
-        class="level-btn"
-        [class.active]="selectedLevel() === lvl"
-        (click)="selectedLevel.set(lvl)"
-      >
-        {{ lvl }}
-      </button>
+  <!-- Loading state -->
+  <section class="card" *ngIf="configLoading()">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading practice configuration…</p>
     </div>
   </section>
 
-  <!-- Grade Selection -->
-  <section class="card">
-    <h3>Select Grade</h3>
-
-    <select class="select-box" [(ngModel)]="selectedGrade" (change)="loadTopicsV2()">
-      <option value="" disabled selected>Select grade</option>
-      <option *ngFor="let g of grades" [value]="g">{{ g }}</option>
-    </select>
+  <!-- Error state -->
+  <section class="card error-card" *ngIf="!configLoading() && configError()">
+    <p class="error-msg">{{ configError() }}</p>
+    <button class="action-btn" (click)="loadConfig()">Retry</button>
   </section>
 
-  <!-- Topic Selection (MULTI-SELECT) -->
-  <section class="card">
-    <h3>Select Topics</h3>
+  <!-- Main content — only shown once config is loaded -->
+  <ng-container *ngIf="!configLoading() && !configError() && config()">
 
-    <div *ngIf="loadingTopics()">Loading topics...</div>
+    <!-- Grade Selection -->
+    <section class="card">
+      <h3>Select Grade</h3>
+      <div class="chip-list">
+        <button
+          *ngFor="let g of allowedGrades()"
+          class="chip"
+          [class.active]="selectedGrade() === g"
+          (click)="onGradeChange(g)"
+        >
+          Grade {{ g === 0 ? 'K' : g }}
+        </button>
+      </div>
+    </section>
 
-    <select
-      class="select-box"
-      multiple
-      [(ngModel)]="selectedTopics"
-      [disabled]="topics().length === 0"
+    <!-- Level Selection (filtered by grade) -->
+    <section class="card">
+      <h3>Practice Level</h3>
+      <p class="hint" *ngIf="!selectedGrade()">Select a grade first.</p>
+      <div class="level-list" *ngIf="allowedLevels().length">
+        <button
+          *ngFor="let lvl of allowedLevels()"
+          class="level-btn"
+          [class.active]="selectedLevel() === lvl"
+          (click)="onLevelChange(lvl)"
+        >
+          {{ lvl }}
+        </button>
+      </div>
+    </section>
+
+    <!-- Topic Multi-Select (filtered by level's allowedOperations) -->
+    <section class="card">
+      <h3>Select Topics</h3>
+      <p class="hint" *ngIf="!selectedLevel()">Select a level first.</p>
+      <p class="hint" *ngIf="selectedLevel() && filteredTopics().length === 0">
+        No topics available for the selected level.
+      </p>
+
+      <div class="topic-grid" *ngIf="filteredTopics().length > 0">
+        <button
+          *ngFor="let topic of filteredTopics()"
+          class="topic-chip"
+          [class.selected]="isTopicSelected(topic.id)"
+          (click)="toggleTopic(topic.id)"
+        >
+          {{ topic.name }}
+        </button>
+      </div>
+
+      <p class="selected-count" *ngIf="selectedTopics().length > 0">
+        {{ selectedTopics().length }} topic{{ selectedTopics().length === 1 ? '' : 's' }} selected
+      </p>
+    </section>
+
+    <!-- Question Count -->
+    <section class="card">
+      <h3>Number of Questions</h3>
+      <input
+        class="number-input"
+        type="number"
+        min="5"
+        max="50"
+        [value]="questionCount()"
+        (change)="questionCount.set(+$any($event.target).value)"
+      />
+    </section>
+
+    <!-- Worksheet error -->
+    <p class="error-msg" *ngIf="worksheetError()">{{ worksheetError() }}</p>
+
+    <!-- Generate Worksheet -->
+    <button
+      class="action-btn generate-btn"
+      [disabled]="!canGenerate()"
+      (click)="generatePractice()"
     >
-      <option *ngFor="let t of topics()" [value]="t.id">
-        {{ t.name }}
-      </option>
-    </select>
+      <span *ngIf="!generatingWorksheet()">Generate Practice Worksheet</span>
+      <span *ngIf="generatingWorksheet()">Generating…</span>
+    </button>
 
-    <button class="dropdown-btn">Topic Map ▼</button>
-    <button class="dropdown-btn">Topic Library ▼</button>
-  </section>
-
-  <!-- Question Count -->
-  <section class="card">
-    <h3>Number of Questions</h3>
-
-    <input
-      class="number-input"
-      type="number"
-      min="5"
-      max="50"
-      [(ngModel)]="questionCount"
-    />
-  </section>
-
-  <!-- Generate Worksheet -->
-  <button
-    class="action-btn generate-btn"
-    [disabled]="!selectedGrade() || selectedTopics().length === 0"
-    (click)="generatePractice()"
-  >
-    Generate Practice Worksheet
-  </button>
+  </ng-container>
 
 </main>
