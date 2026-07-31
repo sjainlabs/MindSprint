@@ -35,21 +35,27 @@
   <section class="card">
     <h3>Select Grade</h3>
 
-    <select class="select-box" [(ngModel)]="selectedGrade" (change)="loadTopics()">
+    <select class="select-box" [(ngModel)]="selectedGrade" (change)="loadTopicsV2()">
       <option value="" disabled selected>Select grade</option>
       <option *ngFor="let g of grades" [value]="g">{{ g }}</option>
     </select>
   </section>
 
-  <!-- Topic Selection -->
+  <!-- Topic Selection (MULTI-SELECT) -->
   <section class="card">
-    <h3>Select Topic</h3>
+    <h3>Select Topics</h3>
 
     <div *ngIf="loadingTopics()">Loading topics...</div>
 
-    <select class="select-box" [(ngModel)]="selectedTopic" [disabled]="topics().length === 0">
-      <option value="" disabled selected>Select topic</option>
-      <option *ngFor="let t of topics()" [value]="t.id">{{ t.name }}</option>
+    <select
+      class="select-box"
+      multiple
+      [(ngModel)]="selectedTopics"
+      [disabled]="topics().length === 0"
+    >
+      <option *ngFor="let t of topics()" [value]="t.id">
+        {{ t.name }}
+      </option>
     </select>
 
     <button class="dropdown-btn">Topic Map ▼</button>
@@ -72,7 +78,7 @@
   <!-- Generate Worksheet -->
   <button
     class="action-btn generate-btn"
-    [disabled]="!selectedGrade() || !selectedTopic()"
+    [disabled]="!selectedGrade() || selectedTopics().length === 0"
     (click)="generatePractice()"
   >
     Generate Practice Worksheet

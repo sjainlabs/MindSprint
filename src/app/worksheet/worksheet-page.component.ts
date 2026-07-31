@@ -1,7 +1,16 @@
+
+interface WorksheetNavState {
+  selectedGrade?: string;
+  selectedTopics?: string[];
+  selectedLevel?: string;
+  questionCount?: number;
+}
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { Location } from '@angular/common';
 import {
   LearningApiService,
   PracticeWorksheetQuestion,
@@ -30,7 +39,7 @@ export class WorksheetPageComponent implements OnInit {
   readonly loading = signal(true);
   readonly errorMessage = signal('');
   readonly answers = signal<Record<string, string>>({});
-
+  private readonly location = inject(Location);
   readonly results = signal<{
     accuracy: number;
     mastery: number;
@@ -46,29 +55,30 @@ export class WorksheetPageComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly incomingState = computed(() => {
-    const nav = this.router.getCurrentNavigation();
-    return nav?.extras?.state ?? {};
+    return this.location.getState() as WorksheetNavState;
   });
 
+
   readonly selectedGrade = computed(() =>
-    this.incomingState()["selectedGrade"] ??
+    this.incomingState().selectedGrade ??
     this.onboarding.getState().grade ??
     '4'
   );
 
-  readonly selectedTopic = computed(() =>
-    this.incomingState()["selectedTopic"] ??
-    this.onboarding.getState().topics[0] ??
-    'General Practice'
+  readonly selectedTopics = computed(() =>
+    this.incomingState().selectedTopics ??
+    this.onboarding.getState().topics ??
+    ['General Practice']
   );
 
   readonly selectedLevel = computed(() =>
-    this.incomingState()["selectedLevel"]
+    this.incomingState().selectedLevel ?? 'Beginner'
   );
 
   readonly selectedQuestionCount = computed(() =>
-    this.incomingState()["questionCount"]
+    this.incomingState().questionCount ?? 10
   );
+
 
 
   async ngOnInit(): Promise<void> {
@@ -84,10 +94,10 @@ export class WorksheetPageComponent implements OnInit {
       const payload = {
         studentId: this.authService.getStoredStudentId() ?? undefined,
         grade: this.selectedGrade(),
-        topic: this.selectedTopic(),
-        level: 'Level 2',
-        questionCount: 10,
-        source: 'recommended' as const,
+        topic: this.selectedTopics(),
+        level: this.selectedLevel(),
+        questionCount: this.selectedQuestionCount(),
+        source: 'practice' as const,
       };
 
       const worksheet = await firstValueFrom(this.api.createPracticeWorksheetV1(payload));

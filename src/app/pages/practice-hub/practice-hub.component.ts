@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { LearningApiService } from '../../services/learning-api.service';
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
+import {firstValueFrom} from 'rxjs';
 
 @Component({
   selector: 'app-practice-hub',
@@ -22,7 +23,7 @@ export class PracticeHubComponent implements OnInit {
 
   topics = signal<{ id: string; name: string }[]>([]);
   selectedGrade = signal('');
-  selectedTopic = signal('');
+  selectedTopics = signal<string[]>([]);
   selectedLevel = signal('Beginner');
   questionCount = signal(20);
 
@@ -32,67 +33,81 @@ export class PracticeHubComponent implements OnInit {
   async ngOnInit() {
     const studentId = this.auth.getStoredStudentId();
     if (!studentId) {
-      this.router.navigate(['/access-code']);
+      await this.router.navigate(['/access-code']);
       return;
     }
   }
 
-  async loadTopics() {
-    if (!this.selectedGrade()) return;
+  async loadTopicsV2() {
+    const grade = this.selectedGrade();
+
+    if (!grade) {
+      this.topics.set([]);
+      this.selectedTopics.set([]);
+      return;
+    }
+
     this.loadingTopics.set(true);
 
-    const list = await this.api.getCurriculumTopicsByGrade(this.selectedGrade());
-    this.topics.set(list);
+    try {
+      const topics = await this.api.getCurriculumTopicsV2(grade);
 
-    this.loadingTopics.set(false);
+      // Atomic topics (fractions, decimals, multiplication, etc.)
+      this.topics.set(topics);
+
+      // Reset selected topics when grade changes
+      this.selectedTopics.set([]);
+
+    } finally {
+      this.loadingTopics.set(false);
+    }
   }
 
   async startRecommendedWorksheet() {
-    const studentId = this.auth.getStoredStudentId() ?? undefined;
-
     const payload = {
-      studentId,
-      grade: '1',
-      topic: 'recommended',
-      level: 'Beginner',
-      questionCount: 10,
-      source: 'recommended' as const,
+      studentId: this.auth.getStoredStudentId() ?? undefined,
+      grade: this.selectedGrade(),
+      topic: this.selectedTopics(),   // MULTIPLE TOPICS
+      level: this.selectedLevel(),
+      questionCount: this.questionCount(),
+      source: 'practice' as const,
     };
 
-    // ⭐ FIX: await the API call
-    const worksheet = this.api.createPracticeWorksheetV1(payload);
-
-    // ⭐ FIX: deep clone to plain JSON
+    const worksheet = await firstValueFrom(this.api.createPracticeWorksheetV1(payload));
     const safeWorksheet = JSON.parse(JSON.stringify(worksheet));
 
     await this.router.navigate(['/practice/worksheet'], {
-      state: { worksheet: safeWorksheet },
+      state: {
+        selectedGrade: this.selectedGrade(),
+        selectedTopics: this.selectedTopics(),
+        selectedLevel: this.selectedLevel(),
+        questionCount: this.questionCount(),
+        worksheet: safeWorksheet,
+      },
     });
   }
 
   async generatePractice() {
-    const rawStudentId = this.auth.getStoredStudentId();
-
-    const payload = {
+    const payload1 = {
       studentId: this.auth.getStoredStudentId() ?? undefined,
       grade: this.selectedGrade(),
-      topic: this.selectedTopic(),
+      topic: this.selectedTopics(),   // MULTIPLE TOPICS
       level: this.selectedLevel(),
-      questionCount: this.questionCount
-      (),
-      source: 'practice' as const,
+      questionCount: this.questionCount(),
+      source: "practice" as const,
     };
 
-
-    // ⭐ FIX: await the API call
-    const worksheet = this.api.createPracticeWorksheetV1(payload);
-
-    // ⭐ FIX: deep clone to plain JSON
+    const worksheet = await firstValueFrom(this.api.createPracticeWorksheetV1(payload1));
     const safeWorksheet = JSON.parse(JSON.stringify(worksheet));
 
-    // ⭐ FIX: navigate to worksheet page, not back to hub
     await this.router.navigate(['/practice/worksheet'], {
-      state: { worksheet: safeWorksheet },
+      state: {
+        selectedGrade: this.selectedGrade(),
+        selectedTopics: this.selectedTopics(),
+        selectedLevel: this.selectedLevel(),
+        questionCount: this.questionCount(),
+        worksheet: safeWorksheet,
+      },
     });
   }
 }

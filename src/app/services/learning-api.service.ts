@@ -52,6 +52,8 @@ export interface GenerateAccessCodeResponse {
 export interface TopicOption {
   id: string;
   name: string;
+  grades: string;
+  subtopics: []
 }
 
 export interface DiagnosticQuestion {
@@ -82,7 +84,7 @@ export interface PracticeWorksheetQuestion {
 export interface PracticeWorksheetRequest {
   studentId?: string;
   grade: string;
-  topic: string;
+  topic: string[];
   level: string;
   questionCount: number;
   source?: 'recommended' | 'practice' | 'diagnostic-followup';
@@ -100,6 +102,32 @@ export interface PracticeWorksheetResponse {
   questions: PracticeWorksheetQuestion[];
   generatedAt?: string;
 }
+
+/* ---------------- V2 MULTI-TOPIC REQUEST ---------------- */
+
+export interface PracticeWorksheetV2Request {
+  studentId?: string;
+  grade: string;
+  topics: string[];   // MULTIPLE TOPICS
+  level: string;
+  questionCount: number;
+  source?: 'recommended' | 'practice' | 'diagnostic-followup';
+}
+
+export interface PracticeWorksheetV2Response {
+  worksheetId: string;
+  recommendedLabel: string;
+  title: string;
+  instructions: string;
+  grade: string;
+  topics: string[];   // MULTIPLE TOPICS
+  level: string;
+  questionCount: number;
+  questions: PracticeWorksheetQuestion[];
+  generatedAt?: string;
+  topic: string
+}
+
 
 export interface TopicDetailResponse {
   id: string;
@@ -130,6 +158,8 @@ export interface SurpriseTestResponse {
   surpriseId: string;
   questions: DiagnosticQuestion[];
 }
+
+
 
 @Injectable({ providedIn: 'root' })
 export class LearningApiService {
@@ -297,5 +327,26 @@ export class LearningApiService {
     });
   }
 
+  /* ---------------- Curriculum V2 ---------------- */
+
+  async getCurriculumTopicsV2(grade: string): Promise<any[]> {
+    const response = await firstValueFrom(
+      this.http.get<{ topics: any[] }>(
+        `${this.apiBase}/curriculum/topics-v2?grade=${encodeURIComponent(grade)}`
+      )
+    );
+    return response.topics ?? [];
+  }
+
+  /* ---------------- Worksheet V2 (MULTI-TOPIC) ---------------- */
+
+  async createPracticeWorksheetV2(payload: PracticeWorksheetV2Request): Promise<PracticeWorksheetV2Response> {
+    return await firstValueFrom(
+      this.http.post<PracticeWorksheetV2Response>(
+        `${this.apiBase}/v2/practice/worksheet`,
+        payload
+      )
+    );
+  }
 
 }
