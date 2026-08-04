@@ -28,7 +28,7 @@ export class PracticeHubComponent implements OnInit {
   syllabusError = signal('');
 
   // ── Selection state (new EnhancedSyllabus-based) ─────────────────────────────
-  selectedGrade = signal<number>(0);
+  selectedGrade = signal<number | null>(null);
   topics = signal<EnhancedTopic[]>([]);
   selectedTopics = signal<EnhancedTopic[]>([]);  // Multi-select topics
   questionCount = signal(20);
@@ -107,13 +107,16 @@ export class PracticeHubComponent implements OnInit {
 
   canGenerate = computed(
     () =>
-      !!this.selectedGrade() &&
+      this.selectedGrade() !== null &&
       this.selectedTopics().length > 0 &&
       !this.generatingWorksheet(),
   );
 
   async generatePractice(): Promise<void> {
     if (!this.canGenerate()) return;
+
+    const grade = this.selectedGrade();
+    if (grade === null) return;
 
     const selectedTopics = this.selectedTopics();
     if (selectedTopics.length === 0) return;
@@ -129,7 +132,7 @@ export class PracticeHubComponent implements OnInit {
 
     const payload = {
       studentId: this.auth.getStoredStudentId() ?? undefined,
-      grade: String(this.selectedGrade()),
+      grade: String(grade),
       topic: topicIds,  // Only topic IDs: ["addition-single-digit", "subtraction-single-digit"]
       level: firstTopic.practiceLevel,
       questionCount: this.questionCount(),
@@ -141,7 +144,7 @@ export class PracticeHubComponent implements OnInit {
       await this.router.navigate(['/practice/worksheet'], {
         state: {
           worksheet,
-          selectedGrade: this.selectedGrade(),
+          selectedGrade: grade,
           selectedTopics: selectedTopics,  // Pass array of topics
           questionCount: this.questionCount(),
         },

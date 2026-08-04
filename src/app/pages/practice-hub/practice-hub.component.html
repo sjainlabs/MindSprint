@@ -40,8 +40,8 @@
     <!-- Topic Selection (filtered by grade) -->
     <section class="card">
       <h3>Select Topics</h3>
-      <p class="hint" *ngIf="!selectedGrade()">Select a grade first.</p>
-      <p class="hint" *ngIf="selectedGrade() && filteredTopics().length === 0">
+      <p class="hint" *ngIf="selectedGrade() === null">Select a grade first.</p>
+      <p class="hint" *ngIf="selectedGrade() !== null && filteredTopics().length === 0">
         No topics available for this grade.
       </p>
 
