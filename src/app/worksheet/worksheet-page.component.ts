@@ -1,11 +1,3 @@
-
-interface WorksheetNavState {
-  selectedGrade?: string;
-  selectedTopics?: string[];
-  selectedLevel?: string;
-  questionCount?: number;
-}
-
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -18,7 +10,16 @@ import {
 } from '../services/learning-api.service';
 import { AuthService } from '../services/auth.service';
 import { OnboardingFlowService } from '../services/onboarding-flow.service';
-import {Router} from '@angular/router';
+import { type EnhancedTopic } from '../services/practice-config.service';
+
+interface WorksheetNavState {
+  worksheet?: any;
+  questionCount?: number;
+  // New EnhancedSyllabus format (multi-topic with EnhancedTopic objects)
+  selectedGrade?: string;
+  selectedTopics?: EnhancedTopic[] | string[];  // Union type: EnhancedTopic[] OR string[]
+  selectedLevel?: string;
+}
 
 @Component({
   selector: 'app-clean-worksheet-page',
@@ -52,28 +53,68 @@ export class WorksheetPageComponent implements OnInit {
   readonly worksheetDescription = computed(() => this.worksheet()?.instructions ?? 'Loading worksheet instructions...');
   readonly questions = computed<PracticeWorksheetQuestion[]>(() => this.worksheet()?.questions ?? []);
 
-  private readonly router = inject(Router);
-
   readonly incomingState = computed(() => {
     return this.location.getState() as WorksheetNavState;
   });
 
+  // New: EnhancedTopic-based properties
+  readonly selectedTopicsArray = computed(() => {
+    const state = this.incomingState();
+    // Check if selectedTopics is an array of EnhancedTopic objects (new format)
+    if (Array.isArray(state.selectedTopics) && state.selectedTopics.length > 0) {
+      const first = state.selectedTopics[0];
+      // If first item has cbseGrade property, it's EnhancedTopic[] (new format)
+      if (first && typeof first === 'object' && 'cbseGrade' in first) {
+        return (state.selectedTopics as unknown as EnhancedTopic[]);
+      }
+    }
+    return [];
+  });
 
-  readonly selectedGrade = computed(() =>
-    this.incomingState().selectedGrade ??
-    this.onboarding.getState().grade ??
-    '4'
-  );
+  readonly selectedGrade = computed(() => {
+    const topicsArray = this.selectedTopicsArray();
+    // If using new format with EnhancedTopic objects
+    if (topicsArray.length > 0) {
+      return String(topicsArray[0].cbseGrade);
+    }
 
-  readonly selectedTopics = computed(() =>
-    this.incomingState().selectedTopics ??
-    this.onboarding.getState().topics ??
-    ['General Practice']
-  );
+    // Fallback to old format
+    const state = this.incomingState();
+    return state.selectedGrade ?? this.onboarding.getState().grade ?? '4';
+  });
 
-  readonly selectedLevel = computed(() =>
-    this.incomingState().selectedLevel ?? 'Beginner'
-  );
+  readonly selectedTopics = computed(() => {
+    const topicsArray = this.selectedTopicsArray();
+    // If using new format, extract topic IDs
+    if (topicsArray.length > 0) {
+      return topicsArray.map((t) => t.id);
+    }
+
+    // Fallback to old format (string array)
+    const state = this.incomingState();
+    const selectedTopicsValue = state.selectedTopics;
+    if (
+      Array.isArray(selectedTopicsValue) &&
+      selectedTopicsValue.length > 0 &&
+      typeof selectedTopicsValue[0] === 'string'
+    ) {
+      return selectedTopicsValue as string[];
+    }
+
+    return ['General Practice'];
+  });
+
+  readonly selectedLevel = computed(() => {
+    const topicsArray = this.selectedTopicsArray();
+    // If using new format, get level from first topic
+    if (topicsArray.length > 0) {
+      return topicsArray[0].practiceLevel;
+    }
+
+    // Fallback to old format
+    const state = this.incomingState();
+    return state.selectedLevel ?? 'Beginner';
+  });
 
   readonly selectedQuestionCount = computed(() =>
     this.incomingState().questionCount ?? 10
@@ -176,4 +217,10 @@ export class WorksheetPageComponent implements OnInit {
       this.errorMessage.set('Unable to load insights.');
     }
   }
+
+  selectedTopicsLabel = computed(() => {
+    const arr = this.selectedTopicsArray() ?? [];
+    return arr.map(t => t.name).join(', ');
+  });
+
 }

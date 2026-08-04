@@ -6,21 +6,21 @@
   </div>
 
   <!-- Loading state -->
-  <section class="card" *ngIf="configLoading()">
+  <section class="card" *ngIf="syllabusLoading()">
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading practice configuration…</p>
+      <p>Loading practice topics…</p>
     </div>
   </section>
 
   <!-- Error state -->
-  <section class="card error-card" *ngIf="!configLoading() && configError()">
-    <p class="error-msg">{{ configError() }}</p>
-    <button class="action-btn" (click)="loadConfig()">Retry</button>
+  <section class="card error-card" *ngIf="!syllabusLoading() && syllabusError()">
+    <p class="error-msg">{{ syllabusError() }}</p>
+    <button class="action-btn" (click)="loadSyllabus()">Retry</button>
   </section>
 
-  <!-- Main content — only shown once config is loaded -->
-  <ng-container *ngIf="!configLoading() && !configError() && config()">
+  <!-- Main content — only shown once topics are loaded -->
+  <ng-container *ngIf="!syllabusLoading() && !syllabusError() && topics().length">
 
     <!-- Grade Selection -->
     <section class="card">
@@ -37,39 +37,28 @@
       </div>
     </section>
 
-    <!-- Level Selection (filtered by grade) -->
-    <section class="card">
-      <h3>Practice Level</h3>
-      <p class="hint" *ngIf="!selectedGrade()">Select a grade first.</p>
-      <div class="level-list" *ngIf="allowedLevels().length">
-        <button
-          *ngFor="let lvl of allowedLevels()"
-          class="level-btn"
-          [class.active]="selectedLevel() === lvl"
-          (click)="onLevelChange(lvl)"
-        >
-          {{ lvl }}
-        </button>
-      </div>
-    </section>
-
-    <!-- Topic Multi-Select (filtered by level's allowedOperations) -->
+    <!-- Topic Selection (filtered by grade) -->
     <section class="card">
       <h3>Select Topics</h3>
-      <p class="hint" *ngIf="!selectedLevel()">Select a level first.</p>
-      <p class="hint" *ngIf="selectedLevel() && filteredTopics().length === 0">
-        No topics available for the selected level.
+      <p class="hint" *ngIf="!selectedGrade()">Select a grade first.</p>
+      <p class="hint" *ngIf="selectedGrade() && filteredTopics().length === 0">
+        No topics available for this grade.
       </p>
 
       <div class="topic-grid" *ngIf="filteredTopics().length > 0">
-        <button
+        <div
           *ngFor="let topic of filteredTopics()"
-          class="topic-chip"
+          class="topic-card"
           [class.selected]="isTopicSelected(topic.id)"
-          (click)="toggleTopic(topic.id)"
+          (click)="selectTopic(topic)"
         >
-          {{ topic.name }}
-        </button>
+          <h4>{{ topic.name }}</h4>
+          <div class="topic-details">
+            <span class="badge">Grade {{ topic.cbseGrade }}</span>
+            <span class="badge kumon-badge">{{ topic.kumonBand }}</span>
+            <span class="badge level-badge">{{ topic.practiceLevel }}</span>
+          </div>
+        </div>
       </div>
 
       <p class="selected-count" *ngIf="selectedTopics().length > 0">
@@ -78,7 +67,7 @@
     </section>
 
     <!-- Question Count -->
-    <section class="card">
+    <section class="card" *ngIf="selectedTopics().length > 0">
       <h3>Number of Questions</h3>
       <input
         class="number-input"

@@ -119,8 +119,109 @@
 
 .topic-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.topic-card {
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+}
+
+.topic-card:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.topic-card.selected {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #14532d;
+}
+
+.topic-card h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.topic-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.1);
+  color: #1e40af;
+  width: fit-content;
+}
+
+.kumon-badge {
+  background: rgba(99, 102, 241, 0.1);
+  color: #3730a3;
+}
+
+.level-badge {
+  background: rgba(168, 85, 247, 0.1);
+  color: #6b21a8;
+}
+
+.operations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.operation-btn {
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.operation-btn:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.operation-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.operation-name {
+  font-weight: 700;
+}
+
+.difficulty-score {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.operation-btn.active .difficulty-score {
+  opacity: 1;
 }
 
 .topic-chip {
@@ -183,3 +284,5 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+

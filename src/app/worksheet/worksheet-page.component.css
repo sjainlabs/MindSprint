@@ -28,6 +28,38 @@
   color: #334155;
 }
 
+/* Topic Info Section (new EnhancedSyllabus details) */
+.topic-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+  padding: 12px;
+  background: #f0f9ff;
+  border-radius: 12px;
+  border: 1px solid #bfdbfe;
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-group .label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-group .value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
 /* Answer Input */
 .answer-label {
   display: block;
@@ -148,3 +180,5 @@
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+

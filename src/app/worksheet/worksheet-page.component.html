@@ -51,6 +51,24 @@
     <section class="card">
       <h1>{{ worksheetTitle() }}</h1>
       <p>{{ worksheetDescription() }}</p>
+
+      <!-- Topic details (new EnhancedSyllabus format - multi-topic) -->
+      <div class="topic-info" *ngIf="selectedTopicsArray().length > 0">
+        <div class="info-group">
+          <span class="label">Topics ({{ selectedTopicsArray().length }}):</span>
+          <span class="value">{{ selectedTopicsLabel() }}</span>
+
+        </div>
+        <div class="info-group">
+          <span class="label">Grade:</span>
+          <span class="value">{{ selectedGrade() }}</span>
+        </div>
+        <div class="info-group">
+          <span class="label">Practice Level:</span>
+          <span class="value">{{ selectedLevel() }}</span>
+        </div>
+      </div>
+
       <p>Progress: {{ answeredCount() }}/{{ questions().length }}</p>
     </section>
 

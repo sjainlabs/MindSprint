@@ -7,8 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
   PracticeConfigService,
-  type PracticeConfig,
-  type PracticeTopicConfig,
+  type EnhancedTopic,
 } from '../../services/practice-config.service';
 
 @Component({
@@ -24,45 +23,34 @@ export class PracticeHubComponent implements OnInit {
   private readonly practiceConfig = inject(PracticeConfigService);
   protected readonly router = inject(Router);
 
-  // ── Config state ────────────────────────────────────────────────────────────
-  config = signal<PracticeConfig | null>(null);
-  configLoading = signal(true);
-  configError = signal('');
+  // ── Loading state ────────────────────────────────────────────────────────────
+  syllabusLoading = signal(true);
+  syllabusError = signal('');
 
-  // ── Selection state ──────────────────────────────────────────────────────────
+  // ── Selection state (new EnhancedSyllabus-based) ─────────────────────────────
   selectedGrade = signal<number>(0);
-  selectedLevel = signal<string>('');
-  selectedTopics = signal<string[]>([]);
+  topics = signal<EnhancedTopic[]>([]);
+  selectedTopics = signal<EnhancedTopic[]>([]);  // Multi-select topics
   questionCount = signal(20);
 
   generatingWorksheet = signal(false);
   worksheetError = signal('');
 
-  // ── Derived values from config ───────────────────────────────────────────────
+  // ── Derived values from EnhancedSyllabus ──────────────────────────────────────
   allowedGrades = computed<number[]>(() => {
-    const cfg = this.config();
-    if (!cfg) return [];
-    return Object.keys(cfg.gradeToLevels)
-      .map(Number)
-      .sort((a, b) => a - b);
+    const allTopics = this.topics();
+    if (!allTopics.length) return [];
+    // Get unique grades from all topics and sort
+    const gradeSet = new Set(allTopics.map((t) => t.cbseGrade));
+    return Array.from(gradeSet).sort((a, b) => a - b);
   });
 
-  allowedLevels = computed<string[]>(() => {
-    const cfg = this.config();
+  filteredTopics = computed<EnhancedTopic[]>(() => {
     const grade = this.selectedGrade();
-    if (!cfg || !grade) return [];
-    return cfg.gradeToLevels[grade] ?? [];
-  });
-
-  filteredTopics = computed<PracticeTopicConfig[]>(() => {
-    const cfg = this.config();
-    const level = this.selectedLevel();
-    if (!cfg || !level) return [];
-    const levelCfg = cfg.levels[level];
-    if (!levelCfg) return [];
-    return Object.values(cfg.topics).filter((t) =>
-      levelCfg.allowedOperations.includes(t.operation),
-    );
+    const allTopics = this.topics();
+    if (grade == null || !allTopics.length) return [];
+    // STRICT filtering: Only show topics where cbseGrade === selectedGrade
+    return allTopics.filter((t) => t.cbseGrade === grade).sort((a, b) => a.cbseGrade - b.cbseGrade);
   });
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -72,66 +60,54 @@ export class PracticeHubComponent implements OnInit {
       await this.router.navigate(['/access-code']);
       return;
     }
-    this.loadConfig();
+    this.loadSyllabus();
   }
 
-  loadConfig(): void {
-    this.configLoading.set(true);
-    this.configError.set('');
+  loadSyllabus(): void {
+    this.syllabusLoading.set(true);
+    this.syllabusError.set('');
 
-    this.practiceConfig.getConfig().subscribe({
-      next: (cfg) => {
-        this.config.set(cfg);
-        this.configLoading.set(false);
-        // Auto-select first grade and first level
-        const grades = Object.keys(cfg.gradeToLevels).map(Number).sort((a, b) => a - b);
+    this.practiceConfig.getTopics().subscribe({
+      next: (topics ) => {
+        this.topics.set(topics);
+        this.syllabusLoading.set(false);
+        // Auto-select first grade
+        const grades = this.allowedGrades();
         if (grades.length) {
           this.selectedGrade.set(grades[0]);
-          const levels = cfg.gradeToLevels[grades[0]] ?? [];
-          if (levels.length) this.selectedLevel.set(levels[0]);
         }
       },
       error: () => {
-        this.configError.set('Unable to load practice configuration. Please try again.');
-        this.configLoading.set(false);
+        this.syllabusError.set('Unable to load practice topics. Please try again.');
+        this.syllabusLoading.set(false);
       },
     });
   }
 
   onGradeChange(grade: number): void {
     this.selectedGrade.set(grade);
-    this.selectedTopics.set([]);
-    // Auto-select first level for the new grade
-    const cfg = this.config();
-    if (cfg) {
-      const levels = cfg.gradeToLevels[grade] ?? [];
-      this.selectedLevel.set(levels[0] ?? '');
-    }
+    this.selectedTopics.set([]);  // Clear topic selection when grade changes
   }
 
-  onLevelChange(level: string): void {
-    this.selectedLevel.set(level);
-    // Clear topics that are no longer valid for this level
-    this.selectedTopics.set([]);
-  }
-
-  toggleTopic(topicId: string): void {
+  selectTopic(topic: EnhancedTopic): void {
+    // Toggle topic: add if not selected, remove if selected
     const current = this.selectedTopics();
-    if (current.includes(topicId)) {
-      this.selectedTopics.set(current.filter((id) => id !== topicId));
+    const exists = current.find((t) => t.id === topic.id);
+
+    if (exists) {
+      this.selectedTopics.set(current.filter((t) => t.id !== topic.id));
     } else {
-      this.selectedTopics.set([...current, topicId]);
+      this.selectedTopics.set([...current, topic]);
     }
   }
 
   isTopicSelected(topicId: string): boolean {
-    return this.selectedTopics().includes(topicId);
+    return this.selectedTopics().some((t) => t.id === topicId);
   }
 
   canGenerate = computed(
     () =>
       !!this.selectedGrade() &&
-      !!this.selectedLevel() &&
       this.selectedTopics().length > 0 &&
       !this.generatingWorksheet(),
   );
@@ -139,14 +115,23 @@ export class PracticeHubComponent implements OnInit {
   async generatePractice(): Promise<void> {
     if (!this.canGenerate()) return;
 
+    const selectedTopics = this.selectedTopics();
+    if (selectedTopics.length === 0) return;
+
     this.generatingWorksheet.set(true);
     this.worksheetError.set('');
+
+    // Use practice level from first selected topic
+    const firstTopic = selectedTopics[0];
+
+    // Extract only topic IDs for backend
+    const topicIds = selectedTopics.map((t) => t.id);
 
     const payload = {
       studentId: this.auth.getStoredStudentId() ?? undefined,
       grade: String(this.selectedGrade()),
-      topic: this.selectedTopics(),
-      level: this.selectedLevel(),
+      topic: topicIds,  // Only topic IDs: ["addition-single-digit", "subtraction-single-digit"]
+      level: firstTopic.practiceLevel,
       questionCount: this.questionCount(),
       source: 'practice' as const,
     };
@@ -157,8 +142,7 @@ export class PracticeHubComponent implements OnInit {
         state: {
           worksheet,
           selectedGrade: this.selectedGrade(),
-          selectedTopics: this.selectedTopics(),
-          selectedLevel: this.selectedLevel(),
+          selectedTopics: selectedTopics,  // Pass array of topics
           questionCount: this.questionCount(),
         },
       });
