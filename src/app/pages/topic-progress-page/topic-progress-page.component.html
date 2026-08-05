@@ -1,0 +1,106 @@
+<!-- Header -->
+<div class="header flex items-center gap-4 mb-4">
+  <button class="back-btn" (click)="goBack()">← Back</button>
+  <a routerLink="/" class="home-link">Home</a>
+</div>
+
+<h2>Your Topic Progress</h2>
+
+<!-- Loading / Error -->
+<div *ngIf="loading()">Loading progression...</div>
+<div *ngIf="error()">{{ error() }}</div>
+
+<!-- Overview -->
+<div *ngIf="overview() as o">
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="o.topicsInProgress.length === 0 && o.topicsMastered.length === 0">
+    <h3>No topics started yet</h3>
+    <p>Recommended first topic: {{ o.recommendedNextTopicId }}</p>
+
+    <button (click)="startTopic(o.recommendedNextTopicId)">
+      Start This Topic
+    </button>
+  </div>
+
+  <!-- IN‑PROGRESS TOPICS -->
+  <div *ngIf="o.topicsInProgress.length > 0">
+    <h3>Topics In Progress</h3>
+
+    <div *ngFor="let topic of o.topicsInProgress" class="topic-card">
+      <h4>{{ topic.topicName }}</h4>
+
+      <p>Worksheets Completed: {{ topic.worksheetsCompleted }}</p>
+      <p>Worksheets Remaining Until Test: {{ topic.worksheetsRemainingUntilTest }}</p>
+
+      <p>Block: {{ topic.currentBlock }} / 4</p>
+      <p>Block Progress: {{ topic.blockProgressPercent }}%</p>
+
+      <p>Tests Passed: {{ topic.testsPassed }} / {{ topic.testsTotal }}</p>
+      <p>Tests Remaining: {{ topic.testsRemaining }}</p>
+
+      <p>
+        Status:
+        <span [style.color]="statusColor(topic.status)">
+          {{ topic.status }}
+        </span>
+      </p>
+
+      <p>Mastery: {{ topic.mastery }}%</p>
+
+      <div class="actions">
+
+        <!-- Scheduled Test -->
+        <button *ngIf="topic.isTestUnlocked"
+                (click)="api.createScheduledTest(o.studentId, topic.topicId).subscribe()">
+          Take Scheduled Test
+        </button>
+
+        <!-- Remediation -->
+        <button *ngIf="topic.isRemediationRequired"
+                (click)="api.createRemediationWorksheet(o.studentId, topic.topicId).subscribe()">
+          Start Remediation
+        </button>
+
+        <!-- Advance Topic -->
+        <button *ngIf="topic.isMastered"
+                (click)="api.advanceTopic(o.studentId, topic.topicId).subscribe()">
+          Advance Topic
+        </button>
+
+        <!-- Ad‑hoc Test -->
+        <button (click)="api.createAdhocTest(o.studentId, topic.topicId).subscribe()">
+          Take Ad‑hoc Test
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MASTERED TOPICS -->
+  <div *ngIf="o.topicsMastered.length > 0">
+    <h3>Mastered Topics</h3>
+
+    <div *ngFor="let topic of o.topicsMastered" class="topic-card mastered">
+      <h4>{{ topic.topicName }}</h4>
+
+      <p>Mastery: {{ topic.mastery }}%</p>
+      <p>Tests Passed: {{ topic.testsPassed }} / {{ topic.testsTotal }}</p>
+
+      <button (click)="api.advanceTopic(o.studentId, topic.topicId).subscribe()">
+        Advance Topic
+      </button>
+    </div>
+  </div>
+
+  <!-- NEXT RECOMMENDED TOPIC -->
+  <div *ngIf="o.recommendedNextTopicId">
+    <h3>Recommended Next Topic</h3>
+    <p>{{ o.recommendedNextTopicId }}</p>
+
+    <button (click)="startTopic(o.recommendedNextTopicId)">
+      Start This Topic
+    </button>
+  </div>
+
+</div>

@@ -17,6 +17,7 @@ import { SurpriseTestPageComponent } from './tests/surprise-test-page.component'
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
+import {TopicProgressPageComponent} from './pages/topic-progress-page/topic-progress-page.component';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -34,6 +35,8 @@ export const routes: Routes = [
   { path: 'insights', canActivate: [studentAuthGuard], component: InsightsPageComponent },
   { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
   { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
+  { path: 'progression/overview', canActivate: [studentAuthGuard], component: TopicProgressPageComponent },
+
 
   // Legacy aliases.
   { path: 'parent-login', redirectTo: '/auth/parent-login', pathMatch: 'full' },

@@ -159,6 +159,38 @@ export interface SurpriseTestResponse {
   questions: DiagnosticQuestion[];
 }
 
+export interface ProgressOverviewTopic {
+  studentId: string;
+  topicId: string;
+  topicName: string;
+  worksheetsCompleted: number;
+  testsTotal: number;
+  testsPassed: number;
+  currentBlock: number;
+  nextTestDueAt: number;
+  mastery: number;
+  level: string;
+  status: string;
+  remediationCount: number;
+  updatedAt: string;
+
+  // Enhanced fields
+  worksheetsRemainingUntilTest: number;
+  blockProgressPercent: number;
+  testsRemaining: number;
+  isTestUnlocked: boolean;
+  isRemediationRequired: boolean;
+  isMastered: boolean;
+}
+
+export interface ProgressOverviewResponse {
+  studentId: string;
+  topicsInProgress: ProgressOverviewTopic[];
+  topicsMastered: ProgressOverviewTopic[];
+  recommendedNextTopicId: string | null;
+  totalTopicsAvailable: number;
+}
+
 
 
 @Injectable({ providedIn: 'root' })
@@ -346,6 +378,48 @@ export class LearningApiService {
         `${this.apiBase}/v2/practice/worksheet`,
         payload
       )
+    );
+  }
+
+  // progression API additions
+
+  getProgressOverview(studentId: string) {
+    return this.http.get<ProgressOverviewResponse>(
+      `${this.apiBase}/progression/${studentId}/overview`
+    );
+  }
+
+  getTopicProgress(studentId: string, topicId: string) {
+    return this.http.get(
+      `${this.apiBase}/progression/${studentId}/topics/${topicId}`
+    );
+  }
+
+  createScheduledTest(studentId: string, topicId: string) {
+    return this.http.post(
+      `${this.apiBase}/progression/${studentId}/topics/${topicId}/test`,
+      {}
+    );
+  }
+
+  createAdhocTest(studentId: string, topicId: string) {
+    return this.http.post(
+      `${this.apiBase}/progression/${studentId}/topics/${topicId}/tests/adhoc`,
+      {}
+    );
+  }
+
+  createRemediationWorksheet(studentId: string, topicId: string) {
+    return this.http.post(
+      `${this.apiBase}/progression/${studentId}/topics/${topicId}/remediation`,
+      {}
+    );
+  }
+
+  advanceTopic(studentId: string, topicId: string) {
+    return this.http.post(
+      `${this.apiBase}/progression/${studentId}/topics/${topicId}/advance`,
+      {}
     );
   }
 

@@ -25,6 +25,7 @@ export class WorksheetComponent implements OnInit {
   private readonly insights = inject(InsightsService);
   private readonly auth = inject(AuthService);
   protected readonly router = inject(Router);
+  readonly results = signal<any>(null);
 
   // ── Worksheet data from router state ────────────────────────────────────────
   worksheet = signal<PracticeWorksheetResponse | null>(null);
@@ -137,8 +138,10 @@ export class WorksheetComponent implements OnInit {
     this.feedback.set('');
 
     this.insights.submitWorksheetResults(payload).subscribe({
-      next: () => {
+      next: (res) => {
         this.loading.set(false);
+        // NEW — store progression results (status, mastery, etc.)
+        this.results.set(res);
         this.submitted.set(true);
         this.feedback.set('Worksheet submitted successfully!');
       },

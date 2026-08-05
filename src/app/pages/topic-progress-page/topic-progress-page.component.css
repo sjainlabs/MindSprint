@@ -1,0 +1,133 @@
+/* ---------- Layout ---------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-btn,
+.home-link {
+  font-size: 1rem;
+  color: #0077cc;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.back-btn:hover,
+.home-link:hover {
+  text-decoration: underline;
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.4rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h4 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- Topic Cards ---------- */
+
+.topic-card {
+  background: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.topic-card.mastered {
+  border-color: #4caf50;
+  background: #f3fff5;
+}
+
+.topic-card p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+/* ---------- Actions ---------- */
+
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.actions button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #0077cc;
+  color: white;
+  transition: background 0.2s ease;
+}
+
+.actions button:hover {
+  background: #005fa3;
+}
+
+.actions button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+/* ---------- Empty State ---------- */
+
+.empty-state {
+  padding: 1.5rem;
+  background: #fafafa;
+  border: 1px dashed #cccccc;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.empty-state button {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  background: #0077cc;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.empty-state button:hover {
+  background: #005fa3;
+}
+
+/* ---------- Status Colors ---------- */
+
+.status-learning {
+  color: gray;
+}
+
+.status-ready_for_test {
+  color: orange;
+}
+
+.status-needs_remediation {
+  color: red;
+}
+
+.status-mastered {
+  color: green;
+}

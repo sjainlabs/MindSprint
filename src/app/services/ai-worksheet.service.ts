@@ -34,9 +34,9 @@ export interface AiWorksheet {
     type: string;
     topic: string;
     subtopic: string;
-    prompt?: string;
+    prompt: string;
     questionText?: string;
-    answer?: string;
+    answer: string;
     difficulty: number;
     hints?: string[];
     metadata?: {

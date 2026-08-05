@@ -1,0 +1,10 @@
+.banner {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.test-ready { background: #ffe9b3; }
+.remediation { background: #ffd1d1; }
+.mastered { background: #c8f7c5; }

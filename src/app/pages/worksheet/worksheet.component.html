@@ -10,6 +10,21 @@
     </button>
   </div>
 
+  <!-- Test Ready Banner -->
+  <div *ngIf="results()?.status === 'ready_for_test'" class="banner test-ready">
+    You unlocked a test! Go to your Progress Page.
+  </div>
+
+  <!-- Remediation Banner -->
+  <div *ngIf="results()?.status === 'needs_remediation'" class="banner remediation">
+    You need remediation. Go to your Progress Page.
+  </div>
+
+  <!-- Mastered Banner -->
+  <div *ngIf="results()?.status === 'mastered'" class="banner mastered">
+    Topic mastered! Proceed to next topic.
+  </div>
+
   <div class="bg-white rounded-lg p-6 shadow" *ngIf="worksheet()">
 
     <!-- Worksheet title + metadata -->
