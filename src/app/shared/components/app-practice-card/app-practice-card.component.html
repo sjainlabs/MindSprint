@@ -1,0 +1,19 @@
+<div class="practice-card" [class.selected]="selected" (click)="toggle.emit()" role="button" tabindex="0">
+  <div class="card-top">
+    <img class="topic-icon" [src]="topic?.icon || '/assets/mascots/penguin.svg'" alt="{{ topic?.name }}" />
+    <div class="title-group">
+      <h4>{{ topic?.name }}</h4>
+      <span class="level">{{ topic?.practiceLevel || 'Beginner' }}</span>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="progress"></div>
+    </div>
+    <div class="progress-label">{{ progress }}%</div>
+  </div>
+
+  <button class="start-btn" (click)="$event.stopPropagation(); start.emit();">Start Practice</button>
+</div>
+

@@ -11,6 +11,9 @@ import {
 import { AuthService } from '../services/auth.service';
 import { OnboardingFlowService } from '../services/onboarding-flow.service';
 import { type EnhancedTopic } from '../services/practice-config.service';
+import { AppMascotComponent } from '../shared/components/app-mascot/app-mascot.component';
+import { AppRewardStarsComponent } from '../shared/components/app-reward-stars/app-reward-stars.component';
+import { triggerConfetti } from '../shared/utils/confetti';
 
 interface WorksheetNavState {
   worksheet?: any;
@@ -24,7 +27,7 @@ interface WorksheetNavState {
 @Component({
   selector: 'app-clean-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent],
   templateUrl: './worksheet-page.component.html',
   styleUrls: ['./worksheet-page.component.css'],
 })
@@ -32,16 +35,17 @@ export class WorksheetPageComponent implements OnInit {
   private readonly api = inject(LearningApiService);
   private readonly authService = inject(AuthService);
   private readonly onboarding = inject(OnboardingFlowService);
-
-  // readonly selectedGrade = computed(() => this.onboarding.getState().grade || '4');
-  // readonly selectedTopic = computed(() => this.onboarding.getState().topics[0] ?? 'General Practice');
+  protected readonly location = inject(Location);
 
   readonly worksheet = signal<PracticeWorksheetResponse | null>(null);
   readonly loading = signal(true);
   readonly errorMessage = signal('');
   readonly answers = signal<Record<string, string>>({});
-  private readonly location = inject(Location);
   readonly results = signal<any | null>(null);
+
+  // Mascot UI state
+  readonly currentMascot = signal('penguin');
+  readonly mascotNames = { penguin: 'Pip the Penguin', lion: 'Leo the Lion', monkey: 'Momo the Monkey', turtle: 'Tilly the Turtle', zebra: 'Zee the Zebra' } as Record<string,string>;
 
 
   readonly worksheetTitle = computed(() => this.worksheet()?.title ?? 'Worksheet');
@@ -115,6 +119,15 @@ export class WorksheetPageComponent implements OnInit {
     this.incomingState().questionCount ?? 10
   );
 
+  // Mascot reaction based on accuracy
+  readonly mascotReaction = computed(() => {
+    const accuracy = this.results()?.accuracy;
+    if (accuracy === undefined) return null;
+    if (accuracy >= 80) return { emoji: '🎉', message: 'Amazing job! You\'re a superstar!' };
+    if (accuracy >= 50) return { emoji: '😊', message: 'Great effort! Keep practicing!' };
+    return { emoji: '💪', message: 'Nice try! You\'ll do even better next time!' };
+  });
+
 
 
   async ngOnInit(): Promise<void> {
@@ -181,7 +194,7 @@ export class WorksheetPageComponent implements OnInit {
         return;
       }
 
-      const submission: any =  firstValueFrom(
+      const submission: any = await firstValueFrom(
         await this.api.submitPracticeWorksheetV1({
           worksheetId,
           studentId,
@@ -191,6 +204,11 @@ export class WorksheetPageComponent implements OnInit {
 
 // Store full worksheet submission results
       this.results.set(submission);
+
+      // Trigger confetti animation on successful submission
+      setTimeout(() => {
+        triggerConfetti(2000);
+      }, 300);
 
     } catch (error) {
       this.errorMessage.set('Unable to submit worksheet.');

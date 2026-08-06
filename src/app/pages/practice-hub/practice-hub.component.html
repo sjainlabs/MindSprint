@@ -22,7 +22,25 @@
   <!-- Main content — only shown once topics are loaded -->
   <ng-container *ngIf="!syllabusLoading() && !syllabusError() && topics().length">
 
-    <!-- Grade Selection -->
+    <!-- Mascot Greeting -->
+    <section class="mascot-card card">
+      <div class="mascot-left">
+        <app-mascot [character]="currentMascot()"></app-mascot>
+      </div>
+      <div class="mascot-right">
+        <h3>{{ mascotNames[currentMascot()] }} is ready to practice with you today!</h3>
+        <p class="sub">Tap a topic below to get started — {{ mascotNames[currentMascot()] }} will cheer you on!</p>
+      </div>
+    </section>
+
+    <!-- Daily goals -->
+    <section class="card goals-row">
+      <div class="goals-grid">
+        <app-daily-goal *ngFor="let g of dailyGoals()" [goal]="g"></app-daily-goal>
+      </div>
+    </section>
+
+    <!-- Grade selection -->
     <section class="card">
       <h3>Select Grade</h3>
       <div class="chip-list">
@@ -37,61 +55,39 @@
       </div>
     </section>
 
-    <!-- Topic Selection (filtered by grade) -->
+    <!-- Topic Cards -->
     <section class="card">
       <h3>Select Topics</h3>
 
       <p class="hint" *ngIf="selectedGrade() === null">Select a grade first.</p>
-      <p class="hint" *ngIf="selectedGrade() !== null && filteredTopics().length === 0">
-        No topics available for this grade.
-      </p>
+      <p class="hint" *ngIf="selectedGrade() !== null && filteredTopics().length === 0">No topics available for this grade.</p>
 
-      <div class="topic-grid" *ngIf="filteredTopics().length > 0">
-        <div
+      <div class="topic-grid friendly-grid" *ngIf="filteredTopics().length > 0">
+        <app-practice-card
           *ngFor="let topic of filteredTopics()"
-          class="topic-card"
-          [class.selected]="isTopicSelected(topic.id)"
-          (click)="selectTopic(topic)"
-        >
-          <h4>{{ topic.name }}</h4>
-          <div class="topic-details">
-            <span class="badge">Grade {{ topic.cbseGrade }}</span>
-            <span class="badge kumon-badge">{{ topic.kumonBand }}</span>
-            <span class="badge level-badge">{{ topic.practiceLevel }}</span>
-          </div>
-        </div>
+          [topic]="topic"
+          [selected]="isTopicSelected(topic.id)"
+          [progress]="topic.progress || 0"
+          (toggle)="selectTopic(topic)"
+          (start)="startPractice(topic)"
+        ></app-practice-card>
       </div>
 
-      <p class="selected-count" *ngIf="selectedTopics().length > 0">
-        {{ selectedTopics().length }} topic{{ selectedTopics().length === 1 ? '' : 's' }} selected
-      </p>
+      <p class="selected-count" *ngIf="selectedTopics().length > 0">{{ selectedTopics().length }} topic{{ selectedTopics().length === 1 ? '' : 's' }} selected</p>
     </section>
 
-    <!-- Question Count -->
+    <!-- Question Count + Generate -->
     <section class="card" *ngIf="selectedTopics().length > 0">
       <h3>Number of Questions</h3>
-      <input
-        class="number-input"
-        type="number"
-        min="5"
-        max="50"
-        [value]="questionCount()"
-        (change)="questionCount.set(+$any($event.target).value)"
-      />
+      <input class="number-input" type="number" min="5" max="50" [value]="questionCount()" (change)="questionCount.set(+$any($event.target).value)" />
+
+      <p class="error-msg" *ngIf="worksheetError()">{{ worksheetError() }}</p>
+
+      <button class="action-btn generate-btn" [disabled]="!canGenerate()" (click)="generatePractice()">
+        <span *ngIf="!generatingWorksheet()">Generate Practice Worksheet</span>
+        <span *ngIf="generatingWorksheet()">Generating…</span>
+      </button>
     </section>
-
-    <!-- Worksheet error -->
-    <p class="error-msg" *ngIf="worksheetError()">{{ worksheetError() }}</p>
-
-    <!-- Generate Worksheet -->
-    <button
-      class="action-btn generate-btn"
-      [disabled]="!canGenerate()"
-      (click)="generatePractice()"
-    >
-      <span *ngIf="!generatingWorksheet()">Generate Practice Worksheet</span>
-      <span *ngIf="generatingWorksheet()">Generating…</span>
-    </button>
 
   </ng-container>
 

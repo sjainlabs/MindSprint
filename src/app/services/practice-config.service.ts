@@ -10,6 +10,7 @@ export interface EnhancedTopic {
   cbseGrade: number;
   kumonBand: string;
   practiceLevel: string;
+  progress?: number; //
   skills: { id: string; difficultyScore: number }[];
 }
 

@@ -1,0 +1,21 @@
+.mascot-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.mascot{
+  width:96px;
+  height:96px;
+  border-radius:50%;
+  animation: wiggle 1.2s ease-in-out both;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+}
+
+@keyframes wiggle{
+  0%{ transform: translateY(0) rotate(0deg) }
+  25%{ transform: translateY(-6px) rotate(-6deg) }
+  50%{ transform: translateY(0) rotate(0deg) }
+  75%{ transform: translateY(-4px) rotate(6deg) }
+  100%{ transform: translateY(0) rotate(0deg) }
+}
+

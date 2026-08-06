@@ -1,19 +1,26 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { LearningApiService } from '../../services/learning-api.service';
+import {FullInsightsResponse, LearningApiService} from '../../services/learning-api.service';
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { switchMap, map } from 'rxjs/operators';
+
+
 import {
   PracticeConfigService,
   type EnhancedTopic,
 } from '../../services/practice-config.service';
+import { AppMascotComponent } from '../../shared/components/app-mascot/app-mascot.component';
+import { AppPracticeCardComponent } from '../../shared/components/app-practice-card/app-practice-card.component';
+import { AppDailyGoalComponent } from '../../shared/components/app-daily-goal/app-daily-goal.component';
+import { AppRewardStarsComponent } from '../../shared/components/app-reward-stars/app-reward-stars.component';
 
 @Component({
   selector: 'app-practice-hub',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppMascotComponent, AppPracticeCardComponent, AppDailyGoalComponent, AppRewardStarsComponent],
   templateUrl: './practice-hub.component.html',
   styleUrls: ['./practice-hub.component.css'],
 })
@@ -35,6 +42,16 @@ export class PracticeHubComponent implements OnInit {
 
   generatingWorksheet = signal(false);
   worksheetError = signal('');
+
+  // Mascot and daily goals (UI-only)
+  currentMascot = signal('penguin');
+  mascotNames = { penguin: 'Pip the Penguin', lion: 'Leo the Lion', monkey: 'Momo the Monkey', turtle: 'Tilly the Turtle', zebra: 'Zee the Zebra' } as Record<string,string>;
+
+  dailyGoals = signal([
+    { title: 'Solve 10 questions today', emoji: '🎯' },
+    { title: 'Earn 1 badge', emoji: '⭐' },
+    { title: 'Complete 1 worksheet', emoji: '🐧' },
+  ] as any[]);
 
   // ── Derived values from EnhancedSyllabus ──────────────────────────────────────
   allowedGrades = computed<number[]>(() => {
@@ -63,26 +80,55 @@ export class PracticeHubComponent implements OnInit {
     this.loadSyllabus();
   }
 
-  loadSyllabus(): void {
-    this.syllabusLoading.set(true);
-    this.syllabusError.set('');
 
-    this.practiceConfig.getTopics().subscribe({
-      next: (topics ) => {
-        this.topics.set(topics);
+
+
+loadSyllabus(): void {
+  this.syllabusLoading.set(true);
+  this.syllabusError.set('');
+
+  const studentId = this.auth.getStoredStudentId();
+  if (!studentId) {
+  this.syllabusError.set('Missing student ID.');
+  this.syllabusLoading.set(false);
+  return;
+}
+
+this.practiceConfig.getTopics()
+  .subscribe({
+    next: async (topics) => {
+      try {
+        const insights = await this.api.getFullInsights(studentId); // Promise
+
+        const enrichedTopics = topics.map(t => ({
+          ...t,
+          progress: insights.mastery?.[t.id] ?? 0
+        }));
+
+        this.topics.set(enrichedTopics);
         this.syllabusLoading.set(false);
-        // Auto-select first grade
+
         const grades = this.allowedGrades();
         if (grades.length) {
           this.selectedGrade.set(grades[0]);
         }
-      },
-      error: () => {
-        this.syllabusError.set('Unable to load practice topics. Please try again.');
+
+      } catch (err) {
+        console.error(err);
+        this.syllabusError.set('Unable to load topic progress.');
         this.syllabusLoading.set(false);
-      },
-    });
-  }
+      }
+    },
+
+    error: () => {
+      this.syllabusError.set('Unable to load practice topics.');
+      this.syllabusLoading.set(false);
+    }
+  });
+}
+
+
+
 
   onGradeChange(grade: number): void {
     this.selectedGrade.set(grade);
@@ -111,6 +157,11 @@ export class PracticeHubComponent implements OnInit {
       this.selectedTopics().length > 0 &&
       !this.generatingWorksheet(),
   );
+
+  startPractice(topic: EnhancedTopic): void {
+    this.selectedTopics.set([topic]);
+    this.generatePractice();
+  }
 
   async generatePractice(): Promise<void> {
     if (!this.canGenerate()) return;
@@ -156,3 +207,5 @@ export class PracticeHubComponent implements OnInit {
     }
   }
 }
+
+export default PracticeHubComponent

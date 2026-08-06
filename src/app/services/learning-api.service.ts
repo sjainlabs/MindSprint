@@ -134,12 +134,12 @@ export interface TopicDetailResponse {
   name: string;
   description: string;
   subtopics: string[];
-  mastery: number;
+  mastery: any;
   difficultyTiers: Record<string, string>;
 }
 
 export interface FullInsightsResponse {
-  mastery: number;
+  mastery: any;
   masteryByTopic: Array<{ topic: string; mastery: number }>;
   level: string;
   worksheetsCompleted: number;

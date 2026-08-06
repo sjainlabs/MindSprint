@@ -1,162 +1,171 @@
 <main class="page">
 
   <!-- Loading -->
-  <section class="card" *ngIf="loading()">Loading...</section>
+  <section class="card loading-card" *ngIf="loading()">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Working on your worksheet…</p>
+    </div>
+  </section>
 
   <!-- Error -->
-  <section class="card" *ngIf="errorMessage()">
-    <h1>Error</h1>
+  <section class="card error-card" *ngIf="errorMessage()">
+    <h1>Oops!</h1>
     <p>{{ errorMessage() }}</p>
-    <button class="retry" (click)="loadWorksheet()">Retry</button>
+    <button class="retry-btn" (click)="loadWorksheet()">Retry</button>
   </section>
 
-  <!-- Results Screen -->
-  <section class="card results" *ngIf="results() && !loading()">
-    <h1>Great job!</h1>
-    <p>Your worksheet has been submitted.</p>
+  <!-- Results Screen with Mascot Reaction -->
+  <ng-container *ngIf="results() && !loading()">
+    <!-- Mascot Reaction Card -->
+    <section class="card mascot-reaction-card">
+      <div class="reaction-top">
+        <app-mascot [character]="currentMascot()"></app-mascot>
+        <div class="reaction-message">
+          <h2 class="emoji">{{ mascotReaction()?.emoji }}</h2>
+          <h2>{{ mascotReaction()?.message }}</h2>
+        </div>
+      </div>
+    </section>
 
-    <div class="metrics">
-      <div class="metric">
-        <h2>{{ results()?.accuracy }}%</h2>
-        <p>Accuracy</p>
+    <!-- Results Summary -->
+    <section class="card results-summary">
+      <h3>📊 Your Results</h3>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">{{ results()?.accuracy }}%</div>
+          <div class="metric-label">Accuracy</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-value">{{ results()?.mastery }}</div>
+          <div class="metric-label">Mastery</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-value">{{ results()?.speedSeconds }}s</div>
+          <div class="metric-label">Time</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-value">{{ results()?.level }}</div>
+          <div class="metric-label">Level</div>
+        </div>
       </div>
 
-      <div class="metric">
-        <h2>{{ results()?.mastery }}</h2>
-        <p>Mastery</p>
-      </div>
+      <app-reward-stars [accuracy]="results()?.accuracy"></app-reward-stars>
+    </section>
 
-      <div class="metric">
-        <h2>{{ results()?.speed }}%</h2>
-        <p>Speed</p>
-      </div>
+    <!-- Recommendations -->
+    <section class="card recommendations-card" *ngIf="results()?.recommendations && results()?.recommendations.length > 0">
+      <h3>💡 Next Steps</h3>
+      <ul class="recommendations-list">
+        <li *ngFor="let rec of results()?.recommendations">{{ rec }}</li>
+      </ul>
+    </section>
 
-      <div class="metric">
-        <h2>{{ results()?.level }}</h2>
-        <p>Level</p>
-      </div>
-    </div>
-
-    <h3>Recommended Next Steps</h3>
-    <ul>
-      <li *ngFor="let rec of results()?.recommendations">{{ rec }}</li>
-    </ul>
-
-    <button class="retry" (click)="loadWorksheet()">Start Another Worksheet</button>
-  </section>
-
-  <!-- Worksheet Report -->
-  <section class="card" *ngIf="results() && !loading()">
-
-    <h1>Worksheet Report</h1>
-    <p>Here’s how you did on each question.</p>
-
-<!--    <div class="metrics">-->
-<!--      <div class="metric">-->
-<!--        <h2>{{ results()?.accuracy }}%</h2>-->
-<!--        <p>Accuracy</p>-->
-<!--      </div>-->
-
-<!--      <div class="metric">-->
-<!--        <h2>{{ results()?.mastery }}</h2>-->
-<!--        <p>Mastery</p>-->
-<!--      </div>-->
-
-<!--      <div class="metric">-->
-<!--        <h2>{{ results()?.speed }}s</h2>-->
-<!--        <p>Time</p>-->
-<!--      </div>-->
-
-<!--      <div class="metric">-->
-<!--        <h2>{{ results()?.level }}</h2>-->
-<!--        <p>Level</p>-->
-<!--      </div>-->
-<!--    </div>-->
-
-    <h3>Question Review</h3>
-
-    <div *ngFor="let q of results()?.results"
-         class="question-item"
-         [class.correct]="q.correct"
-         [class.incorrect]="!q.correct">
-
-      <p><strong>{{ q.questionId }}:</strong> {{ q.prompt }}</p>
-
-      <!-- Incorrect -->
-      <div *ngIf="!q.correct" class="incorrect-answer">
-        ❌ Incorrect
-        <p>Your answer: {{ q.submittedAnswer }}</p>
-
-        <button (click)="toggleCorrect(q.questionId)">
-          {{ showCorrect()[q.questionId] ? 'Hide Correct Answer' : 'Show Correct Answer' }}
-        </button>
-
-        <p *ngIf="showCorrect()[q.questionId]" class="correct-answer">
-          Correct answer: {{ q.expectedAnswer }}
-        </p>
-      </div>
-
-      <!-- Correct -->
-      <div *ngIf="q.correct" class="correct-answer">
-        ✔ Correct
-        <button (click)="toggleCorrect(q.questionId)">
-          {{ showCorrect()[q.questionId] ? 'Hide Answer' : 'Show Answer' }}
-        </button>
-
-        <p *ngIf="showCorrect()[q.questionId]">
-          Answer: {{ q.expectedAnswer }}
-        </p>
-      </div>
-
-    </div>
-
-<!--    <button class="retry" (click)="loadWorksheet()">Start Another Worksheet</button>-->
-
-  </section>
-
-
-  <!-- Worksheet Screen -->
-  <section *ngIf="!results() && !loading() && !errorMessage()">
-
+    <!-- Question Review -->
     <section class="card">
+      <h3>📝 Review Your Answers</h3>
+      <p class="section-hint">Here's how you did on each question.</p>
+
+      <div *ngFor="let q of results()?.results; let i = index"
+           class="question-review-card"
+           [class.correct]="q.correct"
+           [class.incorrect]="!q.correct">
+
+        <div class="question-header">
+          <span class="question-num">Question {{ i + 1 }}</span>
+          <span class="status-badge" [class.correct-badge]="q.correct" [class.incorrect-badge]="!q.correct">
+            {{ q.correct ? '✔ Correct' : '❌ Incorrect' }}
+          </span>
+        </div>
+
+        <p class="question-prompt"><strong>{{ q.prompt }}</strong></p>
+
+        <div class="answer-section">
+          <div class="student-answer">
+            <span class="label">Your answer:</span>
+            <p class="answer-text">{{ q.submittedAnswer }}</p>
+          </div>
+
+          <button class="toggle-answer-btn" (click)="toggleCorrect(q.questionId)">
+            {{ showCorrect()[q.questionId] ? '⬆ Hide' : '⬇ Show' }} Correct Answer
+          </button>
+
+          <div class="correct-answer" *ngIf="showCorrect()[q.questionId]">
+            <span class="label">Correct answer:</span>
+            <p class="answer-text correct">{{ q.expectedAnswer }}</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="card button-group">
+      <button class="action-btn primary" (click)="loadWorksheet()">🎯 Try Another Worksheet</button>
+      <button class="action-btn secondary" (click)="location.back()">← Back</button>
+    </section>
+  </ng-container>
+
+
+  <!-- Worksheet Screen (Before Submission) -->
+  <ng-container *ngIf="!results() && !loading() && !errorMessage()">
+
+    <!-- Header Card -->
+    <section class="card header-card">
       <h1>{{ worksheetTitle() }}</h1>
-      <p>{{ worksheetDescription() }}</p>
+      <p class="description">{{ worksheetDescription() }}</p>
 
-      <!-- Topic details (new EnhancedSyllabus format - multi-topic) -->
+      <!-- Topic details -->
       <div class="topic-info" *ngIf="selectedTopicsArray().length > 0">
-        <div class="info-group">
-          <span class="label">Topics ({{ selectedTopicsArray().length }}):</span>
+        <div class="info-row">
+          <span class="label">📚 Topics:</span>
           <span class="value">{{ selectedTopicsLabel() }}</span>
-
         </div>
-        <div class="info-group">
-          <span class="label">Grade:</span>
-          <span class="value">{{ selectedGrade() }}</span>
+        <div class="info-row">
+          <span class="label">📍 Grade:</span>
+          <span class="value">Grade {{ selectedGrade() }}</span>
         </div>
-        <div class="info-group">
-          <span class="label">Practice Level:</span>
+        <div class="info-row">
+          <span class="label">⭐ Level:</span>
           <span class="value">{{ selectedLevel() }}</span>
         </div>
       </div>
 
-      <p>Progress: {{ answeredCount() }}/{{ questions().length }}</p>
+      <div class="progress-indicator">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="(answeredCount() / questions().length) * 100"></div>
+        </div>
+        <p class="progress-text">{{ answeredCount() }} of {{ questions().length }} answered</p>
+      </div>
     </section>
 
+    <!-- Questions -->
     <section class="card" *ngFor="let question of questions(); let index = index">
-      <h2>Question {{ index + 1 }}</h2>
-      <p>{{ question.prompt }}</p>
+      <div class="question-header">
+        <h2>Question {{ index + 1 }}</h2>
+        <span class="question-count">of {{ questions().length }}</span>
+      </div>
+
+      <p class="question-text">{{ question.prompt }}</p>
 
       <label class="answer-label" [for]="'answer-' + question.id">Your answer</label>
       <textarea
-        class="answer-box"
+        class="answer-input"
         [id]="'answer-' + question.id"
         [ngModel]="answers()[question.id]"
         (ngModelChange)="setAnswer(question.id, $event)"
+        placeholder="Type your answer here…"
         rows="3"
       ></textarea>
     </section>
 
-    <button class="submit" (click)="submitWorksheet()">Submit</button>
-  </section>
+    <!-- Submit Button -->
+    <button class="submit-btn" (click)="submitWorksheet()">✓ Submit Worksheet</button>
+  </ng-container>
 
 </main>
+
