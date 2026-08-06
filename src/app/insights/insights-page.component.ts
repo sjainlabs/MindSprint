@@ -20,6 +20,24 @@ export class InsightsPageComponent implements OnInit {
   readonly errorMessage = signal('');
   readonly insights = signal<FullInsightsResponse | null>(null);
 
+  readonly worksheetHistory = signal<any[]>([]);
+  readonly expandedRows = signal<Record<string, boolean>>({});
+  readonly showCorrect = signal<Record<string, boolean>>({});
+
+  toggleRow(id: string) {
+    this.expandedRows.update(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  }
+
+  toggleCorrect(qid: string) {
+    this.showCorrect.update(prev => ({
+      ...prev,
+      [qid]: !prev[qid]
+    }));
+  }
+
   async ngOnInit(): Promise<void> {
     const studentId = this.authService.getStoredStudentId();
 
@@ -32,6 +50,14 @@ export class InsightsPageComponent implements OnInit {
     try {
       const result = await this.api.getFullInsights(studentId);
       this.insights.set(result);
+      const history = await this.api.getWorksheetHistory(studentId);
+
+      // Sort newest → oldest
+      history.sort((a, b) =>
+        new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+      );
+
+      this.worksheetHistory.set(history);
     } catch {
       this.errorMessage.set('Unable to load insights right now.');
     } finally {
@@ -42,4 +68,6 @@ export class InsightsPageComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/home']);
   }
+
+
 }

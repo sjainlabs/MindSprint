@@ -56,3 +56,98 @@
   </section>
 
 </main>
+
+<!-- Worksheet History Table -->
+<section class="card" *ngIf="worksheetHistory().length > 0">
+
+  <h2>Worksheet History</h2>
+  <p>Latest worksheets appear first. Click a row to expand.</p>
+
+  <table class="history-table">
+    <thead>
+    <tr>
+      <th>Date</th>
+      <th>Topics</th>
+      <th>Level</th>
+      <th>Score</th>
+      <th>Accuracy</th>
+      <th>Mastery</th>
+      <th>Speed</th>
+      <th>Expand</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <ng-container *ngFor="let w of worksheetHistory()">
+
+      <!-- MAIN ROW -->
+      <tr>
+        <td>{{ w.submittedAt | date:'short' }}</td>
+        <td>{{ w.topics.join(', ') }}</td>
+        <td>{{ w.level }}</td>
+        <td>{{ w.score }}/{{ w.total }}</td>
+        <td>{{ w.accuracy }}%</td>
+        <td>{{ w.mastery }}%</td>
+        <td>{{ w.speedSeconds }}s</td>
+
+        <td>
+          <button (click)="toggleRow(w.worksheetId)">
+            {{ expandedRows()[w.worksheetId] ? 'Hide' : 'View' }}
+          </button>
+        </td>
+      </tr>
+
+      <!-- EXPANDED ROW -->
+      <tr *ngIf="expandedRows()[w.worksheetId]">
+        <td colspan="8">
+
+          <div class="expanded-box">
+
+            <h3>Worksheet Questions</h3>
+
+            <div *ngFor="let q of w.details"
+                 class="question-item"
+                 [class.correct]="q.correct"
+                 [class.incorrect]="!q.correct">
+
+              <p><strong>Q{{ q.questionId }}:</strong> {{ q.prompt }}</p>
+
+              <!-- Incorrect -->
+              <div *ngIf="!q.correct" class="incorrect-answer">
+                ❌ Incorrect
+                <p>Your answer: {{ q.submittedAnswer }}</p>
+
+                <button (click)="toggleCorrect(q.questionId)">
+                  {{ showCorrect()[q.questionId] ? 'Hide Correct Answer' : 'Show Correct Answer' }}
+                </button>
+
+                <p *ngIf="showCorrect()[q.questionId]" class="correct-answer">
+                  Correct answer: {{ q.expectedAnswer }}
+                </p>
+              </div>
+
+              <!-- Correct -->
+              <div *ngIf="q.correct" class="correct-answer">
+                ✔ Correct
+                <button (click)="toggleCorrect(q.questionId)">
+                  {{ showCorrect()[q.questionId] ? 'Hide Answer' : 'Show Answer' }}
+                </button>
+
+                <p *ngIf="showCorrect()[q.questionId]">
+                  Answer: {{ q.expectedAnswer }}
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </td>
+      </tr>
+
+    </ng-container>
+    </tbody>
+  </table>
+
+</section>
+

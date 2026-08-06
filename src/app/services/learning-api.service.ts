@@ -423,4 +423,12 @@ export class LearningApiService {
     );
   }
 
+  async getWorksheetHistory(studentId: string): Promise<any[]> {
+    return await firstValueFrom(
+      this.http.get<any[]>(
+        `${this.apiBase}/insights/worksheets/${encodeURIComponent(studentId)}/history`
+      )
+    );
+  }
+
 }

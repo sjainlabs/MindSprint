@@ -45,6 +45,76 @@
     <button class="retry" (click)="loadWorksheet()">Start Another Worksheet</button>
   </section>
 
+  <!-- Worksheet Report -->
+  <section class="card" *ngIf="results() && !loading()">
+
+    <h1>Worksheet Report</h1>
+    <p>Here’s how you did on each question.</p>
+
+<!--    <div class="metrics">-->
+<!--      <div class="metric">-->
+<!--        <h2>{{ results()?.accuracy }}%</h2>-->
+<!--        <p>Accuracy</p>-->
+<!--      </div>-->
+
+<!--      <div class="metric">-->
+<!--        <h2>{{ results()?.mastery }}</h2>-->
+<!--        <p>Mastery</p>-->
+<!--      </div>-->
+
+<!--      <div class="metric">-->
+<!--        <h2>{{ results()?.speed }}s</h2>-->
+<!--        <p>Time</p>-->
+<!--      </div>-->
+
+<!--      <div class="metric">-->
+<!--        <h2>{{ results()?.level }}</h2>-->
+<!--        <p>Level</p>-->
+<!--      </div>-->
+<!--    </div>-->
+
+    <h3>Question Review</h3>
+
+    <div *ngFor="let q of results()?.results"
+         class="question-item"
+         [class.correct]="q.correct"
+         [class.incorrect]="!q.correct">
+
+      <p><strong>{{ q.questionId }}:</strong> {{ q.prompt }}</p>
+
+      <!-- Incorrect -->
+      <div *ngIf="!q.correct" class="incorrect-answer">
+        ❌ Incorrect
+        <p>Your answer: {{ q.submittedAnswer }}</p>
+
+        <button (click)="toggleCorrect(q.questionId)">
+          {{ showCorrect()[q.questionId] ? 'Hide Correct Answer' : 'Show Correct Answer' }}
+        </button>
+
+        <p *ngIf="showCorrect()[q.questionId]" class="correct-answer">
+          Correct answer: {{ q.expectedAnswer }}
+        </p>
+      </div>
+
+      <!-- Correct -->
+      <div *ngIf="q.correct" class="correct-answer">
+        ✔ Correct
+        <button (click)="toggleCorrect(q.questionId)">
+          {{ showCorrect()[q.questionId] ? 'Hide Answer' : 'Show Answer' }}
+        </button>
+
+        <p *ngIf="showCorrect()[q.questionId]">
+          Answer: {{ q.expectedAnswer }}
+        </p>
+      </div>
+
+    </div>
+
+<!--    <button class="retry" (click)="loadWorksheet()">Start Another Worksheet</button>-->
+
+  </section>
+
+
   <!-- Worksheet Screen -->
   <section *ngIf="!results() && !loading() && !errorMessage()">
 

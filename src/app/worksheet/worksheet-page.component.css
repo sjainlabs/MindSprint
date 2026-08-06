@@ -181,4 +181,31 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+.question-item {
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+}
+
+.question-item.correct {
+  background: #e8ffe8;
+  border-left: 4px solid #4caf50;
+}
+
+.question-item.incorrect {
+  background: #ffecec;
+  border-left: 4px solid #e53935;
+}
+
+.correct-answer {
+  color: #2e7d32;
+}
+
+.incorrect-answer {
+  color: #c62828;
+}
+
+button {
+  margin-top: 0.5rem;
+}
 

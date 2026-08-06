@@ -41,13 +41,8 @@ export class WorksheetPageComponent implements OnInit {
   readonly errorMessage = signal('');
   readonly answers = signal<Record<string, string>>({});
   private readonly location = inject(Location);
-  readonly results = signal<{
-    accuracy: number;
-    mastery: number;
-    level: string;
-    speed: number;
-    recommendations: string[];
-  } | null>(null);
+  readonly results = signal<any | null>(null);
+
 
   readonly worksheetTitle = computed(() => this.worksheet()?.title ?? 'Worksheet');
   readonly worksheetDescription = computed(() => this.worksheet()?.instructions ?? 'Loading worksheet instructions...');
@@ -186,15 +181,17 @@ export class WorksheetPageComponent implements OnInit {
         return;
       }
 
-      await firstValueFrom(
+      const submission: any =  firstValueFrom(
         await this.api.submitPracticeWorksheetV1({
           worksheetId,
           studentId,
           answers: this.answers(),
-        }),
+        })
       );
 
-      await this.loadInsights(studentId);
+// Store full worksheet submission results
+      this.results.set(submission);
+
     } catch (error) {
       this.errorMessage.set('Unable to submit worksheet.');
     } finally {
@@ -202,25 +199,19 @@ export class WorksheetPageComponent implements OnInit {
     }
   }
 
-  async loadInsights(studentId: string): Promise<void> {
-    try {
-      const insights = await this.api.getFullInsights(studentId);
 
-      this.results.set({
-        accuracy: insights.accuracy,
-        mastery: insights.mastery,
-        level: insights.level,
-        speed: insights.speed,
-        recommendations: insights.recommendations,
-      });
-    } catch {
-      this.errorMessage.set('Unable to load insights.');
-    }
-  }
 
   selectedTopicsLabel = computed(() => {
     const arr = this.selectedTopicsArray() ?? [];
     return arr.map(t => t.name).join(', ');
   });
+  showCorrect = signal<Record<string, boolean>>({});
+
+  toggleCorrect(id: string) {
+    this.showCorrect.update(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  }
 
 }
