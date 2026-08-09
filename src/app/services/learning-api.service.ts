@@ -110,6 +110,7 @@ export interface PracticeWorksheetV2Request {
   grade: string;
   topics: string[];   // MULTIPLE TOPICS
   level: string;
+  skills?: string[];
   questionCount: number;
   source?: 'recommended' | 'practice' | 'diagnostic-followup';
 }
@@ -191,7 +192,150 @@ export interface ProgressOverviewResponse {
   totalTopicsAvailable: number;
 }
 
+/* ================== V2.0 WORLD-CLASS MATH SYLLABUS ================== */
 
+// New question types for v2.0
+export type QuestionType =
+  | 'short_text'
+  | 'multiple_choice'
+  | 'multi_select'
+  | 'drag_and_drop'
+  | 'number_pad'
+  | 'fraction_input'
+  | 'decimal_input'
+  | 'percent_input'
+  | 'graph_interpretation'
+  | 'conceptual_explanation'
+  | 'reasoning_puzzle'
+  | 'competition_problem';
+
+// New worksheet template types
+export type WorksheetTemplate =
+  | 'standard'
+  | 'fluency-drill'
+  | 'multi-select'
+  | 'drag-and-drop'
+  | 'graph-interpretation'
+  | 'conceptual-explanation'
+  | 'reasoning-puzzle'
+  | 'competition-problem';
+
+// Skill definition
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  mastery: number;
+  masteryDelta?: number;
+}
+
+// Domain definition
+export interface Domain {
+  id: string;
+  name: string;
+  mastery: number;
+  skills: Skill[];
+}
+
+// Study material types
+export interface StudyMaterial {
+  id: string;
+  type: 'concept' | 'video' | 'worksheet' | 'quiz' | 'example';
+  title: string;
+  description: string;
+  url?: string;
+  duration?: number;
+  difficulty?: string;
+}
+
+// Enhanced topic for v2.0
+export interface EnhancedTopicV2 {
+  id: string;
+  name: string;
+  description: string;
+  cbseGrade: number;
+  gradeBand: string;
+  practiceLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Mastery';
+  kumonBand: string;
+  progress: number;
+  skills: Skill[];
+  domains: Domain[];
+  domainTags: string[];
+  difficultyScore: number;
+  ritBand: string;
+  studyMaterials: StudyMaterial[];
+  recommendedNextSkills: Skill[];
+  masterySummary: {
+    topic: number;
+    skills: Record<string, number>;
+    domains: Record<string, number>;
+  };
+}
+
+// Enhanced worksheet question for v2.0
+export interface EnhancedWorksheetQuestionV2 {
+  id: string;
+  prompt: string;
+  type: QuestionType;
+  template: WorksheetTemplate;
+  choices?: string[];
+  correctAnswer?: string | string[] | number | number[];
+  expectedAnswer?: string | string[] | number | number[];
+  submittedAnswer?: string | string[] | number | number[];
+  metadata?: Record<string, any>;
+  mastery?: number;
+  masteryDelta?: number;
+  correct?: boolean;
+  skills?: string[];
+  domains?: string[];
+}
+
+// Enhanced worksheet response for v2.0
+export interface EnhancedWorksheetResponseV2 {
+  worksheetId: string;
+  title: string;
+  instructions: string;
+  grade: string;
+  gradeBand: string;
+  topics: string[];
+  skills: string[];
+  domains: string[];
+  level: string;
+  template: WorksheetTemplate;
+  questionCount: number;
+  questions: EnhancedWorksheetQuestionV2[];
+  generatedAt?: string;
+  estimatedDuration?: number;
+}
+
+// Enhanced submission response for v2.0
+export interface EnhancedSubmissionResponseV2 {
+  worksheetId: string;
+  studentId: string;
+  accuracy: number;
+  mastery: number;
+  masteryDelta: number;
+  speedSeconds: number;
+  level: string;
+  results: EnhancedWorksheetQuestionV2[];
+  recommendations: string[];
+  skillMastery: Record<string, {
+    skill: string;
+    mastery: number;
+    masteryDelta: number;
+  }>;
+  domainMastery: Record<string, {
+    domain: string;
+    mastery: number;
+    masteryDelta: number;
+  }>;
+  nextRecommendedTopics: string[];
+  nextRecommendedSkills: string[];
+  certificateEarned?: boolean;
+  badgesEarned?: string[];
+}
+
+/* ==================== END V2.0 INTERFACES ==================== */
 
 @Injectable({ providedIn: 'root' })
 export class LearningApiService {
@@ -301,13 +445,25 @@ export class LearningApiService {
   }
 
   async getTopicDetail(topicId: string): Promise<TopicDetailResponse> {
-    return firstValueFrom(
-      this.http.get<TopicDetailResponse>(`${this.apiBase}/curriculum/topic/${encodeURIComponent(topicId)}`),
-    );
+    try {
+      return await firstValueFrom(
+        this.http.get<TopicDetailResponse>(`${this.apiBase}/curriculum/topic/${encodeURIComponent(topicId)}`),
+      );
+    } catch (err: any) {
+      if (err?.status === 404) {
+        throw new Error(`Topic '${(topicId || '').toLowerCase()}' was not found in EnhancedSyllabus.`);
+      }
+      throw err;
+    }
   }
 
   createPracticeWorksheetV1(payload: PracticeWorksheetRequest) {
-    return this.http.post<PracticeWorksheetResponse>(`${this.apiBase}/v1/practice/worksheet`, payload);
+    // Normalize topic IDs to lowercase before sending to backend
+    const normalized = {
+      ...payload,
+      topic: Array.isArray(payload.topic) ? payload.topic.map((t) => t.toLowerCase()) : [],
+    } as PracticeWorksheetRequest;
+    return this.http.post<PracticeWorksheetResponse>(`${this.apiBase}/v1/practice/worksheet`, normalized);
   }
 
   async getFullInsights(studentId: string): Promise<FullInsightsResponse> {
@@ -373,11 +529,17 @@ export class LearningApiService {
   /* ---------------- Worksheet V2 (MULTI-TOPIC) ---------------- */
 
   async createPracticeWorksheetV2(payload: PracticeWorksheetV2Request): Promise<PracticeWorksheetV2Response> {
+    // Ensure topics are normalized to lowercase and use modular topic IDs
+    const normalizedPayload: PracticeWorksheetV2Request = {
+      ...payload,
+      topics: Array.isArray(payload.topics) ? payload.topics.map((t) => t.toLowerCase()) : [],
+      skills: Array.isArray((payload as any).skills)
+        ? (payload as any).skills.map((s: string) => s.toLowerCase())
+        : undefined,
+    };
+
     return await firstValueFrom(
-      this.http.post<PracticeWorksheetV2Response>(
-        `${this.apiBase}/v2/practice/worksheet`,
-        payload
-      )
+      this.http.post<PracticeWorksheetV2Response>(`${this.apiBase}/v2/practice/worksheet`, normalizedPayload),
     );
   }
 
@@ -416,6 +578,12 @@ export class LearningApiService {
     );
   }
 
+  /** Fetch skills for a given topic from the modular syllabus */
+  getSkillsByTopic(topicId: string) {
+    const normalized = (topicId || '').toLowerCase();
+    return this.http.get<{ skills: Skill[] }>(`${this.apiBase}/syllabus/skills?topicId=${encodeURIComponent(normalized)}`);
+  }
+
   advanceTopic(studentId: string, topicId: string) {
     return this.http.post(
       `${this.apiBase}/progression/${studentId}/topics/${topicId}/advance`,
@@ -430,5 +598,5 @@ export class LearningApiService {
       )
     );
   }
-
 }
+

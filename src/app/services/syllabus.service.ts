@@ -66,11 +66,12 @@ export class SyllabusService {
   constructor(private readonly http: HttpClient) {}
 
   getSyllabus(): Observable<SuperSyllabus> {
-    return this.http.get<SuperSyllabus>(`${this.apiRoot}/syllabus`);
+    // Use modular syllabus endpoints - fetch domains/topics collection
+    return this.http.get<SuperSyllabus>(`${this.apiRoot}/syllabus/topics`);
   }
 
   getDomain(domainId: SyllabusDomain): Observable<SyllabusDomainDetail> {
-    return this.http.get<SyllabusDomainDetail>(`${this.apiRoot}/syllabus/${domainId}`);
+    return this.http.get<SyllabusDomainDetail>(`${this.apiRoot}/syllabus/domains/${domainId}`);
   }
 
   getSkillsByRIT(band: number): Observable<RITBandSkills> {
@@ -78,7 +79,7 @@ export class SyllabusService {
   }
 
   getSkill(skillId: string): Observable<SyllabusSkill> {
-    return this.http.get<SyllabusSkill>(`${this.apiRoot}/syllabus/skill/${skillId}`);
+    return this.http.get<SyllabusSkill>(`${this.apiRoot}/syllabus/skills/${skillId}`);
   }
 
   getMAPGrowthProjection(studentId: string, currentRIT: number): Observable<MAPGrowthProjection> {

@@ -5,13 +5,28 @@ import { environment } from '../../environments/environment';
 
 /** EnhancedTopic from new backend syllabus system */
 export interface EnhancedTopic {
+  description: string;
+  difficulty: string;
+  color: string;
+  icon: string;
+  generatorKey: string;
+  groupLabel: string;
+  groupKey: string;
+  subtopics: Array<{
+    id: string;
+    name: string;
+    difficulty: { min: number; max: number };
+    conceptualTags: string[];
+  }>;
   id: string;
   name: string;
   cbseGrade: number;
-  kumonBand: string;
+
   practiceLevel: string;
-  progress?: number; //
+  progress?: number; // optional progress value
   skills: { id: string; difficultyScore: number }[];
+  studyMaterial?: { type: string; title: string; url?: string }[];
+  kumonBand: string;
 }
 
 export interface EnhancedSyllabusResponse {
@@ -26,7 +41,8 @@ export class PracticeConfigService {
   private readonly apiBase = `${this.apiRoot}`;
   /** Fetch EnhancedSyllabus with difficulty-aware topics */
   getSyllabus(): Observable<EnhancedSyllabusResponse> {
-    return this.http.get<EnhancedSyllabusResponse>(`${this.apiBase}/syllabus`);
+    // Use new modular syllabus topics endpoint instead of legacy /syllabus
+    return this.http.get<EnhancedSyllabusResponse>(`${this.apiBase}/syllabus/topics`);
   }
 
   /** Get all topics from syllabus */

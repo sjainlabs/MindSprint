@@ -13,44 +13,49 @@ export type AdvancedQuestionType =
   | 'function-analysis'
   | 'trig-identity';
 
-export interface AiWorksheetRequest {
+export interface AiWorksheetQuestion {
+  id: string;
+  type: AdvancedQuestionType;
   topic: string;
+  subtopic: string;
+  prompt: string;
+  answer?: string;
   difficulty: number;
-  questionTypes?: AdvancedQuestionType[];
-  questionCount?: number;
-  studentId?: string;
+  hints: string[];
+  metadata?: any;
+
+
 }
 
 export interface AiWorksheet {
   worksheetId: string;
-  topic: string;
+  topicId: string;
+  skills: string[];
   difficulty: number;
+  questions: AiWorksheetQuestion[];
+  questionTypes?: AdvancedQuestionType[];
   generatedAt: string;
-  downloadUrl?: string;
-  questionTypes: string[];
-  questions: Array<{
-    id?: string;
-    questionId?: string;
-    type: string;
-    topic: string;
-    subtopic: string;
-    prompt: string;
-    questionText?: string;
-    answer: string;
-    difficulty: number;
-    hints?: string[];
-    metadata?: {
-      topic?: string;
-      subtopic?: string;
-      type?: string;
-      hints?: string[];
-    };
-  }>;
   validation: {
-    allQuestionsHaveAnswers: boolean;
-    hasSupportedQuestionTypes: boolean;
-    topicSupported: boolean;
-  };
+    allQuestionsHaveAnswers: boolean
+    hasSupportedQuestionTypes: boolean
+    topicSupported: boolean
+  }
+}
+
+export interface AiWorksheetRequest {
+  questionCount: number;
+  studentId: string;
+  topicId: string;
+  skills: string[];
+  difficulty: number;
+  subtopics?: string[];
+  questionTypes?: AdvancedQuestionType[];
+}
+
+export interface AiWorksheetSubmission {
+  studentId: string;
+  worksheetId: string;
+  answers: Record<string, string>;
 }
 
 @Injectable({
@@ -61,7 +66,16 @@ export class AiWorksheetService {
 
   constructor(private readonly http: HttpClient) {}
 
-  generateWorksheet(payload: AiWorksheetRequest): Observable<AiWorksheet> {
-    return this.http.post<AiWorksheet>(`${this.apiRoot}/ai/worksheet`, payload);
+  /** ⭐ Generate worksheet using modular topic + modular skills */
+  generateWorksheet(request: AiWorksheetRequest): Observable<AiWorksheet> {
+    return this.http.post<AiWorksheet>(`${this.apiRoot}/ai/worksheet/generate`, request);
+  }
+
+  /** ⭐ Submit worksheet answers (must be Record<string,string>) */
+  submitWorksheet(payload: AiWorksheetSubmission): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(
+      `${this.apiRoot}/ai/worksheet/submit`,
+      payload,
+    );
   }
 }

@@ -7,6 +7,7 @@ import { AiWorksheetService, type AiWorksheet } from '../../services/ai-workshee
 import { SyllabusService, type SyllabusSkill } from '../../services/syllabus.service';
 import { LanguageToggleComponent } from '../../components/language-toggle/language-toggle';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import {PracticeTopicCatalogService} from '../../services/practice-topic-catalog.service';
 
 @Component({
   selector: 'app-ai-worksheet-page',
@@ -42,6 +43,7 @@ export class AiWorksheetPageComponent implements OnInit {
     private readonly authService: AuthService,
     private readonly syllabusService: SyllabusService,
     private readonly aiWorksheetService: AiWorksheetService,
+    private readonly catalogService: PracticeTopicCatalogService
   ) {}
 
   ngOnInit(): void {
@@ -121,13 +123,16 @@ export class AiWorksheetPageComponent implements OnInit {
     this.generating.set(true);
     this.errorMessage.set('');
     this.worksheet.set(null);
-
+    const meta = this.catalogService.findByTopic(topic.toLowerCase());
+    // send modular topic IDs as a lowercase array to the backend
     this.aiWorksheetService
       .generateWorksheet({
-        topic,
+        skills: meta?.skills.map(s => s.id) ?? [],
+        topicId: meta?.id ?? topic.toLowerCase(),
         difficulty: this.difficulty(),
         questionCount: this.questionCount(),
-        studentId: this.studentId() || undefined,
+        studentId: this.studentId(),
+        subtopics: meta?.subtopics.map(s => s.id) ?? []
       })
       .subscribe({
         next: (worksheet) => {
@@ -184,7 +189,7 @@ export class AiWorksheetPageComponent implements OnInit {
     ]);
 
     if (allowedTopics.has(normalizedFallback)) {
-      return normalizedFallback;
+      return `topic-${normalizedFallback}`;
     }
 
     const haystack = [skill?.name, skill?.description, skill?.skillId, normalizedFallback]
@@ -192,29 +197,29 @@ export class AiWorksheetPageComponent implements OnInit {
       .join(' ')
       .toLowerCase();
 
-    if (haystack.includes('calculus')) return 'calculus';
-    if (haystack.includes('trigonometry') || haystack.includes('trig')) return 'trigonometry';
-    if (haystack.includes('geometry')) return 'geometry';
+    if (haystack.includes('calculus')) return 'topic-calculus';
+    if (haystack.includes('trigonometry') || haystack.includes('trig')) return 'topic-trigonometry';
+    if (haystack.includes('geometry')) return 'topic-geometry';
     if (haystack.includes('algebra ii') || haystack.includes('algebra 2') || haystack.includes('algebra-ii')) {
-      return 'algebra-ii';
+      return 'topic-algebra-ii';
     }
     if (haystack.includes('pre calculus') || haystack.includes('pre-calculus') || haystack.includes('precalculus')) {
-      return 'pre-calculus';
+      return 'topic-pre-calculus';
     }
     if (haystack.includes('algebra i') || haystack.includes('algebra 1') || haystack.includes('algebra-i')) {
-      return 'algebra-i';
+      return 'topic-algebra-i';
     }
-    if (haystack.includes('algebra')) return 'algebra';
-    if (haystack.includes('ratio') || haystack.includes('proportion')) return 'ratios';
-    if (haystack.includes('percent')) return 'percentages';
-    if (haystack.includes('fraction')) return 'fractions';
-    if (haystack.includes('decimal')) return 'decimals';
-    if (haystack.includes('division')) return 'division';
+    if (haystack.includes('algebra')) return 'topic-algebra';
+    if (haystack.includes('ratio') || haystack.includes('proportion')) return 'topic-ratios-and-percentages';
+    if (haystack.includes('percent')) return 'topic-ratios-and-percentages';
+    if (haystack.includes('fraction')) return 'topic-fraction-operations';
+    if (haystack.includes('decimal')) return 'topic-decimals';
+    if (haystack.includes('division')) return 'topic-division';
     if (haystack.includes('multiplication') || haystack.includes('times') || haystack.includes('product')) {
-      return 'multiplication';
+      return 'topic-multiplication';
     }
     if (haystack.includes('subtraction') || haystack.includes('minus') || haystack.includes('difference')) {
-      return 'subtraction';
+      return 'topic-subtraction';
     }
     if (
       haystack.includes('addition') ||
@@ -222,7 +227,7 @@ export class AiWorksheetPageComponent implements OnInit {
       haystack.includes('number sequencing') ||
       haystack.includes('sum')
     ) {
-      return 'addition';
+      return 'topic-addition';
     }
 
     return '';
@@ -233,10 +238,10 @@ export class AiWorksheetPageComponent implements OnInit {
       ...worksheet,
       questions: (worksheet.questions ?? []).map((question, index) => ({
         ...question,
-        id: question.id || question.questionId || `q-${index + 1}`,
-        prompt: question.prompt || question.questionText || '',
+        id: question.id ?? `q-${index + 1}`,
+        prompt: question.prompt || '',
         type: question.type || question.metadata?.type || 'numeric',
-        topic: question.topic || question.metadata?.topic || worksheet.topic,
+        topic: question.topic ?? worksheet.topicId,
         subtopic: question.subtopic || question.metadata?.subtopic || '',
         hints: question.hints ?? question.metadata?.hints ?? [],
       })),

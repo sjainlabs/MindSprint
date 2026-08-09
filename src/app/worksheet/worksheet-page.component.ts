@@ -7,12 +7,15 @@ import {
   LearningApiService,
   PracticeWorksheetQuestion,
   PracticeWorksheetResponse,
+  EnhancedWorksheetResponseV2,
+  EnhancedWorksheetQuestionV2,
 } from '../services/learning-api.service';
 import { AuthService } from '../services/auth.service';
 import { OnboardingFlowService } from '../services/onboarding-flow.service';
 import { type EnhancedTopic } from '../services/practice-config.service';
 import { AppMascotComponent } from '../shared/components/app-mascot/app-mascot.component';
 import { AppRewardStarsComponent } from '../shared/components/app-reward-stars/app-reward-stars.component';
+import { QuestionRendererComponent } from './components/question-renderer.component';
 import { triggerConfetti } from '../shared/utils/confetti';
 
 interface WorksheetNavState {
@@ -37,15 +40,21 @@ export class WorksheetPageComponent implements OnInit {
   private readonly onboarding = inject(OnboardingFlowService);
   protected readonly location = inject(Location);
 
+  // V1 & V2 Support
   readonly worksheet = signal<PracticeWorksheetResponse | null>(null);
+  readonly worksheetV2 = signal<EnhancedWorksheetResponseV2 | null>(null);
   readonly loading = signal(true);
   readonly errorMessage = signal('');
-  readonly answers = signal<Record<string, string>>({});
+  readonly answers = signal<Record<string, string | number | string[]>>({});
   readonly results = signal<any | null>(null);
 
   // Mascot UI state
   readonly currentMascot = signal('penguin');
   readonly mascotNames = { penguin: 'Pip the Penguin', lion: 'Leo the Lion', monkey: 'Momo the Monkey', turtle: 'Tilly the Turtle', zebra: 'Zee the Zebra' } as Record<string,string>;
+
+  // V2.0 derived values
+  readonly isV2Worksheet = computed(() => this.worksheetV2() !== null);
+  readonly questionsV2 = computed<EnhancedWorksheetQuestionV2[]>(() => this.worksheetV2()?.questions ?? []);
 
 
   readonly worksheetTitle = computed(() => this.worksheet()?.title ?? 'Worksheet');
@@ -179,7 +188,7 @@ export class WorksheetPageComponent implements OnInit {
   }
 
   answeredCount(): number {
-    return Object.values(this.answers()).filter((answer) => answer.trim().length > 0).length;
+    return Object.values(this.answers()).filter((answer) => String(answer).trim().length > 0).length;
   }
 
   async submitWorksheet(): Promise<void> {
@@ -198,7 +207,9 @@ export class WorksheetPageComponent implements OnInit {
         await this.api.submitPracticeWorksheetV1({
           worksheetId,
           studentId,
-          answers: this.answers(),
+          answers: Object.fromEntries(
+            Object.entries(this.answers()).map(([key, value]) => [key, String(value)])
+          )
         })
       );
 

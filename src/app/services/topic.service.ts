@@ -25,6 +25,17 @@ export interface TopicModel {
   subtopics: SubtopicModel[];
 }
 
+// EnhancedTopic mirrors the new backend syllabus EnhancedTopic shape
+export interface EnhancedTopic {
+  id: string;
+  name: string;
+  cbseGrade: number;
+  kumonBand: string;
+  practiceLevel: string;
+  skills: { id: string; difficultyScore: number }[];
+  studyMaterial?: { type: string; title: string; url?: string }[];
+}
+
 export interface TopicTaxonomyResponse {
   topics: TopicModel[];
   difficultyMapping: Array<{
@@ -99,6 +110,24 @@ export class TopicService {
   ): Observable<ExplorationRecommendation> {
     return this.http.get<ExplorationRecommendation>(
       `${this.apiRoot}/topics/explore?studentId=${encodeURIComponent(studentId)}&topicId=${encodeURIComponent(topicId)}`,
+    );
+  }
+  /** ⭐ NEW: Fetch enhanced topic metadata (skills, practiceLevel, cbseGrade, etc.) */
+  getEnhancedTopic(topicId: string): Observable<EnhancedTopic> {
+    return this.http.get<EnhancedTopic>(`${this.apiRoot}/topics/${encodeURIComponent(topicId)}/enhanced`);
+  }
+
+  /** ⭐ NEW: Fetch skills for a topic */
+  getSkillsForTopic(topicId: string): Observable<{ id: string; difficultyScore: number }[]> {
+    return this.http.get<{ id: string; difficultyScore: number }[]>(
+      `${this.apiRoot}/topics/${encodeURIComponent(topicId)}/skills`,
+    );
+  }
+
+  /** ⭐ NEW: Fetch subtopics for a topic */
+  getSubtopics(topicId: string): Observable<SubtopicModel[]> {
+    return this.http.get<SubtopicModel[]>(
+      `${this.apiRoot}/topics/${encodeURIComponent(topicId)}/subtopics`,
     );
   }
 }

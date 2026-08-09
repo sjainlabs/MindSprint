@@ -1,103 +1,77 @@
-<div class="min-h-screen bg-slate-50 px-4 py-4 sm:px-6 sm:py-6">
-  <div class="mx-auto max-w-3xl pb-28">
-    <header class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <a [routerLink]="['/practice-hub']" [queryParams]="{ studentId: studentId(), level: currentLevel() }" class="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-        <span aria-hidden="true">←</span>
-        Back
-      </a>
+<div class="p-6 max-w-3xl mx-auto">
+  <!-- Header -->
+  <h1 class="text-2xl font-bold mb-4">AI Worksheet</h1>
 
-      @if (worksheet(); as activeWorksheet) {
-        <div class="mt-4 space-y-3">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 class="text-3xl font-bold text-slate-900">
-                {{ activeWorksheet.title || 'Personalized Practice Worksheet' }}
-              </h1>
-              <p class="mt-2 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                {{ currentLevel() }}
-              </p>
-            </div>
-            <div class="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-              Attempted {{ attemptedCount() }}/{{ activeWorksheet.questions.length }}
-            </div>
-          </div>
-
-          <p class="text-base leading-7 text-slate-700">{{ activeWorksheet.instructions }}</p>
-        </div>
-      } @else {
-        <div class="mt-4">
-          <h1 class="text-3xl font-bold text-slate-900">Personalized Practice Worksheet</h1>
-        </div>
-      }
-    </header>
-
-    @if (loading()) {
-      <div class="mt-5 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
-        <div class="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p class="mt-4 text-sm text-slate-500">Loading worksheet…</p>
-      </div>
-    }
-
-    @if (errorMessage()) {
-      <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        {{ errorMessage() }}
-      </div>
-    }
-
-    @if (ready() && worksheet(); as activeWorksheet) {
-      <ol class="mt-5 space-y-4">
-        @for (question of activeWorksheet.questions; track question.id; let i = $index) {
-          <li class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <label class="block" [for]="question.id">
-              <span class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Question {{ questionNumber(i) }}
-              </span>
-              <span class="mt-2 block text-lg font-semibold leading-8 text-slate-900">
-                {{ question.prompt }}
-              </span>
-            </label>
-
-            <input
-              class="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-lg text-slate-900 outline-none transition focus:border-primary focus:bg-white"
-              type="text"
-              inputmode="text"
-              [id]="question.id"
-              [name]="question.id"
-              [ngModel]="studentAnswers()[i]"
-              (ngModelChange)="updateAnswer(i, $event)"
-              [disabled]="submitting()"
-              autocomplete="off"
-              autocapitalize="off"
-              spellcheck="false"
-            />
-          </li>
-        }
-      </ol>
-    }
-
-    @if (submitError()) {
-      <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        {{ submitError() }}
-      </div>
-    }
+  <!-- Loading -->
+  <div *ngIf="loading()" class="text-blue-600 font-medium">
+    Generating worksheet…
   </div>
 
-  @if (ready() && worksheet(); as activeWorksheet) {
-    <div class="sticky-submit-bar fixed inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
-      <div class="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm font-semibold text-slate-900">Attempted {{ attemptedCount() }}/{{ activeWorksheet.questions.length }}</p>
-          <p class="text-xs text-slate-500">Finish all questions to unlock your insights.</p>
+  <!-- Error -->
+  <div *ngIf="errorMessage()" class="text-red-600 font-medium">
+    {{ errorMessage() }}
+  </div>
+
+  <!-- Worksheet -->
+  <div *ngIf="worksheet() as ws">
+    <!-- Topic + Skill -->
+    <div class="mb-4 space-y-1">
+      <p class="text-lg font-semibold text-slate-900">
+        Topic: {{ ws.topicId }}
+      </p>
+
+      <p class="text-sm text-slate-600">
+        Skills: {{ ws.skills.join(', ') }}
+      </p>
+
+      <p class="text-sm text-slate-600">
+        Difficulty: {{ ws.difficulty }}
+      </p>
+
+      <p class="text-sm text-slate-600">
+        Question Types: {{ ws.questionTypes.join(', ') }}
+      </p>
+    </div>
+
+    <!-- Questions -->
+    <div class="space-y-6">
+      <div
+        *ngFor="let q of ws.questions; let i = index"
+        class="border p-4 rounded bg-white shadow-sm"
+      >
+        <!-- Prompt -->
+        <p class="font-medium mb-2">
+          {{ i + 1 }}. {{ q.prompt }}
+        </p>
+
+        <!-- Answer Input -->
+        <input
+          type="text"
+          class="border rounded p-2 w-full"
+          [value]="answers()[q.id] || ''"
+          (input)="updateAnswer(q.id, $event.target.value)"
+          placeholder="Your answer"
+        />
+
+        <!-- Hints -->
+        <div class="mt-2 text-sm text-slate-500 space-y-1">
+          <p *ngFor="let h of q.hints">• {{ h }}</p>
         </div>
-        <button
-          type="button"
-          class="w-full rounded-2xl bg-primary px-5 py-4 text-base font-semibold text-white shadow-sm disabled:opacity-50 sm:w-auto sm:min-w-56"
-          (click)="submitWorksheet()"
-          [disabled]="loading() || submitting() || !allQuestionsAnswered()"
-        >
-          {{ submitting() ? 'Submitting…' : 'Submit Worksheet' }}
-        </button>
       </div>
     </div>
-  }
+
+    <!-- Submit -->
+    <div class="mt-6">
+      <button
+        class="bg-blue-600 text-white px-4 py-2 rounded"
+        (click)="submit()"
+      >
+        Submit Worksheet
+      </button>
+
+      <p class="mt-2 text-sm text-slate-600">
+        Answered: {{ answeredCount() }} / {{ ws.questions.length }}
+      </p>
+    </div>
+  </div>
 </div>
