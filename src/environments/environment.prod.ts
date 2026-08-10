@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: 'http://localhost:3001/api',
+  apiUrl: ' https://mindsprint-backend-gcr0.onrender.com/api',
   googleOAuthClientId:
     (globalThis as { __MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__?: string })
       .__MINDSPRINT_GOOGLE_OAUTH_CLIENT_ID__ ?? '',
