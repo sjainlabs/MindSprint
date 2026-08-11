@@ -58,6 +58,34 @@
       </div>
     </section>
 
+    <!-- Find Topics -->
+    <section class="card">
+      <h3>Find Topics</h3>
+
+      <div class="topic-filter-row">
+        <!-- Search across ALL grades -->
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search topics across all grades..."
+          [ngModel]="topicSearch()"
+          (ngModelChange)="onTopicSearchChange($event)"
+        />
+
+        <!-- Topic dropdown across ALL grades -->
+        <select
+          class="topic-select"
+          [ngModel]="selectedTopicId()"
+          (ngModelChange)="onTopicSelectChange($event)"
+        >
+          <option value="">All Topics</option>
+          <option *ngFor="let t of topics()" [value]="t.id">
+            {{ t.name }}
+          </option>
+        </select>
+      </div>
+    </section>
+
     <!-- Topic Cards -->
     <section class="card">
       <h3>Select Topics</h3>

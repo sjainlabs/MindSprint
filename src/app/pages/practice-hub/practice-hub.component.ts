@@ -46,6 +46,8 @@ export class PracticeHubComponent implements OnInit {
   questionCount = signal(20);
   generatingWorksheet = signal(false);
   worksheetError = signal('');
+  topicSearch = signal('');
+  selectedTopicId = signal<string | null>(null);
 
   // Mascot + daily goals
   currentMascot = signal('penguin');
@@ -73,12 +75,44 @@ export class PracticeHubComponent implements OnInit {
     return Array.from(gradeSet).sort((a, b) => a - b);
   });
 
+  // filteredTopics = computed(() => {
+  //   const grade = this.selectedGrade();
+  //   const all = this.topics();
+  //   if (grade == null) return [];
+  //   return all.filter(t => t.cbseGrade === grade);
+  // });
+
   filteredTopics = computed(() => {
     const grade = this.selectedGrade();
+    const search = this.topicSearch().toLowerCase();
+    const topicId = this.selectedTopicId();
     const all = this.topics();
-    if (grade == null) return [];
-    return all.filter(t => t.cbseGrade === grade);
+
+    let result = all;
+
+    // 🔍 Search across ALL grades
+    if (search.trim().length > 0) {
+      result = result.filter(t =>
+        t.name.toLowerCase().includes(search) ||
+        t.id.toLowerCase().includes(search)
+      );
+      return result; // search overrides grade filter
+    }
+
+    // 🎯 Topic dropdown filter (also across ALL grades)
+    if (topicId) {
+      result = result.filter(t => t.id === topicId);
+      return result; // topic filter overrides grade filter
+    }
+
+    // 🏫 Grade filter (default)
+    if (grade != null) {
+      result = result.filter(t => t.cbseGrade === grade);
+    }
+
+    return result;
   });
+
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
   async ngOnInit(): Promise<void> {
@@ -203,6 +237,15 @@ export class PracticeHubComponent implements OnInit {
     this.selectedTopics.set([topic]);
     await this.generatePractice();
   }
+
+  onTopicSearchChange(value: string): void {
+    this.topicSearch.set(value);
+  }
+
+  onTopicSelectChange(value: string): void {
+    this.selectedTopicId.set(value || null);
+  }
+
 }
 
 export default PracticeHubComponent;
