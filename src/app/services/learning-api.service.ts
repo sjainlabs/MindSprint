@@ -505,15 +505,24 @@ export class LearningApiService {
     };
   }
 
- async submitPracticeWorksheetV1(payload: {
-   studentId: string | null;
-   worksheetId: string | undefined;
-   answers: Record<string, string>
- }) {
-    return this.http.post(`${this.apiBase}/v1/practice/worksheet/submit`, payload, {
-      headers: await this.getAuthHeaders(),
-    });
+  async submitPracticeWorksheetV1(payload: {
+    studentId: string | null;
+    worksheetId: string | undefined;
+    answers: Record<string, string>;
+  }, idempotencyKey: string) {
+
+    return this.http.post(
+      `${this.apiBase}/v1/practice/worksheet/submit`,
+      payload,
+      {
+        headers: {
+          ...(await this.getAuthHeaders()),
+          'Idempotency-Key': idempotencyKey
+        }
+      }
+    );
   }
+
 
   /* ---------------- Curriculum V2 ---------------- */
 

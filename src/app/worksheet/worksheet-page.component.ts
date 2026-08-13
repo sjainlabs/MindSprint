@@ -194,7 +194,7 @@ export class WorksheetPageComponent implements OnInit {
   async submitWorksheet(): Promise<void> {
     this.loading.set(true);
 
-    try {
+
       const worksheetId = this.worksheet()?.worksheetId;
       const studentId = this.authService.getStoredStudentId();
 
@@ -203,31 +203,70 @@ export class WorksheetPageComponent implements OnInit {
         return;
       }
 
-      const submission: any = await firstValueFrom(
-        await this.api.submitPracticeWorksheetV1({
-          worksheetId,
-          studentId,
-          answers: Object.fromEntries(
-            Object.entries(this.answers()).map(([key, value]) => [key, String(value)])
-          )
-        })
-      );
+      const idempotencyKey = crypto.randomUUID();
+      const payload = {
+      worksheetId,
+      studentId,
+      answers: Object.fromEntries(
+        Object.entries(this.answers()).map(([key, value]) => [key, String(value)])
+      )
+    };
 
-// Store full worksheet submission results
-      this.results.set(submission);
+      await this.retrySubmit(payload, idempotencyKey);
 
-      // Trigger confetti animation on successful submission
-      setTimeout(() => {
-        triggerConfetti(2000);
-      }, 300);
+//       const submission: any = await firstValueFrom(
+//         await this.api.submitPracticeWorksheetV1({
+//           worksheetId,
+//           studentId,
+//           answers: Object.fromEntries(
+//             Object.entries(this.answers()).map(([key, value]) => [key, String(value)])
+//           )
+//         })
+//       );
+//
+// // Store full worksheet submission results
+//       this.results.set(submission);
+//
+//       // Trigger confetti animation on successful submission
+//       setTimeout(() => {
+//         triggerConfetti(2000);
+//       }, 300);
+//
+//     } catch (error) {
+//       this.errorMessage.set('Unable to submit worksheet.');
+//     } finally {
+//       this.loading.set(false);
+//     }
+  }
 
-    } catch (error) {
-      this.errorMessage.set('Unable to submit worksheet.');
-    } finally {
+private async retrySubmit(
+      payload: any,
+      idempotencyKey: string,
+      retries = 5,
+      delay = 300
+  ): Promise<void> {
+
+      try {
+        const submission = await firstValueFrom(
+          await this.api.submitPracticeWorksheetV1(payload, idempotencyKey)
+        );
+
+        this.results.set(submission);
+
+        setTimeout(() => triggerConfetti(2000), 300);
+    this.loading.set(false);
+    return;
+
+  } catch (err) {
+      if (retries > 0) {
+        await new Promise(res => setTimeout(res, delay));
+        return this.retrySubmit(payload, idempotencyKey, retries - 1, delay * 2);
+      }
+
+      this.errorMessage.set('Unable to submit worksheet after retries.');
       this.loading.set(false);
     }
   }
-
 
 
   selectedTopicsLabel = computed(() => {
