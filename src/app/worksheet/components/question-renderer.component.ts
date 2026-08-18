@@ -289,6 +289,7 @@ export class QuestionRendererComponent {
 
   currentAnswer = signal<string | number | string[]| number[]>('');
   textAnswer = '';
+  // question: import("/Users/sjain/git/MindSprint/src/app/services/learning-api.service").PracticeWorksheetQuestion;
 
   ngOnInit(): void {
     if (this.question.submittedAnswer) {

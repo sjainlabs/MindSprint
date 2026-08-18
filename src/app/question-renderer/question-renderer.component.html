@@ -1,0 +1,44 @@
+<ng-container [ngSwitch]="question.layout">
+
+  <app-vertical-multiplication-component
+    *ngSwitchCase="'vertical'"
+    [top]="question.metadata?.top"
+    [bottom]="question.metadata?.bottom"
+    [answer]="answer"
+    (answerChange)="answerChange.emit($event)"
+  ></app-vertical-multiplication-component>
+
+  <div *ngSwitchCase="'horizontal_with_hint'">
+    <p>{{ question.prompt }}</p>
+    <button (click)="showHint = !showHint">
+      {{ showHint ? 'Hide Steps' : 'Show Steps' }}
+    </button>
+
+    <app-vertical-multiplication-component
+      *ngIf="showHint"
+      [top]="question.metadata?.top"
+      [bottom]="question.metadata?.bottom"
+      [answer]="answer"
+      (answerChange)="answerChange.emit($event)"
+    ></app-vertical-multiplication-component>
+
+    <textarea
+      class="answer-input"
+      [value]="answer"
+      (input)="onInputEvent($event)"
+
+
+    ></textarea>
+  </div>
+
+  <div *ngSwitchDefault>
+    <p>{{ question.prompt }}</p>
+    <textarea
+      class="answer-input"
+      [value]="answer"
+      (input)="onInputEvent($event)"
+
+    ></textarea>
+  </div>
+
+</ng-container>

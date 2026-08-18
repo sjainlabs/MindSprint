@@ -1,0 +1,57 @@
+.question-text {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.answer-input {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: none;
+  margin-top: 10px;
+}
+
+.hint-toggle-btn {
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #eef;
+  border: 1px solid #99c;
+  cursor: pointer;
+}
+
+.mcq-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mcq-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcq-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+}
+
+.horizontal-hint-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.hint-vertical {
+  margin: 12px 0;
+}
+
+.default-block {
+  display: flex;
+  flex-direction: column;
+}

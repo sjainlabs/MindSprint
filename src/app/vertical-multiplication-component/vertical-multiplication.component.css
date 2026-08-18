@@ -1,0 +1,21 @@
+.vertical-mult {
+  font-size: 2rem;
+  width: 140px;
+  margin: 0 auto;
+  text-align: right;
+}
+
+.vm-row {
+  padding: 4px 0;
+}
+
+.vm-divider {
+  border-bottom: 2px solid #000;
+  margin: 6px 0;
+}
+
+.vm-input {
+  width: 100%;
+  font-size: 1.8rem;
+  text-align: center;
+}

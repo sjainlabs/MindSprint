@@ -112,8 +112,8 @@
 ## 🎯 Key Features by Component
 
 ### Question Types Supported
-1. ✅ **Multiple Choice** - Radio buttons (QuestionRenderer)
-2. ✅ **Short Text** - Textarea (QuestionRenderer)
+1. ✅ **Multiple Choice** - Radio buttons (QuestionRendererComponent)
+2. ✅ **Short Text** - Textarea (QuestionRendererComponent)
 3. ✅ **Multi-Select** - Checkboxes with validation (MultiSelectQuestion)
 4. ✅ **Number Pad** - Touch-friendly arithmetic (NumberPadInput)
 5. ✅ **Fraction Input** - Improper & mixed fractions (FractionInput)

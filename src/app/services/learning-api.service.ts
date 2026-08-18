@@ -78,7 +78,13 @@ export interface PracticeWorksheetQuestion {
   prompt: string;
   type: 'short_text' | 'multiple_choice';
   choices?: string[];
-  metadata?: Record<string, unknown>;
+  layout?: 'horizontal' | 'vertical' | 'horizontal_with_hint';
+
+  metadata?: {
+    top?: number;
+    bottom?: number;
+    [key: string]: unknown;
+  };
 }
 
 export interface PracticeWorksheetRequest {

@@ -1,0 +1,12 @@
+<div class="vertical-mult">
+  <div class="vm-row vm-top">{{ top }}</div>
+  <div class="vm-row vm-bottom">× {{ bottom }}</div>
+  <div class="vm-divider"></div>
+
+  <input
+    type="number"
+    class="vm-input"
+    [value]="answer"
+    (input)="onInput($event)"
+  />
+</div>

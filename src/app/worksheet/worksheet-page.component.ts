@@ -15,8 +15,8 @@ import { OnboardingFlowService } from '../services/onboarding-flow.service';
 import { type EnhancedTopic } from '../services/practice-config.service';
 import { AppMascotComponent } from '../shared/components/app-mascot/app-mascot.component';
 import { AppRewardStarsComponent } from '../shared/components/app-reward-stars/app-reward-stars.component';
-import { QuestionRendererComponent } from './components/question-renderer.component';
 import { triggerConfetti } from '../shared/utils/confetti';
+import {QuestionRendererComponent} from '../question-renderer/question-renderer.component';
 
 interface WorksheetNavState {
   worksheet?: any;
@@ -30,7 +30,7 @@ interface WorksheetNavState {
 @Component({
   selector: 'app-clean-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent],
+  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, QuestionRendererComponent],
   templateUrl: './worksheet-page.component.html',
   styleUrls: ['./worksheet-page.component.css'],
 })
@@ -183,9 +183,10 @@ export class WorksheetPageComponent implements OnInit {
     }
   }
 
-  setAnswer(questionId: string, value: string): void {
-    this.answers.set({ ...this.answers(), [questionId]: value });
+  setAnswer(id: string, value: string | number | string[]) {
+    this.answers.set({ ...this.answers(), [id]: value });
   }
+
 
   answeredCount(): number {
     return Object.values(this.answers()).filter((answer) => String(answer).trim().length > 0).length;

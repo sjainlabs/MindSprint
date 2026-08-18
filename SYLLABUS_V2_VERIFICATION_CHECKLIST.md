@@ -300,8 +300,8 @@ describe('Worksheet with v2 questions', () => {
 ### Question Type Reference
 | Type | Component | Status |
 |------|-----------|--------|
-| multiple_choice | QuestionRenderer | ✅ Ready |
-| short_text | QuestionRenderer | ✅ Ready |
+| multiple_choice | QuestionRendererComponent | ✅ Ready |
+| short_text | QuestionRendererComponent | ✅ Ready |
 | multi_select | MultiSelectQuestion | ✅ Ready |
 | number_pad | NumberPadInput | ✅ Ready |
 | fraction_input | FractionInput | ✅ Ready |

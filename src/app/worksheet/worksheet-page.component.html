@@ -150,17 +150,23 @@
         <span class="question-count">of {{ questions().length }}</span>
       </div>
 
-      <p class="question-text">{{ question.prompt }}</p>
+<!--      <p class="question-text">{{ question.prompt }}</p>-->
 
-      <label class="answer-label" [for]="'answer-' + question.id">Your answer</label>
-      <textarea
-        class="answer-input"
-        [id]="'answer-' + question.id"
-        [ngModel]="answers()[question.id]"
-        (ngModelChange)="setAnswer(question.id, $event)"
-        placeholder="Type your answer here…"
-        rows="3"
-      ></textarea>
+<!--      <label class="answer-label" [for]="'answer-' + question.id">Your answer</label>-->
+<!--      <textarea-->
+<!--        class="answer-input"-->
+<!--        [id]="'answer-' + question.id"-->
+<!--        [ngModel]="answers()[question.id]"-->
+<!--        (ngModelChange)="setAnswer(question.id, $event)"-->
+<!--        placeholder="Type your answer here…"-->
+<!--        rows="3"-->
+<!--      ></textarea>-->
+       <app-question-renderer
+        [question]="question"
+        [answer]="answers()[question.id]"
+        (answerChange)="setAnswer(question.id, $event)"
+       >
+       </app-question-renderer>
     </section>
 
     <!-- Submit Button -->
