@@ -194,7 +194,8 @@ export class PracticeHubComponent implements OnInit {
   async generatePractice(): Promise<void> {
     if (!this.canGenerate()) return;
 
-    const grade = this.selectedGrade();
+    const grade = this.autoGrade();
+
     const selected = this.selectedTopics();
     const studentId = this.auth.getStoredStudentId();
 
@@ -245,6 +246,18 @@ export class PracticeHubComponent implements OnInit {
   onTopicSelectChange(value: string): void {
     this.selectedTopicId.set(value || null);
   }
+
+  readonly autoGrade = computed(() => {
+    const selected = this.selectedTopics();
+
+    if (selected.length > 0) {
+      // If multiple topics across grades → pick the lowest grade
+      return Math.min(...selected.map(t => t.cbseGrade));
+    }
+
+    return this.selectedGrade(); // fallback
+  });
+
 
 }
 

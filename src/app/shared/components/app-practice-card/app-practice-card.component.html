@@ -3,6 +3,12 @@
     <img class="topic-icon" [src]="topic?.icon || '/assets/mascots/penguin.svg'" alt="{{ topic?.name }}" />
     <div class="title-group">
       <h4>{{ topic?.name }}</h4>
+      <!-- Grade Badge -->
+      <span class="grade-badge" [attr.data-grade]="topic?.cbseGrade">
+  G{{ topic?.cbseGrade }}
+</span>
+
+
       <span class="level">{{ topic?.practiceLevel || 'Beginner' }}</span>
     </div>
   </div>
