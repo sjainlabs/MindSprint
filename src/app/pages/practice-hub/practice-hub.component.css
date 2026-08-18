@@ -253,5 +253,20 @@
     padding: 12px;
   }
 }
+.topic-wrapper.cross-grade {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.grade-lock-banner {
+  background: #eef;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+
 
 

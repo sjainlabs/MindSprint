@@ -171,6 +171,25 @@ export class PracticeHubComponent implements OnInit {
   // ── Topic selection ──────────────────────────────────────────────────────────
   selectTopic(topic: any): void {
     const current = this.selectedTopics();
+
+    // If nothing selected yet → allow
+    if (current.length === 0) {
+      this.selectedTopics.set([topic]);
+      return;
+    }
+    const currentGrade = current[0].cbseGrade;
+
+    // ❌ Prevent cross‑grade selection
+    if (topic.cbseGrade !== currentGrade) {
+      this.worksheetError.set(
+        `You cannot mix topics from Grade ${currentGrade} and Grade ${topic.cbseGrade}.`
+      );
+      return;
+    }
+
+    // ✔ Valid selection → clear error
+    this.worksheetError.set('');
+
     const exists = current.some(t => t.id === topic.id);
 
     if (exists) {
@@ -192,6 +211,19 @@ export class PracticeHubComponent implements OnInit {
 
   // ── Generate worksheet ───────────────────────────────────────────────────────
   async generatePractice(): Promise<void> {
+
+    const selected1 = this.selectedTopics();
+
+    if (selected1.length > 1) {
+      const grades = new Set(selected1.map(t => t.cbseGrade));
+      if (grades.size > 1) {
+        this.worksheetError.set(
+          `Worksheet cannot be generated because you selected topics from multiple grades: ${Array.from(grades).join(', ')}.`
+        );
+        return;
+      }
+    }
+
     if (!this.canGenerate()) return;
 
     const grade = this.autoGrade();
@@ -257,6 +289,16 @@ export class PracticeHubComponent implements OnInit {
 
     return this.selectedGrade(); // fallback
   });
+
+  readonly isCrossGrade = computed(() => {
+    const selected = this.selectedTopics();
+    if (selected.length === 0) return () => false;
+
+    const currentGrade = selected[0].cbseGrade;
+
+    return (topic: EnhancedTopic) => topic.cbseGrade !== currentGrade;
+  });
+
 
 
 }

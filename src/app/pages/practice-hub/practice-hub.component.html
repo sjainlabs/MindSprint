@@ -90,6 +90,10 @@
     <section class="card">
       <h3>Select Topics</h3>
 
+      <div *ngIf="selectedTopics().length > 0" class="grade-lock-banner">
+        You are practicing Grade {{ selectedTopics()[0].cbseGrade }} topics.
+      </div>
+
       <p class="hint" *ngIf="selectedGrade() === null">
         Select a grade first.
       </p>
@@ -99,15 +103,21 @@
       </p>
 
       <div class="topic-grid friendly-grid" *ngIf="filteredTopics().length > 0">
-        <app-practice-card
+        <div
+          class="topic-wrapper"
           *ngFor="let topic of filteredTopics()"
-          [topic]="topic"
-          [selected]="isTopicSelected(topic.id)"
-          [progress]="topic.progress || 0"
-          (toggle)="selectTopic(topic)"
-          (start)="startPractice(topic)"
-        ></app-practice-card>
+          [class.cross-grade]="selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade"
+        >
+          <app-practice-card
+            [topic]="topic"
+            [selected]="isTopicSelected(topic.id)"
+            [progress]="topic.progress || 0"
+            (toggle)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && selectTopic(topic)"
+            (start)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && startPractice(topic)"
+          ></app-practice-card>
+        </div>
       </div>
+
 
       <p class="selected-count" *ngIf="selectedTopics().length > 0">
         {{ selectedTopics().length }}
