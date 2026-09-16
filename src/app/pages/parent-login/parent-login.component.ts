@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './parent-login.component.html',
-  styleUrl: './parent-login.component.css',
+  styleUrls: ['./parent-login.component.css'],
 })
 export class ParentLoginComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
@@ -19,17 +19,17 @@ export class ParentLoginComponent implements OnInit, OnDestroy {
   readonly restoringSession = signal(false);
   readonly errorMessage = signal('');
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     console.log('[ParentLogin] Component initialized');
 
-    if (this.authService.shouldRedirectParentFromLogin()) {
+    if (this.authService.isParentLoggedIn()) {
       void this.router.navigate(['/parent/dashboard']);
       return;
     }
 
-    const shouldAttemptRestore = this.authService.shouldAttemptParentSessionRestore();
-    this.restoringSession.set(shouldAttemptRestore);
-    this.loading.set(this.restoringSession());
+    // const shouldAttemptRestore = this.authService.shouldAttemptParentSessionRestore();
+    this.restoringSession.set(false);
+    this.loading.set(false);
 
     this.authStateUnsubscribe = this.authService.onAuthStateChanged(async (user) => {
       console.log('[ParentLogin] Auth state changed:', user?.email ?? 'no user');
@@ -47,18 +47,29 @@ export class ParentLoginComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (!this.authService.isParentRedirectPending()) {
-        this.restoringSession.set(false);
+      // if (!this.authService.isParentRedirectPending()) {
+      //   this.restoringSession.set(false);
         this.loading.set(false);
-      }
+      // }
     });
 
-    if (shouldAttemptRestore) {
-      console.log('[ParentLogin] Calling handleRedirectLogin...');
-      void this.restoreRedirectSession();
-    } else {
-      console.log('[ParentLogin] No redirect restore needed on init');
+    // if (shouldAttemptRestore) {
+    //   console.log('[ParentLogin] Calling handleRedirectLogin...');
+    //   void this.restoreRedirectSession();
+    // } else {
+    //   console.log('[ParentLogin] No redirect restore needed on init');
+    // }
+    // Try redirect login (non-blocking)
+    console.log('[ParentLogin] Calling handleRedirectLogin...');
+    const user = await this.authService.handleRedirectLogin();
+
+    if (user) {
+      console.log('[ParentLogin] Redirect login succeeded, navigating to dashboard');
+      await this.router.navigate(['/parent/dashboard']);
+      return;
     }
+
+    console.log('[ParentLogin] No redirect user found');
   }
 
   ngOnDestroy(): void {
@@ -66,37 +77,37 @@ export class ParentLoginComponent implements OnInit, OnDestroy {
     this.authStateUnsubscribe = null;
   }
 
-  private async restoreRedirectSession(): Promise<void> {
-    const hadPendingRedirect = this.authService.isParentRedirectPending();
-
-    try {
-      const user = await this.authService.handleRedirectLogin();
-      console.log('[ParentLogin] handleRedirectLogin resolved with user:', user?.email ?? 'no user');
-
-      if (user) {
-        this.restoringSession.set(false);
-        this.loading.set(true);
-        console.log('[ParentLogin] User authenticated from redirect, navigating to dashboard');
-        await this.router.navigate(['/parent/dashboard']);
-        return;
-      }
-
-      if (hadPendingRedirect) {
-        this.errorMessage.set('Google redirect did not complete. Please tap Login with Google again.');
-      }
-    } catch (error) {
-      console.error('[ParentLogin] Redirect restore failed:', error);
-      this.errorMessage.set('Unable to complete Google sign-in. Please try again.');
-    }
-
-    this.restoringSession.set(false);
-    this.loading.set(false);
-  }
+  // private async restoreRedirectSession(): Promise<void> {
+  //   const hadPendingRedirect = this.authService.isParentRedirectPending();
+  //
+  //   try {
+  //     const user = await this.authService.handleRedirectLogin();
+  //     console.log('[ParentLogin] handleRedirectLogin resolved with user:', user?.email ?? 'no user');
+  //
+  //     if (user) {
+  //       this.restoringSession.set(false);
+  //       this.loading.set(true);
+  //       console.log('[ParentLogin] User authenticated from redirect, navigating to dashboard');
+  //       await this.router.navigate(['/parent/dashboard']);
+  //       return;
+  //     }
+  //
+  //     if (hadPendingRedirect) {
+  //       this.errorMessage.set('Google redirect did not complete. Please tap Login with Google again.');
+  //     }
+  //   } catch (error) {
+  //     console.error('[ParentLogin] Redirect restore failed:', error);
+  //     this.errorMessage.set('Unable to complete Google sign-in. Please try again.');
+  //   }
+  //
+  //   this.restoringSession.set(false);
+  //   this.loading.set(false);
+  // }
 
   async loginWithGoogle(): Promise<void> {
     console.log('[ParentLogin] Login with Google clicked');
     this.loading.set(true);
-    this.restoringSession.set(false);
+    // this.restoringSession.set(false);
     this.errorMessage.set('');
 
     try {

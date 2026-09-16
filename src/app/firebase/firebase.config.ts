@@ -5,7 +5,8 @@ import { environment } from '../../environments/environment';
 
 export const app = initializeApp(environment.firebaseConfig);
 export const auth = getAuth(app);
-export const authPersistenceReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
+// export const authPersistenceReady =
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.warn('[Firebase] Failed to set auth persistence:', error);
 });
 
@@ -14,19 +15,21 @@ googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
 
-export const db = (() => {
+let dbInstance: ReturnType<typeof initializeFirestore> | null = null;
+export const db = () => {
   try {
-    return initializeFirestore(app, {
+    dbInstance = initializeFirestore(app, {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager(),
       }),
     });
   } catch (error) {
     console.warn('[Firebase] Persistent Firestore cache unavailable, falling back to memory cache:', error);
-    return initializeFirestore(app, {
+    dbInstance = initializeFirestore(app, {
       localCache: memoryLocalCache(),
     });
   }
-})();
+  return dbInstance;
+};
 
 

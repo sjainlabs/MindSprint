@@ -26,7 +26,7 @@ export interface EnhancedTopic {
   progress?: number; // optional progress value
   skills: { id: string; difficultyScore: number }[];
   studyMaterial?: { type: string; title: string; url?: string }[];
-  kumonBand: string;
+  Band: string;
 }
 
 export interface EnhancedSyllabusResponse {

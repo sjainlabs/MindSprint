@@ -262,7 +262,7 @@ export interface EnhancedTopicV2 {
   cbseGrade: number;
   gradeBand: string;
   practiceLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Mastery';
-  kumonBand: string;
+  Band: string;
   progress: number;
   skills: Skill[];
   domains: Domain[];

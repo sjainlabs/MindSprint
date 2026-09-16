@@ -218,7 +218,7 @@
 
     /** ⭐ Dynamic metadata (merged from backend EnhancedTopic) */
     cbseGrade: number;
-    kumonBand: string;
+    Band: string;
     practiceLevel: string;
 
     /** ⭐ Dynamic modular skills (op-division-facts, op-long-division, etc.) */
@@ -430,7 +430,7 @@
 
       // dynamic metadata (UI fetches from backend)
       cbseGrade: 0,
-      kumonBand: '',
+      Band: '',
       practiceLevel: '',
       skills: [],
     };

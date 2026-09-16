@@ -25,15 +25,18 @@ export class PracticeTopicCatalogService {
             name: meta.name,
             cbseGrade: meta.cbseGrade,
             practiceLevel: meta.practiceLevel,
-            skills: meta.skills.map(s => ({
-              id: s.id,
-              difficultyScore: s.difficultyScore ?? 0
-            })),
+            skills: Array.isArray(meta.skills)
+              ? meta.skills.map(s => ({
+                id: s?.id ?? 'unknown-skill',
+                difficultyScore: s?.difficultyScore ?? 0
+              }))
+              : [],
+
 
             subtopics: meta.subtopics,
             studyMaterial: meta.studyMaterial ?? [],
             // ⭐ REQUIRED FIELD
-            kumonBand: meta.kumonBand ?? 'default',
+            Band: meta.Band ?? 'default',
             // ⭐ REQUIRED FIELDS from PracticeTopicDefinition
             track: 'math',
             groupKey: meta.groupKey ?? 'default',
@@ -72,16 +75,19 @@ export class PracticeTopicCatalogService {
           practiceLevel: meta.practiceLevel,
 
           // ⭐ FIXED: skills now match EnhancedTopic
-          skills: meta.skills.map(s => ({
-            id: s.id,
-            difficultyScore: s.difficultyScore ?? 0
-          })),
+          skills: Array.isArray(meta.skills)
+            ? meta.skills.map(s => ({
+              id: s?.id ?? 'unknown-skill',
+              difficultyScore: s?.difficultyScore ?? 0
+            }))
+            : [],
+
 
           subtopics: meta.subtopics,
           studyMaterial: meta.studyMaterial ?? [],
 
           // ⭐ REQUIRED FIELD
-          kumonBand: meta.kumonBand ?? 'default',
+          Band: meta.Band ?? 'default',
 
           // ⭐ REQUIRED FIELDS from PracticeTopicDefinition
           track: 'math',

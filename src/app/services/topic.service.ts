@@ -30,7 +30,7 @@ export interface EnhancedTopic {
   id: string;
   name: string;
   cbseGrade: number;
-  kumonBand: string;
+  Band: string;
   practiceLevel: string;
   skills: { id: string; difficultyScore: number }[];
   studyMaterial?: { type: string; title: string; url?: string }[];
