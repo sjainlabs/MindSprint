@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import {firstValueFrom, Observable} from 'rxjs';
 import { environment } from '../../environments/environment';
 import { auth } from '../firebase/firebase.config';
 
@@ -133,6 +133,8 @@ export interface PracticeWorksheetV2Response {
   questions: PracticeWorksheetQuestion[];
   generatedAt?: string;
   topic: string
+  attemptCount: number;
+  results: PracticeWorksheetQuestion[];
 }
 
 

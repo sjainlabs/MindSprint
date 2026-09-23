@@ -105,6 +105,31 @@
 
             <h3>Worksheet Questions</h3>
 
+            <!-- Correction Mode Banner -->
+            <div *ngIf="correctionMode()[w.worksheetId]" class="correction-banner">
+              Correction attempt {{ correctionAttemptCount()[w.worksheetId] + 1 }}
+              of {{ correctionMaxAttempts()[w.worksheetId] }}
+            </div>
+
+            <!-- Edit Button -->
+            <button
+              *ngIf="!correctionMode()[w.worksheetId] &&
+                     correctionAttemptCount()[w.worksheetId] < correctionMaxAttempts()[w.worksheetId]"
+              class="edit-btn"
+              (click)="startCorrection(w.worksheetId)"
+            >
+              Edit Worksheet Responses
+            </button>
+
+            <!-- Locked Message -->
+            <div
+              *ngIf="correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
+              class="locked-banner"
+            >
+              You have reached the maximum number of correction attempts.
+            </div>
+
+            <!-- Questions -->
             <div *ngFor="let q of w.details"
                  class="question-item"
                  [class.correct]="q.correct"
@@ -112,8 +137,8 @@
 
               <p><strong>Q{{ q.questionId }}:</strong> {{ q.prompt }}</p>
 
-              <!-- Incorrect -->
-              <div *ngIf="!q.correct" class="incorrect-answer">
+              <!-- Incorrect (normal mode) -->
+              <div *ngIf="!q.correct && !correctionMode()[w.worksheetId]" class="incorrect-answer">
                 ❌ Incorrect
                 <p>Your answer: {{ q.submittedAnswer }}</p>
 
@@ -124,6 +149,16 @@
                 <p *ngIf="showCorrect()[q.questionId]" class="correct-answer">
                   Correct answer: {{ q.expectedAnswer }}
                 </p>
+              </div>
+
+              <!-- Correction Mode Input -->
+              <div *ngIf="!q.correct && correctionMode()[w.worksheetId]" class="correction-input">
+                <label>Edit your answer:</label>
+                <input
+                  type="text"
+                  [value]="correctionAnswers()[w.worksheetId][q.questionId]"
+                  (input)="updateCorrectionAnswer(w.worksheetId, q.questionId, $event.target.value)"
+                />
               </div>
 
               <!-- Correct -->
@@ -140,6 +175,23 @@
 
             </div>
 
+            <!-- Correction Mode Buttons -->
+            <div *ngIf="correctionMode()[w.worksheetId]" class="correction-actions">
+
+              <button
+                class="submit-btn"
+                (click)="submitCorrection(w.worksheetId)"
+                [disabled]="correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
+              >
+                Submit Corrections
+              </button>
+
+              <button class="cancel-btn" (click)="exitCorrection(w.worksheetId)">
+                Cancel
+              </button>
+
+            </div>
+
           </div>
 
         </td>
@@ -150,4 +202,3 @@
   </table>
 
 </section>
-

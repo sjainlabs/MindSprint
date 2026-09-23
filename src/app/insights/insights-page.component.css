@@ -29,6 +29,7 @@
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  animation: fadeIn 0.25s ease-out;
 }
 
 .card h1,
@@ -83,15 +84,12 @@ li {
 }
 
 /* Fade-in Animation */
-.card {
-  animation: fadeIn 0.25s ease-out;
-}
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Worksheet History Table */
 .history-table {
   width: 100%;
   border-collapse: collapse;
@@ -127,6 +125,7 @@ li {
   background: #005fa3;
 }
 
+/* Expanded Worksheet Box */
 .expanded-box {
   background: #fafafa;
   padding: 1rem;
@@ -135,6 +134,7 @@ li {
   margin-top: 1rem;
 }
 
+/* Question Item */
 .question-item {
   padding: 0.75rem;
   margin-bottom: 0.75rem;
@@ -159,3 +159,87 @@ li {
   color: #c62828;
 }
 
+/* Correction Mode Banner */
+.correction-banner {
+  background: #fff3cd;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  color: #856404;
+  font-weight: 600;
+  border: 1px solid #ffe8a1;
+}
+
+/* Edit Button */
+.edit-btn {
+  background: #2563eb;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.edit-btn:hover {
+  background: #1e4fc7;
+}
+
+/* Locked Banner */
+.locked-banner {
+  background: #ffe4e4;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  color: #b91c1c;
+  font-weight: 600;
+  border: 1px solid #f5b5b5;
+}
+
+/* Correction Input */
+.correction-input {
+  margin-top: 10px;
+}
+
+.correction-input input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+}
+
+/* Correction Action Buttons */
+.correction-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.submit-btn {
+  background: #22c55e;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submit-btn:hover {
+  background: #16a34a;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.cancel-btn:hover {
+  background: #d1d5db;
+}
