@@ -55,6 +55,18 @@
 
   </section>
 
+  <!-- Topic Tests -->
+  <section class="card" *ngIf="!loading() && topicTestStatuses().length > 0">
+    <h2>Topic Tests</h2>
+    <p>Get 10 practice sheets at 80%+ on a topic to unlock its test.</p>
+    <div class="topic-test-grid">
+      <div class="topic-test-item" *ngFor="let t of topicTestStatuses()">
+        <h3>{{ t.topicName }}</h3>
+        <app-topic-test-card [topicStatus]="t"></app-topic-test-card>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <!-- Worksheet History Table -->
@@ -81,14 +93,18 @@
     <ng-container *ngFor="let w of worksheetHistory()">
 
       <!-- MAIN ROW -->
-      <tr>
+      <tr [class.topic-test-row]="isTest(w)">
         <td>{{ w.submittedAt | date:'short' }}</td>
-        <td>{{ w.topics.join(', ') }}</td>
-        <td>{{ w.level }}</td>
+        <td>
+          <span class="test-badge" *ngIf="isTopicTest(w)">Test</span>
+          <span class="test-badge custom" *ngIf="isAdhocTest(w)">Custom Test</span>
+          {{ w.topics?.join(', ') ?? w.topicName }}
+        </td>
+        <td>{{ w.level ?? '—' }}</td>
         <td>{{ w.score }}/{{ w.total }}</td>
         <td>{{ w.accuracy }}%</td>
-        <td>{{ w.mastery }}%</td>
-        <td>{{ w.speedSeconds }}s</td>
+        <td>{{ w.mastery != null ? w.mastery + '%' : '—' }}</td>
+        <td>{{ w.speedSeconds != null ? w.speedSeconds + 's' : '—' }}</td>
 
         <td>
           <button (click)="toggleRow(w.worksheetId)">
@@ -103,7 +119,11 @@
 
           <div class="expanded-box">
 
-            <h3>Worksheet Questions</h3>
+            <h3>{{ isTopicTest(w) ? 'Topic Test Questions' : isAdhocTest(w) ? 'Custom Test Questions' : 'Worksheet Questions' }}</h3>
+
+            <div *ngIf="isTest(w)" class="locked-banner">
+              Tests have one submission, so answers can't be corrected.
+            </div>
 
             <!-- Correction Mode Banner -->
             <div *ngIf="correctionMode()[w.worksheetId]" class="correction-banner">
@@ -113,7 +133,8 @@
 
             <!-- Edit Button -->
             <button
-              *ngIf="!correctionMode()[w.worksheetId] &&
+              *ngIf="!isTest(w) &&
+                     !correctionMode()[w.worksheetId] &&
                      correctionAttemptCount()[w.worksheetId] < correctionMaxAttempts()[w.worksheetId]"
               class="edit-btn"
               (click)="startCorrection(w.worksheetId)"
@@ -123,7 +144,7 @@
 
             <!-- Locked Message -->
             <div
-              *ngIf="correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
+              *ngIf="!isTest(w) && correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
               class="locked-banner"
             >
               You have reached the maximum number of correction attempts.

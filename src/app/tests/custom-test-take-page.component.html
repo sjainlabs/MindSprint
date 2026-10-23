@@ -1,0 +1,195 @@
+<main class="page">
+
+  <!-- Error -->
+  <section class="card" *ngIf="stage() === 'error'">
+    <h1>Oops!</h1>
+    <p>{{ errorMessage() }}</p>
+    <div class="actions">
+      <button class="btn primary" *ngIf="canRetake()" (click)="retake()">Try a new test with the same topics</button>
+      <button class="btn" (click)="buildAnother()">Build another test</button>
+      <button class="btn" (click)="goToTests()">Back to Tests</button>
+    </div>
+  </section>
+
+  <!-- Regenerating for retake -->
+  <section class="card center" *ngIf="stage() === 'regenerating'">
+    <div class="spinner"></div>
+    <p>Creating a fresh test with the same topics…</p>
+  </section>
+
+  <!-- Taking -->
+  <ng-container *ngIf="stage() === 'taking' && currentQuestion() as q">
+    <section class="card">
+      <div class="test-head">
+        <h1>🧩 Custom Test</h1>
+        <button class="link-btn" (click)="saveAndExit()">Save &amp; exit</button>
+      </div>
+      <p class="muted topics-line">
+        {{ active()?.test?.topics?.length }} topic{{ active()?.test?.topics?.length === 1 ? '' : 's' }}:
+        <ng-container *ngFor="let t of active()?.test?.topics; let last = last">{{ t.topicName }}{{ last ? '' : ', ' }}</ng-container>
+      </p>
+
+      <div class="progress">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="(answeredCount() / questions().length) * 100"></div>
+        </div>
+        <p class="progress-text">
+          <strong>{{ currentIndex() + 1 }} / {{ questions().length }}</strong>
+          · {{ answeredCount() }} answered
+        </p>
+      </div>
+
+      <nav class="q-nav" aria-label="Questions">
+        <button
+          *ngFor="let item of questions(); let i = index"
+          class="q-dot"
+          [class.current]="i === currentIndex()"
+          [class.answered]="isAnswered(item.id)"
+          [attr.aria-current]="i === currentIndex() ? 'step' : null"
+          [attr.aria-label]="'Question ' + (i + 1) + (isAnswered(item.id) ? ', answered' : ', not answered')"
+          (click)="goTo(i)"
+        >{{ i + 1 }}</button>
+      </nav>
+    </section>
+
+    <section class="card">
+      <div class="question-header">
+        <h2>Question {{ currentIndex() + 1 }}</h2>
+        <span class="tag" *ngIf="isMultiTopic()">{{ topicName(q.topicId) }}</span>
+      </div>
+
+      <app-question-renderer
+        [question]="asRendererQuestion(q)"
+        [answer]="answers()[q.id] ?? ''"
+        (answerChange)="setAnswer(q.id, $event)"
+      ></app-question-renderer>
+
+      <div class="actions row">
+        <button class="btn" [disabled]="currentIndex() === 0" (click)="prev()">← Previous</button>
+        <button class="btn primary" *ngIf="!isLastQuestion()" (click)="next()">Next →</button>
+        <button class="btn primary" *ngIf="isLastQuestion()" (click)="openReview()">Review &amp; submit</button>
+      </div>
+    </section>
+
+    <button class="btn outline" *ngIf="!isLastQuestion()" (click)="openReview()">Finish test</button>
+  </ng-container>
+
+  <!-- Review before submit -->
+  <section class="card" *ngIf="stage() === 'review'">
+    <h1>Ready to submit?</h1>
+    <p>You answered <strong>{{ answeredCount() }} of {{ questions().length }}</strong> questions.</p>
+
+    <div class="warning" *ngIf="unansweredNumbers().length > 0">
+      <p>
+        ⚠️ {{ unansweredNumbers().length }} question{{ unansweredNumbers().length === 1 ? ' is' : 's are' }}
+        still empty. Empty answers count as wrong.
+      </p>
+      <div class="chip-list">
+        <button class="chip warn" *ngFor="let n of unansweredNumbers()" (click)="goTo(n - 1)">Q{{ n }}</button>
+      </div>
+    </div>
+
+    <p class="notice error" *ngIf="submitError()">{{ submitError() }}</p>
+
+    <div class="actions" *ngIf="!confirmOpen()">
+      <button class="btn primary" (click)="confirmOpen.set(true)">Submit test</button>
+      <button class="btn" (click)="goTo(currentIndex())">Go back to questions</button>
+    </div>
+
+    <div class="confirm-box" *ngIf="confirmOpen()" role="alertdialog" aria-labelledby="confirm-title">
+      <h2 id="confirm-title">You can only submit once</h2>
+      <p>You won't be able to change any answers after this. Submit now?</p>
+      <div class="actions">
+        <button class="btn primary" [disabled]="submitting()" (click)="submit()">
+          <span *ngIf="!submitting()">Yes, submit my test</span>
+          <span *ngIf="submitting()" class="inline-loading"><span class="spinner small"></span> Submitting…</span>
+        </button>
+        <button class="btn" [disabled]="submitting()" (click)="confirmOpen.set(false)">Not yet</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <ng-container *ngIf="stage() === 'results' && result() as r">
+    <section class="card center">
+      <div class="result-emoji">{{ r.accuracy >= 80 ? '🌟' : r.accuracy >= 50 ? '👍' : '💪' }}</div>
+      <h1>Test complete!</h1>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-value">{{ r.score }}/{{ r.total }}</div>
+          <div class="metric-label">Score</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">{{ r.accuracy }}%</div>
+          <div class="metric-label">Accuracy</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>By topic</h2>
+      <p class="hint">Weakest topics first.</p>
+      <div class="topic-score" *ngFor="let t of byTopicWeakestFirst()">
+        <div class="topic-score-head">
+          <span class="topic-score-name">{{ t.topicName }}</span>
+          <span class="topic-score-value">{{ t.score }}/{{ t.total }} · {{ t.accuracy }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [ngClass]="barClass(t.accuracy)" [style.width.%]="t.accuracy"></div>
+        </div>
+        <button class="btn small outline practise-btn" *ngIf="isWeak(t)" (click)="practiseTopic(t.topicId)">
+          Practise this topic
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="actions">
+        <button class="btn primary" [disabled]="!canRetake()" (click)="retake()">🔁 Retake with the same topics</button>
+        <button class="btn" (click)="buildAnother()">🧩 Build another test</button>
+        <button class="btn" (click)="goToTests()">See test history</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <button class="review-toggle" (click)="reviewOpen.set(!reviewOpen())" [attr.aria-expanded]="reviewOpen()">
+        <h2>📝 Review your answers</h2>
+        <span>{{ reviewOpen() ? '▲ Hide' : '▼ Show' }}</span>
+      </button>
+
+      <ng-container *ngIf="reviewOpen()">
+        <div class="chip-list" *ngIf="r.byTopic.length > 1">
+          <button class="chip" [class.active]="reviewTopicFilter() === null" (click)="reviewTopicFilter.set(null)">
+            All ({{ r.results.length }})
+          </button>
+          <button class="chip" *ngFor="let t of r.byTopic"
+                  [class.active]="reviewTopicFilter() === t.topicId"
+                  (click)="reviewTopicFilter.set(t.topicId)">
+            {{ t.topicName }} ({{ t.total }})
+          </button>
+        </div>
+
+        <div class="review-item" *ngFor="let item of filteredReview()"
+             [class.correct]="item.correct" [class.incorrect]="!item.correct">
+          <div class="review-head">
+            <span class="tag">{{ topicName(item.topicId) }}</span>
+            <span class="badge" [class.ok]="item.correct" [class.bad]="!item.correct">
+              {{ item.correct ? '✔ Correct' : '❌ Incorrect' }}
+            </span>
+          </div>
+          <p class="prompt">{{ item.prompt }}</p>
+          <p><span class="muted">Your answer:</span> <strong>{{ item.submittedAnswer || '(no answer)' }}</strong></p>
+          <ng-container *ngIf="!item.correct">
+            <button class="link-btn" (click)="toggleExpected(item.questionId)">
+              {{ showExpected()[item.questionId] ? 'Hide' : 'Show' }} correct answer
+            </button>
+            <p *ngIf="showExpected()[item.questionId]" class="expected">
+              <span class="muted">Correct answer:</span> <strong>{{ item.expectedAnswer }}</strong>
+            </p>
+          </ng-container>
+        </div>
+      </ng-container>
+    </section>
+  </ng-container>
+
+</main>

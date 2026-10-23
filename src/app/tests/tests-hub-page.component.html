@@ -1,0 +1,102 @@
+<main class="page">
+
+  <section class="card">
+    <h1>📋 Tests</h1>
+    <p class="muted">Make your own test, check scheduled tests, and see every test you've taken.</p>
+  </section>
+
+  <!-- Unfinished custom test -->
+  <section class="card resume-card" *ngIf="unfinished() as u">
+    <div>
+      <h2>Unfinished custom test</h2>
+      <p class="muted">{{ u.topicCount }} topic{{ u.topicCount === 1 ? '' : 's' }} · {{ u.answered }} of {{ u.total }} answered</p>
+    </div>
+    <button class="btn primary" (click)="resume()">Resume</button>
+  </section>
+
+  <!-- Options -->
+  <div class="option-grid">
+    <section class="card option-card">
+      <div class="option-icon">🧩</div>
+      <h2>Custom Test</h2>
+      <p class="muted">Mix any topics from any grade or level, and pick how many questions.</p>
+      <p class="hint" *ngIf="lastSelection() as last">
+        Last time: {{ last.topicIds.length }} topic{{ last.topicIds.length === 1 ? '' : 's' }} · {{ last.questionCount }} questions
+      </p>
+      <button class="btn primary" (click)="buildTest()">Build a Custom Test</button>
+    </section>
+
+    <section class="card option-card">
+      <div class="option-icon">🗓️</div>
+      <h2>Scheduled Tests</h2>
+      <p class="muted">See your bi-weekly, monthly and quarterly tests.</p>
+      <a class="btn" routerLink="/tests/scheduled">View scheduled tests</a>
+    </section>
+  </div>
+
+  <!-- History -->
+  <section class="card">
+    <h2>Test history</h2>
+
+    <div class="chip-list" *ngIf="history().length > 0">
+      <button class="chip" [class.active]="filter() === 'all'" (click)="filter.set('all')">All ({{ counts().all }})</button>
+      <button class="chip" [class.active]="filter() === 'adhoc-test'" (click)="filter.set('adhoc-test')">Custom ({{ counts().adhoc }})</button>
+      <button class="chip" [class.active]="filter() === 'topic-test'" (click)="filter.set('topic-test')">Topic Tests ({{ counts().topic }})</button>
+    </div>
+
+    <div class="center-row" *ngIf="loadingHistory()">
+      <div class="spinner"></div>
+    </div>
+
+    <ng-container *ngIf="!loadingHistory()">
+      <div *ngIf="historyError()" class="notice error">
+        {{ historyError() }}
+        <button class="link-btn" (click)="loadHistory()">Try again</button>
+      </div>
+
+      <p class="hint" *ngIf="!historyError() && history().length === 0">
+        No tests yet. Build a custom test to get started!
+      </p>
+      <p class="hint" *ngIf="!historyError() && history().length > 0 && filteredHistory().length === 0">
+        No tests of this type yet.
+      </p>
+
+      <ul class="history-list">
+        <li class="history-item" *ngFor="let h of filteredHistory()">
+          <button class="history-row" (click)="toggle(h.id)" [attr.aria-expanded]="!!expanded()[h.id]">
+            <div class="history-main">
+              <div class="history-tags">
+                <span class="tag custom" *ngIf="h.kind === 'adhoc-test'">Custom Test</span>
+                <span class="tag topic-test" *ngIf="h.kind === 'topic-test'">Topic Test</span>
+                <span class="muted history-date">{{ h.submittedAt | date: 'medium' }}</span>
+              </div>
+              <p class="history-topics">{{ h.topics.join(', ') || '—' }}</p>
+            </div>
+            <div class="history-score">
+              <strong *ngIf="h.accuracy !== null">{{ h.accuracy }}%</strong>
+              <span class="muted" *ngIf="h.score !== null && h.total !== null">{{ h.score }}/{{ h.total }}</span>
+            </div>
+            <span class="chevron">{{ expanded()[h.id] ? '▲' : '▼' }}</span>
+          </button>
+
+          <div class="history-details" *ngIf="expanded()[h.id]">
+            <p class="hint" *ngIf="h.details.length === 0">No question details for this test.</p>
+            <div class="review-item" *ngFor="let q of h.details; let i = index"
+                 [class.correct]="q.correct" [class.incorrect]="!q.correct">
+              <div class="review-head">
+                <span class="muted">Question {{ i + 1 }}</span>
+                <span class="badge" [class.ok]="q.correct" [class.bad]="!q.correct">
+                  {{ q.correct ? '✔ Correct' : '❌ Incorrect' }}
+                </span>
+              </div>
+              <p class="prompt">{{ q.prompt }}</p>
+              <p><span class="muted">Your answer:</span> <strong>{{ q.submittedAnswer || '(no answer)' }}</strong></p>
+              <p *ngIf="!q.correct" class="expected"><span class="muted">Correct answer:</span> <strong>{{ q.expectedAnswer }}</strong></p>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </ng-container>
+  </section>
+
+</main>

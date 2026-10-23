@@ -3,11 +3,14 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LearningApiService, TopicDetailResponse } from '../services/learning-api.service';
 import { OnboardingFlowService } from '../services/onboarding-flow.service';
+import { AuthService } from '../services/auth.service';
+import { TopicTestService } from '../services/topic-test.service';
+import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 
 @Component({
   selector: 'app-topic-detail-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TopicTestCardComponent],
   template: `
     <main class="page">
       <section class="card" *ngIf="loading()">Loading topic...</section>
@@ -18,6 +21,8 @@ import { OnboardingFlowService } from '../services/onboarding-flow.service';
         <h1>{{ topic.name }}</h1>
         <p>{{ topic.description }}</p>
         <p>Mastery: {{ topic.mastery }}%</p>
+
+        <app-topic-test-card [topicStatus]="testStatus()"></app-topic-test-card>
 
         <h2>Difficulty Tiers</h2>
         <ul>
@@ -54,11 +59,14 @@ export class TopicDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(LearningApiService);
   private readonly onboarding = inject(OnboardingFlowService);
+  private readonly auth = inject(AuthService);
+  private readonly topicTests = inject(TopicTestService);
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
   readonly topic = signal<TopicDetailResponse | null>(null);
   readonly topicId = computed(() => this.route.snapshot.paramMap.get('topicId') ?? '');
+  readonly testStatus = computed(() => this.topicTests.statusFor(this.topicId()));
 
   readonly difficultyEntries = computed(() => {
     const tiers = this.topic()?.difficultyTiers ?? {};
@@ -68,6 +76,7 @@ export class TopicDetailPageComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set('');
+    this.loadTestStatus();
 
     try {
       this.topic.set(await this.api.getTopicDetail(this.topicId()));
@@ -76,6 +85,13 @@ export class TopicDetailPageComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Topic test status is optional on this screen; if it fails the card just stays hidden. */
+  private loadTestStatus(): void {
+    const studentId = this.auth.getStoredStudentId();
+    if (!studentId || !this.topicId()) return;
+    this.topicTests.getStatus(studentId, this.topicId()).catch(() => undefined);
   }
 
   generateWorksheet(): void {

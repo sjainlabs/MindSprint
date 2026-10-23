@@ -1,14 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import {FullInsightsResponse, LearningApiService, PracticeWorksheetV2Response} from '../services/learning-api.service';
 import {firstValueFrom} from 'rxjs';
+import { TopicTestService } from '../services/topic-test.service';
+import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 
 @Component({
   selector: 'app-simple-insights-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TopicTestCardComponent],
   templateUrl: './insights-page.component.html',
   styleUrls: ['./insights-page.component.css'],
 })
@@ -16,10 +18,15 @@ export class InsightsPageComponent implements OnInit {
   private readonly api = inject(LearningApiService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly topicTests = inject(TopicTestService);
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
   readonly insights = signal<FullInsightsResponse | null>(null);
+  // Read from the shared cache so a just-submitted test result shows without refetching.
+  readonly topicTestStatuses = computed(() =>
+    (this.insights()?.topicTests ?? []).map((t) => this.topicTests.statusFor(t.topicId) ?? t),
+  );
 
   readonly worksheetHistory = signal<any[]>([]);
   readonly expandedRows = signal<Record<string, boolean>>({});
@@ -55,6 +62,7 @@ export class InsightsPageComponent implements OnInit {
 
     try {
       const result = await this.api.getFullInsights(studentId);
+      this.topicTests.ingest(result.topicTests);
       this.insights.set(result);
       const history = await this.api.getWorksheetHistory(studentId);
 
@@ -92,6 +100,19 @@ export class InsightsPageComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/home']);
+  }
+
+  isTopicTest(entry: { kind?: string }): boolean {
+    return entry?.kind === 'topic-test';
+  }
+
+  isAdhocTest(entry: { kind?: string }): boolean {
+    return entry?.kind === 'adhoc-test';
+  }
+
+  /** Topic and custom tests have one submission, so no corrections. */
+  isTest(entry: { kind?: string }): boolean {
+    return this.isTopicTest(entry) || this.isAdhocTest(entry);
   }
 
   startCorrection(worksheetId: string) {

@@ -57,6 +57,12 @@
       <app-reward-stars [accuracy]="results()?.accuracy"></app-reward-stars>
     </section>
 
+    <!-- Topic Test progress -->
+    <section class="card" *ngIf="topicTestStatuses().length > 0">
+      <h3>🏁 Topic Test</h3>
+      <app-topic-test-card *ngFor="let t of topicTestStatuses()" [topicStatus]="t"></app-topic-test-card>
+    </section>
+
     <!-- Recommendations -->
     <section class="card recommendations-card" *ngIf="results()?.recommendations && results()?.recommendations.length > 0">
       <h3>💡 Next Steps</h3>

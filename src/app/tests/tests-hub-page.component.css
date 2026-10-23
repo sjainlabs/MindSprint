@@ -1,0 +1,104 @@
+.resume-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border: 2px solid var(--primary);
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.option-card {
+  align-content: start;
+}
+
+.option-card .btn {
+  align-self: end;
+}
+
+.option-icon {
+  font-size: 2rem;
+}
+
+.center-row {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.history-item {
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.history-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.history-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.history-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.history-date {
+  font-size: 0.8rem;
+}
+
+.history-topics {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.history-score {
+  display: grid;
+  justify-items: end;
+  font-size: 0.9rem;
+}
+
+.history-score strong {
+  font-size: 1.1rem;
+}
+
+.chevron {
+  color: var(--primary);
+  font-size: 0.8rem;
+}
+
+.history-details {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 14px;
+}

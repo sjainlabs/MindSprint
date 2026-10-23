@@ -26,6 +26,7 @@
       class="answer-input"
       [value]="answer"
       (input)="onInputEvent($event)"
+      [placeholder]="question.placeholder ?? ''"
 
 
     ></textarea>
@@ -37,6 +38,7 @@
       class="answer-input"
       [value]="answer"
       (input)="onInputEvent($event)"
+      [placeholder]="question.placeholder ?? ''"
 
     ></textarea>
   </div>

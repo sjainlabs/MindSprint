@@ -20,6 +20,9 @@
     <div class="progress-label">{{ progress }}%</div>
   </div>
 
+  <!-- Optional extras for this topic (e.g. topic test status) -->
+  <ng-content></ng-content>
+
   <button class="start-btn" (click)="$event.stopPropagation(); start.emit();">Start Practice</button>
 </div>
 

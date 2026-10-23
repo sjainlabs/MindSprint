@@ -14,6 +14,10 @@ import { WorksheetPageComponent } from './worksheet/worksheet-page.component';
 import { InsightsPageComponent } from './insights/insights-page.component';
 import { ScheduledTestsPageComponent } from './tests/scheduled-tests-page.component';
 import { SurpriseTestPageComponent } from './tests/surprise-test-page.component';
+import { TopicTestPageComponent } from './tests/topic-test-page.component';
+import { TestsHubPageComponent } from './tests/tests-hub-page.component';
+import { CustomTestBuilderPageComponent } from './tests/custom-test-builder-page.component';
+import { CustomTestTakePageComponent } from './tests/custom-test-take-page.component';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
@@ -33,8 +37,12 @@ export const routes: Routes = [
   { path: 'practice/topic/:topicId', canActivate: [studentAuthGuard], component: TopicDetailPageComponent },
   { path: 'practice/worksheet', canActivate: [studentAuthGuard], component: WorksheetPageComponent },
   { path: 'insights', canActivate: [studentAuthGuard], component: InsightsPageComponent },
+  { path: 'tests', canActivate: [studentAuthGuard], component: TestsHubPageComponent },
+  { path: 'tests/custom', canActivate: [studentAuthGuard], component: CustomTestBuilderPageComponent },
+  { path: 'tests/custom/take', canActivate: [studentAuthGuard], component: CustomTestTakePageComponent },
   { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
   { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
+  { path: 'tests/topic/:topicId', canActivate: [studentAuthGuard], component: TopicTestPageComponent },
   { path: 'progression/overview', canActivate: [studentAuthGuard], component: TopicProgressPageComponent },
 
 

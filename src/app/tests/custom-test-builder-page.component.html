@@ -1,0 +1,144 @@
+<main class="page">
+
+  <section class="card">
+    <h1>🧩 Build a Custom Test</h1>
+    <p class="muted">Pick up to {{ maxTopics }} topics from any grade or level. We'll mix them into one test.</p>
+  </section>
+
+  <section class="notice info" *ngIf="hasUnfinishedTest()">
+    You have an unfinished custom test.
+    <button class="link-btn" (click)="resumeTest()">Resume it</button>
+    — starting a new test will replace it.
+  </section>
+
+  <!-- Loading / error -->
+  <section class="card center" *ngIf="loading()">
+    <div class="spinner"></div>
+    <p>Loading topics…</p>
+  </section>
+
+  <section class="card" *ngIf="!loading() && loadError()">
+    <p class="notice error">{{ loadError() }}</p>
+  </section>
+
+  <ng-container *ngIf="!loading() && !loadError()">
+
+    <!-- Selection summary -->
+    <section class="card">
+      <div class="summary-head">
+        <h2>Your test</h2>
+        <span class="counter" [class.full]="atTopicLimit()">
+          {{ selectedIds().length }} / {{ maxTopics }} topics
+        </span>
+      </div>
+
+      <p class="hint" *ngIf="selectedTopics().length === 0">No topics yet. Pick some from the list below.</p>
+
+      <div class="chip-list" *ngIf="selectedTopics().length > 0">
+        <span class="selected-chip" *ngFor="let t of selectedTopics()">
+          {{ t.name }}
+          <span class="chip-meta">G{{ gradeLabel(t.cbseGrade) }}</span>
+          <button type="button" class="chip-remove" [attr.aria-label]="'Remove ' + t.name" (click)="remove(t.id)">×</button>
+        </span>
+        <button type="button" class="link-btn clear" (click)="clearSelection()">Clear all</button>
+      </div>
+
+      <div class="count-block">
+        <h3>Number of questions</h3>
+        <div class="count-row">
+          <div class="stepper">
+            <button type="button" class="step-btn" aria-label="Fewer questions"
+                    [disabled]="questionCount() <= range().min" (click)="step(-1)">−</button>
+            <span class="count-value" aria-live="polite">{{ questionCount() }}</span>
+            <button type="button" class="step-btn" aria-label="More questions"
+                    [disabled]="questionCount() >= range().max" (click)="step(1)">+</button>
+          </div>
+          <div class="chip-list">
+            <button type="button" class="chip" *ngFor="let n of presets"
+                    [class.active]="questionCount() === n"
+                    [disabled]="presetDisabled(n)"
+                    (click)="setCount(n)">{{ n }}</button>
+          </div>
+        </div>
+        <p class="hint" *ngIf="selectedIds().length > 0">
+          Between {{ range().min }} and {{ range().max }} questions for {{ selectedIds().length }}
+          topic{{ selectedIds().length === 1 ? '' : 's' }}, split evenly.
+        </p>
+      </div>
+
+      <p class="notice error" *ngIf="generateError()">{{ generateError() }}</p>
+
+      <button class="btn primary" [disabled]="!canGenerate()" (click)="generate()">
+        <span *ngIf="!generating()">Generate test</span>
+        <span *ngIf="generating()" class="inline-loading"><span class="spinner small"></span> Creating your test…</span>
+      </button>
+    </section>
+
+    <!-- Topic picker -->
+    <section class="card">
+      <h2>Choose topics</h2>
+
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Search all topics…"
+        aria-label="Search topics"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+
+      <div class="filter-group">
+        <span class="filter-label">Grade</span>
+        <div class="chip-list">
+          <button type="button" class="chip" [class.active]="gradeFilter() === null" (click)="gradeFilter.set(null)">All</button>
+          <button type="button" class="chip" *ngFor="let g of grades()"
+                  [class.active]="gradeFilter() === g" (click)="gradeFilter.set(g)">{{ gradeLabel(g) }}</button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Level</span>
+        <div class="chip-list">
+          <button type="button" class="chip" [class.active]="levelFilter() === null" (click)="levelFilter.set(null)">All</button>
+          <button type="button" class="chip" *ngFor="let l of levels()"
+                  [class.active]="levelFilter() === l" (click)="levelFilter.set(l)">{{ l }}</button>
+        </div>
+      </div>
+
+      <p class="hint">
+        Showing {{ filteredTopics().length }} topic{{ filteredTopics().length === 1 ? '' : 's' }}
+        <span *ngIf="atTopicLimit()"> · You've picked the maximum of {{ maxTopics }}. Remove one to add another.</span>
+      </p>
+
+      <ul class="topic-list">
+        <li *ngFor="let t of filteredTopics()">
+          <label class="topic-row" [class.selected]="isSelected(t.id)" [class.disabled]="!isSelected(t.id) && atTopicLimit()">
+            <input
+              type="checkbox"
+              [checked]="isSelected(t.id)"
+              [disabled]="!isSelected(t.id) && atTopicLimit()"
+              (change)="toggle(t)"
+            />
+            <span class="topic-name">{{ t.name }}</span>
+            <span class="topic-tags">
+              <span class="tag">G{{ gradeLabel(t.cbseGrade) }}</span>
+              <span class="tag">{{ t.practiceLevel }}</span>
+              <span class="tag above-grade" *ngIf="isAboveGrade(t)">Grade {{ t.cbseGrade }} topic</span>
+            </span>
+          </label>
+        </li>
+      </ul>
+
+      <p class="hint" *ngIf="filteredTopics().length === 0">No topics match. Try another search or filter.</p>
+    </section>
+
+    <!-- Sticky bar so Generate is always reachable while browsing -->
+    <div class="sticky-bar" *ngIf="selectedIds().length > 0">
+      <span>{{ selectedIds().length }} / {{ maxTopics }} topics · {{ questionCount() }} questions</span>
+      <button class="btn primary small" [disabled]="!canGenerate()" (click)="generate()">
+        {{ generating() ? 'Creating…' : 'Generate' }}
+      </button>
+    </div>
+  </ng-container>
+
+</main>

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import {firstValueFrom, Observable} from 'rxjs';
 import { environment } from '../../environments/environment';
 import { auth } from '../firebase/firebase.config';
+import type { TopicTestStatus } from './topic-test.service';
 
 
 export interface AccessCodeValidationResponse {
@@ -79,6 +80,7 @@ export interface PracticeWorksheetQuestion {
   type: 'short_text' | 'multiple_choice';
   choices?: string[];
   layout?: 'horizontal' | 'vertical' | 'horizontal_with_hint';
+  placeholder?: string;
 
   metadata?: {
     top?: number;
@@ -155,6 +157,7 @@ export interface FullInsightsResponse {
   accuracy: number;
   speed: number;
   recommendations: string[];
+  topicTests?: TopicTestStatus[];
 }
 
 export interface ScheduledTestsResponse {

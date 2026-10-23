@@ -17,6 +17,8 @@ import { AppMascotComponent } from '../shared/components/app-mascot/app-mascot.c
 import { AppRewardStarsComponent } from '../shared/components/app-reward-stars/app-reward-stars.component';
 import { triggerConfetti } from '../shared/utils/confetti';
 import {QuestionRendererComponent} from '../question-renderer/question-renderer.component';
+import { TopicTestService } from '../services/topic-test.service';
+import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 
 interface WorksheetNavState {
   worksheet?: any;
@@ -30,7 +32,7 @@ interface WorksheetNavState {
 @Component({
   selector: 'app-clean-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, QuestionRendererComponent],
+  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, TopicTestCardComponent],
   templateUrl: './worksheet-page.component.html',
   styleUrls: ['./worksheet-page.component.css'],
 })
@@ -38,6 +40,7 @@ export class WorksheetPageComponent implements OnInit {
   private readonly api = inject(LearningApiService);
   private readonly authService = inject(AuthService);
   private readonly onboarding = inject(OnboardingFlowService);
+  private readonly topicTests = inject(TopicTestService);
   protected readonly location = inject(Location);
 
   // V1 & V2 Support
@@ -253,6 +256,7 @@ private async retrySubmit(
         );
 
         this.results.set(submission);
+        this.refreshTopicTestStatus(payload.studentId);
 
         setTimeout(() => triggerConfetti(2000), 300);
     this.loading.set(false);
@@ -269,6 +273,21 @@ private async retrySubmit(
     }
   }
 
+
+  // Topic test progress for this worksheet's topics, refreshed once after each submission.
+  readonly topicTestStatuses = computed(() =>
+    this.selectedTopics()
+      .map((id) => this.topicTests.statusFor(id))
+      .filter((s) => s !== null),
+  );
+
+  private refreshTopicTestStatus(studentId: string): void {
+    const topics = this.selectedTopics();
+    const request = topics.length === 1
+      ? this.topicTests.getStatus(studentId, topics[0].toLowerCase())
+      : this.topicTests.getStatus(studentId);
+    request.catch(() => undefined);
+  }
 
   selectedTopicsLabel = computed(() => {
     const arr = this.selectedTopicsArray() ?? [];

@@ -7,6 +7,8 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { LearningApiService } from '../../services/learning-api.service';
 import { PracticeTopicCatalogService } from '../../services/practice-topic-catalog.service';
+import { TopicTestService } from '../../services/topic-test.service';
+import { TopicTestCardComponent } from '../../components/topic-test-card/topic-test-card.component';
 
 import { AppMascotComponent } from '../../shared/components/app-mascot/app-mascot.component';
 import { AppPracticeCardComponent } from '../../shared/components/app-practice-card/app-practice-card.component';
@@ -23,7 +25,7 @@ import {EnhancedTopic} from '../../services/practice-config.service';
     AppMascotComponent,
     AppPracticeCardComponent,
     AppDailyGoalComponent,
-
+    TopicTestCardComponent,
   ],
   templateUrl: './practice-hub.component.html',
   styleUrls: ['./practice-hub.component.css'],
@@ -32,6 +34,7 @@ export class PracticeHubComponent implements OnInit {
   private readonly api = inject(LearningApiService);
   protected readonly auth = inject(AuthService);
   private readonly catalog = inject(PracticeTopicCatalogService);
+  protected readonly topicTests = inject(TopicTestService);
   protected readonly router = inject(Router);
 
   // ── Loading state ────────────────────────────────────────────────────────────
@@ -139,6 +142,7 @@ export class PracticeHubComponent implements OnInit {
 
       // 2. Load dynamic mastery insights
       const insights = await this.api.getFullInsights(studentId);
+      this.topicTests.ingest(insights.topicTests);
 
       // 3. Merge mastery into topics
       const enriched = staticTopics.map(t => ({

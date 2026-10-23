@@ -1,3 +1,5 @@
+import type { TopicTestStatus } from './topic-test.service';
+
 // API types for insights
 
 export interface TopicInsight {
@@ -81,5 +83,6 @@ export interface FullInsightsResponse {
   topicId?: string;
   recommendations?: Recommendation[];
   parentSummary?: ParentSummary;
+  topicTests?: TopicTestStatus[];
 }
 

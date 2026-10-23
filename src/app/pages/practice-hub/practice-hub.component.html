@@ -114,7 +114,13 @@
             [progress]="topic.progress || 0"
             (toggle)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && selectTopic(topic)"
             (start)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && startPractice(topic)"
-          ></app-practice-card>
+          >
+            <app-topic-test-card
+              *ngIf="topicTests.statusFor(topic.id) as tt"
+              [topicStatus]="tt"
+              [compact]="true"
+            ></app-topic-test-card>
+          </app-practice-card>
         </div>
       </div>
 
