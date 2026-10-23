@@ -116,8 +116,7 @@
             (start)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && startPractice(topic)"
           >
             <app-topic-test-card
-              *ngIf="topicTests.statusFor(topic.id) as tt"
-              [topicStatus]="tt"
+              [topicStatus]="topicTests.statusFor(topic.id) ?? topicTests.notStartedStatus(topic.id, topic.name)"
               [compact]="true"
             ></app-topic-test-card>
           </app-practice-card>

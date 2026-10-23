@@ -77,6 +77,7 @@ export interface ActiveTopicTest {
 }
 
 const ACTIVE_TEST_PREFIX = 'mindsprint.topicTest.active';
+const SHEETS_REQUIRED = 10;
 
 @Injectable({ providedIn: 'root' })
 export class TopicTestService {
@@ -90,6 +91,24 @@ export class TopicTestService {
   statusFor(topicId: string | null | undefined): TopicTestStatus | null {
     if (!topicId) return null;
     return this.statuses()[topicId.toLowerCase()] ?? null;
+  }
+
+  /**
+   * Placeholder for a topic the backend has no status for yet (it only returns practised topics),
+   * so every topic can show its 0/10 progress toward the test.
+   */
+  notStartedStatus(topicId: string, topicName: string): TopicTestStatus {
+    return {
+      topicId,
+      topicName,
+      state: 'practising',
+      qualifyingSheets: 0,
+      sheetsRequired: SHEETS_REQUIRED,
+      sheetsRemaining: SHEETS_REQUIRED,
+      attempts: 0,
+      lastTestAccuracy: null,
+      lastTestAt: null,
+    };
   }
 
   /** Merge statuses from any source (status endpoint, insights.topicTests, submit result). */
