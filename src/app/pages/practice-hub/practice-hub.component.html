@@ -43,52 +43,60 @@
       </div>
     </section>
 
-    <!-- Grade selection -->
-    <section class="card">
-      <h3>Select Grade</h3>
-      <div class="chip-list">
-        <button
-          *ngFor="let g of allowedGrades()"
-          class="chip"
-          [class.active]="selectedGrade() === g"
-          (click)="onGradeChange(g)"
-        >
-          Grade {{ g === 0 ? 'K' : g }}
-        </button>
-      </div>
-    </section>
+    <!-- Find a topic: search (all grades) or browse by grade -->
+    <section class="card find-card">
+      <h3>Find a topic</h3>
 
-    <!-- Find Topics -->
-    <section class="card">
-      <h3>Find Topics</h3>
-
-      <div class="topic-filter-row">
-        <!-- Search across ALL grades -->
+      <div class="search-box" [class.active]="isSearching()">
+        <span class="search-icon" aria-hidden="true">🔍</span>
         <input
-          type="text"
+          type="search"
           class="search-input"
-          placeholder="Search topics across all grades..."
+          placeholder="Search all topics, e.g. fractions"
+          aria-label="Search topics across all grades"
+          enterkeyhint="search"
           [ngModel]="topicSearch()"
           (ngModelChange)="onTopicSearchChange($event)"
         />
+        <button
+          *ngIf="isSearching()"
+          type="button"
+          class="search-clear"
+          aria-label="Clear search"
+          (click)="clearSearch()"
+        >✕</button>
+      </div>
 
-        <!-- Topic dropdown across ALL grades -->
-        <select
-          class="topic-select"
-          [ngModel]="selectedTopicId()"
-          (ngModelChange)="onTopicSelectChange($event)"
-        >
-          <option value="">All Topics</option>
-          <option *ngFor="let t of topics()" [value]="t.id">
-            {{ t.name }}
-          </option>
-        </select>
+      <div class="grade-filter" [class.dimmed]="isSearching()">
+        <span class="filter-label">Or browse by grade</span>
+        <div class="grade-scroller" role="group" aria-label="Grade">
+          <button
+            *ngFor="let g of allowedGrades()"
+            type="button"
+            class="chip"
+            [class.active]="!isSearching() && selectedGrade() === g"
+            [attr.aria-pressed]="!isSearching() && selectedGrade() === g"
+            (click)="onGradeChange(g)"
+          >
+            Grade {{ gradeLabel(g) }}
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- Topic Cards -->
     <section class="card">
-      <h3>Select Topics</h3>
+      <div class="results-head">
+        <h3>{{ isSearching() ? 'Search results' : 'Grade ' + gradeLabel(selectedGrade()) + ' topics' }}</h3>
+        <span class="results-count">
+          {{ filteredTopics().length }} topic{{ filteredTopics().length === 1 ? '' : 's' }}
+        </span>
+      </div>
+
+      <p class="hint" *ngIf="isSearching()">
+        Showing matches for “{{ topicSearch().trim() }}” across all grades.
+        <button type="button" class="link-btn" (click)="clearSearch()">Back to Grade {{ gradeLabel(selectedGrade()) }}</button>
+      </p>
 
       <div *ngIf="selectedTopics().length > 0" class="grade-lock-banner">
         You are practicing Grade {{ selectedTopics()[0].cbseGrade }} topics.
@@ -99,7 +107,7 @@
       </p>
 
       <p class="hint" *ngIf="selectedGrade() !== null && filteredTopics().length === 0">
-        No topics available for this grade.
+        {{ isSearching() ? 'No topics match your search. Try a shorter word.' : 'No topics available for this grade.' }}
       </p>
 
       <div class="topic-grid friendly-grid" *ngIf="filteredTopics().length > 0">

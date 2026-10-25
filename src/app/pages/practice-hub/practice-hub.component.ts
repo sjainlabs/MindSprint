@@ -50,7 +50,6 @@ export class PracticeHubComponent implements OnInit {
   generatingWorksheet = signal(false);
   worksheetError = signal('');
   topicSearch = signal('');
-  selectedTopicId = signal<string | null>(null);
 
   // Mascot + daily goals
   currentMascot = signal('penguin');
@@ -87,25 +86,18 @@ export class PracticeHubComponent implements OnInit {
 
   filteredTopics = computed(() => {
     const grade = this.selectedGrade();
-    const search = this.topicSearch().toLowerCase();
-    const topicId = this.selectedTopicId();
+    const search = this.topicSearch().trim().toLowerCase();
     const all = this.topics();
 
     let result = all;
 
     // 🔍 Search across ALL grades
-    if (search.trim().length > 0) {
+    if (search.length > 0) {
       result = result.filter(t =>
         t.name.toLowerCase().includes(search) ||
         t.id.toLowerCase().includes(search)
       );
       return result; // search overrides grade filter
-    }
-
-    // 🎯 Topic dropdown filter (also across ALL grades)
-    if (topicId) {
-      result = result.filter(t => t.id === topicId);
-      return result; // topic filter overrides grade filter
     }
 
     // 🏫 Grade filter (default)
@@ -168,6 +160,8 @@ export class PracticeHubComponent implements OnInit {
 
   // ── Grade selection ──────────────────────────────────────────────────────────
   onGradeChange(grade: number): void {
+    // Picking a grade means "browse this grade", so drop any all-grades search.
+    this.topicSearch.set('');
     this.selectedGrade.set(grade);
     this.selectedTopics.set([]);
   }
@@ -279,8 +273,14 @@ export class PracticeHubComponent implements OnInit {
     this.topicSearch.set(value);
   }
 
-  onTopicSelectChange(value: string): void {
-    this.selectedTopicId.set(value || null);
+  clearSearch(): void {
+    this.topicSearch.set('');
+  }
+
+  readonly isSearching = computed(() => this.topicSearch().trim().length > 0);
+
+  gradeLabel(grade: number | null): string {
+    return grade === 0 ? 'K' : String(grade ?? '');
   }
 
   readonly autoGrade = computed(() => {
