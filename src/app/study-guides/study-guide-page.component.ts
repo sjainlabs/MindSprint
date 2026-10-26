@@ -37,7 +37,7 @@ type TryOutcome = 'correct' | 'got-it' | 'not-yet';
   standalone: true,
   imports: [CommonModule, MathTextComponent, ReadAloudComponent],
   templateUrl: './study-guide-page.component.html',
-  styleUrls: ['./study-guide-page.component.css'],
+  styleUrls: ['./study-guide-page.component.css', './study-guide-sections.css'],
 })
 export class StudyGuidePageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
