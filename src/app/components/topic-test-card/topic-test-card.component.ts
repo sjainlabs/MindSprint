@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TopicTestStatus } from '../../services/topic-test.service';
 
 /**
@@ -10,7 +10,7 @@ import { TopicTestStatus } from '../../services/topic-test.service';
 @Component({
   selector: 'app-topic-test-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div
       *ngIf="status() as s"
@@ -41,6 +41,12 @@ import { TopicTestStatus } from '../../services/topic-test.service';
         <p class="tt-text tt-muted" *ngIf="s.attempts > 0 && s.lastTestAccuracy !== null">
           Last test: {{ s.lastTestAccuracy }}%. Keep practising to retry.
         </p>
+        <a
+          *ngIf="showGuideLink"
+          class="tt-link"
+          [routerLink]="['/study-guides/topic', s.topicId]"
+          (click)="$event.stopPropagation()"
+        >📘 Get ready for the test</a>
       </ng-container>
 
       <!-- Eligible -->
@@ -100,6 +106,7 @@ import { TopicTestStatus } from '../../services/topic-test.service';
         cursor: pointer;
       }
       .tt-cta:hover { background: #5a52e0; }
+      .tt-link { font-weight: 700; font-size: 0.9rem; color: #5a52e0; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
     `,
   ],
 })
@@ -113,6 +120,8 @@ export class TopicTestCardComponent {
     this.statusSignal.set(value ?? null);
   }
   @Input() compact = false;
+  /** Off where the study guide is already one tap away (e.g. inside a practice card). */
+  @Input() showGuideLink = true;
 
   readonly progressPct = computed(() => {
     const s = this.status();

@@ -40,3 +40,9 @@
 .grade-badge[data-grade="7"] { background: #607d8b; }
 
 
+
+.card-actions{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:stretch; }
+.card-actions .start-btn{ margin-top:0; }
+.guide-btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:12px; border:2px solid var(--primary,#6C63FF); color:var(--primary,#6C63FF); background:#fff; font-weight:700; text-decoration:none; white-space:nowrap; }
+.guide-btn:hover{ background:#f5f3ff; }
+.guide-btn:focus-visible{ outline:3px solid #f59e0b; outline-offset:2px; }

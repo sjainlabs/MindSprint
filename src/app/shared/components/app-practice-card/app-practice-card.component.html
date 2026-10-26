@@ -23,6 +23,15 @@
   <!-- Optional extras for this topic (e.g. topic test status) -->
   <ng-content></ng-content>
 
-  <button class="start-btn" (click)="$event.stopPropagation(); start.emit();">Start Practice</button>
+  <div class="card-actions">
+    <button class="start-btn" (click)="$event.stopPropagation(); start.emit();">Start Practice</button>
+    <a
+      *ngIf="guideLink"
+      class="guide-btn"
+      [routerLink]="guideLink"
+      [attr.aria-label]="'Study guide for ' + topic?.name"
+      (click)="$event.stopPropagation()"
+    >📘 Study guide</a>
+  </div>
 </div>
 

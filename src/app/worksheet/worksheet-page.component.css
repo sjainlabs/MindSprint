@@ -594,3 +594,14 @@
   }
 }
 
+
+.guide-help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.guide-help-link {
+  text-decoration: none;
+  text-align: center;
+}

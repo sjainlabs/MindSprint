@@ -38,6 +38,7 @@ import { TopicTestCardComponent } from '../components/topic-test-card/topic-test
 
         <div class="actions">
           <a routerLink="/practice/worksheet" class="button primary">Start Practice</a>
+          <a [routerLink]="['/study-guides/topic', topic.id]" class="button">📘 Study guide</a>
           <button class="button" (click)="generateWorksheet()">Generate AI Worksheet</button>
         </div>
       </section>

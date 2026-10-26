@@ -1,0 +1,365 @@
+<main class="guide-page">
+
+  <!-- Loading skeleton -->
+  @if (loading()) {
+    <div class="skeleton" aria-busy="true" aria-live="polite">
+      <span class="sr-only">Loading the study guide…</span>
+      <div class="sk sk-title"></div>
+      <div class="sk sk-badge"></div>
+      <div class="sk sk-card"></div>
+      <div class="sk sk-line"></div>
+      <div class="sk sk-line short"></div>
+      <div class="sk-row">
+        <div class="sk sk-tile"></div>
+        <div class="sk sk-tile"></div>
+      </div>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (!loading() && error(); as err) {
+    <section class="card error-card" role="alert">
+      <div class="big-emoji" aria-hidden="true">{{ err.code === 'NOT_FOUND' ? '📚' : '🙈' }}</div>
+      <h1>{{ err.code === 'NOT_FOUND' ? 'No guide yet' : 'Oops!' }}</h1>
+      <p>{{ err.message }}</p>
+      <div class="btn-row">
+        @if (err.code !== 'NOT_FOUND') {
+          <button type="button" class="btn primary" (click)="retry()">Try again</button>
+        }
+        <button type="button" class="btn" (click)="startPractice()">Practise this topic</button>
+        <button type="button" class="btn" (click)="browseGuides()">All study guides</button>
+      </div>
+    </section>
+  }
+
+  @if (!loading() && guide(); as g) {
+    <!-- 1. Header -->
+    <header class="guide-header">
+      <p class="eyebrow">📘 Study guide</p>
+      <h1>{{ topic()?.name }}</h1>
+      <div class="header-meta">
+        @if (badge()) {
+          <span class="grade-badge">{{ badge() }}</span>
+        }
+        @if (partOf()) {
+          <span class="part-of">Part of: <strong>{{ partOf() }}</strong></span>
+        }
+      </div>
+    </header>
+
+    <!-- Jump-to bar -->
+    <nav class="section-nav" aria-label="Guide sections">
+      @for (s of sections(); track s.id) {
+        <button type="button" class="nav-chip" (click)="jumpTo(s.id)">
+          <span aria-hidden="true">{{ s.emoji }}</span> {{ s.label }}
+        </button>
+      }
+    </nav>
+
+    @if (resumeSection(); as r) {
+      <div class="resume">
+        <span>Last time you were reading <strong>{{ r.label }}</strong>.</span>
+        <button type="button" class="btn small primary" (click)="jumpTo(r.id)">Jump back</button>
+        <button type="button" class="btn small ghost" (click)="resumeSection.set(null)" aria-label="Dismiss">✕</button>
+      </div>
+    }
+
+    <!-- 2. What is it? -->
+    @if (g.forKids) {
+      <section class="card what-card" id="guide-what" data-section="what" aria-labelledby="h-what">
+        <div class="what-art" aria-hidden="true">💡</div>
+        <div class="what-body">
+          <div class="section-head">
+            <h2 id="h-what" tabindex="-1">What is it?</h2>
+            <app-read-aloud [text]="g.forKids" label="what it is"></app-read-aloud>
+          </div>
+          @for (p of paragraphs(g.forKids); track $index) {
+            <p class="kid-text"><app-math-text [text]="p"></app-math-text></p>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- 3. Key ideas -->
+    @if (g.keyIdeas.length) {
+      <section class="card" id="guide-ideas" data-section="ideas" aria-labelledby="h-ideas">
+        <h2 id="h-ideas" tabindex="-1">✅ Key ideas</h2>
+        <ul class="ideas">
+          @for (idea of g.keyIdeas; track $index) {
+            <li>
+              <span class="idea-icon" aria-hidden="true">★</span>
+              <span><app-math-text [text]="idea"></app-math-text></span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- 4. Tricks -->
+    @if (g.tricks.length) {
+      <section class="section-plain" id="guide-tricks" data-section="tricks" aria-labelledby="h-tricks">
+        <h2 id="h-tricks" tabindex="-1">🪄 Tricks</h2>
+        @if (g.tricks.length > 1) {
+          <p class="swipe-hint" aria-hidden="true">Swipe for more tricks →</p>
+        }
+        <ul class="tricks" aria-label="Tricks">
+          @for (t of g.tricks; track $index; let i = $index) {
+            <li class="trick" [attr.data-tone]="i % 4">
+              <div class="section-head">
+                <h3>{{ t.name }}</h3>
+                <app-read-aloud [text]="trickSpeech(t)" [label]="'the trick ' + t.name"></app-read-aloud>
+              </div>
+              <p><app-math-text [text]="t.how"></app-math-text></p>
+              <div class="trick-example">
+                <span class="example-label">Example</span>
+                <p><app-math-text [text]="t.example"></app-math-text></p>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- 5. Watch me solve it -->
+    @if (g.workedExamples.length) {
+      <section class="section-plain" id="guide-examples" data-section="examples" aria-labelledby="h-examples">
+        <div class="section-head">
+          <h2 id="h-examples" tabindex="-1">👀 Watch me solve it</h2>
+          <button type="button" class="btn small" [attr.aria-pressed]="showAllSteps()" (click)="toggleShowAll()">
+            {{ showAllSteps() ? 'One step at a time' : 'Show all steps' }}
+          </button>
+        </div>
+
+        <div class="examples">
+          @for (ex of g.workedExamples; track $index; let i = $index) {
+            <article class="card example" [attr.aria-labelledby]="'ex-q-' + i">
+              <p class="example-num">Example {{ i + 1 }}</p>
+              <h3 class="example-q" [id]="'ex-q-' + i"><app-math-text [text]="ex.question"></app-math-text></h3>
+
+              <ol class="steps" [id]="'ex-steps-' + i" aria-live="polite">
+                @for (step of ex.steps.slice(0, visibleSteps(i, ex.steps.length)); track $index; let s = $index) {
+                  <li class="step">
+                    <span class="step-num" aria-hidden="true">{{ s + 1 }}</span>
+                    <span class="step-text"><app-math-text [text]="step"></app-math-text></span>
+                    <app-read-aloud [text]="step" [label]="'step ' + (s + 1)"></app-read-aloud>
+                  </li>
+                }
+              </ol>
+
+              @if (visibleSteps(i, ex.steps.length) < ex.steps.length) {
+                <button
+                  type="button"
+                  class="btn primary"
+                  [attr.aria-controls]="'ex-steps-' + i"
+                  (click)="nextStep(i, ex.steps.length)"
+                >
+                  {{ visibleSteps(i, ex.steps.length) === 0 ? 'Show the first step' : 'Next step' }}
+                  ({{ visibleSteps(i, ex.steps.length) + 1 }} of {{ ex.steps.length }})
+                </button>
+              } @else {
+                <div class="answer-box" role="status">
+                  <span class="answer-label">Answer</span>
+                  <strong><app-math-text [text]="ex.answer"></app-math-text></strong>
+                </div>
+                @if (!showAllSteps()) {
+                  <button type="button" class="link-btn" (click)="restartExample(i)">↺ Watch again</button>
+                }
+              }
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- 6. Try it yourself -->
+    @if (questions().length && currentQuestion(); as q) {
+      <section class="card try-card" id="guide-try" data-section="try" aria-labelledby="h-try">
+        <div class="section-head">
+          <h2 id="h-try" tabindex="-1">✏️ Try it yourself</h2>
+          <span class="muted">Just for practice, no score</span>
+        </div>
+
+        <div class="try-dots" role="group" aria-label="Questions">
+          @for (item of questions(); track $index; let i = $index) {
+            <button
+              type="button"
+              class="try-dot"
+              [class.current]="i === tryIndex()"
+              [class.correct]="outcomeFor(i) === 'correct' || outcomeFor(i) === 'got-it'"
+              [class.not-yet]="outcomeFor(i) === 'not-yet'"
+              [attr.aria-current]="i === tryIndex() ? 'step' : null"
+              [attr.aria-label]="'Question ' + (i + 1) + (outcomeFor(i) === 'not-yet' ? ', not yet' : outcomeFor(i) ? ', done' : '')"
+              (click)="goToQuestion(i)"
+            >{{ i + 1 }}</button>
+          }
+        </div>
+
+        <p class="try-count">Question {{ tryIndex() + 1 }} of {{ questions().length }}</p>
+        <p class="try-question" id="try-q"><app-math-text [text]="q.question"></app-math-text></p>
+
+        <label class="sr-only" for="try-input">Your answer</label>
+        <input
+          id="try-input"
+          class="try-input"
+          type="text"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="Type your answer"
+          aria-describedby="try-q"
+          [value]="inputFor(tryIndex())"
+          (input)="onInput($any($event.target).value)"
+          (keydown.enter)="currentAutoCheck() ? check() : reveal()"
+        />
+
+        <div class="btn-row">
+          @if (q.hint) {
+            <button
+              type="button"
+              class="btn"
+              [attr.aria-expanded]="!!hintShown()[tryIndex()]"
+              aria-controls="try-hint"
+              (click)="toggleHint()"
+            >💡 {{ hintShown()[tryIndex()] ? 'Hide hint' : 'Hint' }}</button>
+          }
+          @if (currentAutoCheck()) {
+            <button type="button" class="btn primary" [disabled]="!inputFor(tryIndex()).trim()" (click)="check()">Check</button>
+          }
+          @if (!currentAutoCheck() || checkResult() === 'incorrect') {
+            @if (!answerRevealed()[tryIndex()]) {
+              <button type="button" class="btn" aria-controls="try-answer" (click)="reveal()">👀 Reveal answer</button>
+            }
+          }
+        </div>
+
+        <div id="try-hint" class="hint-box" [hidden]="!hintShown()[tryIndex()]">
+          <strong>Hint:</strong> <app-math-text [text]="q.hint"></app-math-text>
+        </div>
+
+        <div aria-live="polite">
+          @if (checkResult() === 'correct') {
+            <p class="feedback good">🎉 Yes! That's right.</p>
+          }
+          @if (checkResult() === 'incorrect') {
+            <p class="feedback try-again">Not quite. Have another go, or peek at a hint.</p>
+          }
+        </div>
+
+        @if (answerRevealed()[tryIndex()]) {
+          <div id="try-answer" class="answer-box" role="status">
+            <span class="answer-label">Answer</span>
+            <strong><app-math-text [text]="q.answer"></app-math-text></strong>
+          </div>
+          @if (outcomeFor(tryIndex()) !== 'correct') {
+            <div class="btn-row" role="group" aria-label="How did you do?">
+              <button type="button" class="btn good" [attr.aria-pressed]="outcomeFor(tryIndex()) === 'got-it'" (click)="selfAssess('got-it')">I got it ✓</button>
+              <button type="button" class="btn" [attr.aria-pressed]="outcomeFor(tryIndex()) === 'not-yet'" (click)="selfAssess('not-yet')">Not yet</button>
+            </div>
+          }
+        }
+
+        <div class="btn-row nav-row">
+          <button type="button" class="btn" [disabled]="tryIndex() === 0" (click)="goToQuestion(tryIndex() - 1)">← Back</button>
+          @if (tryIndex() < questions().length - 1) {
+            <button type="button" class="btn primary" (click)="goToQuestion(tryIndex() + 1)">Next question →</button>
+          }
+        </div>
+
+        @if (allTried()) {
+          <div class="done-box" role="status">
+            <p>⭐ You've tried all {{ questions().length }} questions. Brilliant effort!</p>
+            <button type="button" class="link-btn" (click)="restartTryIt()">↺ Start again</button>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 7. Watch out! -->
+    @if (g.commonMistakes.length) {
+      <section class="card mistakes-card" id="guide-mistakes" data-section="mistakes" aria-labelledby="h-mistakes">
+        <h2 id="h-mistakes" tabindex="-1">⚠️ Watch out!</h2>
+        <ul class="mistakes">
+          @for (m of g.commonMistakes; track $index) {
+            <li>
+              <span class="mistake-icon" aria-hidden="true">👀</span>
+              <span><app-math-text [text]="m"></app-math-text></span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- 8. For parents -->
+    <section class="card parents-card" id="guide-parents" data-section="parents" aria-labelledby="h-parents">
+      <h2 id="h-parents" tabindex="-1" class="parents-heading">
+        <button
+          type="button"
+          class="parents-toggle"
+          [attr.aria-expanded]="parentOpen()"
+          aria-controls="parents-body"
+          (click)="toggleParents()"
+        >
+          <span><span aria-hidden="true">👪</span> For parents</span>
+          <span class="toggle-state" aria-hidden="true">{{ parentOpen() ? '▲' : '▼' }}</span>
+        </button>
+      </h2>
+
+      <div id="parents-body" class="parents-body" [hidden]="!parentOpen()">
+        @if (g.forParents) {
+          <div class="parent-block">
+            <h3>About this skill</h3>
+            @for (p of paragraphs(g.forParents); track $index) {
+              <p><app-math-text [text]="p"></app-math-text></p>
+            }
+          </div>
+        }
+
+        @if (g.practiceTogether.length) {
+          <div class="parent-block">
+            <h3>Practise together</h3>
+            <ul class="together">
+              @for (a of g.practiceTogether; track $index) {
+                <li><app-math-text [text]="a"></app-math-text></li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (g.method) {
+          <div class="parent-block method">
+            @if (methodHidden()) {
+              <p class="muted">
+                “{{ g.method.title }}” is hidden on every guide.
+                <button type="button" class="link-btn" (click)="setMethodHidden(false)">Show it</button>
+              </p>
+            } @else {
+              <h3>How to practise: {{ g.method.title }}</h3>
+              <p>{{ g.method.summary }}</p>
+              <ol class="method-steps">
+                @for (s of g.method.steps; track $index) {
+                  <li><strong>{{ s.name }}</strong>: {{ s.detail }}</li>
+                }
+              </ol>
+              <button type="button" class="link-btn" (click)="setMethodHidden(true)">
+                I've read this, hide it on every guide
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- 9. Footer -->
+    <footer class="guide-footer">
+      <p class="footer-text">Ready to practise?</p>
+      <div class="btn-row">
+        <button type="button" class="btn primary big" (click)="startPractice()">▶ Start practice</button>
+        @if (testEligible()) {
+          <button type="button" class="btn test big" (click)="takeTest()">🏁 Take the topic test</button>
+        }
+      </div>
+      <button type="button" class="link-btn" (click)="browseGuides()">Browse all study guides</button>
+    </footer>
+  }
+
+</main>

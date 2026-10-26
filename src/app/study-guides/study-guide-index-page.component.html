@@ -1,0 +1,79 @@
+<main class="index-page">
+  <header class="index-header">
+    <h1>📘 Study guides</h1>
+    <p>Friendly explanations, tricks and practice questions for every topic. Read them together!</p>
+  </header>
+
+  <div class="search-box">
+    <span aria-hidden="true">🔍</span>
+    <label class="sr-only" for="guide-search">Search study guides</label>
+    <input
+      id="guide-search"
+      type="search"
+      placeholder="Search guides or topics, e.g. fractions"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" aria-busy="true">
+      <span class="sr-only">Loading study guides…</span>
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="sk"></div>
+      }
+    </div>
+  } @else if (error()) {
+    <section class="card error" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn primary" (click)="load()">Try again</button>
+    </section>
+  } @else {
+    <p class="count" aria-live="polite">
+      {{ resultCount() }} guide{{ resultCount() === 1 ? '' : 's' }}{{ search().trim() ? ' found' : '' }}
+    </p>
+
+    @if (groups().length === 0) {
+      <p class="empty">No guides match “{{ search().trim() }}”. Try a shorter word.</p>
+    }
+
+    @for (group of groups(); track group.stage) {
+      <section class="stage" [attr.aria-labelledby]="'stage-' + $index">
+        <h2 [id]="'stage-' + $index">{{ group.stage }}</h2>
+        <ul class="guide-list">
+          @for (row of group.guides; track row.id) {
+            <li class="guide-item">
+              <button
+                type="button"
+                class="guide-card"
+                [attr.aria-expanded]="row.topics.length > 1 ? pickerFor() === row.id : null"
+                [attr.aria-controls]="row.topics.length > 1 ? 'picker-' + row.id : null"
+                (click)="open(row)"
+              >
+                <span class="guide-title">{{ row.title }}</span>
+                <span class="guide-meta">
+                  {{ metaLine(row) }}
+                </span>
+                <span class="chev" aria-hidden="true">{{ row.topics.length > 1 ? (pickerFor() === row.id ? '▲' : '▼') : '→' }}</span>
+              </button>
+
+              @if (row.topics.length > 1 && pickerFor() === row.id) {
+                <div class="picker" [id]="'picker-' + row.id">
+                  <p class="picker-label">Which topic are you working on?</p>
+                  @for (t of row.topics; track t.id) {
+                    <button type="button" class="picker-btn" (click)="openTopic(t.id)">
+                      <span>{{ t.name }}</span>
+                      <span class="picker-meta">
+                        {{ gradeLabel(t.grade) }}{{ t.level ? ' · ' + t.level : '' }}
+                      </span>
+                    </button>
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</main>

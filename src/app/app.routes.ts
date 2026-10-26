@@ -18,6 +18,8 @@ import { TopicTestPageComponent } from './tests/topic-test-page.component';
 import { TestsHubPageComponent } from './tests/tests-hub-page.component';
 import { CustomTestBuilderPageComponent } from './tests/custom-test-builder-page.component';
 import { CustomTestTakePageComponent } from './tests/custom-test-take-page.component';
+import { StudyGuidePageComponent } from './study-guides/study-guide-page.component';
+import { StudyGuideIndexPageComponent } from './study-guides/study-guide-index-page.component';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
@@ -43,6 +45,9 @@ export const routes: Routes = [
   { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
   { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
   { path: 'tests/topic/:topicId', canActivate: [studentAuthGuard], component: TopicTestPageComponent },
+  // Study guides are for children and parents reading together, so no student login is required.
+  { path: 'study-guides', component: StudyGuideIndexPageComponent },
+  { path: 'study-guides/topic/:topicId', component: StudyGuidePageComponent },
   { path: 'progression/overview', canActivate: [studentAuthGuard], component: TopicProgressPageComponent },
 
 

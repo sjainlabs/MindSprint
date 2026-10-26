@@ -120,12 +120,14 @@
             [topic]="topic"
             [selected]="isTopicSelected(topic.id)"
             [progress]="topic.progress || 0"
+            [guideLink]="'/study-guides/topic/' + topic.id"
             (toggle)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && selectTopic(topic)"
             (start)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && startPractice(topic)"
           >
             <app-topic-test-card
               [topicStatus]="topicTests.statusFor(topic.id) ?? topicTests.notStartedStatus(topic.id, topic.name)"
               [compact]="true"
+              [showGuideLink]="false"
             ></app-topic-test-card>
           </app-practice-card>
         </div>

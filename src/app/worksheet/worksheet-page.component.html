@@ -63,6 +63,16 @@
       <app-topic-test-card *ngFor="let t of topicTestStatuses()" [topicStatus]="t"></app-topic-test-card>
     </section>
 
+    <!-- Study guide -->
+    <section class="card guide-help" *ngIf="guideLinks().length > 0">
+      <h3>📘 Need help? Read the guide</h3>
+      <div class="guide-help-links">
+        <a *ngFor="let t of guideLinks()" class="action-btn secondary guide-help-link" [routerLink]="['/study-guides/topic', t.id]">
+          {{ guideLinks().length > 1 ? t.name : 'Open the ' + t.name + ' study guide' }}
+        </a>
+      </div>
+    </section>
+
     <!-- Recommendations -->
     <section class="card recommendations-card" *ngIf="results()?.recommendations && results()?.recommendations.length > 0">
       <h3>💡 Next Steps</h3>

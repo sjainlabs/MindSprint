@@ -16,6 +16,7 @@ import { type EnhancedTopic } from '../services/practice-config.service';
 import { AppMascotComponent } from '../shared/components/app-mascot/app-mascot.component';
 import { AppRewardStarsComponent } from '../shared/components/app-reward-stars/app-reward-stars.component';
 import { triggerConfetti } from '../shared/utils/confetti';
+import { RouterLink } from '@angular/router';
 import {QuestionRendererComponent} from '../question-renderer/question-renderer.component';
 import { TopicTestService } from '../services/topic-test.service';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
@@ -32,7 +33,7 @@ interface WorksheetNavState {
 @Component({
   selector: 'app-clean-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, TopicTestCardComponent],
+  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, TopicTestCardComponent, RouterLink],
   templateUrl: './worksheet-page.component.html',
   styleUrls: ['./worksheet-page.component.css'],
 })
@@ -288,6 +289,15 @@ private async retrySubmit(
       : this.topicTests.getStatus(studentId);
     request.catch(() => undefined);
   }
+
+  /** One study-guide link per topic on this worksheet. */
+  readonly guideLinks = computed(() => {
+    const named = this.selectedTopicsArray();
+    if (named.length) return named.map((t) => ({ id: t.id, name: t.name }));
+    return this.selectedTopics()
+      .filter((id) => id !== 'General Practice')
+      .map((id) => ({ id, name: id }));
+  });
 
   selectedTopicsLabel = computed(() => {
     const arr = this.selectedTopicsArray() ?? [];

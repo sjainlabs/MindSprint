@@ -23,6 +23,7 @@ import { OnboardingFlowService } from '../services/onboarding-flow.service';
           <a routerLink="/practice/hub" class="button">Practice Hub</a>
           <a routerLink="/tests" class="button">Tests</a>
           <a routerLink="/insights" class="button">Insights</a>
+          <a routerLink="/study-guides" class="button">📘 Study guides</a>
           <a routerLink="/progression/overview" class="button">View Your Progress</a>
 
         </div>
