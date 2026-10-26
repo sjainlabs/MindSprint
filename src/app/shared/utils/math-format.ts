@@ -2,7 +2,8 @@
  * A light formatter for maths notation in prompts and study guides. It turns plain text into
  * parts the template can render: superscripts (x^2, e^(3x)), log bases (log_2), stacked fractions
  * (3/4, 2 1/4), 2×2-style matrices ([a b; c d]), counting dots (●●●●● ●●), dice faces (⚁ ⚄)
- * and square roots with the bar drawn over the number (√7, √(x + 1)).
+ * tally marks (卌 ||| — drawn, since many fonts have no 卌 glyph) and square roots with the bar
+ * drawn over the number (√7, √(x + 1)).
  * Everything else, including ×, ÷, |x - 3|, sin(2x) and f'(0), is left as text.
  */
 
@@ -14,7 +15,8 @@ export type MathPart =
   | { kind: 'matrix'; rows: string[][]; raw: string }
   | { kind: 'dots'; groups: number[]; count: number }
   | { kind: 'dice'; faces: number[] }
-  | { kind: 'root'; value: string };
+  | { kind: 'root'; value: string }
+  | { kind: 'tally'; groups: number[]; count: number };
 
 const CELL = String.raw`[-−]?[\w.\/]+`;
 const ROW = String.raw`${CELL}(?:\s+${CELL})*`;
@@ -46,6 +48,19 @@ const PATTERNS: Pattern[] = [
     // √7, √2.5, √x, √(x + 1): the bar covers the number or bracket contents.
     re: /√\s*(\d+(?:\.\d+)?|[a-zA-Z]|\([^()]*\))/y,
     build: (m) => [{ kind: 'root', value: m[1].startsWith('(') ? m[1].slice(1, -1) : m[1] }],
+  },
+  {
+    // Tally marks: 卌 is a bundle of five; strokes after it (| or ǀ) count one each.
+    re: /卌(?:\s*(?:卌|[|ǀ]))*/y,
+    build: (m) => {
+      const groups: number[] = [];
+      for (const c of m[0].replace(/\s+/g, '')) {
+        if (c === '卌') groups.push(5);
+        else if (groups.length && groups[groups.length - 1] < 5) groups[groups.length - 1] += 1;
+        else groups.push(1);
+      }
+      return [{ kind: 'tally', groups, count: groups.reduce((a, b) => a + b, 0) }];
+    },
   },
   {
     // Counting dots, possibly in space-separated groups.

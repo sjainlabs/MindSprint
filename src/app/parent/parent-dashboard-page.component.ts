@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import {
   LearningApiService,
@@ -28,6 +28,7 @@ interface DashboardStudent {
     AddStudentModalComponent,
     EditChildModalComponent,
     AccessCodeModalComponent,
+    RouterLink,
   ],
   template: `
     <main class="page">
@@ -55,6 +56,10 @@ interface DashboardStudent {
           <button (click)="openEdit(student)">Edit Student</button>
           <button (click)="generateAccessCode(student)">Generate Access Code</button>
           <button (click)="openStudentView(student)">Open Student View</button>
+        </div>
+        <div class="actions">
+          <a class="link" routerLink="/daily/chart" [queryParams]="{ studentId: student.id }">📊 Daily Challenge chart</a>
+          <a class="link" routerLink="/daily/progress" [queryParams]="{ studentId: student.id }">🗺️ Progress map</a>
         </div>
       </section>
 
@@ -90,6 +95,7 @@ interface DashboardStudent {
       button { border: 0; border-radius: 12px; padding: 10px 12px; font-weight: 700; background: #e2e8f0; }
       .primary { background: #2563eb; color: #fff; width: 100%; }
       .ghost { background: #f1f5f9; }
+      .link { border-radius: 12px; padding: 10px 12px; font-weight: 700; background: #eef2ff; color: #3730a3; text-decoration: none; }
       h1, h2, p { margin: 0; }
       section p { margin-top: 6px; color: #334155; }
       .error { color: #b91c1c; }

@@ -321,3 +321,5 @@ ul, ol {
 .resume span {
   flex: 1 1 12rem;
 }
+
+.back-daily { margin-bottom: 10px; justify-self: start; align-self: start; width: auto; }

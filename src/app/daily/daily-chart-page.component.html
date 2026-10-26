@@ -1,0 +1,112 @@
+<main class="page daily-chart">
+  <section class="card">
+    <h1>📊 Daily practice</h1>
+    <p class="muted">The last 30 days of the Daily Challenge. The goal is {{ goal() }} minutes a day.</p>
+  </section>
+
+  @if (loading()) {
+    <section class="card center" aria-busy="true"><div class="spinner"></div><p>Loading…</p></section>
+  } @else if (error()) {
+    <section class="card center" role="alert">
+      <p class="notice error">{{ error() }}</p>
+      <button type="button" class="btn primary" (click)="retry()">Try again</button>
+    </section>
+  } @else if (history(); as h) {
+    <section class="tiles" aria-label="Summary">
+      <div class="tile"><span class="tile-value">{{ h.daysPractised }}</span><span class="tile-label">days practised</span></div>
+      <div class="tile"><span class="tile-value">{{ h.daysGoalReached }}</span><span class="tile-label">days at {{ goal() }} min</span></div>
+      <div class="tile"><span class="tile-value">{{ averageMinutes() }}</span><span class="tile-label">avg min on days practised</span></div>
+      <div class="tile"><span class="tile-value">{{ streak() }}</span><span class="tile-label">day streak</span></div>
+    </section>
+
+    <section class="card">
+      <div class="chart-head">
+        <h2>Day by day</h2>
+        <button type="button" class="btn small" (click)="showTable.set(!showTable())">{{ showTable() ? 'Show chart' : 'Show table' }}</button>
+      </div>
+
+      @if (!showTable()) {
+        @if (practisedDays().length === 0) {
+          <p class="hint">No Daily Challenge practice in the last 30 days yet.</p>
+        }
+        <div class="chart-wrap" #wrap>
+          <svg #svg class="chart" [attr.viewBox]="'0 0 ' + W + ' ' + (H * 3 + 24)" role="img" tabindex="0"
+               aria-label="Minutes, accuracy and average seconds per day for the last 30 days. Use the arrow keys to read each day, or Show table."
+               (pointermove)="onPointer($event, svg)" (pointerleave)="hover.set(null)" (keydown)="onKey($event)" (blur)="hover.set(null)">
+            @for (p of panels(); track p.id; let k = $index) {
+              <g [attr.transform]="'translate(0,' + k * H + ')'">
+                <text class="panel-title" [attr.x]="PAD_L" y="10">{{ p.title }}</text>
+                @for (t of p.ticks; track $index) {
+                  <line class="gridline" [attr.x1]="PAD_L" [attr.x2]="W - PAD_R" [attr.y1]="y(t, p)" [attr.y2]="y(t, p)" />
+                  <text class="axis" [attr.x]="PAD_L - 6" [attr.y]="y(t, p) + 4" text-anchor="end">{{ t }}{{ p.unit === '%' ? '%' : '' }}</text>
+                }
+
+                @if (p.id === 'minutes') {
+                  @for (d of days(); track d.date; let i = $index) {
+                    <path class="bar" [class.reached]="d.goalReached" [attr.d]="barPath(i, d.minutes, p)" />
+                  }
+                  <line class="goal" [attr.x1]="PAD_L" [attr.x2]="W - PAD_R" [attr.y1]="y(goal(), p)" [attr.y2]="y(goal(), p)" />
+                } @else {
+                  <path class="line" [attr.d]="linePath(p)" />
+                  @for (pt of lonePoints(p); track pt.i) {
+                    <circle class="point" [attr.cx]="x(pt.i)" [attr.cy]="y(pt.v, p)" r="4" />
+                  }
+                  @if (hover() !== null && valueOf(days()[hover()!], p) !== null) {
+                    <circle class="point hot" [attr.cx]="x(hover()!)" [attr.cy]="y(valueOf(days()[hover()!], p)!, p)" r="5" />
+                  }
+                }
+              </g>
+            }
+
+            @for (t of xTicks(); track t.i) {
+              <text class="axis" [attr.x]="x(t.i)" [attr.y]="H * 3 + 16" [attr.text-anchor]="t.i === days().length - 1 ? 'end' : 'middle'">{{ t.d.tick }}</text>
+            }
+
+            @if (hover() !== null) {
+              <line class="crosshair" [attr.x1]="x(hover()!)" [attr.x2]="x(hover()!)" y1="14" [attr.y2]="H * 3" />
+            }
+          </svg>
+
+          @if (hover() !== null) {
+            @if (days()[hover()!]; as d) {
+              <div class="tooltip" [style.left.%]="tooltipPos(hover()!).left" [style.right.%]="tooltipPos(hover()!).right" aria-live="polite">
+                <strong>{{ d.label }}</strong>
+                @if (d.questions > 0) {
+                  <span>{{ d.minutes }} min {{ d.goalReached ? '✓ goal' : '' }}</span>
+                  <span>{{ d.questions }} questions</span>
+                  <span>{{ d.accuracy ?? '–' }}% correct</span>
+                  <span>{{ d.seconds ?? '–' }}s per question</span>
+                } @else {
+                  <span>No practice</span>
+                }
+              </div>
+            }
+          }
+        </div>
+        <p class="hint">The dashed line is the {{ goal() }}-minute goal. Darker bars are days it was reached.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Day</th><th scope="col">Minutes</th><th scope="col">Questions</th><th scope="col">Correct</th><th scope="col">Avg seconds</th><th scope="col">Goal</th></tr>
+            </thead>
+            <tbody>
+              @for (d of newestFirst(); track d.date) {
+                <tr>
+                  <th scope="row">{{ d.label }}</th>
+                  <td>{{ d.minutes }}</td>
+                  <td>{{ d.questions }}</td>
+                  <td>{{ d.accuracy ?? '–' }}%</td>
+                  <td>{{ d.seconds ?? '–' }}</td>
+                  <td>{{ d.goalReached ? '✓' : '' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="6">No practice in the last 30 days.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</main>

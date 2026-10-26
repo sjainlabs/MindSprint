@@ -1,0 +1,212 @@
+<main class="page daily">
+
+  @switch (phase()) {
+
+    @case ('loading') {
+      <section class="card center" aria-busy="true">
+        <div class="spinner"></div>
+        <p>Getting your next question…</p>
+      </section>
+    }
+
+    @case ('error') {
+      <section class="card center" role="alert">
+        <div class="big" aria-hidden="true">🙈</div>
+        <h1>Oops!</h1>
+        <p>{{ errorMessage() }}</p>
+        <div class="actions row">
+          <button type="button" class="btn primary" (click)="start()">Try again</button>
+          <button type="button" class="btn" (click)="stopForToday()">Back</button>
+        </div>
+      </section>
+    }
+
+    <!-- First session only: the profile has no grade yet. -->
+    @case ('grade') {
+      <section class="card">
+        <h1>Which grade are you in?</h1>
+        <p class="muted">We'll start with questions from your grade, then follow how you do.</p>
+        @if (errorMessage()) {
+          <p class="notice error">{{ errorMessage() }}</p>
+        }
+        <div class="grade-grid">
+          @for (g of gradeChoices; track g) {
+            <button type="button" class="grade-btn" [class.suggested]="g === suggestedGrade()"
+                    [disabled]="gradeBusy()" (click)="chooseGrade(g)">
+              {{ g === 'K' ? 'K' : g }}
+              <span class="grade-sub">{{ g === 'K' ? 'Kindergarten' : 'Grade' }}</span>
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    @case ('question') {
+      @if (question(); as q) {
+        <div class="topbar">
+          <div class="today-mini" [attr.aria-label]="minutesToday() + ' of ' + goal + ' minutes today'">
+            <span class="mini-bar"><span [style.width.%]="goalPercent()"></span></span>
+            {{ minutesToday() }} / {{ goal }} min
+          </div>
+          <button type="button" class="btn small pause-btn" (click)="openPause()">⏸ Pause</button>
+        </div>
+
+        @if (notice()) {
+          <p class="notice info" role="status">{{ notice() }}</p>
+        }
+
+        <section class="card question-card">
+          <div class="q-head">
+            <span class="topic-name">{{ q.topicName }}</span>
+            <span class="grade-chip">{{ gradeName(q.grade) }}</span>
+            @if (kindLabel(q.kind); as k) {
+              <span class="grade-chip review">🔁 {{ k }}</span>
+            }
+          </div>
+
+          @if (column(); as col) {
+            <div class="prompt" id="daily-prompt">
+              @if (col.intro) {
+                <p class="intro"><app-math-text [text]="col.intro"></app-math-text></p>
+              }
+              <div class="column-sum" role="img" [attr.aria-label]="q.prompt">
+                @for (r of col.rows; track $index; let last = $last) {
+                  <span class="col-op">{{ r.op }}</span>
+                  <span class="col-num" [class.last]="last">{{ r.value }}</span>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="prompt" id="daily-prompt"><app-math-text [text]="q.prompt"></app-math-text></p>
+          }
+
+          <app-daily-answer-pad
+            [prompt]="q.prompt"
+            [placeholder]="q.placeholder"
+            [value]="answer()"
+            [disabled]="submitting()"
+            describedBy="daily-prompt"
+            (valueChange)="answer.set($event)"
+            (submitted)="submit()"
+          ></app-daily-answer-pad>
+
+          @if (submitError()) {
+            <p class="notice error" role="alert">{{ submitError() }}</p>
+          }
+
+          <button type="button" class="btn primary big" [disabled]="!answer().trim() || submitting()" (click)="submit()">
+            @if (submitting()) {
+              <span class="inline-loading"><span class="spinner small"></span> Checking…</span>
+            } @else {
+              Submit
+            }
+          </button>
+        </section>
+      }
+    }
+
+    @case ('feedback') {
+      @if (feedback(); as f) {
+        <section class="card center feedback" [class.good]="f.correct" [class.gentle]="!f.correct" aria-live="polite">
+          <div class="big pop" aria-hidden="true">{{ f.correct ? (f.slow ? '👍' : '⚡') : '💭' }}</div>
+          <h1>{{ celebration(f) }}</h1>
+          @if (!f.correct) {
+            <p>The answer is <strong class="expected"><app-math-text [text]="f.expectedAnswer"></app-math-text></strong>.</p>
+            @if (f.submittedAnswer) {
+              <p class="muted">You wrote {{ f.submittedAnswer }}. You'll get another go at this kind of question soon.</p>
+            }
+          }
+        </section>
+
+        @if (newBadge(); as badge) {
+          <section class="card center moment badge-moment">
+            <div class="badge-medal" [class.excelled]="badge === 'excelled'" aria-hidden="true">{{ badge === 'excelled' ? '🌟' : '🏅' }}</div>
+            <h2>{{ badge === 'excelled' ? 'Excellent!' : 'Mastered!' }}</h2>
+            <p>You {{ badge === 'excelled' ? 'excelled at' : 'mastered' }} <strong>{{ f.topic.topicName }}</strong>.</p>
+          </section>
+        }
+
+        @if (f.gradeUnlocked !== null) {
+          <section class="card center moment unlock-moment">
+            <div class="big pop" aria-hidden="true">🔓</div>
+            <h2>{{ gradeName(f.gradeUnlocked) }} unlocked!</h2>
+            <p>You're ready for some harder questions.</p>
+          </section>
+        }
+
+        @if (f.gradeMastered !== null) {
+          <section class="card center moment trophy-moment">
+            <div class="big pop" aria-hidden="true">🏆</div>
+            <h2>{{ gradeName(f.gradeMastered) }} complete</h2>
+            <p>Every topic in {{ gradeName(f.gradeMastered) }} is mastered. Amazing work!</p>
+          </section>
+        }
+
+        @if (f.dailyGoalJustReached) {
+          <section class="card center moment goal-moment">
+            <div class="big pop" aria-hidden="true">🎉</div>
+            <h2>{{ goal }} minutes done!</h2>
+            <p>You reached today's goal. You can keep going or finish for today.</p>
+            <div class="actions row">
+              <button type="button" class="btn primary" (click)="next()">Keep going</button>
+              <button type="button" class="btn" (click)="finishForToday()">Finish for today</button>
+            </div>
+          </section>
+        }
+
+        @if (f.recommendStudyGuide; as rec) {
+          <section class="card moment guide-moment">
+            <h2>📘 Let's look at a guide for {{ rec.topicName }}</h2>
+            <p class="muted">A quick read can make the next questions easier.</p>
+            @if (pauseError()) {
+              <p class="notice error">{{ pauseError() }}</p>
+            }
+            <div class="actions row">
+              <button type="button" class="btn primary" [disabled]="pauseBusy()" (click)="openGuide(rec.topicId)">
+                {{ pauseBusy() ? 'Opening…' : 'Open guide' }}
+              </button>
+              @if (!f.dailyGoalJustReached) {
+                <button type="button" class="btn" (click)="next()">Keep practising</button>
+              }
+            </div>
+          </section>
+        }
+
+        @if (f.completed) {
+          <button type="button" class="btn primary big" (click)="next()">See what you achieved</button>
+        } @else if (!f.dailyGoalJustReached && !f.recommendStudyGuide) {
+          <button type="button" class="btn primary big" (click)="next()">Next question →</button>
+        }
+      }
+    }
+
+    @case ('completed') {
+      <section class="card center moment trophy-moment">
+        <div class="big pop" aria-hidden="true">🏆</div>
+        <h1>You've mastered it all!</h1>
+        <p>Every grade up to Grade 12 is mastered and there's nothing to review right now. Come back later for review questions.</p>
+        <button type="button" class="btn primary" (click)="stopForToday()">Back to Daily Challenge</button>
+      </section>
+    }
+  }
+
+  <!-- Pause sheet -->
+  @if (pauseOpen()) {
+    <div class="sheet-backdrop" (click)="resume()"></div>
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <h2 id="pause-title">⏸ Paused</h2>
+      <p class="muted">Everything is saved. You can come back any time.</p>
+      @if (pauseError()) {
+        <p class="notice error">{{ pauseError() }}</p>
+      }
+      <div class="actions">
+        <button type="button" class="btn primary big" (click)="resume()">▶ Resume</button>
+        <button type="button" class="btn big" [disabled]="pauseBusy()" (click)="openGuide()">
+          📘 {{ pauseBusy() ? 'Opening the guide…' : 'Study guide for this topic' }}
+        </button>
+        <button type="button" class="btn big" (click)="stopForToday()">Stop for today</button>
+      </div>
+    </section>
+  }
+
+</main>

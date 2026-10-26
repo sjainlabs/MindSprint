@@ -51,6 +51,8 @@ export class StudyGuidePageComponent implements OnInit {
   private readonly readAloud = inject(ReadAloudService);
 
   readonly topicId = signal('');
+  /** Opened from a paused Daily Challenge (?from=daily): offer a way back to it. */
+  readonly fromDaily = signal(false);
   readonly data = signal<TopicStudyGuideResponse | null>(null);
   readonly loading = signal(true);
   readonly error = signal<StudyGuideError | null>(null);
@@ -137,6 +139,7 @@ export class StudyGuidePageComponent implements OnInit {
     this.parentOpen.set(this.guides.getPref('parentOpen'));
     this.methodHidden.set(this.guides.getPref('methodHidden'));
 
+    this.fromDaily.set(this.route.snapshot.queryParamMap.get('from') === 'daily');
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.topicId.set(params.get('topicId') ?? '');
       this.load();
@@ -393,5 +396,10 @@ export class StudyGuidePageComponent implements OnInit {
 
   browseGuides(): void {
     this.router.navigate(['/study-guides']);
+  }
+
+  /** The Daily Challenge screen calls session/start when it opens, which resumes the paused question. */
+  backToDaily(): void {
+    this.router.navigate(['/daily/play']);
   }
 }

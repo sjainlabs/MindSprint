@@ -5,7 +5,7 @@ import { formatMath } from '../../shared/utils/math-format';
  * Renders maths text as given, with light formatting: stacked fractions, superscripts, log bases,
  * square roots with a bar, matrices as a grid, counting dots in groups of five and dice faces.
  * Dice are always drawn as SVG pips, because many Android fonts have no glyphs for ⚀–⚅. Screen readers get the original text for
- * fractions and matrices; the formatted version is visual only.
+ * fractions and matrices; the formatted version is visual only. Tally marks (卌) are drawn as SVG too.
  */
 const L = 28;
 const M = 50;
@@ -75,6 +75,21 @@ const PIPS: Record<number, Array<[number, number]>> = {
                 <rect x="4" y="4" width="92" height="92" rx="18" class="mt-die-face" />
                 @for (pip of pipsFor(face); track $index) {
                   <circle [attr.cx]="pip[0]" [attr.cy]="pip[1]" r="9.5" class="mt-pip" />
+                }
+              </svg>
+            }
+          </span>
+        }
+        @case ('tally') {
+          <span class="mt-tally" role="img" [attr.aria-label]="'Tally marks showing ' + p.count">
+            @for (g of p.groups; track $index) {
+              <svg class="mt-tally-group" [attr.viewBox]="'0 0 ' + tallyWidth(g) + ' 40'"
+                   [style.width.em]="tallyWidth(g) / 26" aria-hidden="true" focusable="false">
+                @for (s of strokesOf(g); track $index) {
+                  <line [attr.x1]="s * 10 + 5" y1="6" [attr.x2]="s * 10 + 5" y2="34" class="mt-stroke" />
+                }
+                @if (g === 5) {
+                  <line x1="1" y1="30" [attr.x2]="tallyWidth(g) - 1" y2="10" class="mt-stroke" />
                 }
               </svg>
             }
@@ -158,6 +173,9 @@ const PIPS: Record<number, Array<[number, number]>> = {
       .mt-die { width: max(48px, 3.25em); height: max(48px, 3.25em); display: block; }
       .mt-die-face { fill: #ffffff; stroke: #1e1b4b; stroke-width: 5; }
       .mt-pip { fill: #1e1b4b; }
+      .mt-tally { display: inline-flex; gap: 0.45em; vertical-align: middle; margin: 0 0.15em; }
+      .mt-tally-group { height: 1.55em; }
+      .mt-stroke { stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; }
       .mt-sr {
         position: absolute;
         width: 1px;
@@ -179,6 +197,15 @@ export class MathTextComponent {
 
   dotsOf(n: number): number[] {
     return Array.from({ length: n }, (_, i) => i);
+  }
+
+  /** A bundle of five is four upright strokes and one across them. */
+  strokesOf(n: number): number[] {
+    return this.dotsOf(n === 5 ? 4 : n);
+  }
+
+  tallyWidth(n: number): number {
+    return this.strokesOf(n).length * 10 + 4;
   }
 
   pipsFor(face: number): Array<[number, number]> {

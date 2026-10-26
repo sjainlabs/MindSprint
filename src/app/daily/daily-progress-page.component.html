@@ -1,0 +1,89 @@
+<main class="page progress-map">
+  <section class="card">
+    <h1>🗺️ Progress map</h1>
+    <p class="muted">Each grade unlocks as topics below it are mastered.</p>
+  </section>
+
+  @if (loading()) {
+    <section class="card center" aria-busy="true"><div class="spinner"></div><p>Loading the map…</p></section>
+  } @else if (error()) {
+    <section class="card center" role="alert">
+      <p class="notice error">{{ error() }}</p>
+      <button type="button" class="btn primary" (click)="load()">Try again</button>
+    </section>
+  } @else if (progress(); as p) {
+    <section class="card rule">
+      <h2>How far can I go?</h2>
+      <p>You can work at most <strong>one grade above your lowest weak topic</strong>. Fixing weak topics unlocks the next grade.</p>
+      <p class="muted">{{ ruleText() }}</p>
+      @if (p.paused) {
+        <p class="hint">⏸ The Daily Challenge is paused. It will carry on from the same question.</p>
+      }
+    </section>
+
+    <section class="card legend-card" aria-label="Colour key">
+      <ul class="legend">
+        @for (s of statusOrder; track s) {
+          <li><span class="swatch" [attr.data-status]="s" aria-hidden="true"></span>{{ statusInfo[s].icon }} {{ statusInfo[s].label }}</li>
+        }
+      </ul>
+    </section>
+
+    <ol class="path">
+      @for (g of grades(); track g.grade) {
+        <li class="stop" [attr.data-state]="g.state">
+          <div class="node" aria-hidden="true">{{ stateIcon(g) }}</div>
+          <div class="stop-body card">
+            <button type="button" class="stop-head" [disabled]="g.state === 'locked'"
+                    [attr.aria-expanded]="g.state === 'locked' ? null : !!open()[g.grade]" (click)="toggle(g.grade)">
+              <span class="stop-title">
+                <strong>{{ gradeName(g.grade) }}</strong>
+                <span class="state-tag">{{ stateLabel(g) }}</span>
+                @if (g.grade === p.frontierGrade && g.state !== 'mastered') {
+                  <span class="state-tag frontier">You are here</span>
+                }
+              </span>
+              @if (g.state !== 'locked') {
+                <span class="chev" aria-hidden="true">{{ open()[g.grade] ? '▾' : '▸' }}</span>
+              }
+            </button>
+
+            @if (g.state === 'locked') {
+              <p class="hint">{{ g.totalTopics }} topics. Unlocks when the grades below are strong enough.</p>
+            } @else {
+              <div class="bar" role="img" [attr.aria-label]="doneCount(g) + ' of ' + g.totalTopics + ' topics mastered'">
+                <span [style.width.%]="donePercent(g)"></span>
+              </div>
+              <p class="hint counts">
+                {{ doneCount(g) }} / {{ g.totalTopics }} mastered
+                @if (g.needsWork) { · {{ g.needsWork }} need work }
+                @if (g.learning) { · {{ g.learning }} learning }
+                @if (g.notStarted) { · {{ g.notStarted }} not started }
+              </p>
+
+              @if (open()[g.grade]) {
+                <ul class="tiles">
+                  @for (t of g.topics; track t.topicId) {
+                    <li class="tile" [attr.data-status]="t.status" [class.current]="isCurrent(t)">
+                      <span class="tile-name">{{ t.topicName }}</span>
+                      <span class="tile-status">{{ tileStatus(t) }}</span>
+                      @if (topicDetail(t)) {
+                        <span class="tile-detail">{{ topicDetail(t) }}</span>
+                      }
+                      @if (t.reviewDue) {
+                        <span class="tile-flag">🔁 Review due</span>
+                      }
+                      @if (isCurrent(t)) {
+                        <span class="tile-flag">📍 Working on now</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+        </li>
+      }
+    </ol>
+  }
+</main>

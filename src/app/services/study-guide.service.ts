@@ -93,6 +93,11 @@ export class StudyGuideService {
     return firstValueFrom(this.topicGuide(topicId));
   }
 
+  /** Cache a guide that arrived another way (e.g. from the Daily Challenge pause call), so it opens instantly. */
+  seedTopicGuide(topicId: string, data: TopicStudyGuideResponse): void {
+    this.store(`topic.${topicId.toLowerCase()}`, data);
+  }
+
   /* ---------------- Progress & preferences (localStorage) ---------------- */
 
   loadProgress(topicId: string): StudyGuideProgress {

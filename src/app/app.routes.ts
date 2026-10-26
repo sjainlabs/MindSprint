@@ -20,6 +20,10 @@ import { CustomTestBuilderPageComponent } from './tests/custom-test-builder-page
 import { CustomTestTakePageComponent } from './tests/custom-test-take-page.component';
 import { StudyGuidePageComponent } from './study-guides/study-guide-page.component';
 import { StudyGuideIndexPageComponent } from './study-guides/study-guide-index-page.component';
+import { DailyHomePageComponent } from './daily/daily-home-page.component';
+import { DailyPlayPageComponent } from './daily/daily-play-page.component';
+import { DailyProgressPageComponent } from './daily/daily-progress-page.component';
+import { DailyChartPageComponent } from './daily/daily-chart-page.component';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
@@ -45,6 +49,11 @@ export const routes: Routes = [
   { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
   { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
   { path: 'tests/topic/:topicId', canActivate: [studentAuthGuard], component: TopicTestPageComponent },
+  { path: 'daily', canActivate: [studentAuthGuard], component: DailyHomePageComponent },
+  { path: 'daily/play', canActivate: [studentAuthGuard], component: DailyPlayPageComponent },
+  // Parents open these from their dashboard with ?studentId=…, which the guard allows.
+  { path: 'daily/progress', canActivate: [studentAuthGuard], component: DailyProgressPageComponent },
+  { path: 'daily/chart', canActivate: [studentAuthGuard], component: DailyChartPageComponent },
   // Study guides are for children and parents reading together, so no student login is required.
   { path: 'study-guides', component: StudyGuideIndexPageComponent },
   { path: 'study-guides/topic/:topicId', component: StudyGuidePageComponent },

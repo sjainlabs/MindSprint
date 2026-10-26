@@ -71,4 +71,19 @@ describe('formatMath', () => {
     ]);
     expect(formatMath('⚀⚅')[0]).toEqual({ kind: 'dice', faces: [1, 6] });
   });
+
+  it('reads tally marks as bundles of five plus single strokes', () => {
+    expect(formatMath('What number is 卌 卌 |||?')).toEqual([
+      { kind: 'text', value: 'What number is ' },
+      { kind: 'tally', groups: [5, 5, 3], count: 13 },
+      { kind: 'text', value: '?' },
+    ]);
+    expect(formatMath('|x - 3| = 2')).toEqual([{ kind: 'text', value: '|x - 3| = 2' }]);
+  });
+
+  it('leaves ₹, °, ², ½, π, ≤ and ≥ as text', () => {
+    expect(formatMath('₹50 at 90° is ½ of π r² ≤ 3 ≥ 1')).toEqual([
+      { kind: 'text', value: '₹50 at 90° is ½ of π r² ≤ 3 ≥ 1' },
+    ]);
+  });
 });

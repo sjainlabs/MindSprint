@@ -35,6 +35,9 @@
   @if (!loading() && guide(); as g) {
     <!-- 1. Header -->
     <header class="guide-header">
+      @if (fromDaily()) {
+        <button type="button" class="btn small primary back-daily" (click)="backToDaily()">← Back to Daily Challenge</button>
+      }
       <p class="eyebrow">📘 Study guide</p>
       <h1>{{ topic()?.name }}</h1>
       <div class="header-meta">
@@ -353,6 +356,9 @@
     <footer class="guide-footer">
       <p class="footer-text">Ready to practise?</p>
       <div class="btn-row">
+        @if (fromDaily()) {
+          <button type="button" class="btn primary big" (click)="backToDaily()">🎯 Back to Daily Challenge</button>
+        }
         <button type="button" class="btn primary big" (click)="startPractice()">▶ Start practice</button>
         @if (testEligible()) {
           <button type="button" class="btn test big" (click)="takeTest()">🏁 Take the topic test</button>
