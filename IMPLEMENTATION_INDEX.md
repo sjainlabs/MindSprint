@@ -175,7 +175,7 @@ backend/
   id: string;                      // e.g., "addition-single-digit"
   name: string;                    // e.g., "Addition (Single Digit)"
   cbseGrade: number;              // 1, 3, 5 (STRICT MATCHING)
-  kumonBand: string;              // K, J, I, H
+  band: string;              // K, J, I, H
   practiceLevel: string;          // Beginner, Intermediate, Advanced
   skills: {
     id: string;                   // e.g., "add-basic"

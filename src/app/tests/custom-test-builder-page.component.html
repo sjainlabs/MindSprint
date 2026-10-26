@@ -123,6 +123,7 @@
             <span class="topic-tags">
               <span class="tag">G{{ gradeLabel(t.cbseGrade) }}</span>
               <span class="tag">{{ t.practiceLevel }}</span>
+              <span class="tag" *ngIf="t.band">Band {{ t.band }}</span>
               <span class="tag above-grade" *ngIf="isAboveGrade(t)">Grade {{ t.cbseGrade }} topic</span>
             </span>
           </label>

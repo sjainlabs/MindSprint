@@ -7,18 +7,18 @@
 // } from './practice-topic-catalog';
 //
 // describe('practice topic catalog', () => {
-//   it('uses the full K-12 + Kumon source map as the topic catalog', () => {
+//   it('uses the full K-12 + band source map as the topic catalog', () => {
 //     const sourceTopicCount =
 //       Object.values(PRACTICE_TOPIC_MAP.mathTopics).reduce((sum, topics) => sum + topics.length, 0) +
-//       Object.values(PRACTICE_TOPIC_MAP.kumonLevels).reduce((sum, topics) => sum + topics.length, 0);
+//       Object.values(PRACTICE_TOPIC_MAP.bands).reduce((sum, topics) => sum + topics.length, 0);
 //
 //     expect(PRACTICE_TOPIC_CATALOG.length).toBe(sourceTopicCount);
 //     expect(createPracticeTopicTaxonomy().topics.length).toBe(sourceTopicCount);
 //   });
 //
-//   it('groups topics by grade and Kumon level', () => {
+//   it('groups topics by grade and band', () => {
 //     expect(PRACTICE_TOPIC_GROUPS.some((group) => group.label === 'Kindergarten')).toBe(true);
-//     expect(PRACTICE_TOPIC_GROUPS.some((group) => group.label === 'Kumon Level A')).toBe(true);
+//     expect(PRACTICE_TOPIC_GROUPS.some((group) => group.label === 'Band A')).toBe(true);
 //   });
 //
 //   it('maps every topic to a valid worksheet generator', () => {

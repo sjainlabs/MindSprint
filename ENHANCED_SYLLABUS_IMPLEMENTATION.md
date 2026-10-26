@@ -1,7 +1,7 @@
 # Enhanced Syllabus Implementation - UI Updates Complete
 
 ## Overview
-The Angular UI has been successfully updated to support the new backend practice system with EnhancedSyllabus topics. The new system replaces the legacy practice configuration with difficulty-aware topic selection based on CBSE grade, Kumon band, and practice level.
+The Angular UI has been successfully updated to support the new backend practice system with EnhancedSyllabus topics. The new system replaces the legacy practice configuration with difficulty-aware topic selection based on CBSE grade, band, and practice level.
 
 ## Key Changes
 
@@ -18,7 +18,7 @@ The Angular UI has been successfully updated to support the new backend practice
   - `id: string` - Unique topic identifier
   - `name: string` - Topic display name
   - `cbseGrade: number` - CBSE grade level (1-5)
-  - `kumonBand: string` - Kumon proficiency band (e.g., "D", "E", "F")
+  - `band: string` - proficiency band (e.g., "D", "E", "F")
   - `practiceLevel: string` - Practice difficulty level (Beginner, Intermediate, Advanced)
   - `skills: { id: string; difficultyScore: number }[]` - Operations with difficulty scoring
 
@@ -85,7 +85,7 @@ The Angular UI has been successfully updated to support the new backend practice
    - Each card displays:
      - Topic name (h4)
      - CBSE Grade badge
-     - Kumon Band badge
+     - Band badge
      - Practice Level badge
    - Selected topic highlighted in green
 5. **Operation Selection** - Buttons for skills available in selected topic
@@ -106,7 +106,7 @@ The Angular UI has been successfully updated to support the new backend practice
 **New Classes Added:**
 - `.topic-card` - Enhanced topic display with hover/selected states
 - `.topic-details` - Flex container for badges
-- `.badge`, `.kumon-badge`, `.level-badge` - Colored info badges
+- `.badge`, `.band-badge`, `.level-badge` - Colored info badges
 - `.operations-list` - Flex container for operations
 - `.operation-btn` - Single operation button with difficulty display
 - `.difficulty-score` - Secondary text showing difficulty score
@@ -154,7 +154,7 @@ interface WorksheetNavState {
 Displayed at top of worksheet with grid layout showing:
 - **Topic:** Topic name (from selectedTopic.name)
 - **Grade:** CBSE grade (from selectedTopic.cbseGrade)
-- **Kumon Band:** Band designation (from selectedTopic.kumonBand)
+- **Band:** Band designation (from selectedTopic.band)
 - **Practice Level:** Difficulty level (from selectedTopic.practiceLevel)
 - **Operation:** Selected operation ID (from selectedOperation)
 
@@ -209,17 +209,17 @@ Displayed at top of worksheet with grid layout showing:
 ## Display Examples
 
 ### Grade 1 Topics
-- Addition (Single Digit) - CBSE Grade 1, Kumon Band K, Beginner
-- Subtraction (Single Digit) - CBSE Grade 1, Kumon Band K, Beginner
+- Addition (Single Digit) - CBSE Grade 1, Band K, Beginner
+- Subtraction (Single Digit) - CBSE Grade 1, Band K, Beginner
 
 ### Grade 3 Topics
-- Multiplication (2-digit × 1-digit) - CBSE Grade 3, Kumon Band J, Intermediate
-- Division (2-digit ÷ 1-digit) - CBSE Grade 3, Kumon Band J, Intermediate
-- Fractions (Basic) - CBSE Grade 3, Kumon Band I, Beginner
+- Multiplication (2-digit × 1-digit) - CBSE Grade 3, Band J, Intermediate
+- Division (2-digit ÷ 1-digit) - CBSE Grade 3, Band J, Intermediate
+- Fractions (Basic) - CBSE Grade 3, Band I, Beginner
 
 ### Grade 5 Topics
-- Decimals (4-place) - CBSE Grade 5, Kumon Band H, Advanced
-- Percentages - CBSE Grade 5, Kumon Band H, Advanced
+- Decimals (4-place) - CBSE Grade 5, Band H, Advanced
+- Percentages - CBSE Grade 5, Band H, Advanced
 
 **UI Display:** "Grade 1" vs "Grade 3" vs "Grade 5" are correctly shown in UI, allowing for proper difficulty differentiation.
 
@@ -261,7 +261,7 @@ Submit Worksheet
 
 - [ ] Syllabus loads without errors
 - [ ] Grade filtering works correctly (Grade 1 topics only show for Grade 1, etc.)
-- [ ] Topic cards display all required fields (name, cbseGrade, kumonBand, practiceLevel)
+- [ ] Topic cards display all required fields (name, cbseGrade, band, practiceLevel)
 - [ ] Topic selection shows operations with difficulty scores
 - [ ] Worksheet generation passes correct grade + topic + operation to backend
 - [ ] Worksheet page displays topic info section with all 5 fields
@@ -284,7 +284,7 @@ The UI now expects the backend to provide:
       "id": "addition-single",
       "name": "Addition (Single Digit)",
       "cbseGrade": 1,
-      "kumonBand": "K",
+      "band": "K",
       "practiceLevel": "Beginner",
       "skills": [
         { "id": "add-basic", "difficultyScore": 10 },

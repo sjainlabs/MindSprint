@@ -240,7 +240,7 @@ const EN: Record<string, string> = {
   'practiceHub.badge': 'Practice Hub',
   'practiceHub.title': 'Choose what to practice next',
   'practiceHub.subtitle':
-    'Pick a level, explore the topic map, browse the K–12 and Kumon library, or generate an AI worksheet.',
+    'Pick a level, explore the topic map, browse the K–12 and band library, or generate an AI worksheet.',
   'practiceHub.profile': 'Profile',
   'practiceHub.home': 'Home',
   'practiceHub.student': 'Student',
@@ -265,7 +265,7 @@ const EN: Record<string, string> = {
 
   // ── Topic Library page ──────────────────────────────────────────────────────
   'topicLibrary.title': 'Topic Library',
-  'topicLibrary.subtitle': 'Search the full K-12 + Kumon skill library.',
+  'topicLibrary.subtitle': 'Search the full K-12 + band skill library.',
   'topicLibrary.search': 'Search skills',
   'topicLibrary.searchPlaceholder': 'Try: fractions, algebra, reasoning',
   'topicLibrary.loading': 'Loading library...',
@@ -331,9 +331,9 @@ const EN: Record<string, string> = {
   'worksheet.personalizedPath': 'Personalized Learning Path Engine',
   'worksheet.topicLibrary': 'Topic Library',
   'worksheet.topicBrowseHelp':
-    'Browse every K–12 grade topic and every Kumon level from the shared topic map.',
+    'Browse every K–12 grade topic and every band from the shared topic map.',
   'worksheet.k12Track': 'K–12 Grades',
-  'worksheet.kumonTrack': 'Kumon Levels',
+  'worksheet.bandTrack': 'Bands',
   'worksheet.groups': 'groups',
   'worksheet.topic': 'Topic',
   'worksheet.difficulty': 'Difficulty (0-100)',
@@ -656,7 +656,7 @@ const HI: Record<string, string> = {
   'practiceHub.badge': 'प्रैक्टिस हब',
   'practiceHub.title': 'अगला अभ्यास चुनें',
   'practiceHub.subtitle':
-    'एक स्तर चुनें, टॉपिक मैप देखें, K–12 और Kumon लाइब्रेरी ब्राउज़ करें, या AI वर्कशीट बनाएं।',
+    'एक स्तर चुनें, टॉपिक मैप देखें, K–12 और बैंड लाइब्रेरी ब्राउज़ करें, या AI वर्कशीट बनाएं।',
   'practiceHub.profile': 'प्रोफाइल',
   'practiceHub.home': 'होम',
   'practiceHub.student': 'छात्र',
@@ -681,7 +681,7 @@ const HI: Record<string, string> = {
 
   // ── Topic Library page ──────────────────────────────────────────────────────
   'topicLibrary.title': 'टॉपिक लाइब्रेरी',
-  'topicLibrary.subtitle': 'पूरी K-12 + Kumon कौशल लाइब्रेरी खोजें।',
+  'topicLibrary.subtitle': 'पूरी K-12 + बैंड कौशल लाइब्रेरी खोजें।',
   'topicLibrary.search': 'कौशल खोजें',
   'topicLibrary.searchPlaceholder': 'जैसे: fractions, algebra, reasoning',
   'topicLibrary.loading': 'लाइब्रेरी लोड हो रही है...',
@@ -746,9 +746,9 @@ const HI: Record<string, string> = {
   'worksheet.personalizedPath': 'व्यक्तिगत शिक्षण पथ इंजन',
   'worksheet.topicLibrary': 'विषय पुस्तकालय',
   'worksheet.topicBrowseHelp':
-    'साझा विषय मानचित्र से सभी K–12 कक्षाओं और सभी Kumon स्तरों को देखें।',
+    'साझा विषय मानचित्र से सभी K–12 कक्षाओं और सभी बैंड को देखें।',
   'worksheet.k12Track': 'K–12 कक्षाएं',
-  'worksheet.kumonTrack': 'Kumon स्तर',
+  'worksheet.bandTrack': 'बैंड',
   'worksheet.groups': 'समूह',
   'worksheet.topic': 'विषय',
   'worksheet.difficulty': 'कठिनाई (0-100)',

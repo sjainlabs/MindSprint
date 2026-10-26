@@ -139,26 +139,26 @@
         'Probability (Advanced)',
       ],
     },
-    kumonLevels: {
-      LevelA: ['Counting', 'Basic Addition', 'Basic Subtraction'],
-      LevelB: ['Addition (2-digit)', 'Subtraction (2-digit)'],
-      LevelC: ['Multiplication', 'Division'],
-      LevelD: ['Fractions (Basic)', 'Decimals (Basic)'],
-      LevelE: ['Fractions (Operations)', 'Decimals (Operations)'],
-      LevelF: ['Pre-Algebra', 'Equations (Simple)'],
-      LevelG: ['Algebra I', 'Linear Equations'],
-      LevelH: ['Algebra II', 'Quadratics'],
-      LevelI: ['Functions', 'Polynomials'],
-      LevelJ: ['Geometry (Advanced)', 'Trigonometry (Intro)'],
-      LevelK: ['Trigonometry', 'Pre-Calculus'],
-      LevelL: ['Differential Calculus'],
-      LevelM: ['Integral Calculus'],
-      LevelN: ['Advanced Calculus', 'Differential Equations'],
-      LevelO: ['University-Level Math', 'Vectors', 'Advanced Probability'],
+    bands: {
+      BandA: ['Counting', 'Basic Addition', 'Basic Subtraction'],
+      BandB: ['Addition (2-digit)', 'Subtraction (2-digit)'],
+      BandC: ['Multiplication', 'Division'],
+      BandD: ['Fractions (Basic)', 'Decimals (Basic)'],
+      BandE: ['Fractions (Operations)', 'Decimals (Operations)'],
+      BandF: ['Pre-Algebra', 'Equations (Simple)'],
+      BandG: ['Algebra I', 'Linear Equations'],
+      BandH: ['Algebra II', 'Quadratics'],
+      BandI: ['Functions', 'Polynomials'],
+      BandJ: ['Geometry (Advanced)', 'Trigonometry (Intro)'],
+      BandK: ['Trigonometry', 'Pre-Calculus'],
+      BandL: ['Differential Calculus'],
+      BandM: ['Integral Calculus'],
+      BandN: ['Advanced Calculus', 'Differential Equations'],
+      BandO: ['University-Level Math', 'Vectors', 'Advanced Probability'],
     },
   } as const;
 
-  export type PracticeTrack = 'k12' | 'kumon';
+  export type PracticeTrack = 'k12' | 'band';
   export type PracticeTopicGeneratorKey =
     | 'number-sense'
     | 'operations'
@@ -181,13 +181,13 @@
     /** Human-friendly topic name */
     name: string;
 
-    /** Track: k12 or kumon */
+    /** Track: k12 or band */
     track: PracticeTrack;
 
-    /** Group key (Grade1, Grade2, LevelA, LevelB, etc.) */
+    /** Group key (Grade1, Grade2, BandA, BandB, etc.) */
     groupKey: string;
 
-    /** Group label (Grade 1, Grade 2, Kumon Level A, etc.) */
+    /** Group label (Grade 1, Grade 2, Band A, etc.) */
     groupLabel: string;
 
     /** Generator key (operations, fractions, algebra, etc.) */
@@ -218,7 +218,7 @@
 
     /** ⭐ Dynamic metadata (merged from backend EnhancedTopic) */
     cbseGrade: number;
-    Band: string;
+    band?: string;
     practiceLevel: string;
 
     /** ⭐ Dynamic modular skills (op-division-facts, op-long-division, etc.) */
@@ -430,7 +430,7 @@
 
       // dynamic metadata (UI fetches from backend)
       cbseGrade: 0,
-      Band: '',
+      band: '',
       practiceLevel: '',
       skills: [],
     };
@@ -449,20 +449,25 @@
       ),
   );
 
-  const KUMON_TOPICS = Object.entries(PRACTICE_TOPIC_MAP.kumonLevels).flatMap(
+  /** "BandC" → "Band C" */
+  function bandLabel(groupKey: string): string {
+    return groupKey.replace(/^Band/, 'Band ');
+  }
+
+  const BAND_TOPICS = Object.entries(PRACTICE_TOPIC_MAP.bands).flatMap(
     ([groupKey, topicNames], groupIndex) =>
       topicNames.map((topicName, topicIndex) =>
         buildTopicDefinition(
           topicName,
-          'kumon',
+          'band',
           groupKey,
-          `Kumon ${groupKey.replace('Level', 'Level ')}`,
+          bandLabel(groupKey),
           2000 + groupIndex * 100 + topicIndex,
         ),
       ),
   );
 
-  export const PRACTICE_TOPIC_CATALOG: PracticeTopicDefinition[] = [...K12_TOPICS, ...KUMON_TOPICS];
+  export const PRACTICE_TOPIC_CATALOG: PracticeTopicDefinition[] = [...K12_TOPICS, ...BAND_TOPICS];
 
   export const PRACTICE_TOPIC_GROUPS: PracticeTopicGroup[] = [
     ...Object.entries(PRACTICE_TOPIC_MAP.mathTopics).map(([groupKey]) => ({
@@ -473,12 +478,12 @@
         (topic) => topic.track === 'k12' && topic.groupKey === groupKey,
       ),
     })),
-    ...Object.entries(PRACTICE_TOPIC_MAP.kumonLevels).map(([groupKey]) => ({
-      id: `kumon-${slugify(groupKey)}`,
-      label: `Kumon ${groupKey.replace('Level', 'Level ')}`,
-      track: 'kumon' as const,
+    ...Object.entries(PRACTICE_TOPIC_MAP.bands).map(([groupKey]) => ({
+      id: `band-${slugify(groupKey)}`,
+      label: bandLabel(groupKey),
+      track: 'band' as const,
       topics: PRACTICE_TOPIC_CATALOG.filter(
-        (topic) => topic.track === 'kumon' && topic.groupKey === groupKey,
+        (topic) => topic.track === 'band' && topic.groupKey === groupKey,
       ),
     })),
   ];
@@ -535,7 +540,7 @@
 
   function buildHints(topic: PracticeTopicDefinition, questionType: AdvancedQuestionType): string[] {
     return [
-      `Review the ${topic.groupLabel} ${topic.track === 'kumon' ? 'Kumon' : 'school'} strategy for ${topic.name.toLowerCase()}.`,
+      `Review the ${topic.groupLabel} ${topic.track === 'band' ? 'band' : 'school'} strategy for ${topic.name.toLowerCase()}.`,
       `Use a ${questionType.replace(/-/g, ' ')} approach and check units before submitting.`,
     ];
   }

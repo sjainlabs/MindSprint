@@ -46,3 +46,4 @@
 .guide-btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:12px; border:2px solid var(--primary,#6C63FF); color:var(--primary,#6C63FF); background:#fff; font-weight:700; text-decoration:none; white-space:nowrap; }
 .guide-btn:hover{ background:#f5f3ff; }
 .guide-btn:focus-visible{ outline:3px solid #f59e0b; outline-offset:2px; }
+.title-group .band{ display:inline-block; margin:4px 0 0 6px; font-size:0.75rem; font-weight:700; color:#3730a3; background:#eef2ff; border-radius:999px; padding:1px 8px; }

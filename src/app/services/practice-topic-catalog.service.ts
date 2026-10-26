@@ -4,6 +4,7 @@ import {
   PracticeTopicDefinition,
   PRACTICE_TOPIC_CATALOG
 } from './practice-topic-catalog';
+import { withoutHiddenTopics } from '../constants/hidden-topics';
 
 @Injectable({ providedIn: 'root' })
 export class PracticeTopicCatalogService {
@@ -36,7 +37,7 @@ export class PracticeTopicCatalogService {
             subtopics: meta.subtopics,
             studyMaterial: meta.studyMaterial ?? [],
             // ⭐ REQUIRED FIELD
-            Band: meta.Band ?? 'default',
+            band: meta.band,
             // ⭐ REQUIRED FIELDS from PracticeTopicDefinition
             track: 'math',
             groupKey: meta.groupKey ?? 'default',
@@ -87,7 +88,7 @@ export class PracticeTopicCatalogService {
           studyMaterial: meta.studyMaterial ?? [],
 
           // ⭐ REQUIRED FIELD
-          Band: meta.Band ?? 'default',
+          band: meta.band,
 
           // ⭐ REQUIRED FIELDS from PracticeTopicDefinition
           track: 'math',
@@ -114,7 +115,7 @@ export class PracticeTopicCatalogService {
 
   /** ⭐ UI uses this instead of static catalog */
   getCatalog(): EnhancedTopic[] {
-    return this.mergedCatalog();
+    return withoutHiddenTopics(this.mergedCatalog());
   }
 
   /** ⭐ Find topic by modular skill ID */

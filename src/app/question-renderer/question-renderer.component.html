@@ -1,46 +1,128 @@
-<ng-container [ngSwitch]="question.layout">
+@switch (question.layout) {
 
-  <app-vertical-multiplication-component
-    *ngSwitchCase="'vertical'"
-    [top]="question.metadata?.top"
-    [bottom]="question.metadata?.bottom"
-    [answer]="answer"
-    (answerChange)="answerChange.emit($event)"
-  ></app-vertical-multiplication-component>
-
-  <div *ngSwitchCase="'horizontal_with_hint'">
-    <p>{{ question.prompt }}</p>
-    <button (click)="showHint = !showHint">
-      {{ showHint ? 'Hide Steps' : 'Show Steps' }}
-    </button>
-
+  @case ('vertical') {
     <app-vertical-multiplication-component
-      *ngIf="showHint"
       [top]="question.metadata?.top"
       [bottom]="question.metadata?.bottom"
       [answer]="answer"
       (answerChange)="answerChange.emit($event)"
     ></app-vertical-multiplication-component>
+  }
 
-    <textarea
-      class="answer-input"
-      [value]="answer"
-      (input)="onInputEvent($event)"
-      [placeholder]="question.placeholder ?? ''"
+  @case ('horizontal_with_hint') {
+    <div class="qr">
+      <p class="qr-prompt" [id]="uid + '-prompt'"><app-math-text [text]="question.prompt"></app-math-text></p>
+      <button type="button" class="hint-toggle-btn" (click)="showHint = !showHint">
+        {{ showHint ? 'Hide Steps' : 'Show Steps' }}
+      </button>
 
+      @if (showHint) {
+        <app-vertical-multiplication-component
+          [top]="question.metadata?.top"
+          [bottom]="question.metadata?.bottom"
+          [answer]="answer"
+          (answerChange)="answerChange.emit($event)"
+        ></app-vertical-multiplication-component>
+      }
 
-    ></textarea>
-  </div>
+      <ng-container *ngTemplateOutlet="answerArea"></ng-container>
+    </div>
+  }
 
-  <div *ngSwitchDefault>
-    <p>{{ question.prompt }}</p>
-    <textarea
-      class="answer-input"
-      [value]="answer"
-      (input)="onInputEvent($event)"
-      [placeholder]="question.placeholder ?? ''"
+  @default {
+    <div class="qr">
+      <p class="qr-prompt" [id]="uid + '-prompt'"><app-math-text [text]="question.prompt"></app-math-text></p>
+      <ng-container *ngTemplateOutlet="answerArea"></ng-container>
+    </div>
+  }
+}
 
-    ></textarea>
-  </div>
+<ng-template #answerArea>
+  @switch (spec().kind) {
 
-</ng-container>
+    <!-- Several values: one small box each, joined as "3, -2" in prompt order. -->
+    @case ('multi') {
+      <div class="qr-multi" role="group" [attr.aria-labelledby]="uid + '-prompt'">
+        @for (v of spec().variables; track $index; let i = $index) {
+          <label class="qr-part">
+            <span class="qr-var">{{ v }} =</span>
+            <input
+              #partInput
+              type="text"
+              class="answer-input qr-part-input"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              [attr.aria-label]="'Value of ' + v"
+              [value]="parts()[i]"
+              (focus)="setTarget(partInput)"
+              (input)="onPartInput(i, $event)"
+            />
+          </label>
+        }
+      </div>
+    }
+
+    <!-- Counting dots: a big number pad. -->
+    @case ('dots') {
+      <div class="qr-count">
+        <input
+          #countInput
+          type="text"
+          class="answer-input qr-count-input"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          aria-label="How many? Your answer"
+          [attr.aria-describedby]="uid + '-prompt'"
+          [value]="answerText"
+          (input)="onInputEvent($event)"
+        />
+        <div class="qr-pad" role="group" aria-label="Number pad">
+          @for (k of padKeys; track k) {
+            <button type="button" class="qr-pad-key" (click)="padPress(k)">{{ k }}</button>
+          }
+          <button type="button" class="qr-pad-key qr-pad-muted" aria-label="Clear" (click)="padClear()">C</button>
+          <button type="button" class="qr-pad-key" (click)="padPress('0')">0</button>
+          <button type="button" class="qr-pad-key qr-pad-muted" aria-label="Delete" (click)="padDelete()">⌫</button>
+        </div>
+      </div>
+    }
+
+    @default {
+      <input
+        #singleInput
+        type="text"
+        class="answer-input"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        [attr.inputmode]="spec().inputMode"
+        [attr.aria-describedby]="uid + '-prompt' + (spec().hint ? ' ' + uid + '-hint' : '')"
+        [value]="answerText"
+        [placeholder]="question.placeholder ?? 'Type your answer'"
+        (focus)="setTarget(singleInput)"
+        (input)="onInputEvent($event)"
+      />
+    }
+  }
+
+  @if (spec().kind !== 'dots' && spec().helperKeys.length) {
+    <div class="qr-keys" role="group" aria-label="Maths symbols">
+      @for (k of spec().helperKeys; track k.label) {
+        <button
+          type="button"
+          class="qr-key"
+          [attr.aria-label]="k.aria"
+          (pointerdown)="keepFocus($event)"
+          (click)="insertKey(k)"
+        >{{ k.label }}</button>
+      }
+    </div>
+  }
+
+  @if (spec().hint) {
+    <p class="qr-hint" [id]="uid + '-hint'">{{ spec().hint }}</p>
+  }
+</ng-template>

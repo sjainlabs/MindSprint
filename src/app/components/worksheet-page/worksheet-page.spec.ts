@@ -115,7 +115,7 @@
 //       of({
 //         topics: [
 //           PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'Kindergarten')!,
-//           PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'LevelA')!,
+//           PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'BandA')!,
 //         ],
 //         difficultyMapping: [],
 //       }),
@@ -281,13 +281,13 @@
 //     expect(submitButton.disabled).toBe(false);
 //   });
 //
-//   it('renders grouped K-12 and Kumon topic sections', () => {
+//   it('renders grouped K-12 and band topic sections', () => {
 //     const fixture = TestBed.createComponent(WorksheetPageComponent);
 //     fixture.detectChanges();
 //
 //     const compiled = fixture.nativeElement as HTMLElement;
 //     expect(compiled.textContent).toContain('Kindergarten');
-//     expect(compiled.textContent).toContain('Kumon Level A');
+//     expect(compiled.textContent).toContain('Band A');
 //   });
 //
 //   it('refreshes adaptive recommendation after worksheet submission', () => {
@@ -343,7 +343,7 @@
 //     fixture.detectChanges();
 //     const component = fixture.componentInstance;
 //
-//     const selectedTopic = PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'LevelA')!;
+//     const selectedTopic = PRACTICE_TOPIC_CATALOG.find((topic) => topic.groupKey === 'BandA')!;
 //     component.selectTopic(selectedTopic.id);
 //     component.generateAdvancedWorksheet();
 //

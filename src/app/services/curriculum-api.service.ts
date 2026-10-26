@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { withoutHiddenTopics } from '../constants/hidden-topics';
 
 export interface CurriculumApiTopic {
   id: string;
@@ -27,14 +28,16 @@ export class CurriculumApiService {
 
   /** GET /api/curriculum/topics */
   getAllTopics(): Observable<CurriculumApiTopic[]> {
-    return this.http.get<CurriculumApiTopic[]>(`${this.apiBase}/curriculum/topics`);
+    return this.http
+      .get<CurriculumApiTopic[]>(`${this.apiBase}/curriculum/topics`)
+      .pipe(map((topics) => withoutHiddenTopics(topics ?? [])));
   }
 
   /** GET /api/curriculum/topics?grade=X */
   getTopicsByGrade(grade: number | string): Observable<CurriculumApiTopic[]> {
-    return this.http.get<CurriculumApiTopic[]>(
-      `${this.apiBase}/curriculum/topics?grade=${encodeURIComponent(String(grade))}`,
-    );
+    return this.http
+      .get<CurriculumApiTopic[]>(`${this.apiBase}/curriculum/topics?grade=${encodeURIComponent(String(grade))}`)
+      .pipe(map((topics) => withoutHiddenTopics(topics ?? [])));
   }
 
   /** GET /api/curriculum/topic/:id */

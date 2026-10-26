@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { PracticeTopicCatalogService } from '../services/practice-topic-catalog.service';
 import { EnhancedTopic } from '../services/practice-config.service';
 import { StudyGuideService } from '../services/study-guide.service';
+import { isHiddenTopic } from '../constants/hidden-topics';
 
 const STAGES = [
   'Early years',
@@ -86,7 +87,7 @@ export class StudyGuideIndexPageComponent implements OnInit {
       next: (res) => {
         this.rows.set(
           (res.guides ?? []).map((g) => {
-            const topics = g.topicIds.map((id) => {
+            const topics = g.topicIds.filter((id) => !isHiddenTopic(id)).map((id) => {
               const t = byId.get(id);
               return {
                 id,
@@ -96,7 +97,9 @@ export class StudyGuideIndexPageComponent implements OnInit {
               };
             });
             return { id: g.id, title: g.title, topics, stage: this.stageFor(g.id, g.title, topics) };
-          }),
+          })
+          // A guide whose topics are all drawing-only has nothing to open.
+          .filter((row) => row.topics.length > 0),
         );
         this.loading.set(false);
       },

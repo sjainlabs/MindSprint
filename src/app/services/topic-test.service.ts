@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { TestApiError, toTestApiError } from './test-api-error';
+import { isHiddenTopic } from '../constants/hidden-topics';
 
 /* ---------------- Types (mirror /api/tests/topic) ---------------- */
 
@@ -116,7 +117,9 @@ export class TopicTestService {
     if (!statuses?.length) return;
     this.statuses.update((prev) => {
       const next = { ...prev };
-      for (const s of statuses) next[s.topicId.toLowerCase()] = s;
+      for (const s of statuses) {
+        if (!isHiddenTopic(s.topicId)) next[s.topicId.toLowerCase()] = s;
+      }
       return next;
     });
   }

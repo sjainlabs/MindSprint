@@ -12,7 +12,7 @@ The Angular UI has been **100% updated** to support the new backend practice sys
 
 1. **PracticeConfigService** (`src/app/services/practice-config.service.ts`)
    - ✅ Replaced legacy `PracticeConfig` with new `EnhancedTopic` interface
-   - ✅ Added `cbseGrade`, `kumonBand`, `practiceLevel` properties
+   - ✅ Added `cbseGrade`, `band`, `practiceLevel` properties
    - ✅ Implemented `/v2/syllabus` endpoints
    - ✅ Removed: `getConfig()`, `getLevels()`, `getPracticeRules()`
 
@@ -24,7 +24,7 @@ The Angular UI has been **100% updated** to support the new backend practice sys
    - ✅ Single-topic workflow (one topic at a time)
 
 3. **Practice Hub Template** (`src/app/pages/practice-hub/practice-hub.component.html`)
-   - ✅ Topic cards showing: name, cbseGrade, kumonBand, practiceLevel
+   - ✅ Topic cards showing: name, cbseGrade, band, practiceLevel
    - ✅ Operations list with difficulty scores
    - ✅ Proper state management and error handling
    - ✅ Removed: Level dropdown, multi-select topics
@@ -43,7 +43,7 @@ The Angular UI has been **100% updated** to support the new backend practice sys
 
 6. **Worksheet Page Template** (`src/app/worksheet/worksheet-page.component.html`)
    - ✅ New "Topic Info" section showing all EnhancedTopic metadata
-   - ✅ Displays: Topic name, CBSE Grade, Kumon Band, Practice Level, Operation
+   - ✅ Displays: Topic name, CBSE Grade, Band, Practice Level, Operation
    - ✅ Professional blue-themed styling
 
 7. **Worksheet Page Styles** (`src/app/worksheet/worksheet-page.component.css`)
@@ -110,7 +110,7 @@ ADDED:
        id: string
        name: string
        cbseGrade: number
-       kumonBand: string
+       band: string
        practiceLevel: string
        skills: { id: string; difficultyScore: number }[]
      }
@@ -162,21 +162,21 @@ filteredTopics = topics.filter(t => t.cbseGrade <= 5)
 
 **Grade 1 Topics:**
 - CBSE Grade Badge shows: `[Grade 1]`
-- Kumon Band: K (very easy)
+- Band: K (very easy)
 - Practice Level: Beginner
 - Operations: 2-3 per topic
 - Difficulty Scores: 5-25
 
 **Grade 3 Topics:**
 - CBSE Grade Badge shows: `[Grade 3]`
-- Kumon Band: J or I
+- Band: J or I
 - Practice Level: Intermediate
 - Operations: 3-4 per topic
 - Difficulty Scores: 15-45
 
 **Grade 5 Topics:**
 - CBSE Grade Badge shows: `[Grade 5]`
-- Kumon Band: H
+- Band: H
 - Practice Level: Advanced
 - Operations: 4-5 per topic
 - Difficulty Scores: 40-90
@@ -193,7 +193,7 @@ filteredTopics = topics.filter(t => t.cbseGrade <= 5)
 
 ### ✅ Difficulty-Aware Display
 - CBSE Grade shown on every topic card
-- Kumon Band indicates proficiency level
+- Band indicates proficiency level
 - Practice Level (Beginner/Intermediate/Advanced) clear
 - Difficulty scores on operations show exact complexity
 
@@ -230,7 +230,7 @@ filteredTopics = topics.filter(t => t.cbseGrade <= 5)
 6. Select "Add Basic" (Difficulty 10)
 7. Set to 20 questions
 8. Generate worksheet
-9. See worksheet with "Grade 1, Kumon K, Beginner" info
+9. See worksheet with "Grade 1, Band K, Beginner" info
 10. Answer 20 addition problems
 11. Submit and see results
 ```
@@ -247,7 +247,7 @@ filteredTopics = topics.filter(t => t.cbseGrade <= 5)
 7. Select "Multiply With Carrying" (Difficulty 35)
 8. Set to 15 questions
 9. Generate worksheet
-10. See worksheet with "Grade 3, Kumon J, Intermediate" info
+10. See worksheet with "Grade 3, Band J, Intermediate" info
 11. Answer 15 multiplication problems
 12. Submit and see results
 13. Optional: Go back and try Grade 1 addition for review
@@ -264,7 +264,7 @@ filteredTopics = topics.filter(t => t.cbseGrade <= 5)
 6. Select "Complex Percentage Problems" (Difficulty 90)
 7. Set to 10 questions
 8. Generate worksheet
-9. See worksheet with "Grade 5, Kumon H, Advanced" info
+9. See worksheet with "Grade 5, Band H, Advanced" info
 10. Answer 10 complex percentage problems
 11. Submit and see results
 12. Optional: Try easier Grade 3 multiplication for warm-up
@@ -405,7 +405,7 @@ All requirements met:
 
 - ✅ UI supports EnhancedSyllabus topics
 - ✅ Load syllabus.topics from new backend
-- ✅ Display cbseGrade, kumonBand, practiceLevel, difficultyScore
+- ✅ Display cbseGrade, band, practiceLevel, difficultyScore
 - ✅ Remove legacy LearningLevel from practice hub
 - ✅ Remove practice.rules display
 - ✅ Remove gradeToBand, bandToLevel UI

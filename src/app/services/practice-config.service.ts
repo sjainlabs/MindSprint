@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {map, Observable} from 'rxjs';
 import { environment } from '../../environments/environment';
+import { withoutHiddenTopics } from '../constants/hidden-topics';
 
 /** EnhancedTopic from new backend syllabus system */
 export interface EnhancedTopic {
@@ -26,7 +27,8 @@ export interface EnhancedTopic {
   progress?: number; // optional progress value
   skills: { id: string; difficultyScore: number }[];
   studyMaterial?: { type: string; title: string; url?: string }[];
-  Band: string;
+  /** Proficiency band letter, e.g. "C". */
+  band?: string;
 }
 
 export interface EnhancedSyllabusResponse {
@@ -42,21 +44,23 @@ export class PracticeConfigService {
   /** Fetch EnhancedSyllabus with difficulty-aware topics */
   getSyllabus(): Observable<EnhancedSyllabusResponse> {
     // Use new modular syllabus topics endpoint instead of legacy /syllabus
-    return this.http.get<EnhancedSyllabusResponse>(`${this.apiBase}/syllabus/topics`);
+    return this.http
+      .get<EnhancedSyllabusResponse>(`${this.apiBase}/syllabus/topics`)
+      .pipe(map((res) => ({ ...res, topics: withoutHiddenTopics(res.topics ?? []) })));
   }
 
   /** Get all topics from syllabus */
   getTopics() {
     return this.http.get<{ topics: EnhancedTopic[] }>(`${this.apiBase}/syllabus/topics`)
-      .pipe(map(res => res.topics));
+      .pipe(map(res => withoutHiddenTopics(res.topics ?? [])));
   }
 
 
   /** Get topics filtered by grade (topics where cbseGrade <= grade) */
   getTopicsForGrade(grade: number): Observable<EnhancedTopic[]> {
-    return this.http.get<EnhancedTopic[]>(
-      `${this.apiBase}/syllabus/topics?grade=${encodeURIComponent(String(grade))}`
-    );
+    return this.http
+      .get<EnhancedTopic[]>(`${this.apiBase}/syllabus/topics?grade=${encodeURIComponent(String(grade))}`)
+      .pipe(map((topics) => withoutHiddenTopics(topics ?? [])));
   }
 }
 

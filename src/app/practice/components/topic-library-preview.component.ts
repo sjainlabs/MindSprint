@@ -11,7 +11,7 @@ import { type SuperSyllabus } from '../../services/syllabus.service';
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">Topic library</p>
-          <h2 class="mt-1 text-xl font-bold text-slate-900">K-12 + Kumon preview</h2>
+          <h2 class="mt-1 text-xl font-bold text-slate-900">K-12 + bands preview</h2>
           <p class="mt-2 text-sm text-slate-600">Open the full library to browse all skills.</p>
         </div>
       </div>

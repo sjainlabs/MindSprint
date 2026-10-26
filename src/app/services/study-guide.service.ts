@@ -57,7 +57,8 @@ export interface StudyGuideProgress {
 
 /** Guides change rarely: serve from cache for a day, then show the cached copy while refetching. */
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const CACHE_PREFIX = 'mindsprint.studyGuide.cache';
+// Bump the version when cached guide or topic data must be discarded (v2: corrected grades and bands).
+const CACHE_PREFIX = 'mindsprint.studyGuide.cache.v2';
 const PROGRESS_PREFIX = 'mindsprint.studyGuide.progress';
 const PREF_PREFIX = 'mindsprint.studyGuide.pref';
 

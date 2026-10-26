@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {firstValueFrom, Observable} from 'rxjs';
+import {firstValueFrom, map, Observable} from 'rxjs';
 import { environment } from '../../environments/environment';
 import { auth } from '../firebase/firebase.config';
 import type { TopicTestStatus } from './topic-test.service';
+import { isHiddenTopic, withoutHiddenTopics } from '../constants/hidden-topics';
 
 
 export interface AccessCodeValidationResponse {
@@ -267,7 +268,7 @@ export interface EnhancedTopicV2 {
   cbseGrade: number;
   gradeBand: string;
   practiceLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Mastery';
-  Band: string;
+  band?: string;
   progress: number;
   skills: Skill[];
   domains: Domain[];
@@ -452,7 +453,7 @@ export class LearningApiService {
         `${this.apiBase}/curriculum/topics?grade=${encodeURIComponent(grade)}`,
       ),
     );
-    return (response.topics ?? []).filter((topic) => !!topic.id && !!topic.name);
+    return withoutHiddenTopics(response.topics ?? []).filter((topic) => !!topic.id && !!topic.name);
   }
 
   async getTopicDetail(topicId: string): Promise<TopicDetailResponse> {
@@ -543,7 +544,7 @@ export class LearningApiService {
         `${this.apiBase}/curriculum/topics-v2?grade=${encodeURIComponent(grade)}`
       )
     );
-    return response.topics ?? [];
+    return withoutHiddenTopics(response.topics ?? []);
   }
 
   /* ---------------- Worksheet V2 (MULTI-TOPIC) ---------------- */
@@ -566,9 +567,16 @@ export class LearningApiService {
   // progression API additions
 
   getProgressOverview(studentId: string) {
-    return this.http.get<ProgressOverviewResponse>(
-      `${this.apiBase}/progression/${studentId}/overview`
-    );
+    return this.http
+      .get<ProgressOverviewResponse>(`${this.apiBase}/progression/${studentId}/overview`)
+      .pipe(
+        map((o) => ({
+          ...o,
+          topicsInProgress: withoutHiddenTopics(o.topicsInProgress ?? []),
+          topicsMastered: withoutHiddenTopics(o.topicsMastered ?? []),
+          recommendedNextTopicId: isHiddenTopic(o.recommendedNextTopicId) ? null : o.recommendedNextTopicId,
+        })),
+      );
   }
 
   getTopicProgress(studentId: string, topicId: string) {

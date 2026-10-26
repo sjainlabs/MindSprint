@@ -1,6 +1,6 @@
 # MindSprint
 
-MindSprint is a gamified skill assessment app for kids, built with Angular and Tailwind CSS. It provides an engaging and interactive way for children to test their knowledge in Math, English, and Science — powered by the **Super-Syllabus**: a unified K–12 curriculum framework combining Kumon-style fluency, Mathnasium conceptual mastery, NWEA MAP alignment, reasoning & logic, and competition math.
+MindSprint is a gamified skill assessment app for kids, built with Angular and Tailwind CSS. It provides an engaging and interactive way for children to test their knowledge in Math, English, and Science — powered by the **Super-Syllabus**: a unified K–12 curriculum framework combining daily fluency practice, Mathnasium conceptual mastery, NWEA MAP alignment, reasoning & logic, and competition math.
 
 ## 🎨 Design
 

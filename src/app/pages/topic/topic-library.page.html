@@ -79,7 +79,7 @@
               <p class="font-semibold">
                 Level: {{ meta.practiceLevel }}
                 • CBSE Grade: {{ meta.cbseGrade }}
-                • Kumon: {{ meta.Band }}
+                <ng-container *ngIf="meta.band">• Band {{ meta.band }}</ng-container>
               </p>
 
               <p class="mt-1">

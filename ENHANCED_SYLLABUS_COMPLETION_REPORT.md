@@ -17,7 +17,7 @@ All required Angular UI updates have been successfully implemented to support th
   - `id: string` - Unique identifier
   - `name: string` - Display name
   - `cbseGrade: number` - CBSE grade level
-  - `kumonBand: string` - Kumon proficiency band
+  - `band: string` - proficiency band
   - `practiceLevel: string` - Difficulty level
   - `skills: { id: string; difficultyScore: number }[]` - Operations with difficulty
 - Added `EnhancedSyllabusResponse` interface
@@ -73,7 +73,7 @@ All required Angular UI updates have been successfully implemented to support th
 5. **Topic Selection** - Card grid with:
    - Topic name (h4)
    - CBSE Grade badge
-   - Kumon Band badge
+   - Band badge
    - Practice Level badge
    - Hover/selected visual states
 6. **Operation Selection** - Button list showing:
@@ -99,7 +99,7 @@ All required Angular UI updates have been successfully implemented to support th
 - `.topic-card` - Enhanced card container
 - `.topic-card.selected` - Green highlight state
 - `.topic-details` - Badge container
-- `.badge`, `.kumon-badge`, `.level-badge` - Color-coded badges
+- `.badge`, `.band-badge`, `.level-badge` - Color-coded badges
 - `.operations-list` - Flex operations container
 - `.operation-btn` - Operation button with active state
 - `.difficulty-score` - Secondary text styling
@@ -159,7 +159,7 @@ interface WorksheetNavState {
 Displays before questions with:
 - Topic name
 - CBSE Grade
-- Kumon Band
+- Band
 - Practice Level
 - Operation (when available)
 
@@ -392,7 +392,7 @@ Before deploying to production:
 ✅ UI displays correct difficulty for Grade 1 vs Grade 3 vs Grade 5
 ✅ EnhancedTopic interface implemented and used throughout
 ✅ Single-topic practice flow (one topic at a time)
-✅ Topic cards show cbseGrade, kumonBand, practiceLevel
+✅ Topic cards show cbseGrade, band, practiceLevel
 ✅ Operations shown with difficulty scores
 ✅ Worksheet displays full topic context
 ✅ Legacy LearningLevel removed from practice hub

@@ -49,3 +49,6 @@ Thumbs.db
 /backend/node_modules
 /backend/dist
 /backend/src/db/mindsprint.sqlite
+
+# Local AI assistant chat logs
+.ollamassist/

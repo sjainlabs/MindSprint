@@ -6,6 +6,7 @@ import {FullInsightsResponse, LearningApiService, PracticeWorksheetV2Response} f
 import {firstValueFrom} from 'rxjs';
 import { TopicTestService } from '../services/topic-test.service';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
+import { withoutHiddenTopics } from '../constants/hidden-topics';
 
 @Component({
   selector: 'app-simple-insights-page',
@@ -25,7 +26,7 @@ export class InsightsPageComponent implements OnInit {
   readonly insights = signal<FullInsightsResponse | null>(null);
   // Read from the shared cache so a just-submitted test result shows without refetching.
   readonly topicTestStatuses = computed(() =>
-    (this.insights()?.topicTests ?? []).map((t) => this.topicTests.statusFor(t.topicId) ?? t),
+    withoutHiddenTopics(this.insights()?.topicTests ?? []).map((t) => this.topicTests.statusFor(t.topicId) ?? t),
   );
 
   readonly worksheetHistory = signal<any[]>([]);

@@ -66,7 +66,7 @@
 │                                                               │
 │ Topic Info:                                                   │
 │ ┌─────────────┬─────────────┬──────────────┬──────────────┐  │
-│ │Topic: Add.. │Grade: 1     │Kumon: K      │Level: Beg.   │  │
+│ │Topic: Add.. │Grade: 1     │Band: K       │Level: Beg.   │  │
 │ │Operation: Add Basic       │              │              │  │
 │ └─────────────┴─────────────┴──────────────┴──────────────┘  │
 │                                                               │
@@ -159,7 +159,7 @@
 │                                                               │
 │ Topic Info:                                                   │
 │ ┌──────────────┬──────────────┬──────────────┬──────────────┐ │
-│ │Topic: Mult.. │Grade: 3      │Kumon: J      │Level: Int.   │ │
+│ │Topic: Mult.. │Grade: 3      │Band: J       │Level: Int.   │ │
 │ │Operation: Multiply With Carrying                          │ │
 │ └──────────────┴──────────────┴──────────────┴──────────────┘ │
 │                                                               │
@@ -259,7 +259,7 @@
 │                                                               │
 │ Topic Info:                                                   │
 │ ┌──────────────┬──────────────┬──────────────┬──────────────┐ │
-│ │Topic: Percent│Grade: 5      │Kumon: H      │Level: Adv.   │ │
+│ │Topic: Percent│Grade: 5      │Band: H       │Level: Adv.   │ │
 │ │Operation: Find Percentage of Number                       │ │
 │ └──────────────┴──────────────┴──────────────┴──────────────┘ │
 │                                                               │
@@ -305,12 +305,12 @@ GRADE 5 (Advanced) [Inherits all Grade 1 + Grade 3 + adds]
 └── Word Problems (Complex) ─ Difficulty: 60-90
 ```
 
-### CBSE Grade vs Kumon Band Mapping
+### CBSE Grade vs Band Mapping
 
 ```
-CBSE Grade 1  → Kumon Band K  (Age 5-6)   → beginner/very_easy
-CBSE Grade 3  → Kumon Band J  (Age 7-8)   → intermediate/easy_medium
-CBSE Grade 5  → Kumon Band H  (Age 9-10)  → advanced/medium_hard
+CBSE Grade 1  → Band K  (Age 5-6)   → beginner/very_easy
+CBSE Grade 3  → Band J  (Age 7-8)   → intermediate/easy_medium
+CBSE Grade 5  → Band H  (Age 9-10)  → advanced/medium_hard
 ```
 
 ---
@@ -404,7 +404,7 @@ This reminds user what they're practicing!
 |---------|---------|---------|---------|
 | **Topics Available** | 3 | 7 | 11 |
 | **Difficulty Level** | Beginner | Intermediate | Advanced |
-| **Kumon Band** | K | J, I, H | H |
+| **Band**       | K | J, I, H | H |
 | **Operations** | 2-3 per topic | 3-4 per topic | 4-5 per topic |
 | **Difficulty Scores** | 5-25 | 15-45 | 40-90 |
 | **Example Topic** | Addition | Multiplication | Percentages |

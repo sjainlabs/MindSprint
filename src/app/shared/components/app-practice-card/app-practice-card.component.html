@@ -10,6 +10,7 @@
 
 
       <span class="level">{{ topic?.practiceLevel || 'Beginner' }}</span>
+      <span class="band" *ngIf="topic?.band">Band {{ topic.band }}</span>
     </div>
   </div>
 

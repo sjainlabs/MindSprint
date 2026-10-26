@@ -8,7 +8,7 @@ export interface EnhancedTopic {
   id: string;                                    // e.g., "addition-single"
   name: string;                                  // e.g., "Addition (Single Digit)"
   cbseGrade: number;                            // 1, 3, 5, etc.
-  kumonBand: string;                            // "K", "J", "I", "H", etc.
+  band: string;                            // "K", "J", "I", "H", etc.
   practiceLevel: string;                        // "Beginner", "Intermediate", "Advanced"
   skills: { 
     id: string;                                 // e.g., "add-basic"
@@ -202,7 +202,7 @@ export interface EnhancedTopic {
 - `.topic-card:hover` - Hover state
 - `.topic-details` - Badge container
 - `.badge` - Blue badge (default)
-- `.kumon-badge` - Indigo badge (Kumon band)
+- `.band-badge` - Indigo badge (band)
 - `.level-badge` - Purple badge (practice level)
 
 ### Operations
@@ -317,7 +317,7 @@ Topic Filtering
 Topic Cards
   ☐ Topic name displays correctly
   ☐ cbseGrade badge shows numeric value
-  ☐ kumonBand badge shows letter value
+  ☐ band badge shows letter value
   ☐ practiceLevel badge shows level name
   ☐ Card clickable and selects topic
   ☐ Selected topic highlights in green

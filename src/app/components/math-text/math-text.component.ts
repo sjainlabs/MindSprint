@@ -1,58 +1,76 @@
 import { Component, Input, computed, signal } from '@angular/core';
-
-type Part =
-  | { kind: 'text'; value: string }
-  | { kind: 'frac'; whole?: string; num: string; den: string; raw: string };
-
-// "2 1/4" (mixed) or "3/4". Not part of a longer token like a date "12/05/2024" or a URL.
-const FRACTION = /(?<![\d/])(?:(\d+) )?(\d+)\/(\d+)(?![\d/])/g;
-
-/** Splits text into plain runs and fractions. Exported for tests. */
-export function splitFractions(text: string): Part[] {
-  const parts: Part[] = [];
-  let last = 0;
-  for (const m of text.matchAll(FRACTION)) {
-    const start = m.index ?? 0;
-    if (start > last) parts.push({ kind: 'text', value: text.slice(last, start) });
-    parts.push({ kind: 'frac', whole: m[1], num: m[2], den: m[3], raw: m[0] });
-    last = start + m[0].length;
-  }
-  if (last < text.length) parts.push({ kind: 'text', value: text.slice(last) });
-  return parts;
-}
+import { formatMath } from '../../shared/utils/math-format';
 
 /**
- * Renders study-guide text as given, but shows a/b and mixed numbers as stacked fractions.
- * Screen readers get the original "3/4" text; the stacked version is visual only.
+ * Renders maths text as given, with light formatting: stacked fractions, superscripts, log bases,
+ * matrices as a grid and counting dots in groups of five. Screen readers get the original text for
+ * fractions and matrices; the formatted version is visual only.
  */
 @Component({
   selector: 'app-math-text',
   standalone: true,
   template: `
     @for (p of parts(); track $index) {
-      @if (p.kind === 'text') {
-        <ng-container>{{ p.value }}</ng-container>
-      } @else {
-        <span class="mt-frac-wrap">
-          <span class="mt-sr">{{ p.raw }}</span>
-          <span class="mt-visual" aria-hidden="true">
-            @if (p.whole) {
-              <span class="mt-whole">{{ p.whole }}</span>
-            }
-            <span class="mt-frac">
-              <span class="mt-num">{{ p.num }}</span>
-              <span class="mt-den">{{ p.den }}</span>
+      @switch (p.kind) {
+        @case ('text') {
+          <ng-container>{{ p.value }}</ng-container>
+        }
+        @case ('sup') {
+          <sup class="mt-sup">{{ p.value }}</sup>
+        }
+        @case ('sub') {
+          <sub class="mt-sub">{{ p.value }}</sub>
+        }
+        @case ('frac') {
+          <span class="mt-frac-wrap">
+            <span class="mt-sr">{{ p.raw }}</span>
+            <span class="mt-visual" aria-hidden="true">
+              @if (p.whole) {
+                <span class="mt-whole">{{ p.whole }}</span>
+              }
+              <span class="mt-frac">
+                <span class="mt-num">{{ p.num }}</span>
+                <span class="mt-den">{{ p.den }}</span>
+              </span>
             </span>
           </span>
-        </span>
+        }
+        @case ('matrix') {
+          <span class="mt-matrix-wrap">
+            <span class="mt-sr">matrix {{ p.raw }}</span>
+            <span
+              class="mt-matrix"
+              aria-hidden="true"
+              [style.grid-template-columns]="'repeat(' + p.rows[0].length + ', auto)'"
+            >
+              @for (row of p.rows; track $index) {
+                @for (cell of row; track $index) {
+                  <span class="mt-cell">{{ cell }}</span>
+                }
+              }
+            </span>
+          </span>
+        }
+        @case ('dots') {
+          <span class="mt-dots" role="img" [attr.aria-label]="p.count + ' dots in groups of five'">
+            @for (g of p.groups; track $index) {
+              <span class="mt-dot-group">
+                @for (d of dotsOf(g); track $index) {
+                  <span class="mt-dot"></span>
+                }
+              </span>
+            }
+          </span>
+        }
       }
     }
   `,
   styles: [
     `
       :host { display: inline; }
+      .mt-sup, .mt-sub { font-size: 0.72em; line-height: 0; }
       /* position: relative keeps the hidden text inside scrolling rows instead of widening the page. */
-      .mt-frac-wrap { white-space: nowrap; position: relative; }
+      .mt-frac-wrap, .mt-matrix-wrap { white-space: nowrap; position: relative; }
       .mt-visual { display: inline-flex; align-items: center; gap: 0.12em; vertical-align: middle; }
       .mt-frac {
         display: inline-flex;
@@ -64,6 +82,33 @@ export function splitFractions(text: string): Part[] {
       }
       .mt-num { border-bottom: 0.1em solid currentColor; padding: 0 0.15em; }
       .mt-den { padding: 0 0.15em; }
+      .mt-matrix {
+        display: inline-grid;
+        gap: 0.1em 0.8em;
+        vertical-align: middle;
+        padding: 0.15em 0.45em;
+        margin: 0 0.15em;
+        border-left: 0.12em solid currentColor;
+        border-right: 0.12em solid currentColor;
+        border-radius: 0.25em;
+        line-height: 1.2;
+      }
+      .mt-cell { text-align: center; }
+      /* Big, high-contrast dots with a clear gap after every five so children can count them. */
+      .mt-dots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6em 1.1em;
+        margin: 0.5em 0;
+      }
+      .mt-dot-group { display: inline-flex; gap: 0.3em; }
+      .mt-dot {
+        width: 1.6em;
+        height: 1.6em;
+        border-radius: 50%;
+        background: #1e1b4b;
+        display: inline-block;
+      }
       .mt-sr {
         position: absolute;
         width: 1px;
@@ -77,9 +122,13 @@ export function splitFractions(text: string): Part[] {
 })
 export class MathTextComponent {
   private readonly textSignal = signal('');
-  readonly parts = computed(() => splitFractions(this.textSignal()));
+  readonly parts = computed(() => formatMath(this.textSignal()));
 
   @Input({ required: true }) set text(value: string | null | undefined) {
     this.textSignal.set(value ?? '');
+  }
+
+  dotsOf(n: number): number[] {
+    return Array.from({ length: n }, (_, i) => i);
   }
 }
