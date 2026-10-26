@@ -1,8 +1,9 @@
 /**
  * A light formatter for maths notation in prompts and study guides. It turns plain text into
  * parts the template can render: superscripts (x^2, e^(3x)), log bases (log_2), stacked fractions
- * (3/4, 2 1/4), 2×2-style matrices ([a b; c d]) and counting dots (●●●●● ●●).
- * Everything else, including √, ×, ÷, |x - 3|, sin(2x) and f'(0), is left as text.
+ * (3/4, 2 1/4), 2×2-style matrices ([a b; c d]), counting dots (●●●●● ●●), dice faces (⚁ ⚄)
+ * and square roots with the bar drawn over the number (√7, √(x + 1)).
+ * Everything else, including ×, ÷, |x - 3|, sin(2x) and f'(0), is left as text.
  */
 
 export type MathPart =
@@ -11,7 +12,9 @@ export type MathPart =
   | { kind: 'sub'; value: string }
   | { kind: 'frac'; whole?: string; num: string; den: string; raw: string }
   | { kind: 'matrix'; rows: string[][]; raw: string }
-  | { kind: 'dots'; groups: number[]; count: number };
+  | { kind: 'dots'; groups: number[]; count: number }
+  | { kind: 'dice'; faces: number[] }
+  | { kind: 'root'; value: string };
 
 const CELL = String.raw`[-−]?[\w.\/]+`;
 const ROW = String.raw`${CELL}(?:\s+${CELL})*`;
@@ -31,6 +34,18 @@ const PATTERNS: Pattern[] = [
       const rows = m[1].split(';').map((r) => r.trim().split(/\s+/));
       return [{ kind: 'matrix', rows, raw: m[0] }];
     },
+  },
+  {
+    // Dice faces ⚀–⚅ (U+2680–2685), possibly space-separated.
+    re: /[\u2680-\u2685](?:\s*[\u2680-\u2685])*/y,
+    build: (m) => [
+      { kind: 'dice', faces: [...m[0].replace(/\s+/g, '')].map((c) => c.charCodeAt(0) - 0x2680 + 1) },
+    ],
+  },
+  {
+    // √7, √2.5, √x, √(x + 1): the bar covers the number or bracket contents.
+    re: /√\s*(\d+(?:\.\d+)?|[a-zA-Z]|\([^()]*\))/y,
+    build: (m) => [{ kind: 'root', value: m[1].startsWith('(') ? m[1].slice(1, -1) : m[1] }],
   },
   {
     // Counting dots, possibly in space-separated groups.

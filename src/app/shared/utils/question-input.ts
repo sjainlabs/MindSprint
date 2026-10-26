@@ -29,6 +29,7 @@ export interface QuestionInputSpec {
 const KEY_MINUS: HelperKey = { label: '−', insert: '-', aria: 'Insert minus sign' };
 const KEY_SLASH: HelperKey = { label: '/', insert: '/', aria: 'Insert fraction bar' };
 const KEY_POINT: HelperKey = { label: '.', insert: '.', aria: 'Insert decimal point' };
+const KEY_ROOT: HelperKey = { label: '√', insert: '√', aria: 'Insert square root sign' };
 const INEQUALITY_KEYS: HelperKey[] = [
   { label: '<', insert: '<', aria: 'Insert less than' },
   { label: '>', insert: '>', aria: 'Insert greater than' },
@@ -36,9 +37,10 @@ const INEQUALITY_KEYS: HelperKey[] = [
   { label: '≥', insert: '≥', aria: 'Insert greater than or equal to' },
 ];
 
-const DOTS = /[●⚫]/;
-/** "Give x, y …", "Give p, q where p ≤ q", "Give a, b, c": single letters separated by commas. */
-const GIVE_VARIABLES = /\bGive\s+([a-z](?:\s*,\s*[a-z])+)\b/i;
+// Counting dots and dice faces ⚀–⚅.
+const DOTS = /[●⚫\u2680-\u2685]/;
+/** "Give x, y …", "Give p, q where p ≤ q", "Give a, b, c, R": single letters separated by commas (or "and"). */
+const GIVE_VARIABLES = /\bGive\s+([a-z](?:(?:\s*,\s*|\s+and\s+)[a-z])+)\b/i;
 const FRACTION_IN_PROMPT = /\d\s*\/\s*\d|fraction|simplest form|mixed number/i;
 // A minus is a negative sign when a digit follows straight away (−7), not in "45 − 23".
 const NEGATIVE_IN_PROMPT = /(^|[\s(=,+×÷*])[-−]\d|[-−]\s*\(|\b\d+\s*[-−]\s*\d+\b.*[<>≤≥=]|integer|negative/i;
@@ -47,7 +49,7 @@ const ARITHMETIC = /\d\s*[+×÷*x−-]\s*\d/;
 /** Prompts that want a word, not a number. */
 const WORD_ANSWER = /\b(which|name|what shape|what kind|explain|why|true or false|word|spell|direction|left or right|up or down)\b/i;
 
-const EXAMPLE_VALUES = ['3', '-2', '5'];
+const EXAMPLE_VALUES = ['3', '-2', '5', '1'];
 
 export function inputSpecFor(prompt: string): QuestionInputSpec {
   const text = prompt ?? '';
@@ -58,7 +60,7 @@ export function inputSpecFor(prompt: string): QuestionInputSpec {
 
   const give = GIVE_VARIABLES.exec(text);
   if (give) {
-    const variables = give[1].split(',').map((v) => v.trim());
+    const variables = give[1].split(/\s*,\s*|\s+and\s+/).map((v) => v.trim());
     const example = variables.map((_, i) => EXAMPLE_VALUES[i % EXAMPLE_VALUES.length]).join(', ');
     return {
       kind: 'multi',
@@ -76,6 +78,17 @@ export function inputSpecFor(prompt: string): QuestionInputSpec {
       inputMode: 'text',
       helperKeys: [...INEQUALITY_KEYS, KEY_MINUS, ...(FRACTION_IN_PROMPT.test(text) ? [KEY_SLASH] : [])],
       hint: 'Example: x ≤ 5',
+    };
+  }
+
+  // Surds: answers like 9 + 2√14 need a √ key, which phone keyboards don't have.
+  if (/√/.test(text)) {
+    return {
+      kind: 'text',
+      variables: [],
+      inputMode: 'text',
+      helperKeys: [KEY_ROOT, KEY_SLASH, KEY_MINUS],
+      hint: 'Example: 9 + 2√14',
     };
   }
 

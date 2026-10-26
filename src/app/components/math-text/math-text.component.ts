@@ -3,9 +3,23 @@ import { formatMath } from '../../shared/utils/math-format';
 
 /**
  * Renders maths text as given, with light formatting: stacked fractions, superscripts, log bases,
- * matrices as a grid and counting dots in groups of five. Screen readers get the original text for
+ * square roots with a bar, matrices as a grid, counting dots in groups of five and dice faces.
+ * Dice are always drawn as SVG pips, because many Android fonts have no glyphs for ⚀–⚅. Screen readers get the original text for
  * fractions and matrices; the formatted version is visual only.
  */
+const L = 28;
+const M = 50;
+const H = 72;
+/** Pip centres for each face, on a 100×100 die. */
+const PIPS: Record<number, Array<[number, number]>> = {
+  1: [[M, M]],
+  2: [[L, L], [H, H]],
+  3: [[L, L], [M, M], [H, H]],
+  4: [[L, L], [H, L], [L, H], [H, H]],
+  5: [[L, L], [H, L], [M, M], [L, H], [H, H]],
+  6: [[L, L], [H, L], [L, M], [H, M], [L, H], [H, H]],
+};
+
 @Component({
   selector: 'app-math-text',
   standalone: true,
@@ -49,6 +63,21 @@ import { formatMath } from '../../shared/utils/math-format';
                 }
               }
             </span>
+          </span>
+        }
+        @case ('root') {
+          <span class="mt-root"><span class="mt-root-sign">√</span><span class="mt-radicand">{{ p.value }}</span></span>
+        }
+        @case ('dice') {
+          <span class="mt-dice" role="img" [attr.aria-label]="diceLabel(p.faces)">
+            @for (face of p.faces; track $index) {
+              <svg class="mt-die" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                <rect x="4" y="4" width="92" height="92" rx="18" class="mt-die-face" />
+                @for (pip of pipsFor(face); track $index) {
+                  <circle [attr.cx]="pip[0]" [attr.cy]="pip[1]" r="9.5" class="mt-pip" />
+                }
+              </svg>
+            }
           </span>
         }
         @case ('dots') {
@@ -109,6 +138,26 @@ import { formatMath } from '../../shared/utils/math-format';
         background: #1e1b4b;
         display: inline-block;
       }
+      /* Plain inline (not a box) so lines don't break between "(" and the root. */
+      .mt-root { white-space: nowrap; }
+      /* The vinculum: a bar over the radicand that joins the top of the √ sign. */
+      .mt-radicand {
+        border-top: 0.08em solid currentColor;
+        padding: 0.04em 0.12em 0 0.04em;
+      }
+      .mt-dice {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        margin: 0.35rem 0.15rem;
+        border-radius: 1rem;
+        background: #f1f5f9;
+        vertical-align: middle;
+      }
+      .mt-die { width: max(48px, 3.25em); height: max(48px, 3.25em); display: block; }
+      .mt-die-face { fill: #ffffff; stroke: #1e1b4b; stroke-width: 5; }
+      .mt-pip { fill: #1e1b4b; }
       .mt-sr {
         position: absolute;
         width: 1px;
@@ -130,5 +179,14 @@ export class MathTextComponent {
 
   dotsOf(n: number): number[] {
     return Array.from({ length: n }, (_, i) => i);
+  }
+
+  pipsFor(face: number): Array<[number, number]> {
+    return PIPS[face] ?? [];
+  }
+
+  diceLabel(faces: number[]): string {
+    const names = faces.map((f) => `${f}`).join(' and ');
+    return faces.length === 1 ? `A dice showing ${names}` : `Dice showing ${names}`;
   }
 }

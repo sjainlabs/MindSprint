@@ -2,7 +2,7 @@ import { formatMath } from './math-format';
 
 describe('formatMath', () => {
   it('leaves plain text alone', () => {
-    expect(formatMath('Find √49 × 2 ÷ 7')).toEqual([{ kind: 'text', value: 'Find √49 × 2 ÷ 7' }]);
+    expect(formatMath('Find 49 × 2 ÷ 7')).toEqual([{ kind: 'text', value: 'Find 49 × 2 ÷ 7' }]);
     expect(formatMath("Find f'(0) and |x - 3|")).toEqual([{ kind: 'text', value: "Find f'(0) and |x - 3|" }]);
   });
 
@@ -45,5 +45,30 @@ describe('formatMath', () => {
     const parts = formatMath('How many dots? ●●●●● ●●');
     expect(parts[1]).toEqual({ kind: 'dots', groups: [5, 2], count: 7 });
     expect(formatMath('●●●●●●●●●●●●')[0]).toEqual({ kind: 'dots', groups: [5, 5, 2], count: 12 });
+  });
+
+  it('draws roots over the number or bracket contents', () => {
+    expect(formatMath('(√7 + √2)^2')).toEqual([
+      { kind: 'text', value: '(' },
+      { kind: 'root', value: '7' },
+      { kind: 'text', value: ' + ' },
+      { kind: 'root', value: '2' },
+      { kind: 'text', value: ')' },
+      { kind: 'sup', value: '2' },
+    ]);
+    expect(formatMath('1/(√26 - 5)')).toEqual([
+      { kind: 'text', value: '1/(' },
+      { kind: 'root', value: '26' },
+      { kind: 'text', value: ' - 5)' },
+    ]);
+    expect(formatMath('√(x + 1)')).toEqual([{ kind: 'root', value: 'x + 1' }]);
+  });
+
+  it('turns dice characters into faces', () => {
+    expect(formatMath('How many dots altogether? ⚁ ⚄')).toEqual([
+      { kind: 'text', value: 'How many dots altogether? ' },
+      { kind: 'dice', faces: [2, 5] },
+    ]);
+    expect(formatMath('⚀⚅')[0]).toEqual({ kind: 'dice', faces: [1, 6] });
   });
 });
