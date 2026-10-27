@@ -31,7 +31,7 @@ import { DailyChallengeService, localDate } from '../services/daily-challenge.se
           <a routerLink="/tests" class="button">Tests</a>
           <a routerLink="/insights" class="button">Insights</a>
           <a routerLink="/study-guides" class="button">📘 Study guides</a>
-          <a routerLink="/progression/overview" class="button">View Your Progress</a>
+<!--          <a routerLink="/progression/overview" class="button">View Your Progress</a>-->
 
         </div>
       </section>
