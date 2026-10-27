@@ -60,6 +60,7 @@ interface DashboardStudent {
         <div class="actions">
           <a class="link" routerLink="/daily/chart" [queryParams]="{ studentId: student.id }">📊 Daily Challenge chart</a>
           <a class="link" routerLink="/daily/progress" [queryParams]="{ studentId: student.id }">🗺️ Progress map</a>
+          <a class="link" routerLink="/math-games/abacus/parent" [queryParams]="{ studentId: student.id }">🧮 Abacus levels</a>
         </div>
       </section>
 

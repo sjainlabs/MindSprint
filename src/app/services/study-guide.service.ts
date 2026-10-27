@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, concat, EMPTY, firstValueFrom, of, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
+import type { MathBrainLink } from './math-brain.service';
 
 /* ---------------- Types (mirror /api/study-guides) ---------------- */
 
@@ -24,6 +25,8 @@ export interface StudyGuide {
   sampleQuestions: Array<{ question: string; answer: string; hint: string }>;
   commonMistakes: string[];
   practiceTogether: string[];
+  /** "Practise with Math Brain" links (tables, squares, abacus…). */
+  mathBrain?: MathBrainLink[];
 }
 
 export interface TopicStudyGuideResponse {

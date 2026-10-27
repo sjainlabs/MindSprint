@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { OnboardingFlowService } from '../services/onboarding-flow.service';
 import { StudyGuideService } from '../services/study-guide.service';
 import {
   AnswerResponse,
@@ -16,22 +15,20 @@ import {
 import { MathTextComponent } from '../components/math-text/math-text.component';
 import { columnLayout } from '../shared/utils/column-layout';
 import { DailyAnswerPadComponent } from './daily-answer-pad.component';
+import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
 
 type Phase = 'loading' | 'grade' | 'question' | 'feedback' | 'completed' | 'error';
-
-const GRADE_CHOICES = ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
 @Component({
   selector: 'app-daily-play-page',
   standalone: true,
-  imports: [CommonModule, MathTextComponent, DailyAnswerPadComponent],
+  imports: [CommonModule, MathTextComponent, DailyAnswerPadComponent, GradePickerComponent],
   templateUrl: './daily-play-page.component.html',
   styleUrls: ['../tests/test-pages.css', './daily-play-page.component.css'],
 })
 export class DailyPlayPageComponent implements OnInit {
   private readonly api = inject(DailyChallengeService);
   private readonly auth = inject(AuthService);
-  private readonly onboarding = inject(OnboardingFlowService);
   private readonly guides = inject(StudyGuideService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -39,7 +36,6 @@ export class DailyPlayPageComponent implements OnInit {
   @ViewChild(DailyAnswerPadComponent) pad?: DailyAnswerPadComponent;
 
   readonly goal = DAILY_GOAL_MINUTES;
-  readonly gradeChoices = GRADE_CHOICES;
   readonly gradeName = gradeName;
 
   readonly phase = signal<Phase>('loading');
@@ -56,7 +52,6 @@ export class DailyPlayPageComponent implements OnInit {
   readonly pauseBusy = signal(false);
   readonly pauseError = signal('');
 
-  readonly suggestedGrade = signal('');
   readonly gradeBusy = signal(false);
 
   readonly column = computed(() => {
@@ -106,7 +101,6 @@ export class DailyPlayPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.studentId = this.auth.getStoredStudentId() ?? '';
-    this.suggestedGrade.set(this.guessGrade());
     document.addEventListener('visibilitychange', this.onVisibility);
     window.addEventListener('pagehide', this.onVisibility);
     this.destroyRef.onDestroy(() => {
@@ -261,13 +255,5 @@ export class DailyPlayPageComponent implements OnInit {
   private fail(message: string): void {
     this.errorMessage.set(message);
     this.phase.set('error');
-  }
-
-  /** Pre-highlights the grade the child picked during onboarding, if any. */
-  private guessGrade(): string {
-    const raw = this.onboarding.getState().grade ?? '';
-    if (/^k|kinder/i.test(raw)) return 'K';
-    const n = raw.match(/\d+/)?.[0];
-    return n && GRADE_CHOICES.includes(n) ? n : '';
   }
 }

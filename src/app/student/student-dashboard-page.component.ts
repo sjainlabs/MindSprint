@@ -27,6 +27,8 @@ import { DailyChallengeService, localDate } from '../services/daily-challenge.se
               <span class="badge" [class.done]="b.done">{{ b.text }}</span>
             }
           </a>
+          <a routerLink="/math-brain" class="button">🧠 Math Brain</a>
+          <a routerLink="/math-games" class="button">🎮 Math Games</a>
           <a routerLink="/practice/hub" class="button">Practice Hub</a>
           <a routerLink="/tests" class="button">Tests</a>
           <a routerLink="/insights" class="button">Insights</a>

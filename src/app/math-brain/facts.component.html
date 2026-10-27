@@ -1,0 +1,93 @@
+<main class="page mb-page">
+  <div class="chip-row" role="tablist" aria-label="Facts">
+    @for (s of sections; track s.id) {
+      <button type="button" role="tab" class="chip" [class.active]="section() === s.id" [attr.aria-selected]="section() === s.id" (click)="pickSection(s.id)">{{ s.label }}</button>
+    }
+  </div>
+
+  @if (loading()) {
+    <section class="card center" aria-busy="true"><div class="spinner"></div><p>Loading…</p></section>
+  } @else if (error()) {
+    <section class="card center" role="alert">
+      <p class="notice error">{{ error() }}</p>
+      <button type="button" class="btn primary" (click)="load()">Try again</button>
+    </section>
+  } @else if (section() === 'tables') {
+    <section class="card">
+      <div class="row-between">
+        <h2>Times tables</h2>
+        <div class="toggle" role="group" aria-label="How far each table goes">
+          @for (n of upToChoices; track n) {
+            <button type="button" [class.active]="upTo() === n" [attr.aria-pressed]="upTo() === n" (click)="pickUpTo(n)">×{{ n }}</button>
+          }
+        </div>
+      </div>
+      <div class="table-grid">
+        @for (t of tables(); track t.table) {
+          <button type="button" class="table-btn" [class.active]="selectedTable() === t.table" (click)="pickTable(t.table)">{{ t.table }}</button>
+        }
+      </div>
+      @if (selectedTable() === null) {
+        <p class="hint">Tap a table to see it.</p>
+        <button type="button" class="btn primary" (click)="practise()">🃏 Practise all tables</button>
+      }
+    </section>
+
+    @if (table(); as t) {
+      <section class="card" id="table-detail">
+        <div class="row-between">
+          <h2>The {{ t.table }} times table</h2>
+          <button type="button" class="btn small" (click)="pickTable(null)">All tables</button>
+        </div>
+        <ol class="fact-rows table-rows">
+          @for (r of t.rows; track r.multiplier) {
+            <li><app-math-text [text]="r.text"></app-math-text></li>
+          }
+        </ol>
+        <button type="button" class="btn primary" (click)="practise()">🃏 Practise these</button>
+      </section>
+
+      @if (t.tricks.length) {
+        <section class="tricks" aria-label="Tricks">
+          @for (k of t.tricks; track k.name) {
+            <article class="trick">
+              <h3>🪄 {{ k.name }}</h3>
+              <p><app-math-text [text]="k.how"></app-math-text></p>
+              <p class="trick-example"><app-math-text [text]="k.example"></app-math-text></p>
+            </article>
+          }
+        </section>
+      }
+    }
+  } @else if (reference(); as ref) {
+    <section class="card">
+      <div class="row-between">
+        <h2>{{ ref.title }}</h2>
+        <button type="button" class="btn primary small" (click)="practise()">🃏 Practise these</button>
+      </div>
+      @if (ref.intro) {
+        <p class="muted"><app-math-text [text]="ref.intro"></app-math-text></p>
+      }
+    </section>
+
+    @if (ref.tricks.length) {
+      <section class="tricks" aria-label="Tricks">
+        @for (k of ref.tricks; track k.name) {
+          <article class="trick">
+            <h3>🪄 {{ k.name }}</h3>
+            <p><app-math-text [text]="k.how"></app-math-text></p>
+            <p class="trick-example"><app-math-text [text]="k.example"></app-math-text></p>
+          </article>
+        }
+      </section>
+    }
+
+    <section class="card">
+      <ol class="fact-rows scroll-list" tabindex="0" [attr.aria-label]="ref.title">
+        @for (r of ref.rows; track r.number) {
+          <li><app-math-text [text]="r.text"></app-math-text></li>
+        }
+      </ol>
+    </section>
+  }
+</main>

@@ -364,6 +364,13 @@
           <button type="button" class="btn test big" (click)="takeTest()">🏁 Take the topic test</button>
         }
       </div>
+      @if (mathBrainLinks().length) {
+        <div class="btn-row">
+          @for (m of mathBrainLinks(); track $index) {
+            <button type="button" class="btn big" (click)="openMathBrain(m)">🧠 Practise with Math Brain: {{ m.label }}</button>
+          }
+        </div>
+      }
       <button type="button" class="link-btn" (click)="browseGuides()">Browse all study guides</button>
     </footer>
   }

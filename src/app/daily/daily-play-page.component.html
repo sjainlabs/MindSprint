@@ -29,15 +29,7 @@
         @if (errorMessage()) {
           <p class="notice error">{{ errorMessage() }}</p>
         }
-        <div class="grade-grid">
-          @for (g of gradeChoices; track g) {
-            <button type="button" class="grade-btn" [class.suggested]="g === suggestedGrade()"
-                    [disabled]="gradeBusy()" (click)="chooseGrade(g)">
-              {{ g === 'K' ? 'K' : g }}
-              <span class="grade-sub">{{ g === 'K' ? 'Kindergarten' : 'Grade' }}</span>
-            </button>
-          }
-        </div>
+        <app-grade-picker [busy]="gradeBusy()" (picked)="chooseGrade($event)"></app-grade-picker>
       </section>
     }
 

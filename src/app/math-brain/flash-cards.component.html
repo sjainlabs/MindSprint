@@ -1,0 +1,145 @@
+<main class="page mb-page">
+  @switch (phase()) {
+
+    @case ('pick') {
+      <section class="card">
+        <h2>Pick a deck</h2>
+        <div class="deck-grid">
+          @for (d of decks; track d.id) {
+            <button type="button" class="deck-btn" [class.active]="deck() === d.id" [attr.aria-pressed]="deck() === d.id" (click)="deck.set(d.id)">
+              <span class="deck-emoji" aria-hidden="true">{{ d.emoji }}</span>{{ d.label }}
+            </button>
+          }
+        </div>
+
+        @if (deck() === 'tables') {
+          <div class="range">
+            <label>From the
+              <select [value]="from()" (change)="setFrom(+$any($event.target).value)">
+                @for (n of tableNumbers; track n) { <option [value]="n" [selected]="n === from()">{{ n }}</option> }
+              </select>
+            </label>
+            <label>to the
+              <select [value]="to()" (change)="setTo(+$any($event.target).value)">
+                @for (n of tableNumbers; track n) { <option [value]="n" [selected]="n === to()">{{ n }}</option> }
+              </select>
+              times table
+            </label>
+            <div class="toggle" role="group" aria-label="How far each table goes">
+              @for (n of upToChoices; track n) {
+                <button type="button" [class.active]="upTo() === n" [attr.aria-pressed]="upTo() === n" (click)="upTo.set(n)">×{{ n }}</button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (!studentId) {
+          <p class="hint">You're not logged in, so you'll get a shuffled deck and your progress won't be saved.</p>
+        }
+        <button type="button" class="btn primary big" (click)="start()">▶ Start</button>
+      </section>
+    }
+
+    @case ('loading') {
+      <section class="card center" aria-busy="true"><div class="spinner"></div><p>Shuffling the cards…</p></section>
+    }
+
+    @case ('error') {
+      <section class="card center" role="alert">
+        <p class="notice error">{{ error() }}</p>
+        <div class="actions row">
+          <button type="button" class="btn primary" (click)="start()">Try again</button>
+          <button type="button" class="btn" (click)="changeDeck()">Change deck</button>
+        </div>
+      </section>
+    }
+
+    @case ('playing') {
+      @if (card(); as c) {
+        <div class="row-between">
+          <span class="deck-name">{{ deckLabel() }} · card {{ index() + 1 }} of {{ cards().length }}</span>
+          <button type="button" class="link-btn" (click)="changeDeck()">Change deck</button>
+        </div>
+
+        @if (summary(); as s) {
+          <div class="counts" aria-label="Your deck">
+            <span class="count new">🆕 {{ s.new }} new</span>
+            <span class="count learning">✏️ {{ s.learning }} learning</span>
+            <span class="count remembered">🌟 {{ s.remembered }} remembered</span>
+          </div>
+        }
+
+        <button type="button" class="flip-card" [class.flipped]="flipped()" (click)="flip()"
+                [attr.aria-label]="flipped() ? 'Answer: ' + c.back + '. Tap to see the question again.' : c.front + '. Tap to see the answer.'">
+          <span class="face front" aria-hidden="true">
+            @if (c.isNew) { <span class="new-tag">New</span> }
+            <span class="face-text"><app-math-text [text]="c.front"></app-math-text></span>
+            <span class="face-hint">Tap to flip</span>
+          </span>
+          <span class="face back" aria-hidden="true">
+            <span class="face-q"><app-math-text [text]="c.front"></app-math-text></span>
+            <span class="face-text"><app-math-text [text]="c.back"></app-math-text></span>
+          </span>
+        </button>
+
+        @if (c.hint) {
+          @if (hintShown()) {
+            <p class="notice info hint-box">💡 <app-math-text [text]="c.hint"></app-math-text></p>
+          } @else {
+            <button type="button" class="link-btn center-btn" (click)="hintShown.set(true)">💡 Show a hint</button>
+          }
+        }
+
+        @if (flipped()) {
+          <div class="actions row">
+            <button type="button" class="btn big notyet" [disabled]="busy()" (click)="mark(false)">🤔 Not yet</button>
+            <button type="button" class="btn big knew" [disabled]="busy()" (click)="mark(true)">✅ I knew it</button>
+          </div>
+        } @else {
+          <button type="button" class="btn primary big" (click)="flip()">Flip the card</button>
+        }
+
+        @if (celebrate()) {
+          <div class="cheer" role="status">🌟 Remembered!</div>
+        }
+      }
+    }
+
+    @case ('done') {
+      <section class="card center">
+        <div class="big-emoji" aria-hidden="true">🎉</div>
+        <h2>Set finished!</h2>
+        <p>You knew <strong>{{ knewCount() }}</strong> and have <strong>{{ notYetCount() }}</strong> to keep practising.</p>
+        @if (rememberedNow()) {
+          <p>🌟 {{ rememberedNow() }} card{{ rememberedNow() === 1 ? '' : 's' }} moved to remembered.</p>
+        }
+        @if (summary(); as s) {
+          <div class="counts">
+            <span class="count new">🆕 {{ s.new }} new</span>
+            <span class="count learning">✏️ {{ s.learning }} learning</span>
+            <span class="count remembered">🌟 {{ s.remembered }} remembered</span>
+          </div>
+        }
+        <div class="actions row">
+          <button type="button" class="btn primary" (click)="start()">Next set</button>
+          <button type="button" class="btn" (click)="changeDeck()">Change deck</button>
+        </div>
+      </section>
+    }
+
+    @case ('caught-up') {
+      <section class="card center">
+        <div class="big-emoji" aria-hidden="true">😎</div>
+        <h2>All caught up!</h2>
+        <p>Come back {{ comeBack() }} for more {{ deckLabel().toLowerCase() }} cards.</p>
+        @if (summary(); as s) {
+          <div class="counts">
+            <span class="count learning">✏️ {{ s.learning }} learning</span>
+            <span class="count remembered">🌟 {{ s.remembered }} remembered</span>
+          </div>
+        }
+        <button type="button" class="btn" (click)="changeDeck()">Try another deck</button>
+      </section>
+    }
+  }
+</main>

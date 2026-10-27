@@ -20,6 +20,7 @@ import {
   TopicStudyGuideResponse,
 } from '../services/study-guide.service';
 import { TopicTestService } from '../services/topic-test.service';
+import { MathBrainTarget, mathBrainTarget } from '../services/math-brain.service';
 import { checkAnswer, canAutoCheck } from '../shared/utils/answer-check';
 import { MathTextComponent } from '../components/math-text/math-text.component';
 import { ReadAloudComponent, ReadAloudService } from '../components/read-aloud/read-aloud.component';
@@ -129,6 +130,8 @@ export class StudyGuidePageComponent implements OnInit {
   readonly methodHidden = signal(false);
 
   /* ---------------- Footer ---------------- */
+
+  readonly mathBrainLinks = computed<MathBrainTarget[]>(() => (this.guide()?.mathBrain ?? []).map(mathBrainTarget));
 
   readonly testStatus = computed(() => this.topicTests.statusFor(this.topicId()));
   readonly testEligible = computed(() => this.testStatus()?.state === 'eligible');
@@ -392,6 +395,10 @@ export class StudyGuidePageComponent implements OnInit {
 
   takeTest(): void {
     this.router.navigate(['/tests/topic', this.topic()?.topicId ?? this.topicId()]);
+  }
+
+  openMathBrain(t: MathBrainTarget): void {
+    this.router.navigate(t.commands, { queryParams: t.queryParams });
   }
 
   browseGuides(): void {

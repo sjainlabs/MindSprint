@@ -20,10 +20,6 @@ import { CustomTestBuilderPageComponent } from './tests/custom-test-builder-page
 import { CustomTestTakePageComponent } from './tests/custom-test-take-page.component';
 import { StudyGuidePageComponent } from './study-guides/study-guide-page.component';
 import { StudyGuideIndexPageComponent } from './study-guides/study-guide-index-page.component';
-import { DailyHomePageComponent } from './daily/daily-home-page.component';
-import { DailyPlayPageComponent } from './daily/daily-play-page.component';
-import { DailyProgressPageComponent } from './daily/daily-progress-page.component';
-import { DailyChartPageComponent } from './daily/daily-chart-page.component';
 import { parentAuthGuard } from './guards/parent-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
@@ -49,11 +45,46 @@ export const routes: Routes = [
   { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
   { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
   { path: 'tests/topic/:topicId', canActivate: [studentAuthGuard], component: TopicTestPageComponent },
-  { path: 'daily', canActivate: [studentAuthGuard], component: DailyHomePageComponent },
-  { path: 'daily/play', canActivate: [studentAuthGuard], component: DailyPlayPageComponent },
+  { path: 'daily', canActivate: [studentAuthGuard], loadComponent: () => import('./daily/daily-home-page.component').then((m) => m.DailyHomePageComponent) },
+  { path: 'daily/play', canActivate: [studentAuthGuard], loadComponent: () => import('./daily/daily-play-page.component').then((m) => m.DailyPlayPageComponent) },
   // Parents open these from their dashboard with ?studentId=…, which the guard allows.
-  { path: 'daily/progress', canActivate: [studentAuthGuard], component: DailyProgressPageComponent },
-  { path: 'daily/chart', canActivate: [studentAuthGuard], component: DailyChartPageComponent },
+  { path: 'daily/progress', canActivate: [studentAuthGuard], loadComponent: () => import('./daily/daily-progress-page.component').then((m) => m.DailyProgressPageComponent) },
+  { path: 'daily/chart', canActivate: [studentAuthGuard], loadComponent: () => import('./daily/daily-chart-page.component').then((m) => m.DailyChartPageComponent) },
+  // New sections load on first visit to keep the initial download small.
+  // Tables, facts and flash cards work without a login (flash cards then aren't saved); games need one.
+  {
+    path: 'math-brain',
+    loadComponent: () => import('./components/section-shell/section-shell.component').then((m) => m.SectionShellComponent),
+    data: {
+      title: '🧠 Math Brain',
+      tabs: [
+        { path: 'facts', label: '📚 Tables & Facts' },
+        { path: 'cards', label: '🃏 Flash Cards' },
+      ],
+    },
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'facts' },
+      { path: 'facts', loadComponent: () => import('./math-brain/facts.component').then((m) => m.MathBrainFactsComponent) },
+      { path: 'cards', loadComponent: () => import('./math-brain/flash-cards.component').then((m) => m.FlashCardsComponent) },
+      // The abacus moved to Math Games; keep old links working.
+      { path: 'abacus', pathMatch: 'full', redirectTo: '/math-games/abacus' },
+      { path: 'abacus/parent', pathMatch: 'full', redirectTo: '/math-games/abacus/parent' },
+    ],
+  },
+  {
+    path: 'math-games',
+    loadComponent: () => import('./components/section-shell/section-shell.component').then((m) => m.SectionShellComponent),
+    data: {
+      title: '🎮 Math Games',
+      tabs: [{ path: 'abacus', label: '🧮 Abacus' }],
+    },
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'abacus' },
+      // Parents open abacus/parent from their dashboard with ?studentId=…, which the guard allows.
+      { path: 'abacus', canActivate: [studentAuthGuard], loadComponent: () => import('./math-games/abacus.component').then((m) => m.AbacusComponent) },
+      { path: 'abacus/parent', canActivate: [studentAuthGuard], loadComponent: () => import('./math-games/abacus-parent.component').then((m) => m.AbacusParentComponent) },
+    ],
+  },
   // Study guides are for children and parents reading together, so no student login is required.
   { path: 'study-guides', component: StudyGuideIndexPageComponent },
   { path: 'study-guides/topic/:topicId', component: StudyGuidePageComponent },

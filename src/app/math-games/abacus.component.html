@@ -1,0 +1,183 @@
+<main class="page mb-page abacus">
+  @switch (phase()) {
+
+    @case ('setup') {
+      @if (notice()) {
+        <p class="notice info" role="status">{{ notice() }}</p>
+      }
+      <section class="card">
+        <h2>What shall we practise?</h2>
+        <div class="op-grid">
+          @for (op of operations; track op.id) {
+            <button type="button" class="op-btn" [class.active]="operation() === op.id" [class.locked]="isLocked(op.id)"
+                    [disabled]="isLocked(op.id)" [attr.aria-pressed]="operation() === op.id" (click)="pickOperation(op.id)">
+              <span class="op-emoji" aria-hidden="true">{{ isLocked(op.id) ? '🔒' : op.emoji }}</span>
+              <span class="op-label">{{ op.label }}</span>
+              @if (familyFor(op.id); as f) {
+                <span class="op-meta">{{ f.unlocked ? 'Level ' + f.level : 'Unlocks in Grade ' + f.unlocksAtGrade }}</span>
+              } @else if (op.id === 'random') {
+                <span class="op-meta">A mix of everything</span>
+              }
+            </button>
+          }
+        </div>
+
+        <div class="setting">
+          <span class="setting-label">How to show the numbers</span>
+          <div class="toggle" role="group" aria-label="How to show the numbers">
+            <button type="button" [class.active]="mode() === 'flash'" [attr.aria-pressed]="mode() === 'flash'" (click)="setMode('flash')">⚡ Flash</button>
+            <button type="button" [class.active]="mode() === 'all'" [attr.aria-pressed]="mode() === 'all'" (click)="setMode('all')">👀 Show all</button>
+          </div>
+          <span class="hint">{{ mode() === 'flash' ? 'Numbers appear one at a time, then you answer.' : 'See the whole sum at once.' }}</span>
+        </div>
+
+        <div class="setting">
+          <label class="check">
+            <input type="checkbox" [checked]="practiceLevelOn()" (change)="practiceLevelOn.set($any($event.target).checked)" />
+            Choose a level (practice mode)
+          </label>
+          @if (practiceLevelOn()) {
+            <div class="slider-row">
+              <input type="range" min="1" max="10" step="1" [value]="practiceLevel()" aria-label="Practice level"
+                     (input)="practiceLevel.set(+$any($event.target).value)" />
+              <span class="slider-value">Level {{ practiceLevel() }}</span>
+            </div>
+            <span class="hint">Practice mode doesn't change your level.</span>
+          }
+        </div>
+
+        <label class="check">
+          <input type="checkbox" [checked]="showSoroban()" (change)="toggleSoroban()" />
+          Show an abacus to help me
+        </label>
+
+        <button type="button" class="btn primary big" (click)="startSet()">▶ Start {{ setSize }} rounds</button>
+      </section>
+
+      <a class="link-btn parent-link" routerLink="/math-games/abacus/parent">👪 For parents: levels and progress</a>
+    }
+
+    @case ('grade') {
+      <section class="card">
+        <h2>Which grade are you in?</h2>
+        <p class="muted">We use it to pick the right kinds of sums.</p>
+        <app-grade-picker [busy]="gradeBusy()" (picked)="chooseGrade($event)"></app-grade-picker>
+      </section>
+    }
+
+    @case ('loading') {
+      <section class="card center" aria-busy="true"><div class="spinner"></div><p>Getting your sum…</p></section>
+    }
+
+    @case ('error') {
+      <section class="card center" role="alert">
+        <p class="notice error">{{ error() }}</p>
+        <div class="actions row">
+          <button type="button" class="btn primary" (click)="requestRound()">Try again</button>
+          <button type="button" class="btn" (click)="backToSetup()">Back</button>
+        </div>
+      </section>
+    }
+
+    @case ('summary') {
+      @if (setSummary(); as s) {
+        <section class="card center">
+          <div class="big-emoji" aria-hidden="true">{{ s.accuracy >= 80 ? '🏆' : s.accuracy >= 50 ? '👏' : '💪' }}</div>
+          <h2>{{ s.total === setSize ? 'Set complete!' : 'Nice practice!' }}</h2>
+          <div class="stats">
+            <div class="stat"><span class="stat-value">{{ s.correct }}/{{ s.total }}</span><span class="stat-label">correct</span></div>
+            <div class="stat"><span class="stat-value">{{ s.accuracy }}%</span><span class="stat-label">accuracy</span></div>
+            <div class="stat"><span class="stat-value">{{ s.averageSeconds }}s</span><span class="stat-label">per sum</span></div>
+            <div class="stat"><span class="stat-value">{{ s.level }}</span><span class="stat-label">level reached</span></div>
+          </div>
+          @if (s.levelUps) {
+            <p>⬆️ You levelled up {{ s.levelUps === 1 ? 'once' : s.levelUps + ' times' }}!</p>
+          }
+          @if (s.practice) {
+            <p class="hint">Practice mode: your own level didn't change.</p>
+          }
+          <div class="actions row">
+            <button type="button" class="btn primary" (click)="anotherSet()">Play {{ setSize }} more</button>
+            <button type="button" class="btn" (click)="backToSetup()">Change settings</button>
+          </div>
+        </section>
+      }
+    }
+
+    @default {
+      <!-- ready / flash / answer / feedback -->
+      @if (round(); as r) {
+        <div class="row-between">
+          <span class="round-meta">Round {{ roundNumber() }} of {{ setSize }} · Level {{ r.level }}{{ r.chosenLevel ? ' (practice)' : '' }}</span>
+          <button type="button" class="btn small" (click)="stop()">■ Stop</button>
+        </div>
+        <div class="dots" aria-hidden="true">
+          @for (i of [0,1,2,3,4,5,6,7,8,9]; track i) {
+            <span class="dot" [class.good]="setResults()[i]?.correct === true" [class.bad]="setResults()[i]?.correct === false" [class.now]="i === roundNumber() - 1 && phase() !== 'feedback'"></span>
+          }
+        </div>
+
+        @if (notice()) {
+          <p class="notice info" role="status">{{ notice() }}</p>
+        }
+
+        <section class="card stage" [class.good]="phase() === 'feedback' && result()?.correct" [class.bad]="phase() === 'feedback' && result()?.correct === false">
+          @switch (phase()) {
+            @case ('ready') {
+              <p class="ready" aria-live="assertive">Ready?</p>
+            }
+            @case ('flash') {
+              <p class="flash-number" aria-live="assertive">{{ flashText() }}</p>
+            }
+            @default {
+              @if (mode() === 'all' || phase() === 'feedback') {
+                <div class="sum" role="img" [attr.aria-label]="r.expression">
+                  @for (d of r.display; track $index) {
+                    <span>{{ d }}</span>
+                  }
+                </div>
+              } @else {
+                <p class="muted center-text">What's the answer?</p>
+              }
+
+              @if (phase() === 'feedback' && result(); as res) {
+                <div class="verdict" aria-live="polite">
+                  @if (res.correct) {
+                    <p class="verdict-main">✅ {{ res.slow ? 'Correct!' : 'Correct and quick!' }}</p>
+                  } @else {
+                    <p class="verdict-main">❌ Not quite. It's <strong>{{ res.expectedAnswer }}</strong>.</p>
+                  }
+                  @if (res.levelChange === 1) {
+                    <p class="level up">⬆️ Level up! Now level {{ res.level }}.</p>
+                  } @else if (res.levelChange === -1) {
+                    <p class="level down">Let's try a level easier for a bit.</p>
+                  }
+                  <button type="button" class="link-btn center-btn" (click)="continue()">Next →</button>
+                </div>
+              }
+            }
+          }
+        </section>
+
+        <!-- The abacus sits between the sum and the answer pad, so both stay in reach. -->
+        @if (showSoroban()) {
+          <section class="card soroban-card" aria-label="Abacus helper">
+            <app-soroban [resetKey]="r.roundId"></app-soroban>
+          </section>
+        }
+
+        @if (phase() === 'answer') {
+          @if (error()) {
+            <p class="notice error" role="alert">{{ error() }}</p>
+          }
+          <app-daily-answer-pad [prompt]="r.expression" [value]="answer()" [disabled]="submitting()"
+                                (valueChange)="answer.set($event)" (submitted)="submit()"></app-daily-answer-pad>
+          <button type="button" class="btn primary big" [disabled]="!answer().trim() || submitting()" (click)="submit()">
+            {{ submitting() ? 'Checking…' : 'Submit' }}
+          </button>
+        }
+
+      }
+    }
+  }
+</main>

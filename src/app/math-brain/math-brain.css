@@ -1,0 +1,11 @@
+/* Shared by the Math Brain tabs (on top of tests/test-pages.css). */
+.mb-page { padding: 12px 0 28px; background: transparent; }
+.mb-page h1, .mb-page h2, .mb-page h3 { font-weight: 800; }
+.row-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.chip-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chip-row .chip { white-space: nowrap; min-height: 40px; }
+.chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.toggle { display: inline-flex; background: #f1f5f9; border-radius: 12px; padding: 3px; gap: 3px; }
+.toggle button { border: 0; background: none; padding: 8px 12px; border-radius: 10px; font-weight: 800; color: #475569; cursor: pointer; min-height: 38px; }
+.toggle button.active { background: #fff; color: #1e1b4b; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15); }
+.btn.big { padding: 16px; font-size: 1.1rem; border-radius: 14px; }
