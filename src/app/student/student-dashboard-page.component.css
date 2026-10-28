@@ -1,0 +1,79 @@
+.dash { max-width: 760px; }
+.toggle { display: inline-flex; background: #f1f5f9; border-radius: 12px; padding: 3px; gap: 3px; }
+.toggle button { border: 0; background: none; padding: 6px 12px; border-radius: 10px; font-weight: 800; color: #475569; cursor: pointer; min-height: 36px; }
+.toggle button.active { background: #fff; color: #1e1b4b; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15); }
+
+/* Level */
+.eyebrow { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #6c63ff; }
+.headline { font-size: 1.15rem; font-weight: 700; color: #1e1b4b; margin-top: 4px; line-height: 1.45; }
+.grades { display: grid; gap: 12px; margin-top: 14px; }
+.grade-row { padding: 10px 12px; border-radius: 12px; background: #f8fafc; }
+.grade-row.working { background: #f5f3ff; outline: 2px solid #c4b5fd; }
+.grade-name { font-weight: 800; color: #1e293b; display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.now, .secure { font-size: 0.72rem; border-radius: 999px; padding: 2px 8px; }
+.now { background: #6c63ff; color: #fff; }
+.secure { background: #dcfce7; color: #166534; }
+.pct { font-weight: 700; color: #475569; font-size: 0.88rem; }
+.grade-row .progress-bar { margin-top: 6px; }
+.counts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 0.8rem; color: #475569; }
+.counts > span { display: inline-flex; align-items: center; gap: 5px; }
+.chip.gap { background: #fffbeb; border-color: #fcd34d; gap: 4px; }
+
+/* Up next */
+.next { margin-top: 8px; padding: 14px; border-radius: 14px; background: linear-gradient(135deg, #eef2ff, #f5f3ff); }
+.next-label { font-size: 1.1rem; font-weight: 800; color: #1e1b4b; margin: 0 0 4px; }
+.recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 8px; }
+.rec {
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.rec:hover:not(.static) { border-color: #a5b4fc; box-shadow: 0 4px 12px rgba(67, 56, 202, 0.12); }
+.rec.static { cursor: default; }
+.rec-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rec-name { font-weight: 800; color: #1e293b; overflow-wrap: anywhere; }
+.rec-reason { font-size: 0.85rem; color: #475569; }
+.score { margin-left: auto; font-weight: 800; color: #334155; font-size: 0.9rem; }
+.kind { border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 800; }
+.kind.fix { background: #fee2e2; color: #991b1b; }
+.kind.continue { background: #dbeafe; color: #1e40af; }
+.kind.new { background: #ede9fe; color: #5b21b6; }
+.kind.test-ready { background: #dcfce7; color: #166534; }
+.kind.speed { background: #fef3c7; color: #92400e; }
+.kind.review { background: #ccfbf1; color: #115e59; }
+
+/* Progress */
+.activity { font-weight: 700; color: #1e293b; }
+.change { font-weight: 800; }
+.change.up { color: #15803d; }
+.change.down { color: #b45309; }
+.change.same { color: #64748b; }
+.strands { display: grid; gap: 8px; margin-top: 12px; }
+.strand { display: grid; grid-template-columns: minmax(0, 11rem) 1fr 3rem; align-items: center; gap: 10px; }
+.strand-name { font-size: 0.88rem; font-weight: 700; color: #334155; overflow-wrap: anywhere; }
+.strand-bar { height: 12px; background: #eef2ff; border-radius: 999px; overflow: hidden; }
+.strand-fill { display: block; height: 100%; background: #6366f1; border-radius: 999px; }
+.strand-val { font-weight: 800; font-size: 0.88rem; color: #1e293b; text-align: right; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.tips { margin-top: 14px; background: #f8fafc; border-radius: 12px; padding: 10px 12px; }
+.tips summary { font-weight: 800; cursor: pointer; color: #334155; }
+.tips ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; color: #334155; }
+
+/* Links to the rest of the app */
+.button { text-align: center; text-decoration: none; border-radius: 12px; padding: 14px; font-weight: 700; background: #dbeafe; color: #1e3a8a; }
+.button.daily { background: #6c63ff; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
+.badge { background: #fef3c7; color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: 0.8rem; }
+.badge.done { background: #dcfce7; color: #166534; }
+
+@media (max-width: 520px) {
+  .two-col { grid-template-columns: 1fr; gap: 0; }
+  .strand { grid-template-columns: minmax(0, 7.5rem) 1fr 2.8rem; }
+}

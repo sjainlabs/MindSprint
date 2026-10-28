@@ -1,98 +1,171 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { LearningApiService } from '../services/learning-api.service';
-import { OnboardingFlowService } from '../services/onboarding-flow.service';
 import { DailyChallengeService, localDate } from '../services/daily-challenge.service';
+import {
+  KIND_LABELS,
+  LearningPlan,
+  LearningPlanError,
+  LearningPlanService,
+  Recommendation,
+  STATUS_LABELS,
+  gradeBand,
+  gradeLabel,
+} from '../services/learning-plan.service';
+import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
+import { PlanActions } from './plan-actions';
+import { ReviewTestCardComponent } from './review-test-card.component';
 
+type Phase = 'loading' | 'ready' | 'grade' | 'error';
+
+/**
+ * The learning plan: level, what to do next, the review test and progress. A parent sees the same
+ * page in parent mode (?view=parent, or ?studentId=… from their dashboard) with their own notes and settings.
+ */
 @Component({
   selector: 'app-student-dashboard-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
-  template: `
-    <main class="page">
-      <section class="card">
-        <h1>Student Dashboard</h1>
-        <p><strong>Recommended next worksheet:</strong> {{ recommendedWorksheet() }}</p>
-        <p><strong>Next scheduled test:</strong> {{ nextScheduledTest() }}</p>
-        <p><strong>Mastery summary:</strong> {{ masterySummary() }}</p>
-      </section>
-
-      <section class="card">
-        <div class="actions">
-          <a routerLink="/daily" class="button daily">
-            🎯 Daily Challenge
-            @if (dailyBadge(); as b) {
-              <span class="badge" [class.done]="b.done">{{ b.text }}</span>
-            }
-          </a>
-          <a routerLink="/math-brain" class="button">🧠 Math Brain</a>
-          <a routerLink="/math-games" class="button">🎮 Math Games</a>
-          <a routerLink="/practice/hub" class="button">Practice Hub</a>
-          <a routerLink="/tests" class="button">Tests</a>
-          <a routerLink="/insights" class="button">Insights</a>
-          <a routerLink="/study-guides" class="button">📘 Study guides</a>
-<!--          <a routerLink="/progression/overview" class="button">View Your Progress</a>-->
-
-        </div>
-      </section>
-    </main>
-  `,
-  styles: [
-    `
-      .page { max-width: 720px; margin: 0 auto; padding: 16px; display: grid; gap: 12px; }
-      .card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
-      .actions { display: grid; gap: 10px; }
-      .button { text-align: center; text-decoration: none; border-radius: 12px; padding: 14px; font-weight: 700; background: #dbeafe; color: #1e3a8a; }
-      .button.daily { background: #6c63ff; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
-      .badge { background: #fef3c7; color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: 0.8rem; }
-      .badge.done { background: #dcfce7; color: #166534; }
-      h1, p { margin: 0; }
-      p { margin-top: 8px; color: #334155; }
-    `,
-  ],
+  imports: [RouterLink, GradePickerComponent, ReviewTestCardComponent],
+  templateUrl: './student-dashboard-page.component.html',
+  styleUrls: ['../tests/test-pages.css', './plan-shared.css', './student-dashboard-page.component.css'],
 })
 export class StudentDashboardPageComponent implements OnInit {
-  private readonly authService = inject(AuthService);
-  private readonly api = inject(LearningApiService);
-  private readonly onboarding = inject(OnboardingFlowService);
+  private readonly auth = inject(AuthService);
+  private readonly api = inject(LearningPlanService);
   private readonly daily = inject(DailyChallengeService);
+  private readonly actions = inject(PlanActions);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  readonly recommendedWorksheet = signal('Loading...');
-  readonly nextScheduledTest = signal('Loading...');
-  readonly masterySummary = signal('Building profile');
+  @ViewChild(ReviewTestCardComponent) reviewCard?: ReviewTestCardComponent;
+
+  readonly phase = signal<Phase>('loading');
+  readonly error = signal('');
+  readonly plan = signal<LearningPlan | null>(null);
+  readonly gradeBusy = signal(false);
+  readonly opening = signal<string | null>(null);
   /** A gentle nudge toward today's 30 minutes; never a block. */
   readonly dailyBadge = signal<{ text: string; done: boolean } | null>(null);
 
-  async ngOnInit(): Promise<void> {
-    const state = this.onboarding.getState();
-    const topic = state.topics[0] ?? 'core skills';
-    const grade = state.grade || 'current grade';
-    this.recommendedWorksheet.set(`${topic} - ${grade}`);
+  readonly studentId = signal('');
+  readonly parentMode = signal(false);
+  /** A parent who is logged in can switch views; the kid never sees the switch. */
+  readonly parentLoggedIn = this.auth.isParentLoggedIn();
+  /** Starting sheets and tests only makes sense for the child signed in on this device. */
+  readonly canAct = computed(() => this.studentId() === (this.auth.getStoredStudentId() ?? ''));
 
-    const studentId = this.authService.getStoredStudentId();
-    if (!studentId) {
-      this.nextScheduledTest.set('No test scheduled');
+  readonly kindLabels = KIND_LABELS;
+  readonly statusLabels = STATUS_LABELS;
+  readonly gradeBand = gradeBand;
+  readonly gradeLabel = gradeLabel;
+
+  readonly maxStrand = computed(() => Math.max(100, ...(this.plan()?.strands.map((s) => s.averageScore) ?? [])));
+  readonly nextGrade = computed(() => {
+    const p = this.plan();
+    const next = p?.nextWorksheet;
+    return next ? p.recommendations.find((r) => r.topicId === next.topicId)?.grade ?? null : null;
+  });
+  readonly activityLine = computed(() => {
+    const a = this.plan()?.activity;
+    if (!a) return null;
+    const week = a.last7Days;
+    const sheets = `${week.sheets} sheet${week.sheets === 1 ? '' : 's'}`;
+    if (week.averageAccuracy === null) return { text: `This week: ${sheets}`, change: null };
+    const c = a.accuracyChange;
+    const change =
+      c === null
+        ? null
+        : c === 0
+          ? { dir: 'same', label: '→ same as last week', aria: 'same as last week' }
+          : { dir: c > 0 ? 'up' : 'down', label: `${c > 0 ? '↑' : '↓'} ${Math.abs(c)} pts`, aria: `${c > 0 ? 'up' : 'down'} ${Math.abs(c)} points from last week` };
+    return { text: `This week: ${sheets}, ${week.averageAccuracy}%`, change };
+  });
+
+  ngOnInit(): void {
+    const query = this.route.snapshot.queryParamMap;
+    const fromQuery = query.get('studentId');
+    this.studentId.set(fromQuery ?? this.auth.getStoredStudentId() ?? '');
+    this.parentMode.set(query.get('view') === 'parent' || (!!fromQuery && this.parentLoggedIn && !this.canAct()));
+    if (!this.studentId()) {
+      this.router.navigate(['/auth/access-code']);
       return;
     }
+    if (this.canAct()) this.loadDailyBadge(this.studentId());
+    this.load();
+  }
 
-    this.loadDailyBadge(studentId);
-
+  async load(quiet = false): Promise<void> {
+    if (!quiet) this.phase.set('loading');
+    this.error.set('');
     try {
-      const tests = await this.api.getScheduledTests(studentId);
-      const next = tests.biWeekly[0] ?? tests.monthly[0] ?? tests.quarterly[0] ?? 'No test scheduled';
-      this.nextScheduledTest.set(next);
-    } catch {
-      this.nextScheduledTest.set('No test scheduled');
+      this.plan.set(await this.api.plan(this.studentId()));
+      this.phase.set('ready');
+    } catch (err) {
+      const e = err as LearningPlanError;
+      if (e.code === 'GRADE_REQUIRED') this.phase.set('grade');
+      else {
+        this.error.set(e.message);
+        if (!this.plan()) this.phase.set('error');
+      }
     }
+  }
 
-    try {
-      const insights = await this.api.getFullInsights(studentId);
-      this.masterySummary.set(`${insights.level} (${insights.accuracy}% accuracy)`);
-    } catch {
-      this.masterySummary.set('Building profile');
+  /** Starting the review test can also say GRADE_REQUIRED: ask, then start it. */
+  askGradeForReview(): void {
+    this.reviewGradePending = true;
+    this.phase.set('grade');
+  }
+  private reviewGradePending = false;
+
+  /** GRADE_REQUIRED: remember the grade for this visit and retry with ?grade=. */
+  async pickGrade(grade: string): Promise<void> {
+    this.api.setGrade(this.studentId(), grade);
+    if (this.reviewGradePending && this.plan()) {
+      this.reviewGradePending = false;
+      this.phase.set('ready');
+      // The card is back on screen after this change detection pass.
+      setTimeout(() => this.reviewCard?.start());
+      return;
     }
+    this.gradeBusy.set(true);
+    await this.load();
+    this.gradeBusy.set(false);
+  }
+
+  setParentMode(on: boolean): void {
+    this.parentMode.set(on);
+    this.router.navigate([], { queryParams: { view: on ? 'parent' : null }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  async startNext(): Promise<void> {
+    const next = this.plan()?.nextWorksheet;
+    if (!next || this.opening()) return;
+    this.opening.set('next');
+    try {
+      await this.actions.open(next, this.nextGrade());
+    } finally {
+      this.opening.set(null);
+    }
+  }
+
+  async startRecommendation(r: Recommendation): Promise<void> {
+    if (this.opening() || !this.canAct()) return;
+    this.opening.set(r.topicId);
+    try {
+      await this.actions.open(r.action, r.grade);
+    } finally {
+      this.opening.set(null);
+    }
+  }
+
+  nextButtonText(type: string): string {
+    if (type === 'topic-test') return '🏁 Start the topic test';
+    if (type === 'study-guide-then-practice') return '📘 Read the guide, then practise';
+    return '▶ Start';
+  }
+
+  topicsLink(): Record<string, string> {
+    return this.canAct() ? {} : { studentId: this.studentId() };
   }
 
   private async loadDailyBadge(studentId: string): Promise<void> {

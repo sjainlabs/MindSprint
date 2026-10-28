@@ -54,6 +54,8 @@ export class StudyGuidePageComponent implements OnInit {
   readonly topicId = signal('');
   /** Opened from a paused Daily Challenge (?from=daily): offer a way back to it. */
   readonly fromDaily = signal(false);
+  /** Opened from the learning plan (?then=practice): read first, then the practice sheet. */
+  readonly thenPractice = signal(false);
   readonly data = signal<TopicStudyGuideResponse | null>(null);
   readonly loading = signal(true);
   readonly error = signal<StudyGuideError | null>(null);
@@ -143,6 +145,7 @@ export class StudyGuidePageComponent implements OnInit {
     this.methodHidden.set(this.guides.getPref('methodHidden'));
 
     this.fromDaily.set(this.route.snapshot.queryParamMap.get('from') === 'daily');
+    this.thenPractice.set(this.route.snapshot.queryParamMap.get('then') === 'practice');
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.topicId.set(params.get('topicId') ?? '');
       this.load();

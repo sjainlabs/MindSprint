@@ -6,8 +6,11 @@
     <p>{{ errorMessage() }}</p>
     <div class="actions">
       <button class="btn primary" *ngIf="canRetake()" (click)="retake()">Try a new test with the same topics</button>
-      <button class="btn" (click)="buildAnother()">Build another test</button>
-      <button class="btn" (click)="goToTests()">Back to Tests</button>
+      <ng-container *ngIf="!isReview">
+        <button class="btn" (click)="buildAnother()">Build another test</button>
+        <button class="btn" (click)="goToTests()">Back to Tests</button>
+      </ng-container>
+      <button class="btn" *ngIf="isReview" (click)="goToDashboard()">Back to my plan</button>
     </div>
   </section>
 
@@ -21,7 +24,7 @@
   <ng-container *ngIf="stage() === 'taking' && currentQuestion() as q">
     <section class="card">
       <div class="test-head">
-        <h1>🧩 Custom Test</h1>
+        <h1>{{ isReview ? '📅 Review Test' : '🧩 Custom Test' }}</h1>
         <button class="link-btn" (click)="saveAndExit()">Save &amp; exit</button>
       </div>
       <p class="muted topics-line">
@@ -113,7 +116,7 @@
   <ng-container *ngIf="stage() === 'results' && result() as r">
     <section class="card center">
       <div class="result-emoji">{{ r.accuracy >= 80 ? '🌟' : r.accuracy >= 50 ? '👍' : '💪' }}</div>
-      <h1>Test complete!</h1>
+      <h1>{{ isReview ? 'Review test complete!' : 'Test complete!' }}</h1>
       <div class="metrics">
         <div class="metric">
           <div class="metric-value">{{ r.score }}/{{ r.total }}</div>
@@ -143,7 +146,14 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card center" *ngIf="isReview && nextReviewDate() as next">
+      <p>📅 Next review test: <strong>{{ shortDate(next, true) }}</strong></p>
+      <div class="actions">
+        <button class="btn primary" (click)="goToDashboard()">Back to my plan</button>
+      </div>
+    </section>
+
+    <section class="card" *ngIf="!isReview">
       <div class="actions">
         <button class="btn primary" [disabled]="!canRetake()" (click)="retake()">🔁 Retake with the same topics</button>
         <button class="btn" (click)="buildAnother()">🧩 Build another test</button>

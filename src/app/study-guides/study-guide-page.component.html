@@ -38,6 +38,9 @@
       @if (fromDaily()) {
         <button type="button" class="btn small primary back-daily" (click)="backToDaily()">← Back to Daily Challenge</button>
       }
+      @if (thenPractice()) {
+        <p class="then-practice">📘 Read this first, then tap <strong>Start practice</strong> at the bottom for your sheet.</p>
+      }
       <p class="eyebrow">📘 Study guide</p>
       <h1>{{ topic()?.name }}</h1>
       <div class="header-meta">

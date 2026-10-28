@@ -3,7 +3,6 @@ import { LandingPageComponent } from './landing/landing-page.component';
 import { ParentLoginPageComponent } from './auth/parent-login-page.component';
 import { AccessCodePageComponent } from './auth/access-code-page.component';
 import { ParentDashboardPageComponent } from './parent/parent-dashboard-page.component';
-import { StudentDashboardPageComponent } from './student/student-dashboard-page.component';
 import { GradeSelectionPageComponent } from './onboarding/grade-selection-page.component';
 import { TopicSelectionPageComponent } from './onboarding/topic-selection-page.component';
 import { DiagnosticPageComponent } from './diagnostic/diagnostic-page.component';
@@ -30,7 +29,9 @@ export const routes: Routes = [
   { path: 'auth/parent-login', component: ParentLoginPageComponent },
   { path: 'auth/access-code', component: AccessCodePageComponent },
   { path: 'parent/dashboard', canActivate: [parentAuthGuard], component: ParentDashboardPageComponent },
-  { path: 'student/dashboard', canActivate: [studentAuthGuard], component: StudentDashboardPageComponent },
+  // The learning plan. Parents open it from their dashboard with ?studentId=…, which the guard allows.
+  { path: 'student/dashboard', canActivate: [studentAuthGuard], loadComponent: () => import('./student/student-dashboard-page.component').then((m) => m.StudentDashboardPageComponent) },
+  { path: 'student/topics', canActivate: [studentAuthGuard], loadComponent: () => import('./student/plan-topics-page.component').then((m) => m.PlanTopicsPageComponent) },
   { path: 'onboarding/grade-selection', canActivate: [studentAuthGuard], component: GradeSelectionPageComponent },
   { path: 'onboarding/topic-selection', canActivate: [studentAuthGuard], component: TopicSelectionPageComponent },
   { path: 'diagnostic/start', canActivate: [studentAuthGuard], component: DiagnosticPageComponent },
@@ -42,6 +43,7 @@ export const routes: Routes = [
   { path: 'tests', canActivate: [studentAuthGuard], component: TestsHubPageComponent },
   { path: 'tests/custom', canActivate: [studentAuthGuard], component: CustomTestBuilderPageComponent },
   { path: 'tests/custom/take', canActivate: [studentAuthGuard], component: CustomTestTakePageComponent },
+  { path: 'tests/review/take', canActivate: [studentAuthGuard], component: CustomTestTakePageComponent, data: { review: true } },
   { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
   { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
   { path: 'tests/topic/:topicId', canActivate: [studentAuthGuard], component: TopicTestPageComponent },

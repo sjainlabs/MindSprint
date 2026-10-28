@@ -1,0 +1,33 @@
+.review { border-top: 5px solid #94a3b8; }
+.review.open { border-top-color: #16a34a; }
+.review.overdue { border-top-color: #d97706; }
+
+.status-pill { border-radius: 999px; padding: 4px 12px; font-size: 0.82rem; font-weight: 800; background: #f1f5f9; color: #475569; }
+.status-pill.open { background: #dcfce7; color: #166534; }
+.status-pill.overdue { background: #fef3c7; color: #92400e; }
+
+.due { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; }
+.countdown { font-size: 1.8rem; font-weight: 800; color: #1e1b4b; }
+.review.overdue .countdown { color: #b45309; }
+.due-date { font-weight: 700; color: #475569; }
+.reminder { margin-top: 6px; color: #334155; }
+
+.foot { margin-top: 14px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
+.foot .chip-row { margin-top: 0; }
+.date-chip { background: #f1f5f9; color: #334155; border-radius: 8px; padding: 3px 8px; font-size: 0.8rem; font-weight: 700; }
+
+.settings { margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 12px; }
+.settings h3 { margin-top: 0; }
+.weekday-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+.weekday {
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  border-radius: 10px;
+  min-height: 42px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #334155;
+  cursor: pointer;
+  padding: 0;
+}
+.weekday.active { border-color: #6c63ff; background: #6c63ff; color: #fff; }

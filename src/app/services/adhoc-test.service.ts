@@ -74,7 +74,12 @@ export interface ActiveAdhocTest {
   answers: Record<string, string>;
   startedAt: string;
   currentIndex: number;
+  /** Set for a 3-weekly review test, which is graded through /api/learning-plan. */
+  review?: { cycle: number; dueDate: string };
 }
+
+/** Custom tests and review tests are saved separately, so starting one never loses the other. */
+export type ActiveTestSlot = 'adhoc' | 'review';
 
 export const ADHOC_MAX_TOPICS = 10;
 export const ADHOC_MAX_QUESTIONS = 50;
@@ -124,17 +129,21 @@ export class AdhocTestService {
 
   /* ---------------- Active test persistence ---------------- */
 
-  loadActive(studentId: string): ActiveAdhocTest | null {
-    const parsed = this.read<ActiveAdhocTest>(`${ACTIVE_KEY}.${studentId}`);
+  loadActive(studentId: string, slot: ActiveTestSlot = 'adhoc'): ActiveAdhocTest | null {
+    const parsed = this.read<ActiveAdhocTest>(this.activeKey(studentId, slot));
     return parsed?.studentId === studentId && parsed.test?.testId ? parsed : null;
   }
 
-  saveActive(active: ActiveAdhocTest): void {
-    this.write(`${ACTIVE_KEY}.${active.studentId}`, active);
+  saveActive(active: ActiveAdhocTest, slot: ActiveTestSlot = 'adhoc'): void {
+    this.write(this.activeKey(active.studentId, slot), active);
   }
 
-  clearActive(studentId: string): void {
-    this.remove(`${ACTIVE_KEY}.${studentId}`);
+  clearActive(studentId: string, slot: ActiveTestSlot = 'adhoc'): void {
+    this.remove(this.activeKey(studentId, slot));
+  }
+
+  private activeKey(studentId: string, slot: ActiveTestSlot): string {
+    return slot === 'review' ? `${ACTIVE_KEY}.review.${studentId}` : `${ACTIVE_KEY}.${studentId}`;
   }
 
   /* ---------------- Last selection ---------------- */

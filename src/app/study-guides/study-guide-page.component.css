@@ -323,3 +323,4 @@ ul, ol {
 }
 
 .back-daily { margin-bottom: 10px; justify-self: start; align-self: start; width: auto; }
+.then-practice { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #eef2ff; color: #3730a3; font-weight: 600; }

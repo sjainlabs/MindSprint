@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { PracticeWorksheetQuestion } from '../services/learning-api.service';
 import { PracticeTopicCatalogService } from '../services/practice-topic-catalog.service';
@@ -11,7 +11,9 @@ import {
   AdhocTestResult,
   AdhocTestService,
   AdhocTopicScore,
+  ActiveTestSlot,
 } from '../services/adhoc-test.service';
+import { LearningPlanService, shortDate } from '../services/learning-plan.service';
 import { TestApiError } from '../services/test-api-error';
 import { QuestionRendererComponent } from '../question-renderer/question-renderer.component';
 
@@ -32,6 +34,14 @@ export class CustomTestTakePageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly adhoc = inject(AdhocTestService);
   private readonly catalog = inject(PracticeTopicCatalogService);
+  private readonly learningPlan = inject(LearningPlanService);
+
+  /** The 3-weekly review test reuses this page (route data `review: true`), graded through the learning plan. */
+  readonly isReview = inject(ActivatedRoute).snapshot.data['review'] === true;
+  private readonly slot: ActiveTestSlot = this.isReview ? 'review' : 'adhoc';
+  /** From the review test result: when the next one is due. */
+  readonly nextReviewDate = signal<string | null>(null);
+  readonly shortDate = shortDate;
 
   private studentId = '';
 
@@ -93,10 +103,10 @@ export class CustomTestTakePageComponent implements OnInit {
     }
     this.studentId = studentId;
 
-    const saved = this.adhoc.loadActive(studentId);
+    const saved = this.adhoc.loadActive(studentId, this.slot);
     if (!saved) {
-      // Nothing to take: go build one.
-      await this.router.navigate(['/tests/custom']);
+      // Nothing to take: go build one (or back to the plan, which starts review tests).
+      await this.router.navigate([this.isReview ? '/student/dashboard' : '/tests/custom']);
       return;
     }
     this.active.set(saved);
@@ -137,7 +147,7 @@ export class CustomTestTakePageComponent implements OnInit {
 
   /** Leave without submitting; the test stays saved and resumes from the Tests page. */
   saveAndExit(): void {
-    this.router.navigate(['/tests']);
+    this.router.navigate([this.isReview ? '/student/dashboard' : '/tests']);
   }
 
   /* ---------------- Submit ---------------- */
@@ -162,13 +172,16 @@ export class CustomTestTakePageComponent implements OnInit {
     }
 
     try {
-      const result = await this.adhoc.submit({
-        testId: active.test.testId,
-        studentId: this.studentId,
-        answers,
-        startedAt: active.startedAt,
-      });
-      this.adhoc.clearActive(this.studentId);
+      const payload = { testId: active.test.testId, studentId: this.studentId, answers, startedAt: active.startedAt };
+      let result: AdhocTestResult;
+      if (this.isReview) {
+        const review = await this.learningPlan.submitReview(payload);
+        this.nextReviewDate.set(review.nextReviewDate);
+        result = review;
+      } else {
+        result = await this.adhoc.submit(payload);
+      }
+      this.adhoc.clearActive(this.studentId, this.slot);
       this.lastSelection = active.selection;
       this.result.set(result);
       this.reviewOpen.set(false);
@@ -179,11 +192,11 @@ export class CustomTestTakePageComponent implements OnInit {
     } catch (err) {
       const code = err instanceof TestApiError ? err.code : 'UNKNOWN';
       if (code === 'ALREADY_SUBMITTED' || code === 'FORBIDDEN' || code === 'NOT_FOUND') {
-        this.adhoc.clearActive(this.studentId);
-        this.lastSelection = active.selection;
+        this.adhoc.clearActive(this.studentId, this.slot);
+        this.lastSelection = this.isReview ? null : active.selection;
         this.active.set(null);
         this.fail(
-          code === 'ALREADY_SUBMITTED'
+          code === 'ALREADY_SUBMITTED' && !this.isReview
             ? `${this.messageOf(err)} You can see it in your test history.`
             : this.messageOf(err),
         );
@@ -268,8 +281,12 @@ export class CustomTestTakePageComponent implements OnInit {
     this.router.navigate(['/tests']);
   }
 
+  goToDashboard(): void {
+    this.router.navigate(['/student/dashboard']);
+  }
+
   canRetake(): boolean {
-    return !!this.lastSelection;
+    return !this.isReview && !!this.lastSelection;
   }
 
   /* ---------------- Helpers ---------------- */
@@ -279,7 +296,7 @@ export class CustomTestTakePageComponent implements OnInit {
     if (!current) return;
     const next = fn(current);
     this.active.set(next);
-    this.adhoc.saveActive(next);
+    this.adhoc.saveActive(next, this.slot);
   }
 
   private fail(message: string): void {

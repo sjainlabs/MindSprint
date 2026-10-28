@@ -1,0 +1,87 @@
+@let c = current();
+<section class="card review" [class]="c.status" aria-labelledby="review-title">
+  <div class="row-between">
+    <h2 id="review-title">📅 Review test</h2>
+    <span class="status-pill" [class]="c.status">{{ statusText() }}</span>
+  </div>
+
+  <div class="due">
+    <div class="countdown">{{ countdown() }}</div>
+    <div class="due-date">{{ shortDate(c.dueDate, true) }}</div>
+  </div>
+
+  <p class="reminder">{{ parentMode() ? c.reminder.parent : c.reminder.kid }}</p>
+
+  @if (c.topics.length) {
+    <h3>Covers {{ c.topics.length }} topic{{ c.topics.length === 1 ? '' : 's' }} · {{ c.questionCount }} questions</h3>
+    <ul class="topic-list">
+      @for (t of c.topics; track t.topicId) {
+        <li>
+          <span class="dot" [class]="t.status" aria-hidden="true"></span>
+          <span class="name">{{ t.topicName }}</span>
+          <span class="muted small">{{ statusLabels[t.status] }}@if (t.score !== null) { · {{ t.score }}% }</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="muted">No topics yet: practise a few sheets and they will show up here.</p>
+  }
+
+  @if (c.reviseFirst.length) {
+    <h3>Revise these first</h3>
+    <div class="chip-row">
+      @for (t of c.reviseFirst; track t.topicId) {
+        <a class="chip link" [routerLink]="['/study-guides/topic', t.topicId]">📘 {{ t.topicName }}</a>
+      }
+    </div>
+  }
+
+  @if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+
+  @if (c.canStart && canAct()) {
+    <button type="button" class="btn primary big" [disabled]="starting()" (click)="start()">
+      @if (starting()) {
+        <span class="spinner small"></span> Getting your test ready…
+      } @else if (canResume()) {
+        ▶ Resume review test
+      } @else {
+        ▶ Start review test
+      }
+    </button>
+  }
+
+  <div class="row-between foot">
+    <div class="chip-row" aria-label="Next review dates">
+      <span class="muted small">Then:</span>
+      @for (d of schedule().upcoming; track d) {
+        <span class="date-chip">{{ shortDate(d) }}</span>
+      }
+    </div>
+    <a class="link small" [href]="calendarUrl()" target="_blank" rel="noopener">📆 Add to calendar</a>
+  </div>
+
+  @if (parentMode()) {
+    <div class="settings">
+      <h3>Review test day</h3>
+      <p class="muted small">Every {{ schedule().cadenceDays / 7 }} weeks on the day you choose.</p>
+      <div class="weekday-row" role="radiogroup" aria-label="Review test day">
+        @for (d of weekdays; track d; let i = $index) {
+          <button
+            type="button"
+            role="radio"
+            class="weekday"
+            [class.active]="schedule().weekday === i"
+            [attr.aria-checked]="schedule().weekday === i"
+            [attr.aria-label]="d"
+            [disabled]="savingDay() !== null"
+            (click)="setWeekday(i)"
+          >
+            {{ savingDay() === i ? '…' : d.slice(0, 3) }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+</section>
