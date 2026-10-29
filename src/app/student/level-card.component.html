@@ -1,0 +1,86 @@
+@let l = level();
+<section class="card level" aria-labelledby="level-title">
+  @if (levelUp(); as g) {
+    <div class="level-up" role="status">
+      <span class="burst" aria-hidden="true">🎉</span>
+      <strong>You've moved up to Grade {{ gradeLabel(g) }}!</strong>
+    </div>
+  }
+
+  <div class="head">
+    <div class="badge-wrap">
+      <div class="grade-badge" id="level-title">
+        <span class="grade-word">Grade</span>
+        <span class="grade-num">{{ gradeLabel(l.workingGrade) }}</span>
+      </div>
+      @if (l.workingBand) {
+        <span class="band-pill">Band {{ l.workingBand }}</span>
+      }
+    </div>
+    <div class="head-text">
+      @if (ahead()) {
+        <span class="ribbon">🚀 Ahead of grade</span>
+      }
+      <p class="summary">{{ l.summary }}</p>
+    </div>
+  </div>
+
+  @if (empty()) {
+    <div class="empty">
+      <p>Let's find {{ parentMode() ? 'their' : 'your' }} level! Start the daily challenge or a practice sheet.</p>
+      @if (canAct()) {
+        <a class="btn primary" routerLink="/daily">🎯 Start the daily challenge</a>
+      }
+    </div>
+  } @else {
+    <ol class="ladder" aria-label="Grades, highest first">
+      @for (g of ladder(); track g.grade) {
+        <li>
+          <a class="rung" [class.here]="g.grade === l.workingGrade" routerLink="/student/topics" [queryParams]="topicsQuery(g.grade)">
+            <span class="rung-name">
+              Grade {{ gradeLabel(g.grade) }}
+              @if (g.secure) { <span class="medal" title="Secure: 80% or more strong" aria-label="secure">✓</span> }
+            </span>
+            <span class="bar" role="img" [attr.aria-label]="barLabel(g)">
+              <span class="track">
+                @for (s of segments; track s.key) {
+                  @if (segmentWidth(g, s.key) > 0) {
+                    <span class="seg" [class]="s.cls" [style.width.%]="segmentWidth(g, s.key)"></span>
+                  }
+                }
+              </span>
+              <span class="tick" [style.left.%]="target" aria-hidden="true"><span>{{ target }}%</span></span>
+            </span>
+            <span class="rung-pct">{{ g.securePercent }}% strong</span>
+            @if (g.grade === l.workingGrade) {
+              <span class="here-tag">📍 {{ parentMode() ? 'Working here' : 'You are here' }}</span>
+            }
+          </a>
+        </li>
+      }
+    </ol>
+
+    <ul class="legend" aria-label="Legend">
+      @for (s of segments; track s.key) {
+        <li><span class="swatch" [class]="s.cls"></span>{{ s.label }}</li>
+      }
+    </ul>
+  }
+
+  @if (l.gaps.length) {
+    <h3>Fix these first</h3>
+    <div class="chip-row">
+      @for (gap of gaps(); track gap.topicId) {
+        <a class="chip link gap" [routerLink]="['/study-guides/topic', gap.topicId]" [queryParams]="{ then: 'practice' }">
+          {{ gap.topicName }} · Grade {{ gradeLabel(gap.grade) }}@if (gap.score !== null) { · {{ gap.score }}%}
+          @if (trendIcon(gap.trend); as icon) {
+            <span class="trend" [class.down]="icon === '↓'" [attr.aria-label]="gap.trend">{{ icon }}</span>
+          }
+        </a>
+      }
+      @if (hiddenGaps() && !showAllGaps()) {
+        <button type="button" class="chip" (click)="showAllGaps.set(true)">+{{ hiddenGaps() }} more</button>
+      }
+    </div>
+  }
+</section>

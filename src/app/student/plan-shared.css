@@ -11,9 +11,9 @@ h3 { font-size: 0.95rem; margin-top: 14px; color: #334155; }
 
 /* Topic status: always shown with its label too. */
 .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: #cbd5e1; }
-.dot.mastered { background: #4338ca; }
-.dot.strong { background: #16a34a; }
-.dot.learning { background: #0ea5e9; }
+.dot.mastered { background: #15803d; }
+.dot.strong { background: #4ade80; }
+.dot.learning { background: #3b82f6; }
 .dot.needs-work { background: #f59e0b; }
 .dot.not-started { background: #fff; border: 2px solid #cbd5e1; }
 

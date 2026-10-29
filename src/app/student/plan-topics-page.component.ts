@@ -21,7 +21,14 @@ const TREND_ICONS: Record<string, string> = { improving: '↑', slipping: '↓' 
   imports: [RouterLink, GradePickerComponent],
   template: `
     <main class="page">
-      <h1>All topics</h1>
+      <div class="row-between">
+        <h1>All topics</h1>
+        @if (gradeFilter() !== null) {
+          <button type="button" class="chip active" (click)="gradeFilter.set(null)" aria-label="Show every grade">
+            Grade {{ gradeLabel(gradeFilter()!) }} ✕
+          </button>
+        }
+      </div>
 
       @if (loading()) {
         <section class="card center" aria-busy="true"><div class="spinner"></div></section>
@@ -38,7 +45,7 @@ const TREND_ICONS: Record<string, string> = { improving: '↑', slipping: '↓' 
       } @else {
         <div class="chip-row filters" role="group" aria-label="Show topics">
           <button type="button" class="chip" [class.active]="filter() === null" [attr.aria-pressed]="filter() === null" (click)="filter.set(null)">
-            All ({{ topics().length }})
+            All ({{ inGrade().length }})
           </button>
           @for (s of statuses; track s) {
             @if (counts()[s]) {
@@ -99,17 +106,23 @@ export class PlanTopicsPageComponent implements OnInit {
   readonly error = signal('');
   readonly topics = signal<TopicStanding[]>([]);
   readonly filter = signal<PlanStatus | null>(null);
+  /** From a level-card ladder row (?grade=3). */
+  readonly gradeFilter = signal<number | null>(null);
+  readonly inGrade = computed(() => {
+    const g = this.gradeFilter();
+    return g === null ? this.topics() : this.topics().filter((t) => t.grade === g);
+  });
 
   readonly counts = computed(() => {
     const c: Partial<Record<PlanStatus, number>> = {};
-    for (const t of this.topics()) c[t.status] = (c[t.status] ?? 0) + 1;
+    for (const t of this.inGrade()) c[t.status] = (c[t.status] ?? 0) + 1;
     return c;
   });
 
   readonly groups = computed(() => {
     const f = this.filter();
     const byGrade = new Map<number, TopicStanding[]>();
-    for (const t of this.topics()) {
+    for (const t of this.inGrade()) {
       if (f && t.status !== f) continue;
       byGrade.set(t.grade, [...(byGrade.get(t.grade) ?? []), t]);
     }
@@ -119,7 +132,10 @@ export class PlanTopicsPageComponent implements OnInit {
   private studentId = '';
 
   ngOnInit(): void {
-    this.studentId = this.route.snapshot.queryParamMap.get('studentId') ?? this.auth.getStoredStudentId() ?? '';
+    const query = this.route.snapshot.queryParamMap;
+    this.studentId = query.get('studentId') ?? this.auth.getStoredStudentId() ?? '';
+    const grade = query.get('grade');
+    if (grade !== null && grade !== '' && !Number.isNaN(Number(grade))) this.gradeFilter.set(Number(grade));
     this.load();
   }
 

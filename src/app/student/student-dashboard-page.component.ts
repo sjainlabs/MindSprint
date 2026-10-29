@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { DailyChallengeService, localDate } from '../services/daily-challenge.service';
@@ -10,11 +10,11 @@ import {
   Recommendation,
   STATUS_LABELS,
   gradeBand,
-  gradeLabel,
 } from '../services/learning-plan.service';
 import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
 import { PlanActions } from './plan-actions';
 import { ReviewTestCardComponent } from './review-test-card.component';
+import { LevelCardComponent } from './level-card.component';
 
 type Phase = 'loading' | 'ready' | 'grade' | 'error';
 
@@ -25,7 +25,7 @@ type Phase = 'loading' | 'ready' | 'grade' | 'error';
 @Component({
   selector: 'app-student-dashboard-page',
   standalone: true,
-  imports: [RouterLink, GradePickerComponent, ReviewTestCardComponent],
+  imports: [RouterLink, GradePickerComponent, ReviewTestCardComponent, LevelCardComponent],
   templateUrl: './student-dashboard-page.component.html',
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './student-dashboard-page.component.css'],
 })
@@ -36,6 +36,7 @@ export class StudentDashboardPageComponent implements OnInit {
   private readonly actions = inject(PlanActions);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild(ReviewTestCardComponent) reviewCard?: ReviewTestCardComponent;
 
@@ -57,7 +58,6 @@ export class StudentDashboardPageComponent implements OnInit {
   readonly kindLabels = KIND_LABELS;
   readonly statusLabels = STATUS_LABELS;
   readonly gradeBand = gradeBand;
-  readonly gradeLabel = gradeLabel;
 
   readonly maxStrand = computed(() => Math.max(100, ...(this.plan()?.strands.map((s) => s.averageScore) ?? [])));
   readonly nextGrade = computed(() => {
@@ -92,7 +92,15 @@ export class StudentDashboardPageComponent implements OnInit {
     }
     if (this.canAct()) this.loadDailyBadge(this.studentId());
     this.load();
+    // Sheets, tests and the daily challenge all come back here, which reloads the plan; this also
+    // catches work finished in another tab.
+    document.addEventListener('visibilitychange', this.onVisible);
+    this.destroyRef.onDestroy(() => document.removeEventListener('visibilitychange', this.onVisible));
   }
+
+  private readonly onVisible = () => {
+    if (!document.hidden && this.phase() === 'ready') this.load(true);
+  };
 
   async load(quiet = false): Promise<void> {
     if (!quiet) this.phase.set('loading');

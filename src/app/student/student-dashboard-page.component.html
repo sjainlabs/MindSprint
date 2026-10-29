@@ -40,44 +40,7 @@
         }
 
         <!-- 1. Level -->
-        <section class="card level" aria-labelledby="level-title">
-          <p class="eyebrow" id="level-title">Where {{ parentMode() ? 'they are' : 'you are' }}</p>
-          <p class="headline">{{ p.level.summary }}</p>
-          <div class="grades">
-            @for (g of p.level.grades; track g.grade) {
-              <div class="grade-row" [class.working]="g.grade === p.level.workingGrade">
-                <div class="row-between">
-                  <span class="grade-name">
-                    Grade {{ gradeLabel(g.grade) }}
-                    @if (g.grade === p.level.workingGrade) { <span class="now">Now</span> }
-                    @if (g.secure) { <span class="secure">✓ Secure</span> }
-                  </span>
-                  <span class="pct">{{ g.securePercent }}% strong</span>
-                </div>
-                <div class="progress-bar" role="img" [attr.aria-label]="'Grade ' + gradeLabel(g.grade) + ': ' + g.securePercent + '% of topics strong or mastered'">
-                  <div class="progress-fill" [style.width.%]="g.securePercent"></div>
-                </div>
-                <p class="counts">
-                  @if (g.mastered) { <span><span class="dot mastered"></span>{{ g.mastered }} mastered</span> }
-                  @if (g.strong) { <span><span class="dot strong"></span>{{ g.strong }} strong</span> }
-                  @if (g.learning) { <span><span class="dot learning"></span>{{ g.learning }} learning</span> }
-                  @if (g.needsWork) { <span><span class="dot needs-work"></span>{{ g.needsWork }} needs work</span> }
-                  @if (g.notStarted) { <span><span class="dot not-started"></span>{{ g.notStarted }} not started</span> }
-                </p>
-              </div>
-            }
-          </div>
-          @if (p.level.gaps.length) {
-            <h3>Gaps from earlier grades</h3>
-            <div class="chip-row">
-              @for (gap of p.level.gaps; track gap.topicId) {
-                <a class="chip link gap" [routerLink]="['/study-guides/topic', gap.topicId]">
-                  {{ gap.topicName }} <span class="muted small">· G{{ gradeLabel(gap.grade) }}@if (gap.score !== null) { · {{ gap.score }}% }</span>
-                </a>
-              }
-            </div>
-          }
-        </section>
+        <app-level-card [level]="p.level" [studentId]="studentId()" [parentMode]="parentMode()" [canAct]="canAct()" />
 
         <!-- 2. Up next -->
         <section class="card" aria-labelledby="next-title">

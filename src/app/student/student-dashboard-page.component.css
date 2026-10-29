@@ -3,22 +3,6 @@
 .toggle button { border: 0; background: none; padding: 6px 12px; border-radius: 10px; font-weight: 800; color: #475569; cursor: pointer; min-height: 36px; }
 .toggle button.active { background: #fff; color: #1e1b4b; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15); }
 
-/* Level */
-.eyebrow { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #6c63ff; }
-.headline { font-size: 1.15rem; font-weight: 700; color: #1e1b4b; margin-top: 4px; line-height: 1.45; }
-.grades { display: grid; gap: 12px; margin-top: 14px; }
-.grade-row { padding: 10px 12px; border-radius: 12px; background: #f8fafc; }
-.grade-row.working { background: #f5f3ff; outline: 2px solid #c4b5fd; }
-.grade-name { font-weight: 800; color: #1e293b; display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.now, .secure { font-size: 0.72rem; border-radius: 999px; padding: 2px 8px; }
-.now { background: #6c63ff; color: #fff; }
-.secure { background: #dcfce7; color: #166534; }
-.pct { font-weight: 700; color: #475569; font-size: 0.88rem; }
-.grade-row .progress-bar { margin-top: 6px; }
-.counts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 0.8rem; color: #475569; }
-.counts > span { display: inline-flex; align-items: center; gap: 5px; }
-.chip.gap { background: #fffbeb; border-color: #fcd34d; gap: 4px; }
-
 /* Up next */
 .next { margin-top: 8px; padding: 14px; border-radius: 14px; background: linear-gradient(135deg, #eef2ff, #f5f3ff); }
 .next-label { font-size: 1.1rem; font-weight: 800; color: #1e1b4b; margin: 0 0 4px; }
