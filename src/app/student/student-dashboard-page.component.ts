@@ -10,6 +10,7 @@ import {
   Recommendation,
   STATUS_LABELS,
   gradeBand,
+  gradeLabel,
 } from '../services/learning-plan.service';
 import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
 import { PlanActions } from './plan-actions';
@@ -18,6 +19,8 @@ import { LevelCardComponent } from './level-card.component';
 import { RewardsBarComponent } from '../rewards/rewards-bar.component';
 
 type Phase = 'loading' | 'ready' | 'grade' | 'error';
+
+const PLAN_OPEN_KEY = 'mindsprint.plan.open';
 
 /**
  * The learning plan: level, what to do next, the review test and progress. A parent sees the same
@@ -59,6 +62,25 @@ export class StudentDashboardPageComponent implements OnInit {
   readonly kindLabels = KIND_LABELS;
   readonly statusLabels = STATUS_LABELS;
   readonly gradeBand = gradeBand;
+
+  /** The plan folds into one row; kids open it when they want it, parents see it open. */
+  private readonly planOpen = signal<boolean | null>(readPlanOpen());
+  /** Asking for the grade can't wait behind a closed panel. */
+  readonly expanded = computed(() => this.phase() === 'grade' || (this.planOpen() ?? this.parentMode()));
+  readonly teaser = computed(() => {
+    const p = this.plan();
+    if (this.phase() === 'loading') return 'Loading…';
+    if (this.phase() === 'grade') return 'Pick a grade to build the plan';
+    if (!p) return "Couldn't load the plan";
+    const review = p.reviewTest.current.status;
+    return [
+      `Grade ${gradeLabel(p.level.workingGrade)}`,
+      review === 'open' ? '📅 Review test open' : review === 'overdue' ? '📅 Review test overdue' : '',
+      p.nextWorksheet ? `Up next: ${p.nextWorksheet.topicName}` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  });
 
   readonly maxStrand = computed(() => Math.max(100, ...(this.plan()?.strands.map((s) => s.averageScore) ?? [])));
   readonly nextGrade = computed(() => {
@@ -141,6 +163,16 @@ export class StudentDashboardPageComponent implements OnInit {
     this.gradeBusy.set(false);
   }
 
+  togglePlan(): void {
+    const open = !this.expanded();
+    this.planOpen.set(open);
+    try {
+      localStorage.setItem(PLAN_OPEN_KEY, String(open));
+    } catch {
+      // Not remembered; it still toggles.
+    }
+  }
+
   setParentMode(on: boolean): void {
     this.parentMode.set(on);
     this.router.navigate([], { queryParams: { view: on ? 'parent' : null }, queryParamsHandling: 'merge', replaceUrl: true });
@@ -191,5 +223,14 @@ export class StudentDashboardPageComponent implements OnInit {
     } catch {
       // No badge if the server can't be reached; the button still works.
     }
+  }
+}
+
+function readPlanOpen(): boolean | null {
+  try {
+    const saved = localStorage.getItem(PLAN_OPEN_KEY);
+    return saved === null ? null : saved === 'true';
+  } catch {
+    return null;
   }
 }

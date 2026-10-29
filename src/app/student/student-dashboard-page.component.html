@@ -1,6 +1,6 @@
 <main class="page dash">
   <div class="row-between">
-    <h1>{{ parentMode() ? '👪 Learning plan' : 'My learning plan' }}</h1>
+    <h1>{{ parentMode() ? '👪 Learning plan' : '🏠 My dashboard' }}</h1>
     @if (parentLoggedIn) {
       <div class="toggle" role="group" aria-label="Who is looking">
         <button type="button" [class.active]="!parentMode()" [attr.aria-pressed]="!parentMode()" (click)="setParentMode(false)">Kid</button>
@@ -13,151 +13,164 @@
     <app-rewards-bar />
   }
 
-  @switch (phase()) {
-    @case ('loading') {
-      <section class="card center" aria-busy="true">
-        <div class="spinner"></div>
-        <p class="muted">Building the plan from everything practised so far…</p>
-      </section>
-    }
+  <section class="plan-panel" [class.open]="expanded()">
+    <button type="button" class="plan-toggle" aria-controls="plan-body" [attr.aria-expanded]="expanded()" (click)="togglePlan()">
+      <span class="plan-icon" aria-hidden="true">📋</span>
+      <span class="plan-head">
+        <span class="plan-title">{{ parentMode() ? 'Learning plan' : 'My learning plan' }}</span>
+        <span class="plan-teaser">{{ teaser() }}</span>
+      </span>
+      <span class="chev" aria-hidden="true">▾</span>
+    </button>
 
-    @case ('grade') {
-      <section class="card">
-        <h2>Which grade {{ parentMode() ? 'is your child' : 'are you' }} in?</h2>
-        <p class="muted">We need it once to build the plan.</p>
-        <app-grade-picker [busy]="gradeBusy()" (picked)="pickGrade($event)" />
-      </section>
-    }
-
-    @case ('error') {
-      <section class="card">
-        <h2>We couldn't load the plan</h2>
-        <p class="notice error" role="alert">{{ error() }}</p>
-        <button type="button" class="btn primary" (click)="load()">Try again</button>
-      </section>
-    }
-
-    @case ('ready') {
-      @if (plan(); as p) {
-        @if (error()) {
-          <p class="notice error" role="alert">{{ error() }}</p>
+    <div id="plan-body" class="plan-body" [hidden]="!expanded()">
+      @switch (phase()) {
+        @case ('loading') {
+          <section class="card center" aria-busy="true">
+            <div class="spinner"></div>
+            <p class="muted">Building the plan from everything practised so far…</p>
+          </section>
         }
 
-        <!-- 1. Level -->
-        <app-level-card [level]="p.level" [studentId]="studentId()" [parentMode]="parentMode()" [canAct]="canAct()" />
+        @case ('grade') {
+          <section class="card">
+            <h2>Which grade {{ parentMode() ? 'is your child' : 'are you' }} in?</h2>
+            <p class="muted">We need it once to build the plan.</p>
+            <app-grade-picker [busy]="gradeBusy()" (picked)="pickGrade($event)" />
+          </section>
+        }
 
-        <!-- 2. Up next -->
-        <section class="card" aria-labelledby="next-title">
-          <h2 id="next-title">Up next</h2>
-          @if (p.nextWorksheet; as next) {
-            <div class="next">
-              <p class="next-label">{{ next.label }}</p>
-              <p class="muted">{{ next.reason }}</p>
-              @if (canAct()) {
-                <button type="button" class="btn primary big" [disabled]="opening() === 'next'" (click)="startNext()">
-                  @if (opening() === 'next') { <span class="spinner small"></span> Opening… } @else { {{ nextButtonText(next.type) }} }
-                </button>
+        @case ('error') {
+          <section class="card">
+            <h2>We couldn't load the plan</h2>
+            <p class="notice error" role="alert">{{ error() }}</p>
+            <button type="button" class="btn primary" (click)="load()">Try again</button>
+          </section>
+        }
+
+        @case ('ready') {
+          @if (plan(); as p) {
+            @if (error()) {
+              <p class="notice error" role="alert">{{ error() }}</p>
+            }
+
+            <!-- 1. Level -->
+            <app-level-card [level]="p.level" [studentId]="studentId()" [parentMode]="parentMode()" [canAct]="canAct()" />
+
+            <!-- 2. Up next -->
+            <section class="card" aria-labelledby="next-title">
+              <h2 id="next-title">Up next</h2>
+              @if (p.nextWorksheet; as next) {
+                <div class="next">
+                  <p class="next-label">{{ next.label }}</p>
+                  <p class="muted">{{ next.reason }}</p>
+                  @if (canAct()) {
+                    <button type="button" class="btn primary big" [disabled]="opening() === 'next'" (click)="startNext()">
+                      @if (opening() === 'next') { <span class="spinner small"></span> Opening… } @else { {{ nextButtonText(next.type) }} }
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="muted">Nothing to suggest yet. Try a sheet from the Practice Hub to get started.</p>
               }
-            </div>
-          } @else {
-            <p class="muted">Nothing to suggest yet. Try a sheet from the Practice Hub to get started.</p>
-          }
 
-          @if (p.recommendations.length > 1) {
-            <h3>More ideas</h3>
-            <div class="recs">
-              @for (r of p.recommendations.slice(1); track r.topicId) {
-                <button type="button" class="rec" [class.static]="!canAct()" [disabled]="opening() === r.topicId" (click)="startRecommendation(r)">
-                  <span class="rec-top">
-                    <span class="kind" [class]="r.kind">{{ kindLabels[r.kind] }}</span>
-                    <span class="tag">{{ gradeBand(r.grade, r.band) }}</span>
-                    @if (r.score !== null) { <span class="score">{{ r.score }}%</span> }
-                  </span>
-                  <span class="rec-name">{{ r.topicName }}</span>
-                  <span class="rec-reason">{{ r.reason }}</span>
-                </button>
-              }
-            </div>
-          }
-        </section>
-
-        <!-- 3. Review test -->
-        <app-review-test-card
-          [schedule]="p.reviewTest"
-          [studentId]="studentId()"
-          [parentMode]="parentMode()"
-          [canAct]="canAct()"
-          (gradeRequired)="askGradeForReview()"
-          (changed)="load(true)"
-        />
-
-        <!-- 4. Progress -->
-        <section class="card" aria-labelledby="progress-title">
-          <div class="row-between">
-            <h2 id="progress-title">Progress</h2>
-            <a class="link small" routerLink="/student/topics" [queryParams]="topicsLink()">All topics →</a>
-          </div>
-
-          @if (activityLine(); as a) {
-            <p class="activity">
-              {{ a.text }}
-              @if (a.change; as c) {
-                (<span class="change" [class]="c.dir" [attr.aria-label]="c.aria">{{ c.label }}</span>)
-              }
-            </p>
-          }
-
-          @if (p.strands.length) {
-            <div class="strands">
-              @for (s of p.strands; track s.strand) {
-                <div class="strand">
-                  <span class="strand-name">{{ s.strand }}</span>
-                  <span class="strand-bar"><span class="strand-fill" [style.width.%]="(s.averageScore / maxStrand()) * 100"></span></span>
-                  <span class="strand-val">{{ s.averageScore }}%</span>
+              @if (p.recommendations.length > 1) {
+                <h3>More ideas</h3>
+                <div class="recs">
+                  @for (r of p.recommendations.slice(1); track r.topicId) {
+                    <button type="button" class="rec" [class.static]="!canAct()" [disabled]="opening() === r.topicId" (click)="startRecommendation(r)">
+                      <span class="rec-top">
+                        <span class="kind" [class]="r.kind">{{ kindLabels[r.kind] }}</span>
+                        <span class="tag">{{ gradeBand(r.grade, r.band) }}</span>
+                        @if (r.score !== null) { <span class="score">{{ r.score }}%</span> }
+                      </span>
+                      <span class="rec-name">{{ r.topicName }}</span>
+                      <span class="rec-reason">{{ r.reason }}</span>
+                    </button>
+                  }
                 </div>
               }
-            </div>
-          } @else {
-            <p class="muted">Practise a few sheets and progress shows up here.</p>
-          }
+            </section>
 
-          @if (p.strengths.length || p.focusAreas.length) {
-            <div class="two-col">
-              <div>
-                <h3>💪 Strengths</h3>
-                <ul class="topic-list">
-                  @for (t of p.strengths; track t.topicId) {
-                    <li><span class="dot" [class]="t.status"></span><span class="name">{{ t.topicName }}</span><span class="muted small">{{ t.score }}%</span></li>
-                  } @empty {
-                    <li class="muted small">Not yet: keep practising!</li>
-                  }
-                </ul>
-              </div>
-              <div>
-                <h3>🎯 Focus areas</h3>
-                <ul class="topic-list">
-                  @for (t of p.focusAreas; track t.topicId) {
-                    <li><span class="dot" [class]="t.status"></span><span class="name">{{ t.topicName }}</span><span class="muted small">{{ t.score }}%</span></li>
-                  } @empty {
-                    <li class="muted small">Nothing weak right now.</li>
-                  }
-                </ul>
-              </div>
-            </div>
-          }
+            <!-- 3. Review test -->
+            <app-review-test-card
+              [schedule]="p.reviewTest"
+              [studentId]="studentId()"
+              [parentMode]="parentMode()"
+              [canAct]="canAct()"
+              (gradeRequired)="askGradeForReview()"
+              (changed)="load(true)"
+            />
 
-          @if (p.tips.length) {
-            <details class="tips" [open]="parentMode()">
-              <summary>👪 Tips for parents</summary>
-              <ul>
-                @for (tip of p.tips; track tip) { <li>{{ tip }}</li> }
-              </ul>
-            </details>
+            <!-- 4. Progress -->
+            <section class="card" aria-labelledby="progress-title">
+              <div class="row-between">
+                <h2 id="progress-title">Progress</h2>
+                <a class="link small" routerLink="/student/topics" [queryParams]="topicsLink()">All topics →</a>
+              </div>
+
+              @if (activityLine(); as a) {
+                <p class="activity">
+                  {{ a.text }}
+                  @if (a.change; as c) {
+                    (<span class="change" [class]="c.dir" [attr.aria-label]="c.aria">{{ c.label }}</span>)
+                  }
+                </p>
+              }
+
+              @if (p.strands.length) {
+                <div class="strands">
+                  @for (s of p.strands; track s.strand) {
+                    <div class="strand">
+                      <span class="strand-name">{{ s.strand }}</span>
+                      <span class="strand-bar"><span class="strand-fill" [style.width.%]="(s.averageScore / maxStrand()) * 100"></span></span>
+                      <span class="strand-val">{{ s.averageScore }}%</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="muted">Practise a few sheets and progress shows up here.</p>
+              }
+
+              @if (p.strengths.length || p.focusAreas.length) {
+                <div class="two-col">
+                  <div>
+                    <h3>💪 Strengths</h3>
+                    <ul class="topic-list">
+                      @for (t of p.strengths; track t.topicId) {
+                        <li><span class="dot" [class]="t.status"></span><span class="name">{{ t.topicName }}</span><span class="muted small">{{ t.score }}%</span></li>
+                      } @empty {
+                        <li class="muted small">Not yet: keep practising!</li>
+                      }
+                    </ul>
+                  </div>
+                  <div>
+                    <h3>🎯 Focus areas</h3>
+                    <ul class="topic-list">
+                      @for (t of p.focusAreas; track t.topicId) {
+                        <li><span class="dot" [class]="t.status"></span><span class="name">{{ t.topicName }}</span><span class="muted small">{{ t.score }}%</span></li>
+                      } @empty {
+                        <li class="muted small">Nothing weak right now.</li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              }
+
+              @if (p.tips.length) {
+                <details class="tips" [open]="parentMode()">
+                  <summary>👪 Tips for parents</summary>
+                  <ul>
+                    @for (tip of p.tips; track tip) { <li>{{ tip }}</li> }
+                  </ul>
+                </details>
+              }
+            </section>
           }
-        </section>
+        }
       }
-    }
-  }
+    </div>
+  </section>
 
   @if (canAct() && !parentMode()) {
     <section class="card">

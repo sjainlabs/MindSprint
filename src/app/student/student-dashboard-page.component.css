@@ -3,6 +3,20 @@
 .toggle button { border: 0; background: none; padding: 6px 12px; border-radius: 10px; font-weight: 800; color: #475569; cursor: pointer; min-height: 36px; }
 .toggle button.active { background: #fff; color: #1e1b4b; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15); }
 
+/* The plan folds into one tappable row */
+.plan-panel { display: grid; gap: 16px; }
+.plan-toggle { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; border: 2px solid #e0e7ff; border-radius: 18px; padding: 14px 16px; background: linear-gradient(120deg, #eef2ff, #f5f3ff); box-shadow: 0 6px 18px rgba(67, 56, 202, 0.08); }
+.plan-toggle:hover { border-color: #a5b4fc; }
+.plan-toggle:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+.plan-icon { font-size: 1.6rem; }
+.plan-head { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.plan-title { font-weight: 800; font-size: 1.1rem; color: #1e1b4b; }
+.plan-teaser { font-size: 0.85rem; font-weight: 700; color: #4c1d95; overflow-wrap: anywhere; }
+.chev { font-size: 1.3rem; color: #4338ca; transition: transform 0.2s ease; }
+.plan-panel.open .chev { transform: rotate(180deg); }
+.plan-body { display: grid; gap: 16px; }
+.plan-body[hidden] { display: none; }
+
 /* Up next */
 .next { margin-top: 8px; padding: 14px; border-radius: 14px; background: linear-gradient(135deg, #eef2ff, #f5f3ff); }
 .next-label { font-size: 1.1rem; font-weight: 800; color: #1e1b4b; margin: 0 0 4px; }
