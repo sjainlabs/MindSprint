@@ -9,6 +9,10 @@
     }
   </div>
 
+  @if (canAct() && !parentMode()) {
+    <app-rewards-bar />
+  }
+
   @switch (phase()) {
     @case ('loading') {
       <section class="card center" aria-busy="true">
@@ -166,6 +170,7 @@
         </a>
         <a routerLink="/math-brain" class="button">🧠 Math Brain</a>
         <a routerLink="/math-games" class="button">🎮 Math Games</a>
+        <a routerLink="/rewards" class="button">⭐ Rewards</a>
         <a routerLink="/practice/hub" class="button">Practice Hub</a>
         <a routerLink="/tests" class="button">Tests</a>
         <a routerLink="/insights" class="button">Insights</a>

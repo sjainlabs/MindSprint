@@ -15,6 +15,7 @@ import { GradePickerComponent } from '../components/grade-picker/grade-picker.co
 import { PlanActions } from './plan-actions';
 import { ReviewTestCardComponent } from './review-test-card.component';
 import { LevelCardComponent } from './level-card.component';
+import { RewardsBarComponent } from '../rewards/rewards-bar.component';
 
 type Phase = 'loading' | 'ready' | 'grade' | 'error';
 
@@ -25,7 +26,7 @@ type Phase = 'loading' | 'ready' | 'grade' | 'error';
 @Component({
   selector: 'app-student-dashboard-page',
   standalone: true,
-  imports: [RouterLink, GradePickerComponent, ReviewTestCardComponent, LevelCardComponent],
+  imports: [RouterLink, GradePickerComponent, ReviewTestCardComponent, LevelCardComponent, RewardsBarComponent],
   templateUrl: './student-dashboard-page.component.html',
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './student-dashboard-page.component.css'],
 })

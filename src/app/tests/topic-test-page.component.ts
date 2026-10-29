@@ -13,6 +13,7 @@ import {
 import { QuestionRendererComponent } from '../question-renderer/question-renderer.component';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 import { triggerConfetti } from '../shared/utils/confetti';
+import { ResultsRewardsComponent } from '../rewards/results-rewards.component';
 
 type Stage =
   | 'loading'    // fetching status
@@ -27,7 +28,7 @@ type Stage =
 @Component({
   selector: 'app-topic-test-page',
   standalone: true,
-  imports: [CommonModule, QuestionRendererComponent, TopicTestCardComponent],
+  imports: [CommonModule, QuestionRendererComponent, TopicTestCardComponent, ResultsRewardsComponent],
   templateUrl: './topic-test-page.component.html',
   styleUrls: ['./topic-test-page.component.css'],
 })

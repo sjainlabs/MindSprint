@@ -16,13 +16,14 @@ import { MathTextComponent } from '../components/math-text/math-text.component';
 import { columnLayout } from '../shared/utils/column-layout';
 import { DailyAnswerPadComponent } from './daily-answer-pad.component';
 import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
+import { ResultsRewardsComponent } from '../rewards/results-rewards.component';
 
 type Phase = 'loading' | 'grade' | 'question' | 'feedback' | 'completed' | 'error';
 
 @Component({
   selector: 'app-daily-play-page',
   standalone: true,
-  imports: [CommonModule, MathTextComponent, DailyAnswerPadComponent, GradePickerComponent],
+  imports: [CommonModule, MathTextComponent, DailyAnswerPadComponent, GradePickerComponent, ResultsRewardsComponent],
   templateUrl: './daily-play-page.component.html',
   styleUrls: ['../tests/test-pages.css', './daily-play-page.component.css'],
 })

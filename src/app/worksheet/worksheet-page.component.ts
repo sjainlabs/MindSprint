@@ -20,6 +20,7 @@ import { RouterLink } from '@angular/router';
 import {QuestionRendererComponent} from '../question-renderer/question-renderer.component';
 import { TopicTestService } from '../services/topic-test.service';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
+import { ResultsRewardsComponent } from '../rewards/results-rewards.component';
 
 interface WorksheetNavState {
   worksheet?: any;
@@ -33,7 +34,7 @@ interface WorksheetNavState {
 @Component({
   selector: 'app-clean-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, TopicTestCardComponent, RouterLink],
+  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, TopicTestCardComponent, RouterLink, ResultsRewardsComponent],
   templateUrl: './worksheet-page.component.html',
   styleUrls: ['./worksheet-page.component.css'],
 })

@@ -1,0 +1,154 @@
+<main class="page rewards">
+  @if (loading()) {
+    <section class="card center" aria-busy="true"><div class="spinner"></div></section>
+  } @else if (summary(); as s) {
+    <div class="top-row">
+      <button type="button" class="link-btn" (click)="infoOpen.set(true)">ℹ️ How to earn stars</button>
+    </div>
+
+    <!-- Level -->
+    <section class="card level-card" aria-labelledby="level-name">
+      <div class="level-badge" aria-hidden="true">
+        <span class="level-word">Level</span>
+        <span class="level-num">{{ s.level.number }}</span>
+      </div>
+      <div class="level-body">
+        <h2 id="level-name">{{ s.level.name }} <span class="muted small">· Level {{ s.level.number }}</span></h2>
+        <div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="s.level.progressPercent" [attr.aria-label]="s.level.next ? 'Progress to ' + s.level.next.name : 'Top level'">
+          <span class="meter-fill level-fill" [style.width.%]="s.level.progressPercent"></span>
+        </div>
+        <p class="small strong">
+          @if (s.level.next; as n) { {{ n.starsToGo }} stars to {{ n.name }} } @else { 🏆 Top level reached! }
+        </p>
+      </div>
+    </section>
+
+    <!-- Stars -->
+    <section class="card" aria-labelledby="stars-title">
+      <h2 id="stars-title">⭐ Stars</h2>
+      <div class="big-numbers">
+        <div class="big-num star-counter"><strong>{{ s.stars.available }}</strong><span>to spend</span></div>
+        <div class="big-num"><strong>{{ s.stars.today }}</strong><span>today</span></div>
+        <div class="big-num"><strong>{{ s.stars.thisWeek }}</strong><span>this week</span></div>
+      </div>
+      <h3>Recent stars</h3>
+      <ul class="recent">
+        @for (r of s.recentStars; track $index) {
+          <li><strong class="plus">+{{ r.stars }}</strong><span>{{ r.reason }}</span><span class="muted small">{{ dayLabel(r.date) }}</span></li>
+        } @empty {
+          <li class="muted">Answer a question to earn your first star!</li>
+        }
+      </ul>
+    </section>
+
+    <!-- Streak -->
+    <section class="card" aria-labelledby="streak-title">
+      <h2 id="streak-title">🔥 Streak</h2>
+      <div class="big-numbers two">
+        <div class="big-num"><strong>{{ s.streak.current }}</strong><span>{{ s.streak.current === 1 ? 'day now' : 'days now' }}</span></div>
+        <div class="big-num"><strong>{{ s.streak.longest }}</strong><span>longest</span></div>
+      </div>
+      <ol class="calendar" aria-label="Last 4 weeks">
+        @for (d of s.calendar; track d.date; let last = $last) {
+          <li class="day" [class.active]="d.active" [class.today]="last" [attr.title]="calendarLabel(d)" [attr.aria-label]="calendarLabel(d)">
+            <span class="day-num">{{ dayNumber(d.date) }}</span>
+            @if (d.active) { <span class="tick" aria-hidden="true">✓</span> }
+          </li>
+        }
+      </ol>
+      @if (s.streak.nextMilestone; as m) {
+        <p class="small strong">{{ m.daysToGo }} more {{ m.daysToGo === 1 ? 'day' : 'days' }} to the {{ m.days }}-day badge (+{{ m.stars }}⭐)</p>
+      }
+      <ul class="badges" aria-label="Streak badges">
+        @for (b of badges(); track b.days) {
+          <li class="badge-medal" [class.locked]="!b.earnedOn" [attr.aria-label]="b.days + '-day badge, ' + (b.earnedOn ? 'earned ' + dayLabel(b.earnedOn) : 'locked')">
+            <span class="medal-face" aria-hidden="true">{{ b.earnedOn ? '🏅' : '🔒' }}</span>
+            <span class="medal-days">{{ b.days }} days</span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <!-- Treasure chest -->
+    <section class="card" aria-labelledby="chest-title">
+      <h2 id="chest-title">🎁 Treasure chest</h2>
+      <div class="chest-row">
+        <div class="mystery" [class]="'frame-' + s.chests.nextCollectible.rarity" aria-hidden="true">?</div>
+        <div class="chest-body">
+          <p class="strong">Next: ??? <span class="rarity" [class]="s.chests.nextCollectible.rarity">{{ rarityLabels[s.chests.nextCollectible.rarity] }}</span></p>
+          <div class="meter" role="progressbar" aria-valuemin="0" [attr.aria-valuemax]="s.chests.questionsPerChest" [attr.aria-valuenow]="s.chests.questionsPerChest - s.chests.questionsToNext" aria-label="Questions towards the next chest">
+            <span class="meter-fill chest-fill" [style.width.%]="s.chests.progressPercent"></span>
+          </div>
+          <p class="small muted">{{ s.chests.questionsPerChest - s.chests.questionsToNext }}/{{ s.chests.questionsPerChest }} questions</p>
+        </div>
+      </div>
+      @if (s.chests.unclaimed.length) {
+        <button type="button" class="btn primary big-btn wobble" (click)="openChest()">
+          🎁 Open chest @if (s.chests.unclaimed.length > 1) { ({{ s.chests.unclaimed.length }} waiting) }
+        </button>
+      }
+
+      <h3>My collection <span class="muted small">· {{ s.collectibles.length }} found</span></h3>
+      <ul class="collection">
+        @for (slot of slots(); track slot.milestone) {
+          <li class="slot" [class]="slot.state + ' frame-' + slot.rarity"
+              [attr.aria-label]="slot.state === 'collected' ? slot.name + ', ' + rarityLabels[slot.rarity] : 'Chest ' + slot.milestone + ', ' + (slot.state === 'ready' ? 'ready to open' : 'locked')">
+            @switch (slot.state) {
+              @case ('collected') { <span class="slot-art" aria-hidden="true">{{ slot.rarity === 'trophy' ? '🏆' : '🐾' }}</span><span class="slot-name">{{ slot.name }}</span> }
+              @case ('ready') { <span class="slot-art" aria-hidden="true">🎁</span><span class="slot-name">Open me!</span> }
+              @default { <span class="slot-art" aria-hidden="true">?</span><span class="slot-name">#{{ slot.milestone }}</span> }
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  } @else {
+    <section class="card">
+      <p class="notice error" role="alert">{{ error() }}</p>
+      <button type="button" class="btn primary" (click)="load()">Try again</button>
+    </section>
+  }
+
+  <!-- Opening a chest -->
+  @if (chestState() !== 'idle') {
+    <div class="overlay" (click)="chestState() === 'open' && closeChest()">
+      <section class="chest-stage" role="dialog" aria-modal="true" aria-labelledby="chest-stage-title" (click)="$event.stopPropagation()">
+        @if (chestState() === 'shaking') {
+          <div class="big-chest shake" aria-hidden="true">🎁</div>
+          <h2 id="chest-stage-title">Opening…</h2>
+        } @else if (opened(); as o) {
+          <div class="prize" [class]="'frame-' + o.collectible.rarity">
+            <span class="prize-art" aria-hidden="true">{{ o.collectible.rarity === 'trophy' ? '🏆' : '🐾' }}</span>
+          </div>
+          <h2 id="chest-stage-title">{{ o.collectible.name }}</h2>
+          <span class="rarity" [class]="o.collectible.rarity">{{ rarityLabels[o.collectible.rarity] }}</span>
+          <p class="fly" aria-live="polite">+{{ o.bonusStars }} ⭐</p>
+          <div class="actions row">
+            @if (o.rewards.chests.unclaimed.length) {
+              <button type="button" class="btn primary" (click)="openChest()">Open next chest</button>
+            }
+            <button type="button" class="btn" (click)="closeChest()">Done</button>
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  <!-- How stars work -->
+  @if (infoOpen()) {
+    <div class="overlay" (click)="infoOpen.set(false)">
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="info-title" (click)="$event.stopPropagation()">
+        <h2 id="info-title">How to earn stars</h2>
+        <ul class="rules">
+          @for (r of starRules; track r.text) { <li><strong>{{ r.stars }} ⭐</strong> {{ r.text }}</li> }
+          <li><strong>🔥</strong> Streak badges: 3 days +10, 7 days +25, 14 days +50, 30 days +100, 60 days +200, 100 days +300</li>
+        </ul>
+        <h3>Levels</h3>
+        <ol class="level-list">
+          @for (l of levels; track l.name) { <li><span>{{ l.name }}</span><span class="muted">{{ l.stars }} ⭐</span></li> }
+        </ol>
+        <button type="button" class="btn primary" (click)="infoOpen.set(false)">Got it</button>
+      </section>
+    </div>
+  }
+</main>

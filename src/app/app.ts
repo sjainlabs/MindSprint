@@ -2,10 +2,11 @@ import { CommonModule, Location } from '@angular/common';
 import { Component, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { RewardsCelebrationsComponent } from './rewards/rewards-celebrations.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [CommonModule, RouterOutlet, RouterLink, RewardsCelebrationsComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

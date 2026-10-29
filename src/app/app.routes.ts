@@ -87,6 +87,24 @@ export const routes: Routes = [
       { path: 'abacus/parent', canActivate: [studentAuthGuard], loadComponent: () => import('./math-games/abacus-parent.component').then((m) => m.AbacusParentComponent) },
     ],
   },
+  // Parents open this from their dashboard with ?studentId=…; it sits outside the kid's tabs.
+  { path: 'rewards/parent', canActivate: [parentAuthGuard], loadComponent: () => import('./rewards/reward-shop-parent-page.component').then((m) => m.RewardShopParentPageComponent) },
+  {
+    path: 'rewards',
+    loadComponent: () => import('./components/section-shell/section-shell.component').then((m) => m.SectionShellComponent),
+    data: {
+      title: '⭐ Rewards',
+      tabs: [
+        { path: 'me', label: '🏅 My rewards' },
+        { path: 'shop', label: '🛍️ Reward shop' },
+      ],
+    },
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'me' },
+      { path: 'me', canActivate: [studentAuthGuard], loadComponent: () => import('./rewards/rewards-page.component').then((m) => m.RewardsPageComponent) },
+      { path: 'shop', canActivate: [studentAuthGuard], loadComponent: () => import('./rewards/reward-shop-page.component').then((m) => m.RewardShopPageComponent) },
+    ],
+  },
   // Study guides are for children and parents reading together, so no student login is required.
   { path: 'study-guides', component: StudyGuideIndexPageComponent },
   { path: 'study-guides/topic/:topicId', component: StudyGuidePageComponent },

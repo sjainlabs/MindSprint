@@ -16,6 +16,7 @@ import {
 import { LearningPlanService, shortDate } from '../services/learning-plan.service';
 import { TestApiError } from '../services/test-api-error';
 import { QuestionRendererComponent } from '../question-renderer/question-renderer.component';
+import { ResultsRewardsComponent } from '../rewards/results-rewards.component';
 
 type Stage = 'taking' | 'review' | 'results' | 'regenerating' | 'error';
 
@@ -25,7 +26,7 @@ const WEAK_TOPIC_ACCURACY = 80;
 @Component({
   selector: 'app-custom-test-take-page',
   standalone: true,
-  imports: [CommonModule, QuestionRendererComponent],
+  imports: [CommonModule, QuestionRendererComponent, ResultsRewardsComponent],
   templateUrl: './custom-test-take-page.component.html',
   styleUrls: ['./test-pages.css', './custom-test-take-page.component.css'],
 })
