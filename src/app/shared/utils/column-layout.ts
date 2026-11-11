@@ -27,7 +27,7 @@ function normaliseOp(op: string): string {
 }
 
 export function columnLayout(prompt: string, metadata?: Record<string, unknown> | null): ColumnLayout | null {
-  const fromMeta = metadataRows(metadata);
+  const fromMeta = metadataRows(metadata, promptOperator(prompt));
   if (fromMeta) {
     const m = SUM.exec(prompt ?? '');
     return { intro: (m ? prompt.slice(0, m.index) : '').trim(), rows: fromMeta };
@@ -42,9 +42,17 @@ export function columnLayout(prompt: string, metadata?: Record<string, unknown> 
   return { intro: text.slice(0, m.index).trim(), rows };
 }
 
-function metadataRows(metadata?: Record<string, unknown> | null): ColumnRow[] | null {
+/** The first operator in the prompt's sum, e.g. × for "45 × 23". */
+function promptOperator(prompt: string): string | null {
+  const m = SUM.exec(prompt ?? '');
+  const op = m ? new RegExp(String.raw`^\s*(${OP})`).exec(m[2]) : null;
+  return op ? normaliseOp(op[1]) : null;
+}
+
+function metadataRows(metadata?: Record<string, unknown> | null, fallbackOp?: string | null): ColumnRow[] | null {
   if (!metadata) return null;
-  const operator = typeof metadata['operator'] === 'string' ? normaliseOp(metadata['operator']) : '+';
+  // Some questions send only top/bottom, so read the sign from the prompt rather than assume +
+  const operator = typeof metadata['operator'] === 'string' ? normaliseOp(metadata['operator']) : fallbackOp ?? '+';
   const operands = Array.isArray(metadata['operands'])
     ? metadata['operands']
     : metadata['top'] !== undefined && metadata['bottom'] !== undefined

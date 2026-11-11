@@ -29,6 +29,13 @@ describe('columnLayout', () => {
     });
   });
 
+  it('takes the sign from the prompt when metadata has no operator', () => {
+    expect(columnLayout('45 × 23', { top: 45, bottom: 23 })?.rows).toEqual([
+      { op: '', value: '45' },
+      { op: '×', value: '23' },
+    ]);
+  });
+
   it('gives up on prompts that are not a plain sum', () => {
     expect(columnLayout('How many tens are in 450?')).toBeNull();
   });

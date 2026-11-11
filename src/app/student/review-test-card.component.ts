@@ -55,7 +55,8 @@ export class ReviewTestCardComponent {
   readonly statusText = computed(() => {
     const c = this.current();
     if (c.status === 'open') return 'Open now';
-    if (c.status === 'overdue') return `Open until ${shortDate(c.closesOn)}`;
+    // An overdue test stays open until it is taken; the next one waits for it
+    if (c.status === 'overdue') return 'Still open, take it next';
     return `Opens ${shortDate(c.opensOn)}`;
   });
 
