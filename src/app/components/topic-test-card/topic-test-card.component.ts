@@ -42,7 +42,7 @@ import { TopicTestStatus } from '../../services/topic-test.service';
           Last test: {{ s.lastTestAccuracy }}%. Keep practising to retry.
         </p>
         <a
-          *ngIf="showGuideLink"
+          *ngIf="showGuideLink && !readOnly"
           class="tt-link"
           [routerLink]="['/study-guides/topic', s.topicId]"
           (click)="$event.stopPropagation()"
@@ -55,10 +55,10 @@ import { TopicTestStatus } from '../../services/topic-test.service';
           <span class="tt-icon">🔓</span>
           <span class="tt-title">Topic Test unlocked!</span>
         </div>
-        <button class="tt-cta" type="button" (click)="$event.stopPropagation(); openTest(s.topicId)">
+        <button *ngIf="!readOnly" class="tt-cta" type="button" (click)="$event.stopPropagation(); openTest(s.topicId)">
           Take Topic Test
         </button>
-        <p class="tt-text tt-muted">20 questions · pass at 80% · one attempt</p>
+        <p class="tt-text tt-muted">{{ readOnly ? 'Ready to take: ' : '' }}20 questions · pass at 80% · one attempt</p>
       </ng-container>
 
       <!-- Passed -->
@@ -122,6 +122,8 @@ export class TopicTestCardComponent {
   @Input() compact = false;
   /** Off where the study guide is already one tap away (e.g. inside a practice card). */
   @Input() showGuideLink = true;
+  /** Guest analyst: no test button and no links out of the page. */
+  @Input() readOnly = false;
 
   readonly progressPct = computed(() => {
     const s = this.status();
@@ -130,6 +132,7 @@ export class TopicTestCardComponent {
   });
 
   openTest(topicId: string): void {
+    if (this.readOnly) return;
     this.router.navigate(['/tests/topic', topicId]);
   }
 }

@@ -1,4 +1,5 @@
-import { Component, OnChanges, computed, input, signal } from '@angular/core';
+import { Component, OnChanges, computed, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GradeSummary, LevelEstimate, gradeLabel } from '../services/learning-plan.service';
 
@@ -18,7 +19,7 @@ const SEGMENTS: Array<{ key: keyof GradeSummary & string; label: string; cls: st
 @Component({
   selector: 'app-level-card',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgTemplateOutlet],
   templateUrl: './level-card.component.html',
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './level-card.component.css'],
 })
@@ -28,6 +29,9 @@ export class LevelCardComponent implements OnChanges {
   readonly parentMode = input(false);
   /** False when a parent views another child: links carry ?studentId= and there is no daily-challenge button. */
   readonly canAct = input(true);
+  /** Guest analyst: nothing links out of the page; a ladder rung asks the page to show that grade's topics. */
+  readonly readOnly = input(false);
+  readonly gradeSelected = output<number>();
 
   readonly gradeLabel = gradeLabel;
   readonly segments = SEGMENTS;
@@ -67,6 +71,7 @@ export class LevelCardComponent implements OnChanges {
 
   /** Compares with the working grade seen last time on this device; the first visit only records it. */
   private checkLevelUp(): void {
+    if (this.readOnly()) return;
     const key = `${LEVEL_KEY}.${this.studentId()}`;
     const now = this.level().workingGrade;
     try {

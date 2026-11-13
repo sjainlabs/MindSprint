@@ -15,6 +15,7 @@ import { RouterLink } from '@angular/router';
           <a routerLink="/auth/parent-login" class="button primary">Parent Login</a>
           <a routerLink="/auth/access-code" class="button">Enter Access Code</a>
         </div>
+        <a routerLink="/auth/analyst" class="analyst-link">Analyst? Enter access code</a>
       </section>
     </main>
   `,
@@ -27,6 +28,7 @@ import { RouterLink } from '@angular/router';
       .actions { display: grid; gap: 12px; }
       .button { text-align: center; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; text-decoration: none; color: #0f172a; font-weight: 700; }
       .button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+      .analyst-link { display: block; margin-top: 16px; text-align: center; color: #475569; font-size: 0.9rem; font-weight: 600; }
     `,
   ],
 })

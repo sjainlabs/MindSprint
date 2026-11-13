@@ -23,11 +23,26 @@ import { parentAuthGuard } from './guards/parent-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
 import {TopicProgressPageComponent} from './pages/topic-progress-page/topic-progress-page.component';
+import { analystGuard, toAnalystEntry } from './analyst/analyst.guard';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
   { path: 'auth/parent-login', component: ParentLoginPageComponent },
   { path: 'auth/access-code', component: AccessCodePageComponent },
+  // Guest analyst: one child's plan and insights, read-only, opened with a code a parent shared.
+  { path: 'auth/analyst', loadComponent: () => import('./auth/analyst-entry-page.component').then((m) => m.AnalystEntryPageComponent) },
+  { path: 'analyst', pathMatch: 'full', redirectTo: toAnalystEntry },
+  {
+    path: 'analyst',
+    canActivate: [analystGuard],
+    canActivateChild: [analystGuard],
+    loadComponent: () => import('./analyst/analyst-shell.component').then((m) => m.AnalystShellComponent),
+    children: [
+      { path: 'plan', loadComponent: () => import('./analyst/analyst-plan-page.component').then((m) => m.AnalystPlanPageComponent) },
+      { path: 'insights', data: { analyst: true }, loadComponent: () => import('./insights/insights-page.component').then((m) => m.InsightsPageComponent) },
+      { path: '**', redirectTo: 'plan' },
+    ],
+  },
   { path: 'parent/dashboard', canActivate: [parentAuthGuard], component: ParentDashboardPageComponent },
   // The learning plan. Parents open it from their dashboard with ?studentId=…, which the guard allows.
   { path: 'student/dashboard', canActivate: [studentAuthGuard], loadComponent: () => import('./student/student-dashboard-page.component').then((m) => m.StudentDashboardPageComponent) },

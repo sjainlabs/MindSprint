@@ -27,7 +27,11 @@
 
   @if (empty()) {
     <div class="empty">
-      <p>Let's find {{ parentMode() ? 'their' : 'your' }} level! Start the daily challenge or a practice sheet.</p>
+      @if (readOnly()) {
+        <p>No practice yet, so there is no level to show.</p>
+      } @else {
+        <p>Let's find {{ parentMode() ? 'their' : 'your' }} level! Start the daily challenge or a practice sheet.</p>
+      }
       @if (canAct()) {
         <a class="btn primary" routerLink="/daily">🎯 Start the daily challenge</a>
       }
@@ -36,26 +40,15 @@
     <ol class="ladder" aria-label="Grades, highest first">
       @for (g of ladder(); track g.grade) {
         <li>
-          <a class="rung" [class.here]="g.grade === l.workingGrade" routerLink="/student/topics" [queryParams]="topicsQuery(g.grade)">
-            <span class="rung-name">
-              Grade {{ gradeLabel(g.grade) }}
-              @if (g.secure) { <span class="medal" title="Secure: 80% or more strong" aria-label="secure">✓</span> }
-            </span>
-            <span class="bar" role="img" [attr.aria-label]="barLabel(g)">
-              <span class="track">
-                @for (s of segments; track s.key) {
-                  @if (segmentWidth(g, s.key) > 0) {
-                    <span class="seg" [class]="s.cls" [style.width.%]="segmentWidth(g, s.key)"></span>
-                  }
-                }
-              </span>
-              <span class="tick" [style.left.%]="target" aria-hidden="true"><span>{{ target }}%</span></span>
-            </span>
-            <span class="rung-pct">{{ g.securePercent }}% strong</span>
-            @if (g.grade === l.workingGrade) {
-              <span class="here-tag">📍 {{ parentMode() ? 'Working here' : 'You are here' }}</span>
-            }
-          </a>
+          @if (readOnly()) {
+            <button type="button" class="rung" [class.here]="g.grade === l.workingGrade" (click)="gradeSelected.emit(g.grade)">
+              <ng-container *ngTemplateOutlet="rungBody; context: { $implicit: g }" />
+            </button>
+          } @else {
+            <a class="rung" [class.here]="g.grade === l.workingGrade" routerLink="/student/topics" [queryParams]="topicsQuery(g.grade)">
+              <ng-container *ngTemplateOutlet="rungBody; context: { $implicit: g }" />
+            </a>
+          }
         </li>
       }
     </ol>
@@ -71,12 +64,13 @@
     <h3>Fix these first</h3>
     <div class="chip-row">
       @for (gap of gaps(); track gap.topicId) {
-        <a class="chip link gap" [routerLink]="['/study-guides/topic', gap.topicId]" [queryParams]="{ then: 'practice' }">
-          {{ gap.topicName }} · Grade {{ gradeLabel(gap.grade) }}@if (gap.score !== null) { · {{ gap.score }}%}
-          @if (trendIcon(gap.trend); as icon) {
-            <span class="trend" [class.down]="icon === '↓'" [attr.aria-label]="gap.trend">{{ icon }}</span>
-          }
-        </a>
+        @if (readOnly()) {
+          <span class="chip gap static"><ng-container *ngTemplateOutlet="gapBody; context: { $implicit: gap }" /></span>
+        } @else {
+          <a class="chip link gap" [routerLink]="['/study-guides/topic', gap.topicId]" [queryParams]="{ then: 'practice' }">
+            <ng-container *ngTemplateOutlet="gapBody; context: { $implicit: gap }" />
+          </a>
+        }
       }
       @if (hiddenGaps() && !showAllGaps()) {
         <button type="button" class="chip" (click)="showAllGaps.set(true)">+{{ hiddenGaps() }} more</button>
@@ -84,3 +78,31 @@
     </div>
   }
 </section>
+
+<ng-template #rungBody let-g>
+  <span class="rung-name">
+    Grade {{ gradeLabel(g.grade) }}
+    @if (g.secure) { <span class="medal" title="Secure: 80% or more strong" aria-label="secure">✓</span> }
+  </span>
+  <span class="bar" role="img" [attr.aria-label]="barLabel(g)">
+    <span class="track">
+      @for (s of segments; track s.key) {
+        @if (segmentWidth(g, s.key) > 0) {
+          <span class="seg" [class]="s.cls" [style.width.%]="segmentWidth(g, s.key)"></span>
+        }
+      }
+    </span>
+    <span class="tick" [style.left.%]="target" aria-hidden="true"><span>{{ target }}%</span></span>
+  </span>
+  <span class="rung-pct">{{ g.securePercent }}% strong</span>
+  @if (g.grade === level().workingGrade) {
+    <span class="here-tag">📍 {{ parentMode() ? 'Working here' : 'You are here' }}</span>
+  }
+</ng-template>
+
+<ng-template #gapBody let-gap>
+  {{ gap.topicName }} · Grade {{ gradeLabel(gap.grade) }}@if (gap.score !== null) { · {{ gap.score }}%}
+  @if (trendIcon(gap.trend); as icon) {
+    <span class="trend" [class.down]="icon === '↓'" [attr.aria-label]="gap.trend">{{ icon }}</span>
+  }
+</ng-template>

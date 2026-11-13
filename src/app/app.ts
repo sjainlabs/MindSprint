@@ -48,7 +48,8 @@ export class App {
   }
 
   protected showSubpageNav(): boolean {
-    return this.currentUrl() !== '/';
+    // The analyst shell has its own header and Exit; Back/Home would lead out of the read-only view.
+    return this.currentUrl() !== '/' && !/^\/analyst(\/|$|\?)/.test(this.currentUrl());
   }
 
   protected goBack(): void {

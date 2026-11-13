@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import {FullInsightsResponse, LearningApiService, PracticeWorksheetV2Response} from '../services/learning-api.service';
 import {firstValueFrom} from 'rxjs';
 import { TopicTestService } from '../services/topic-test.service';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 import { withoutHiddenTopics } from '../constants/hidden-topics';
+import { AnalystApiService, INVALID_ANALYST_CODE, analystErrorMessage } from '../analyst/analyst-api.service';
 
 @Component({
   selector: 'app-simple-insights-page',
@@ -20,13 +21,17 @@ export class InsightsPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly topicTests = inject(TopicTestService);
+  private readonly analystApi = inject(AnalystApiService);
+
+  /** Guest analyst (route data { analyst: true }): reads /api/analyst/*, and nothing can be resubmitted. */
+  readonly readOnly = inject(ActivatedRoute).snapshot.data['analyst'] === true;
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
   readonly insights = signal<FullInsightsResponse | null>(null);
   // Read from the shared cache so a just-submitted test result shows without refetching.
   readonly topicTestStatuses = computed(() =>
-    withoutHiddenTopics(this.insights()?.topicTests ?? []).map((t) => this.topicTests.statusFor(t.topicId) ?? t),
+    withoutHiddenTopics(this.insights()?.topicTests ?? []).map((t) => (this.readOnly ? t : this.topicTests.statusFor(t.topicId) ?? t)),
   );
 
   readonly worksheetHistory = signal<any[]>([]);
@@ -53,19 +58,19 @@ export class InsightsPageComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const studentId = this.authService.getStoredStudentId();
+    const studentId = this.readOnly ? null : this.authService.getStoredStudentId();
 
-    if (!studentId) {
+    if (!this.readOnly && !studentId) {
       this.errorMessage.set('No active student.');
       this.loading.set(false);
       return;
     }
 
     try {
-      const result = await this.api.getFullInsights(studentId);
-      this.topicTests.ingest(result.topicTests);
+      const result = this.readOnly ? await this.analystApi.insights() : await this.api.getFullInsights(studentId!);
+      if (!this.readOnly) this.topicTests.ingest(result.topicTests);
       this.insights.set(result);
-      const history = await this.api.getWorksheetHistory(studentId);
+      const history = (this.readOnly ? await this.analystApi.worksheetHistory() : await this.api.getWorksheetHistory(studentId!)) ?? [];
 
       // Sort newest → oldest
       history.sort((a, b) =>
@@ -81,7 +86,7 @@ export class InsightsPageComponent implements OnInit {
 
         // Store answers for editing
         const ans: Record<string, string> = {};
-        for (const q of w.details) {
+        for (const q of w.details ?? []) {
           ans[q.questionId] = q.submittedAnswer;
         }
         answerMap[w.worksheetId] = ans;
@@ -92,8 +97,13 @@ export class InsightsPageComponent implements OnInit {
       this.correctionAnswers.set(answerMap);
 
       this.worksheetHistory.set(history);
-    } catch {
-      this.errorMessage.set('Unable to load insights right now.');
+    } catch (err) {
+      if (this.readOnly) {
+        // An expired code is sent to the code page by the analyst interceptor.
+        if ((err as { code?: string }).code !== INVALID_ANALYST_CODE) this.errorMessage.set(analystErrorMessage(err));
+      } else {
+        this.errorMessage.set('Unable to load insights right now.');
+      }
     } finally {
       this.loading.set(false);
     }
@@ -117,6 +127,7 @@ export class InsightsPageComponent implements OnInit {
   }
 
   startCorrection(worksheetId: string) {
+    if (this.readOnly) return;
     const attempts = this.correctionAttemptCount()[worksheetId];
     const max = this.correctionMaxAttempts()[worksheetId];
 
@@ -148,6 +159,7 @@ export class InsightsPageComponent implements OnInit {
   }
 
   async submitCorrection(worksheetId: string) {
+    if (this.readOnly) return;
     const studentId = this.authService.getStoredStudentId();
     if (!studentId) return;
 

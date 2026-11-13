@@ -3,19 +3,15 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { DailyChallengeService, localDate } from '../services/daily-challenge.service';
 import {
-  KIND_LABELS,
   LearningPlan,
   LearningPlanError,
   LearningPlanService,
   Recommendation,
-  STATUS_LABELS,
-  gradeBand,
   gradeLabel,
 } from '../services/learning-plan.service';
 import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
 import { PlanActions } from './plan-actions';
-import { ReviewTestCardComponent } from './review-test-card.component';
-import { LevelCardComponent } from './level-card.component';
+import { PlanViewComponent } from './plan-view.component';
 import { RewardsBarComponent } from '../rewards/rewards-bar.component';
 
 type Phase = 'loading' | 'ready' | 'grade' | 'error';
@@ -29,7 +25,7 @@ const PLAN_OPEN_KEY = 'mindsprint.plan.open';
 @Component({
   selector: 'app-student-dashboard-page',
   standalone: true,
-  imports: [RouterLink, GradePickerComponent, ReviewTestCardComponent, LevelCardComponent, RewardsBarComponent],
+  imports: [RouterLink, GradePickerComponent, PlanViewComponent, RewardsBarComponent],
   templateUrl: './student-dashboard-page.component.html',
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './student-dashboard-page.component.css'],
 })
@@ -42,7 +38,7 @@ export class StudentDashboardPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  @ViewChild(ReviewTestCardComponent) reviewCard?: ReviewTestCardComponent;
+  @ViewChild(PlanViewComponent) planView?: PlanViewComponent;
 
   readonly phase = signal<Phase>('loading');
   readonly error = signal('');
@@ -58,10 +54,6 @@ export class StudentDashboardPageComponent implements OnInit {
   readonly parentLoggedIn = this.auth.isParentLoggedIn();
   /** Starting sheets and tests only makes sense for the child signed in on this device. */
   readonly canAct = computed(() => this.studentId() === (this.auth.getStoredStudentId() ?? ''));
-
-  readonly kindLabels = KIND_LABELS;
-  readonly statusLabels = STATUS_LABELS;
-  readonly gradeBand = gradeBand;
 
   /** The plan folds into one row; kids open it when they want it, parents see it open. */
   private readonly planOpen = signal<boolean | null>(readPlanOpen());
@@ -82,28 +74,11 @@ export class StudentDashboardPageComponent implements OnInit {
       .join(' · ');
   });
 
-  readonly maxStrand = computed(() => Math.max(100, ...(this.plan()?.strands.map((s) => s.averageScore) ?? [])));
   readonly nextGrade = computed(() => {
     const p = this.plan();
     const next = p?.nextWorksheet;
     return next ? p.recommendations.find((r) => r.topicId === next.topicId)?.grade ?? null : null;
   });
-  readonly activityLine = computed(() => {
-    const a = this.plan()?.activity;
-    if (!a) return null;
-    const week = a.last7Days;
-    const sheets = `${week.sheets} sheet${week.sheets === 1 ? '' : 's'}`;
-    if (week.averageAccuracy === null) return { text: `This week: ${sheets}`, change: null };
-    const c = a.accuracyChange;
-    const change =
-      c === null
-        ? null
-        : c === 0
-          ? { dir: 'same', label: '→ same as last week', aria: 'same as last week' }
-          : { dir: c > 0 ? 'up' : 'down', label: `${c > 0 ? '↑' : '↓'} ${Math.abs(c)} pts`, aria: `${c > 0 ? 'up' : 'down'} ${Math.abs(c)} points from last week` };
-    return { text: `This week: ${sheets}, ${week.averageAccuracy}%`, change };
-  });
-
   ngOnInit(): void {
     const query = this.route.snapshot.queryParamMap;
     const fromQuery = query.get('studentId');
@@ -155,7 +130,7 @@ export class StudentDashboardPageComponent implements OnInit {
       this.reviewGradePending = false;
       this.phase.set('ready');
       // The card is back on screen after this change detection pass.
-      setTimeout(() => this.reviewCard?.start());
+      setTimeout(() => this.planView?.reviewCard?.start());
       return;
     }
     this.gradeBusy.set(true);
@@ -197,16 +172,6 @@ export class StudentDashboardPageComponent implements OnInit {
     } finally {
       this.opening.set(null);
     }
-  }
-
-  nextButtonText(type: string): string {
-    if (type === 'topic-test') return '🏁 Start the topic test';
-    if (type === 'study-guide-then-practice') return '📘 Read the guide, then practise';
-    return '▶ Start';
-  }
-
-  topicsLink(): Record<string, string> {
-    return this.canAct() ? {} : { studentId: this.studentId() };
   }
 
   private async loadDailyBadge(studentId: string): Promise<void> {

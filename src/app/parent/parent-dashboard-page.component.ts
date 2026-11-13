@@ -10,6 +10,7 @@ import {
 import { AddStudentModalComponent, AddStudentPayload } from './add-student-modal.component';
 import { EditChildModalComponent, EditChildPayload } from './edit-child-modal.component';
 import { AccessCodeModalComponent } from './access-code-modal.component';
+import { AnalystCodeModalComponent } from './analyst-code-modal.component';
 
 interface DashboardStudent {
   id: string;
@@ -28,6 +29,7 @@ interface DashboardStudent {
     AddStudentModalComponent,
     EditChildModalComponent,
     AccessCodeModalComponent,
+    AnalystCodeModalComponent,
     RouterLink,
   ],
   template: `
@@ -56,6 +58,7 @@ interface DashboardStudent {
           <button (click)="openEdit(student)">Edit Student</button>
           <button (click)="generateAccessCode(student)">Generate Access Code</button>
           <button (click)="openStudentView(student)">Open Student View</button>
+          <button (click)="sharingStudent.set(student)">🔗 Share with analyst</button>
         </div>
         <div class="actions">
           <a class="link" routerLink="/student/dashboard" [queryParams]="{ studentId: student.id, view: 'parent' }">📋 Learning plan</a>
@@ -84,6 +87,13 @@ interface DashboardStudent {
         *ngIf="activeAccessCode()"
         [code]="activeAccessCode()!"
         (closed)="activeAccessCode.set('')"
+      />
+
+      <app-analyst-code-modal
+        *ngIf="sharingStudent()"
+        [studentId]="sharingStudent()!.id"
+        [studentName]="sharingStudent()!.name"
+        (closed)="sharingStudent.set(null)"
       />
 
       <section class="card error" *ngIf="errorMessage()">{{ errorMessage() }}</section>
@@ -116,6 +126,8 @@ export class ParentDashboardPageComponent implements OnInit {
   readonly showAddStudent = signal(false);
   readonly editingStudent = signal<DashboardStudent | null>(null);
   readonly activeAccessCode = signal('');
+  /** The child whose analyst code is being shown. */
+  readonly sharingStudent = signal<DashboardStudent | null>(null);
   readonly studentCount = computed(() => this.students().length);
 
   ngOnInit(): void {

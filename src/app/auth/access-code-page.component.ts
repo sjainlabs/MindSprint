@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -7,7 +7,7 @@ import {FormsModule} from '@angular/forms';
 @Component({
   selector: 'app-access-code-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './access-code-page.component.html',
   styleUrls: ['./access-code-page.component.css'],
 })

@@ -1,0 +1,133 @@
+@let p = plan();
+<!-- 1. Level -->
+<app-level-card
+  [level]="p.level"
+  [studentId]="studentId()"
+  [parentMode]="parentMode()"
+  [canAct]="canStart()"
+  [readOnly]="readOnly()"
+  (gradeSelected)="gradeSelected.emit($event)"
+/>
+
+<!-- 2. Up next -->
+<section class="card" aria-labelledby="next-title">
+  <h2 id="next-title">Up next</h2>
+  @if (p.nextWorksheet; as next) {
+    <div class="next">
+      <p class="next-label">{{ next.label }}</p>
+      <p class="muted">{{ next.reason }}</p>
+      @if (canStart()) {
+        <button type="button" class="btn primary big" [disabled]="opening() === 'next'" (click)="startNext.emit()">
+          @if (opening() === 'next') { <span class="spinner small"></span> Opening… } @else { {{ nextButtonText(next.type) }} }
+        </button>
+      }
+    </div>
+  } @else {
+    <p class="muted">{{ readOnly() ? 'Nothing to suggest yet: no sheets practised so far.' : 'Nothing to suggest yet. Try a sheet from the Practice Hub to get started.' }}</p>
+  }
+
+  @if (p.recommendations.length > 1) {
+    <h3>More ideas</h3>
+    <div class="recs">
+      @for (r of p.recommendations.slice(1); track r.topicId) {
+        @if (canStart()) {
+          <button type="button" class="rec" [disabled]="opening() === r.topicId" (click)="startRecommendation.emit(r)">
+            <ng-container *ngTemplateOutlet="recBody; context: { $implicit: r }" />
+          </button>
+        } @else {
+          <div class="rec static">
+            <ng-container *ngTemplateOutlet="recBody; context: { $implicit: r }" />
+          </div>
+        }
+      }
+    </div>
+  }
+</section>
+
+<!-- 3. Review test -->
+<app-review-test-card
+  [schedule]="p.reviewTest"
+  [studentId]="studentId()"
+  [parentMode]="parentMode()"
+  [canAct]="canStart()"
+  [readOnly]="readOnly()"
+  (gradeRequired)="gradeRequired.emit()"
+  (changed)="changed.emit()"
+/>
+
+<!-- 4. Progress -->
+<section class="card" aria-labelledby="progress-title">
+  <div class="row-between">
+    <h2 id="progress-title">Progress</h2>
+    @if (!readOnly()) {
+      <a class="link small" routerLink="/student/topics" [queryParams]="topicsLink()">All topics →</a>
+    }
+  </div>
+
+  @if (activityLine(); as a) {
+    <p class="activity">
+      {{ a.text }}
+      @if (a.change; as c) {
+        (<span class="change" [class]="c.dir" [attr.aria-label]="c.aria">{{ c.label }}</span>)
+      }
+    </p>
+  }
+
+  @if (p.strands.length) {
+    <div class="strands">
+      @for (s of p.strands; track s.strand) {
+        <div class="strand">
+          <span class="strand-name">{{ s.strand }}</span>
+          <span class="strand-bar"><span class="strand-fill" [style.width.%]="(s.averageScore / maxStrand()) * 100"></span></span>
+          <span class="strand-val">{{ s.averageScore }}%</span>
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="muted">{{ readOnly() ? 'No sheets practised yet.' : 'Practise a few sheets and progress shows up here.' }}</p>
+  }
+
+  @if (p.strengths.length || p.focusAreas.length) {
+    <div class="two-col">
+      <div>
+        <h3>💪 Strengths</h3>
+        <ul class="topic-list">
+          @for (t of p.strengths; track t.topicId) {
+            <li><span class="dot" [class]="t.status"></span><span class="name">{{ t.topicName }}</span><span class="muted small">{{ t.score }}%</span></li>
+          } @empty {
+            <li class="muted small">{{ readOnly() ? 'None yet.' : 'Not yet: keep practising!' }}</li>
+          }
+        </ul>
+      </div>
+      <div>
+        <h3>🎯 Focus areas</h3>
+        <ul class="topic-list">
+          @for (t of p.focusAreas; track t.topicId) {
+            <li><span class="dot" [class]="t.status"></span><span class="name">{{ t.topicName }}</span><span class="muted small">{{ t.score }}%</span></li>
+          } @empty {
+            <li class="muted small">Nothing weak right now.</li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
+
+  @if (p.tips.length) {
+    <details class="tips" [open]="parentMode()">
+      <summary>👪 Tips for parents</summary>
+      <ul>
+        @for (tip of p.tips; track tip) { <li>{{ tip }}</li> }
+      </ul>
+    </details>
+  }
+</section>
+
+<ng-template #recBody let-r>
+  <span class="rec-top">
+    <span class="kind" [class]="r.kind">{{ kindLabel(r) }}</span>
+    <span class="tag">{{ gradeBand(r.grade, r.band) }}</span>
+    @if (r.score !== null) { <span class="score">{{ r.score }}%</span> }
+  </span>
+  <span class="rec-name">{{ r.topicName }}</span>
+  <span class="rec-reason">{{ r.reason }}</span>
+</ng-template>

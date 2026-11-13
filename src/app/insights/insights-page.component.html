@@ -21,8 +21,8 @@
   <!-- Insights -->
   <section class="card" *ngIf="insights() && !loading()">
 
-    <h1>Your Learning Insights</h1>
-    <p>Updated performance summary based on your recent worksheets.</p>
+    <h1>{{ readOnly ? 'Learning insights' : 'Your Learning Insights' }}</h1>
+    <p>Updated performance summary based on {{ readOnly ? 'recent' : 'your recent' }} worksheets.</p>
 
     <!-- Metrics -->
     <div class="metrics">
@@ -48,23 +48,30 @@
     </div>
 
     <!-- Recommendations -->
-    <h3>Recommended Next Steps</h3>
-    <ul>
-      <li *ngFor="let rec of insights()?.recommendations">{{ rec }}</li>
-    </ul>
+    <ng-container *ngIf="insights()?.recommendations?.length">
+      <h3>Recommended Next Steps</h3>
+      <ul>
+        <li *ngFor="let rec of insights()?.recommendations">{{ rec }}</li>
+      </ul>
+    </ng-container>
 
   </section>
 
   <!-- Topic Tests -->
   <section class="card" *ngIf="!loading() && topicTestStatuses().length > 0">
     <h2>Topic Tests</h2>
-    <p>Get 10 practice sheets at 80%+ on a topic to unlock its test.</p>
+    <p>{{ readOnly ? 'A topic test unlocks after 10 practice sheets at 80%+ on the topic.' : 'Get 10 practice sheets at 80%+ on a topic to unlock its test.' }}</p>
     <div class="topic-test-grid">
       <div class="topic-test-item" *ngFor="let t of topicTestStatuses()">
         <h3>{{ t.topicName }}</h3>
-        <app-topic-test-card [topicStatus]="t"></app-topic-test-card>
+        <app-topic-test-card [topicStatus]="t" [readOnly]="readOnly"></app-topic-test-card>
       </div>
     </div>
+  </section>
+
+  <section class="card" *ngIf="!loading() && !errorMessage() && insights() && worksheetHistory().length === 0">
+    <h2>Worksheet History</h2>
+    <p>No worksheets {{ readOnly ? 'have been' : '' }} submitted yet.</p>
   </section>
 
 </main>
@@ -75,6 +82,7 @@
   <h2>Worksheet History</h2>
   <p>Latest worksheets appear first. Click a row to expand.</p>
 
+  <div class="table-scroll">
   <table class="history-table">
     <thead>
     <tr>
@@ -121,7 +129,7 @@
 
             <h3>{{ isTopicTest(w) ? 'Topic Test Questions' : isAdhocTest(w) ? 'Custom Test Questions' : 'Worksheet Questions' }}</h3>
 
-            <div *ngIf="isTest(w)" class="locked-banner">
+            <div *ngIf="isTest(w) && !readOnly" class="locked-banner">
               Tests have one submission, so answers can't be corrected.
             </div>
 
@@ -133,7 +141,7 @@
 
             <!-- Edit Button -->
             <button
-              *ngIf="!isTest(w) &&
+              *ngIf="!readOnly && !isTest(w) &&
                      !correctionMode()[w.worksheetId] &&
                      correctionAttemptCount()[w.worksheetId] < correctionMaxAttempts()[w.worksheetId]"
               class="edit-btn"
@@ -144,14 +152,14 @@
 
             <!-- Locked Message -->
             <div
-              *ngIf="!isTest(w) && correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
+              *ngIf="!readOnly && !isTest(w) && correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
               class="locked-banner"
             >
               You have reached the maximum number of correction attempts.
             </div>
 
             <!-- Questions -->
-            <div *ngFor="let q of w.details"
+            <div *ngFor="let q of w.details ?? []"
                  class="question-item"
                  [class.correct]="q.correct"
                  [class.incorrect]="!q.correct">
@@ -161,7 +169,7 @@
               <!-- Incorrect (normal mode) -->
               <div *ngIf="!q.correct && !correctionMode()[w.worksheetId]" class="incorrect-answer">
                 ❌ Incorrect
-                <p>Your answer: {{ q.submittedAnswer }}</p>
+                <p>{{ readOnly ? 'Answer given' : 'Your answer' }}: {{ q.submittedAnswer }}</p>
 
                 <button (click)="toggleCorrect(q.questionId)">
                   {{ showCorrect()[q.questionId] ? 'Hide Correct Answer' : 'Show Correct Answer' }}
@@ -221,5 +229,6 @@
     </ng-container>
     </tbody>
   </table>
+  </div>
 
 </section>

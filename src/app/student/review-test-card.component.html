@@ -31,7 +31,11 @@
     <h3>Revise these first</h3>
     <div class="chip-row">
       @for (t of c.reviseFirst; track t.topicId) {
-        <a class="chip link" [routerLink]="['/study-guides/topic', t.topicId]">📘 {{ t.topicName }}</a>
+        @if (readOnly()) {
+          <span class="chip static">📘 {{ t.topicName }}</span>
+        } @else {
+          <a class="chip link" [routerLink]="['/study-guides/topic', t.topicId]">📘 {{ t.topicName }}</a>
+        }
       }
     </div>
   }
@@ -40,7 +44,7 @@
     <p class="notice error" role="alert">{{ error() }}</p>
   }
 
-  @if (c.canStart && canAct()) {
+  @if (c.canStart && canAct() && !readOnly()) {
     <button type="button" class="btn primary big" [disabled]="starting()" (click)="start()">
       @if (starting()) {
         <span class="spinner small"></span> Getting your test ready…
@@ -59,10 +63,12 @@
         <span class="date-chip">{{ shortDate(d) }}</span>
       }
     </div>
-    <a class="link small" [href]="calendarUrl()" target="_blank" rel="noopener">📆 Add to calendar</a>
+    @if (!readOnly()) {
+      <a class="link small" [href]="calendarUrl()" target="_blank" rel="noopener">📆 Add to calendar</a>
+    }
   </div>
 
-  @if (parentMode()) {
+  @if (parentMode() && !readOnly()) {
     <div class="settings">
       <h3>Review test day</h3>
       <p class="muted small">Every {{ schedule().cadenceDays / 7 }} weeks on the day you choose.</p>

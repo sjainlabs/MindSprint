@@ -281,3 +281,10 @@ li {
 .test-badge.custom {
   background: #0f766e;
 }
+
+/* Wide history table scrolls sideways on small screens instead of the page. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll .history-table { min-width: 640px; }

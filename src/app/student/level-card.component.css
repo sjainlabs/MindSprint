@@ -39,6 +39,8 @@
   color: inherit;
 }
 .rung:hover { background: #f1f5f9; }
+button.rung { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; }
+.chip.static { cursor: default; display: inline-flex; align-items: center; min-height: 36px; }
 .rung.here { background: #f5f3ff; outline: 2px solid #c4b5fd; }
 .rung-name { font-weight: 800; color: #1e293b; display: inline-flex; align-items: center; gap: 6px; }
 .medal { width: 20px; height: 20px; border-radius: 50%; background: #facc15; color: #713f12; display: inline-grid; place-items: center; font-size: 0.75rem; }

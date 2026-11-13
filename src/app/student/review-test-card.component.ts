@@ -29,6 +29,8 @@ export class ReviewTestCardComponent {
   readonly parentMode = input(false);
   /** False when a parent is looking at another child: no starting tests for them. */
   readonly canAct = input(true);
+  /** Guest analyst: no starting, no weekday setting, no links out of the page. */
+  readonly readOnly = input(false);
   /** Ask the dashboard for a grade (GRADE_REQUIRED); it calls start() again once picked. */
   @Output() gradeRequired = new EventEmitter<void>();
   /** The weekday changed; the dashboard reloads the plan for the new dates. */
@@ -67,7 +69,7 @@ export class ReviewTestCardComponent {
   });
 
   async start(): Promise<void> {
-    if (this.starting()) return;
+    if (this.starting() || this.readOnly()) return;
     const studentId = this.studentId();
     if (this.canResume()) {
       await this.router.navigate(['/tests/review/take']);
@@ -101,7 +103,7 @@ export class ReviewTestCardComponent {
   }
 
   async setWeekday(day: number): Promise<void> {
-    if (this.savingDay() !== null || day === this.schedule().weekday) return;
+    if (this.readOnly() || this.savingDay() !== null || day === this.schedule().weekday) return;
     this.savingDay.set(day);
     this.error.set('');
     try {

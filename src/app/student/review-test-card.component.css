@@ -31,3 +31,5 @@
   padding: 0;
 }
 .weekday.active { border-color: #6c63ff; background: #6c63ff; color: #fff; }
+
+.chip.static { cursor: default; display: inline-flex; align-items: center; min-height: 36px; }

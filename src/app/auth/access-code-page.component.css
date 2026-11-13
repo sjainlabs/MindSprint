@@ -75,3 +75,12 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.analyst-link {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
