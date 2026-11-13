@@ -20,8 +20,9 @@ export class AccessCodePageComponent {
   isValid = false;
 
   onCodeChange(): void {
-    this.code = this.code.replace(/\D/g, '').slice(0, 6);
-    this.isValid = /^\d{6}$/.test(this.code);
+    // Access codes are 6 letters and numbers, e.g. K7P2QX.
+    this.code = this.code.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    this.isValid = /^[A-Z0-9]{6}$/.test(this.code);
     this.errorMessage = '';
   }
 

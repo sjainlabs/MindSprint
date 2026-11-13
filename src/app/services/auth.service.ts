@@ -228,9 +228,10 @@ export class AuthService {
   // -------------------------------------------------------
 
   async loginStudentWithCode(code: string): Promise<StudentProfile> {
-    const loginCode = code.trim();
-    if (!/^\d{6}$/.test(loginCode)) {
-      throw new Error('Please enter a valid 6-digit code.');
+    // Codes are 6 letters and numbers (the backend stores them in capitals); older codes are 6 digits.
+    const loginCode = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!/^[A-Z0-9]{6}$/.test(loginCode)) {
+      throw new Error('Please enter a valid 6-character code.');
     }
 
     try {

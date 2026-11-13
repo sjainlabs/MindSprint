@@ -6,17 +6,18 @@
   </div>
 
   <section class="card">
-    <p class="subtitle">Enter your 6‑digit student access code to begin.</p>
+    <p class="subtitle">Enter your 6-character student access code to begin.</p>
 
     <input
       class="code-input"
       type="text"
-      maxlength="6"
-      pattern="[0-9]*"
-      inputmode="numeric"
+      maxlength="8"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
       [(ngModel)]="code"
       (input)="onCodeChange()"
-      placeholder="123456"
+      placeholder="K7P2QX"
     />
 
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
