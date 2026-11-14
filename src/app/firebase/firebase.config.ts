@@ -16,7 +16,9 @@ googleProvider.setCustomParameters({
 });
 
 let dbInstance: ReturnType<typeof initializeFirestore> | null = null;
+// initializeFirestore may only be called once per app; later calls with any options throw
 export const db = () => {
+  if (dbInstance) return dbInstance;
   try {
     dbInstance = initializeFirestore(app, {
       localCache: persistentLocalCache({
