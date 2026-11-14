@@ -78,10 +78,14 @@ export class InsightsPageComponent implements OnInit {
     }
 
     try {
-      const result = this.readOnly ? await this.analystApi.insights() : await this.api.getFullInsights(studentId!);
+      // Both requests at once; neither needs the other
+      const [result, loadedHistory] = await Promise.all([
+        this.readOnly ? this.analystApi.insights() : this.api.getFullInsights(studentId!),
+        this.readOnly ? this.analystApi.worksheetHistory() : this.api.getWorksheetHistory(studentId!),
+      ]);
       if (this.canCorrect) this.topicTests.ingest(result.topicTests);
       this.insights.set(result);
-      const history = (this.readOnly ? await this.analystApi.worksheetHistory() : await this.api.getWorksheetHistory(studentId!)) ?? [];
+      const history = loadedHistory ?? [];
 
       // Sort newest → oldest
       history.sort((a, b) =>
