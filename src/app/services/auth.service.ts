@@ -28,7 +28,7 @@ import {
 import { auth, db, googleProvider } from '../firebase/firebase.config';
 import {environment} from '../../environments/environment.prod';
 import {firstValueFrom} from 'rxjs';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 
 export interface ParentProfile {
   id: string;
@@ -48,6 +48,17 @@ export interface StudentProfile {
   loginCode: string;
   masteryMap: Record<string, number>;
   createdAt: string | null;
+}
+
+interface StudentCodeLookup {
+  valid: boolean;
+  studentId: string | null;
+  studentName: string | null;
+  grade: string | null;
+  parentId?: string;
+  avatar?: string | null;
+  loginCode?: string;
+  createdAt?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -234,26 +245,41 @@ export class AuthService {
       throw new Error('Please enter a valid 6-character code.');
     }
 
+    // The browser can't query students itself (Firestore rules need a signed-in parent), so the backend checks the code
+    let response: StudentCodeLookup;
     try {
-      const studentsRef = collection(db(), 'students');
-      const snapshot = await getDocs(query(studentsRef, where('loginCode', '==', loginCode), limit(1)));
-      if (snapshot.empty) {
-        throw new Error('Invalid student login code.');
-      }
-
-      const studentDoc = snapshot.docs[0];
-      const student = this.mapStudent(studentDoc.id, studentDoc.data());
-      this.setStudentId(student.id);
-      return student;
+      response = await firstValueFrom(
+        this.http.post<StudentCodeLookup>(`${environment.apiUrl}/students/access-code`, { accessCode: loginCode }),
+      );
     } catch (error) {
-      console.warn('[Auth] Falling back to local student login lookup:', error);
-      const student = this.getLocalStudents().find((entry) => entry.loginCode === loginCode) ?? null;
-      if (!student) {
+      if (error instanceof HttpErrorResponse && error.status === 404) {
         throw new Error('Invalid student login code.');
       }
-      this.setStudentId(student.id);
-      return student;
+      if (error instanceof HttpErrorResponse && error.status === 429) {
+        throw new Error('Too many wrong codes. Please wait a few minutes and try again.');
+      }
+      console.warn('[Auth] Falling back to local student login lookup:', error);
+      const local = this.getLocalStudents().find((entry) => entry.loginCode === loginCode) ?? null;
+      if (!local) {
+        throw new Error('Could not check the code. Please check your connection and try again.');
+      }
+      this.setStudentId(local.id);
+      return local;
     }
+
+    if (!response.valid || !response.studentId) {
+      throw new Error('Invalid student login code.');
+    }
+    const student = this.mapStudent(response.studentId, {
+      parentId: response.parentId,
+      name: response.studentName,
+      grade: response.grade,
+      avatar: response.avatar ?? undefined,
+      loginCode: response.loginCode ?? loginCode,
+      createdAt: response.createdAt,
+    });
+    this.setStudentId(student.id);
+    return student;
   }
 
   logoutStudent(): void {
