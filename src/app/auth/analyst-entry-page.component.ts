@@ -11,10 +11,7 @@ import { EXPIRED_QUERY } from '../analyst/analyst.interceptor';
   standalone: true,
   template: `
     <main class="page">
-      <div class="header">
-        <button type="button" class="back-btn" (click)="goBack()">← Back</button>
-        <h2>Analyst access</h2>
-      </div>
+      <h2>Analyst access</h2>
 
       <section class="card">
         @if (notice()) {
@@ -120,9 +117,5 @@ export class AnalystEntryPageComponent implements OnInit {
 
   resume(): void {
     void this.router.navigate(['/analyst/plan']);
-  }
-
-  goBack(): void {
-    void this.router.navigate(['/']);
   }
 }

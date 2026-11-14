@@ -1,6 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ANALYST_CODE_LENGTH } from '../analyst/analyst-code';
+
+/** Students log in with 6 characters; an 8-character code is one a parent shared with an analyst. */
+const STUDENT_CODE_LENGTH = 6;
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -24,15 +28,24 @@ export class AccessCodePageComponent {
    */
   onCodeChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    // Access codes are 6 letters and numbers, e.g. K7P2QX.
-    this.code = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    // Student codes are 6 letters and numbers (K7P2QX); analyst codes are 8 (WDTS7QEK).
+    this.code = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, ANALYST_CODE_LENGTH);
     if (input.value !== this.code) input.value = this.code;
-    this.isValid = /^[A-Z0-9]{6}$/.test(this.code);
+    this.isValid = this.code.length === STUDENT_CODE_LENGTH || this.isAnalystCode;
     this.errorMessage = '';
+  }
+
+  get isAnalystCode(): boolean {
+    return this.code.length === ANALYST_CODE_LENGTH;
   }
 
   async submitCode(): Promise<void> {
     if (!this.isValid) return;
+    if (this.isAnalystCode) {
+      // The analyst page checks the code as soon as it opens with ?code=.
+      this.router.navigate(['/auth/analyst'], { queryParams: { code: this.code } });
+      return;
+    }
 
     try {
       const student = await this.auth.loginStudentWithCode(this.code);

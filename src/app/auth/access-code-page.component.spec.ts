@@ -41,10 +41,28 @@ describe('AccessCodePageComponent', () => {
     expect(button.disabled).toBe(false);
   });
 
-  it('drops spaces, dashes and extra characters', () => {
+  it('drops spaces, dashes and characters past the eighth', () => {
     const { input, type } = setup();
-    type('k7p-2qx9');
-    expect(input.value).toBe('K7P2QX');
+    type('k7p-2qx 9a');
+    expect(input.value).toBe('K7P2QX9A');
+    type('wdts-7qek-zz');
+    expect(input.value).toBe('WDTS7QEK');
+  });
+
+  it('keeps Continue disabled at 7 characters', () => {
+    const { button, type } = setup();
+    type('K7P2QX9');
+    expect(button.disabled).toBe(true);
+  });
+
+  it('sends an 8-character analyst code to the analyst login instead', async () => {
+    const { button, type, fixture } = setup();
+    type('wdts7qek');
+    expect(button.disabled).toBe(false);
+    button.click();
+    await fixture.whenStable();
+    expect(login).not.toHaveBeenCalled();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/auth/analyst'], { queryParams: { code: 'WDTS7QEK' } });
   });
 
   it('still accepts an all-digit code', () => {

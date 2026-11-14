@@ -3,7 +3,7 @@
   <h2>Enter Access Code</h2>
 
   <section class="card">
-    <p class="subtitle">Enter your 6-character student access code to begin.</p>
+    <p class="subtitle">Enter your 6-character student access code to begin. Got an 8-character analyst code? It works here too.</p>
 
     <input
       class="code-input"
@@ -16,7 +16,7 @@
       (input)="onCodeChange($event)"
       (keydown.enter)="submitCode()"
       placeholder="K7P2QX"
-      title="Type the 6 letters and numbers your parent gave you"
+      title="Students: the 6-character code from your parent. Analysts: the 8-character code a parent shared"
       aria-label="Student access code"
     />
 
@@ -26,7 +26,7 @@
       class="submit-btn"
       type="button"
       [disabled]="!isValid"
-      [title]="isValid ? 'Log in and open your dashboard' : 'Type all 6 characters of your code first'"
+      [title]="!isValid ? 'Type all 6 characters of a student code, or 8 of an analyst code' : isAnalystCode ? 'Open the read-only report a parent shared' : 'Log in and open your dashboard'"
       (click)="submitCode()"
     >
       Continue
