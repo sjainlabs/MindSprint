@@ -41,8 +41,4 @@ export class AccessCodePageComponent {
       this.errorMessage = err?.message ?? 'Invalid access code.';
     }
   }
-
-  goBack(): void {
-    this.router.navigate(['/']);
-  }
 }
