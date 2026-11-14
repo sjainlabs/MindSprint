@@ -21,8 +21,8 @@
   <!-- Insights -->
   <section class="card" *ngIf="insights() && !loading()">
 
-    <h1>{{ readOnly ? 'Learning insights' : 'Your Learning Insights' }}</h1>
-    <p>Updated performance summary based on {{ readOnly ? 'recent' : 'your recent' }} worksheets.</p>
+    <h1>{{ aboutChild ? 'Learning insights' : 'Your Learning Insights' }}</h1>
+    <p>Updated performance summary based on {{ aboutChild ? 'recent' : 'your recent' }} worksheets.</p>
 
     <!-- Metrics -->
     <div class="metrics">
@@ -60,7 +60,7 @@
   <!-- Topic Tests -->
   <section class="card" *ngIf="!loading() && topicTestStatuses().length > 0">
     <h2>Topic Tests</h2>
-    <p>{{ readOnly ? 'A topic test unlocks after 10 practice sheets at 80%+ on the topic.' : 'Get 10 practice sheets at 80%+ on a topic to unlock its test.' }}</p>
+    <p>{{ readOnly ? 'A topic test unlocks after 10 practice sheets at 80%+ on the topic.' : 'Get 10 practice sheets at 80%+ on a topic to unlock its test.' }} Only one topic test is open at a time.</p>
     <div class="topic-test-grid">
       <div class="topic-test-item" *ngFor="let t of topicTestStatuses()">
         <h3>{{ t.topicName }}</h3>
@@ -118,6 +118,12 @@
           <button (click)="toggleRow(w.worksheetId)">
             {{ expandedRows()[w.worksheetId] ? 'Hide' : 'View' }}
           </button>
+          <a
+            *ngIf="parentView"
+            class="fix-link"
+            routerLink="/parent/fix-answers"
+            [queryParams]="{ studentId: childId, worksheetId: w.worksheetId }"
+          >✏️ Fix typos</a>
         </td>
       </tr>
 
@@ -129,7 +135,7 @@
 
             <h3>{{ isTopicTest(w) ? 'Topic Test Questions' : isAdhocTest(w) ? 'Custom Test Questions' : 'Worksheet Questions' }}</h3>
 
-            <div *ngIf="isTest(w) && !readOnly" class="locked-banner">
+            <div *ngIf="isTest(w) && canCorrect" class="locked-banner">
               Tests have one submission, so answers can't be corrected.
             </div>
 
@@ -141,7 +147,7 @@
 
             <!-- Edit Button -->
             <button
-              *ngIf="!readOnly && !isTest(w) &&
+              *ngIf="canCorrect && !isTest(w) &&
                      !correctionMode()[w.worksheetId] &&
                      correctionAttemptCount()[w.worksheetId] < correctionMaxAttempts()[w.worksheetId]"
               class="edit-btn"
@@ -152,7 +158,7 @@
 
             <!-- Locked Message -->
             <div
-              *ngIf="!readOnly && !isTest(w) && correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
+              *ngIf="canCorrect && !isTest(w) && correctionAttemptCount()[w.worksheetId] >= correctionMaxAttempts()[w.worksheetId]"
               class="locked-banner"
             >
               You have reached the maximum number of correction attempts.
@@ -169,7 +175,7 @@
               <!-- Incorrect (normal mode) -->
               <div *ngIf="!q.correct && !correctionMode()[w.worksheetId]" class="incorrect-answer">
                 ❌ Incorrect
-                <p>{{ readOnly ? 'Answer given' : 'Your answer' }}: {{ q.submittedAnswer }}</p>
+                <p>{{ aboutChild ? 'Answer given' : 'Your answer' }}: {{ q.submittedAnswer }}</p>
 
                 <button (click)="toggleCorrect(q.questionId)">
                   {{ showCorrect()[q.questionId] ? 'Hide Correct Answer' : 'Show Correct Answer' }}

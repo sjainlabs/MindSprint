@@ -7,7 +7,16 @@ import { isHiddenTopic } from '../constants/hidden-topics';
 
 /* ---------------- Types (mirror /api/tests/topic) ---------------- */
 
-export type TopicTestState = 'practising' | 'eligible' | 'passed';
+export type TopicTestState = 'practising' | 'eligible' | 'locked' | 'passed';
+
+/** Why a ready test is locked: only one topic test is open at a time. */
+export interface TopicTestLock {
+  topicId: string;
+  topicName: string;
+  /** failed: below 80% and never passed; unfinished: started and not submitted. */
+  reason: 'failed' | 'unfinished';
+  accuracy: number | null;
+}
 
 export interface TopicTestStatus {
   topicId: string;
@@ -19,6 +28,24 @@ export interface TopicTestStatus {
   attempts: number;
   lastTestAccuracy: number | null;
   lastTestAt: string | null;
+  /** Set when state is 'locked'. */
+  lockedBy?: TopicTestLock | null;
+}
+
+/** "Pass the Fractions test first (last score 65%, 80% needed)" / "Finish your Fractions test first". */
+export function lockMessage(lock: TopicTestLock | null | undefined): string {
+  if (!lock) return 'Finish your other topic test first.';
+  if (lock.reason === 'failed') {
+    const score = lock.accuracy !== null && lock.accuracy !== undefined ? `last score ${lock.accuracy}%, ` : '';
+    return `Pass the ${lock.topicName} test first (${score}80% needed)`;
+  }
+  return `Finish your ${lock.topicName} test first`;
+}
+
+/** Ready tests first, then locked ones, then the rest (each group keeps its order). */
+export function readyThenLocked<T extends { state: TopicTestState }>(statuses: T[]): T[] {
+  const rank = (s: T) => (s.state === 'eligible' ? 0 : s.state === 'locked' ? 1 : 2);
+  return statuses.map((s, i) => ({ s, i })).sort((a, b) => rank(a.s) - rank(b.s) || a.i - b.i).map(({ s }) => s);
 }
 
 export interface TopicTestQuestion {
@@ -60,6 +87,7 @@ export interface TopicTestResult {
 
 export type TopicTestErrorCode =
   | 'NOT_ELIGIBLE'
+  | 'TEST_LOCKED'
   | 'ALREADY_PASSED'
   | 'ALREADY_SUBMITTED'
   | 'FORBIDDEN'
@@ -109,6 +137,7 @@ export class TopicTestService {
       attempts: 0,
       lastTestAccuracy: null,
       lastTestAt: null,
+      lockedBy: null,
     };
   }
 

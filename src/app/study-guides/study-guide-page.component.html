@@ -367,6 +367,14 @@
           <button type="button" class="btn test big" (click)="takeTest()">🏁 Take the topic test</button>
         }
       </div>
+      @if (testLock(); as lock) {
+        <p class="test-lock" role="status">
+          🔒 The topic test is ready, but only one is open at a time. {{ lock.text }}.
+          @if (lock.topicId) {
+            <button type="button" class="link-btn" (click)="openBlockingTest(lock.topicId)">Go to that test →</button>
+          }
+        </p>
+      }
       @if (mathBrainLinks().length) {
         <div class="btn-row">
           @for (m of mathBrainLinks(); track $index) {

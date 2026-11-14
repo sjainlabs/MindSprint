@@ -324,3 +324,7 @@ ul, ol {
 
 .back-daily { margin-bottom: 10px; justify-self: start; align-self: start; width: auto; }
 .then-practice { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #eef2ff; color: #3730a3; font-weight: 600; }
+
+/* Topic test ready but locked behind another topic's test */
+.test-lock { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; color: #334155; font-weight: 600; }
+.test-lock .link-btn { margin-left: 4px; }

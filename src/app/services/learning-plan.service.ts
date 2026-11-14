@@ -27,7 +27,7 @@ export interface TopicStanding {
   targetSecondsPerQuestion: number;
   lastPractisedAt: string | null;
   daysSincePractice: number | null;
-  testState: 'practising' | 'eligible' | 'passed' | null;
+  testState: 'practising' | 'eligible' | 'locked' | 'passed' | null;
 }
 
 export interface GradeSummary {

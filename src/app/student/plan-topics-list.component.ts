@@ -37,6 +37,11 @@ const TREND_ICONS: Record<string, string> = { improving: '↑', slipping: '↓' 
                 <a class="name" [routerLink]="['/study-guides/topic', t.topicId]">{{ t.topicName }}</a>
               }
               @if (t.band) { <span class="tag">Band {{ t.band }}</span> }
+              @if (t.testState === 'eligible') {
+                <span class="tag test-ready">🏁 Test ready</span>
+              } @else if (t.testState === 'locked') {
+                <span class="tag test-locked" title="Another topic's test has to be passed or finished first">🔒 Test waits</span>
+              }
               <span class="muted small right">
                 {{ labels[t.status] }}@if (t.score !== null) { · {{ t.score }}% }
                 @if (trend(t); as icon) { <span [attr.aria-label]="t.trend">{{ icon }}</span> }
@@ -60,6 +65,8 @@ const TREND_ICONS: Record<string, string> = { improving: '↑', slipping: '↓' 
       .topic-list .name { text-decoration: none; }
       .topic-list a.name:hover { text-decoration: underline; }
       .right { margin-left: auto; }
+      .tag.test-ready { background: #dcfce7; color: #166534; }
+      .tag.test-locked { background: #f1f5f9; color: #475569; }
     `,
   ],
 })

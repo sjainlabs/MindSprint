@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import {FullInsightsResponse, LearningApiService, PracticeWorksheetV2Response} from '../services/learning-api.service';
 import {firstValueFrom} from 'rxjs';
-import { TopicTestService } from '../services/topic-test.service';
+import { TopicTestService, readyThenLocked } from '../services/topic-test.service';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 import { withoutHiddenTopics } from '../constants/hidden-topics';
 import { AnalystApiService, INVALID_ANALYST_CODE, analystErrorMessage } from '../analyst/analyst-api.service';
@@ -12,7 +12,7 @@ import { AnalystApiService, INVALID_ANALYST_CODE, analystErrorMessage } from '..
 @Component({
   selector: 'app-simple-insights-page',
   standalone: true,
-  imports: [CommonModule, TopicTestCardComponent],
+  imports: [CommonModule, TopicTestCardComponent, RouterLink],
   templateUrl: './insights-page.component.html',
   styleUrls: ['./insights-page.component.css'],
 })
@@ -24,14 +24,25 @@ export class InsightsPageComponent implements OnInit {
   private readonly analystApi = inject(AnalystApiService);
 
   /** Guest analyst (route data { analyst: true }): reads /api/analyst/*, and nothing can be resubmitted. */
-  readonly readOnly = inject(ActivatedRoute).snapshot.data['analyst'] === true;
+  private readonly route = inject(ActivatedRoute);
+  readonly readOnly = this.route.snapshot.data['analyst'] === true;
+  /** A logged-in parent opened ?studentId=… from their dashboard: they can fix typos, not resubmit for the kid. */
+  readonly childId = this.readOnly ? null : this.route.snapshot.queryParamMap.get('studentId');
+  readonly parentView = !!this.childId && this.authService.isParentLoggedIn();
+  /** The kid's own correction attempts: only for the kid. */
+  readonly canCorrect = !this.readOnly && !this.parentView;
+  /** Wording about the child rather than "you". */
+  readonly aboutChild = this.readOnly || this.parentView;
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
   readonly insights = signal<FullInsightsResponse | null>(null);
   // Read from the shared cache so a just-submitted test result shows without refetching.
+  // Ready tests first, then locked ones (only one topic test is open at a time).
   readonly topicTestStatuses = computed(() =>
-    withoutHiddenTopics(this.insights()?.topicTests ?? []).map((t) => (this.readOnly ? t : this.topicTests.statusFor(t.topicId) ?? t)),
+    readyThenLocked(
+      withoutHiddenTopics(this.insights()?.topicTests ?? []).map((t) => (this.canCorrect ? this.topicTests.statusFor(t.topicId) ?? t : t)),
+    ),
   );
 
   readonly worksheetHistory = signal<any[]>([]);
@@ -58,7 +69,7 @@ export class InsightsPageComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const studentId = this.readOnly ? null : this.authService.getStoredStudentId();
+    const studentId = this.readOnly ? null : this.parentView ? this.childId : this.authService.getStoredStudentId();
 
     if (!this.readOnly && !studentId) {
       this.errorMessage.set('No active student.');
@@ -68,7 +79,7 @@ export class InsightsPageComponent implements OnInit {
 
     try {
       const result = this.readOnly ? await this.analystApi.insights() : await this.api.getFullInsights(studentId!);
-      if (!this.readOnly) this.topicTests.ingest(result.topicTests);
+      if (this.canCorrect) this.topicTests.ingest(result.topicTests);
       this.insights.set(result);
       const history = (this.readOnly ? await this.analystApi.worksheetHistory() : await this.api.getWorksheetHistory(studentId!)) ?? [];
 
@@ -127,7 +138,7 @@ export class InsightsPageComponent implements OnInit {
   }
 
   startCorrection(worksheetId: string) {
-    if (this.readOnly) return;
+    if (!this.canCorrect) return;
     const attempts = this.correctionAttemptCount()[worksheetId];
     const max = this.correctionMaxAttempts()[worksheetId];
 
@@ -159,7 +170,7 @@ export class InsightsPageComponent implements OnInit {
   }
 
   async submitCorrection(worksheetId: string) {
-    if (this.readOnly) return;
+    if (!this.canCorrect) return;
     const studentId = this.authService.getStoredStudentId();
     if (!studentId) return;
 

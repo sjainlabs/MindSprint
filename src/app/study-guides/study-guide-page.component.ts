@@ -19,7 +19,7 @@ import {
   StudyGuideService,
   TopicStudyGuideResponse,
 } from '../services/study-guide.service';
-import { TopicTestService } from '../services/topic-test.service';
+import { TopicTestService, lockMessage } from '../services/topic-test.service';
 import { MathBrainTarget, mathBrainTarget } from '../services/math-brain.service';
 import { checkAnswer, canAutoCheck } from '../shared/utils/answer-check';
 import { MathTextComponent } from '../components/math-text/math-text.component';
@@ -136,7 +136,12 @@ export class StudyGuidePageComponent implements OnInit {
   readonly mathBrainLinks = computed<MathBrainTarget[]>(() => (this.guide()?.mathBrain ?? []).map(mathBrainTarget));
 
   readonly testStatus = computed(() => this.topicTests.statusFor(this.topicId()));
+  /** Only 'eligible' can start; 'locked' waits for another topic's test (shown with the reason). */
   readonly testEligible = computed(() => this.testStatus()?.state === 'eligible');
+  readonly testLock = computed(() => {
+    const s = this.testStatus();
+    return s?.state === 'locked' ? { text: lockMessage(s.lockedBy), topicId: s.lockedBy?.topicId ?? null } : null;
+  });
 
   private loadSub: Subscription | null = null;
 
@@ -394,6 +399,11 @@ export class StudyGuidePageComponent implements OnInit {
             questionCount: 10,
           },
     });
+  }
+
+  /** The test that has to be passed or finished before this topic's test unlocks. */
+  openBlockingTest(topicId: string): void {
+    this.router.navigate(['/tests/topic', topicId]);
   }
 
   takeTest(): void {

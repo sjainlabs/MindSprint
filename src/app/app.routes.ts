@@ -44,6 +44,8 @@ export const routes: Routes = [
     ],
   },
   { path: 'parent/dashboard', canActivate: [parentAuthGuard], component: ParentDashboardPageComponent },
+  // ?studentId=…&worksheetId=… from the dashboard's Fix typos list or the parent view of insights.
+  { path: 'parent/fix-answers', canActivate: [parentAuthGuard], loadComponent: () => import('./parent/fix-answers-page.component').then((m) => m.FixAnswersPageComponent) },
   // The learning plan. Parents open it from their dashboard with ?studentId=…, which the guard allows.
   { path: 'student/dashboard', canActivate: [studentAuthGuard], loadComponent: () => import('./student/student-dashboard-page.component').then((m) => m.StudentDashboardPageComponent) },
   { path: 'student/topics', canActivate: [studentAuthGuard], loadComponent: () => import('./student/plan-topics-page.component').then((m) => m.PlanTopicsPageComponent) },

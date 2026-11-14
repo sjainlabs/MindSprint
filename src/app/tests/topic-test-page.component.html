@@ -16,13 +16,14 @@
     </div>
   </section>
 
-  <!-- Blocked: practising or passed -->
+  <!-- Blocked: practising, locked by another topic's test, or passed -->
   <section class="card" *ngIf="stage() === 'blocked'">
-    <h1>{{ topicName() }} · Topic Test</h1>
+    <h1>{{ status()?.state === 'locked' ? '🔒 ' : '' }}{{ topicName() }} · Topic Test</h1>
     <p class="notice" *ngIf="notice()">{{ notice() }}</p>
+    <p class="hint" *ngIf="lockText() && !notice()">Only one topic test is open at a time. {{ lockText() }}, then this one unlocks.</p>
     <app-topic-test-card [topicStatus]="status()"></app-topic-test-card>
     <div class="actions">
-      <button class="btn primary" (click)="goToPractice()">Keep practising</button>
+      <button class="btn" [class.primary]="status()?.state !== 'locked'" (click)="goToPractice()">Keep practising</button>
       <button class="btn" (click)="goToTopic()">Back to topic</button>
     </div>
   </section>

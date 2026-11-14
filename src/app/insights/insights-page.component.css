@@ -288,3 +288,12 @@ li {
   -webkit-overflow-scrolling: touch;
 }
 .table-scroll .history-table { min-width: 640px; }
+
+.fix-link {
+  display: inline-block;
+  margin-left: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #4338ca;
+  white-space: nowrap;
+}

@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TopicTestStatus } from '../../services/topic-test.service';
+import { TopicTestStatus, lockMessage } from '../../services/topic-test.service';
 
 /**
- * Shows a topic's test state: practising (progress), eligible (take test CTA) or passed (trophy).
+ * Shows a topic's test state: practising (progress), eligible (take test CTA), locked (another topic's
+ * test comes first: link to it) or passed (trophy).
  * Use `compact` inside dense lists such as the practice hub topic grid.
  */
 @Component({
@@ -18,6 +19,7 @@ import { TopicTestStatus } from '../../services/topic-test.service';
       [class.compact]="compact"
       [class.eligible]="s.state === 'eligible'"
       [class.passed]="s.state === 'passed'"
+      [class.locked]="s.state === 'locked'"
     >
       <!-- Practising -->
       <ng-container *ngIf="s.state === 'practising'">
@@ -61,6 +63,23 @@ import { TopicTestStatus } from '../../services/topic-test.service';
         <p class="tt-text tt-muted">{{ readOnly ? 'Ready to take: ' : '' }}20 questions · pass at 80% · one attempt</p>
       </ng-container>
 
+      <!-- Locked: one open topic test at a time -->
+      <ng-container *ngIf="s.state === 'locked'">
+        <div class="tt-head">
+          <span class="tt-icon" aria-hidden="true">🔒</span>
+          <span class="tt-title">Topic Test locked</span>
+        </div>
+        <p class="tt-text">{{ lockText() }}</p>
+        <button
+          *ngIf="!readOnly && s.lockedBy as lock"
+          class="tt-cta tt-cta-lock"
+          type="button"
+          (click)="$event.stopPropagation(); openTest(lock.topicId)"
+        >
+          {{ lock.reason === 'failed' ? 'Go to the ' + lock.topicName + ' test' : 'Finish the ' + lock.topicName + ' test' }}
+        </button>
+      </ng-container>
+
       <!-- Passed -->
       <ng-container *ngIf="s.state === 'passed'">
         <div class="tt-head">
@@ -86,6 +105,9 @@ import { TopicTestStatus } from '../../services/topic-test.service';
       }
       .tt-card.eligible { border-color: #6c63ff; background: #f1f0ff; }
       .tt-card.passed { border-color: #f5b301; background: #fff8e1; }
+      .tt-card.locked { border-color: #cbd5e1; border-style: dashed; background: #f8fafc; }
+      .tt-cta.tt-cta-lock { background: #fff; color: #4338ca; border: 2px solid #6c63ff; }
+      .tt-cta.tt-cta-lock:hover { background: #eef2ff; }
       .tt-card.compact { padding: 8px 10px; gap: 6px; border-radius: 12px; }
       .tt-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
       .tt-title { flex: 1; }
@@ -124,6 +146,8 @@ export class TopicTestCardComponent {
   @Input() showGuideLink = true;
   /** Guest analyst: no test button and no links out of the page. */
   @Input() readOnly = false;
+
+  readonly lockText = computed(() => lockMessage(this.status()?.lockedBy));
 
   readonly progressPct = computed(() => {
     const s = this.status();

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { PracticeWorksheetQuestion } from '../services/learning-api.service';
@@ -9,6 +10,7 @@ import {
   TopicTestResult,
   TopicTestService,
   TopicTestStatus,
+  lockMessage,
 } from '../services/topic-test.service';
 import { QuestionRendererComponent } from '../question-renderer/question-renderer.component';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
@@ -17,7 +19,7 @@ import { ResultsRewardsComponent } from '../rewards/results-rewards.component';
 
 type Stage =
   | 'loading'    // fetching status
-  | 'blocked'    // not eligible or already passed: show the card
+  | 'blocked'    // not eligible, locked by another topic's test, or already passed: show the card
   | 'confirm'    // rules + Start / Cancel
   | 'generating' // POST /generate in flight
   | 'taking'     // answering questions
@@ -37,8 +39,13 @@ export class TopicTestPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly topicTests = inject(TopicTestService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly topicId = this.route.snapshot.paramMap.get('topicId') ?? '';
+  /** Changes in place when a locked card links to the other topic's test (same route, new param). */
+  private readonly topicIdSignal = signal(this.route.snapshot.paramMap.get('topicId') ?? '');
+  get topicId(): string {
+    return this.topicIdSignal();
+  }
   private studentId = '';
 
   readonly stage = signal<Stage>('loading');
@@ -53,7 +60,9 @@ export class TopicTestPageComponent implements OnInit {
   readonly result = signal<TopicTestResult | null>(null);
   readonly showExpected = signal<Record<string, boolean>>({});
 
-  readonly status = computed<TopicTestStatus | null>(() => this.topicTests.statusFor(this.topicId));
+  readonly status = computed<TopicTestStatus | null>(() => this.topicTests.statusFor(this.topicIdSignal()));
+  /** Locked: which test to pass or finish first. */
+  readonly lockText = computed(() => (this.status()?.state === 'locked' ? lockMessage(this.status()?.lockedBy) : ''));
   readonly topicName = computed(
     () => this.active()?.test.topicName ?? this.status()?.topicName ?? 'this topic',
   );
@@ -81,6 +90,19 @@ export class TopicTestPageComponent implements OnInit {
     }
     this.studentId = studentId;
 
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const next = params.get('topicId') ?? '';
+      if (next === this.topicId) return;
+      this.topicIdSignal.set(next);
+      this.resetForTopic();
+      void this.openTopic();
+    });
+    await this.openTopic();
+  }
+
+  /** Resume a saved test for this topic, or check whether it can start. */
+  private async openTopic(): Promise<void> {
+    const studentId = this.studentId;
     // Resume an unsubmitted test (refresh / accidental navigation). Generating again would give new questions.
     const saved = this.topicTests.loadActive(studentId, this.topicId);
     if (saved) {
@@ -128,9 +150,9 @@ export class TopicTestPageComponent implements OnInit {
       this.stage.set('taking');
     } catch (err) {
       const code = err instanceof TopicTestError ? err.code : 'UNKNOWN';
-      if (code === 'NOT_ELIGIBLE' || code === 'ALREADY_PASSED') {
+      if (code === 'NOT_ELIGIBLE' || code === 'ALREADY_PASSED' || code === 'TEST_LOCKED') {
         this.notice.set(this.messageOf(err));
-        await this.refreshStatusAfterRejection(code === 'ALREADY_PASSED' ? 'passed' : 'practising');
+        await this.refreshStatusAfterRejection(code === 'ALREADY_PASSED' ? 'passed' : code === 'TEST_LOCKED' ? 'locked' : 'practising');
         this.stage.set('blocked');
         return;
       }
@@ -272,12 +294,22 @@ export class TopicTestPageComponent implements OnInit {
   }
 
   /** After NOT_ELIGIBLE / ALREADY_PASSED, make sure the card reflects the server, even if refresh fails. */
-  private async refreshStatusAfterRejection(fallback: 'practising' | 'passed'): Promise<void> {
+  private async refreshStatusAfterRejection(fallback: 'practising' | 'locked' | 'passed'): Promise<void> {
     await this.refreshStatusQuietly();
     const s = this.status();
     if (s && s.state === 'eligible') {
       this.topicTests.ingest([{ ...s, state: fallback }]);
     }
+  }
+
+  private resetForTopic(): void {
+    this.active.set(null);
+    this.result.set(null);
+    this.notice.set('');
+    this.errorMessage.set('');
+    this.submitError.set('');
+    this.confirmOpen.set(false);
+    this.showExpected.set({});
   }
 
   private fail(message: string): void {

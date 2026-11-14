@@ -11,6 +11,7 @@ import { AddStudentModalComponent, AddStudentPayload } from './add-student-modal
 import { EditChildModalComponent, EditChildPayload } from './edit-child-modal.component';
 import { AccessCodeModalComponent } from './access-code-modal.component';
 import { AnalystCodeModalComponent } from './analyst-code-modal.component';
+import { FixTyposModalComponent } from './fix-typos-modal.component';
 
 interface DashboardStudent {
   id: string;
@@ -30,6 +31,7 @@ interface DashboardStudent {
     EditChildModalComponent,
     AccessCodeModalComponent,
     AnalystCodeModalComponent,
+    FixTyposModalComponent,
     RouterLink,
   ],
   template: `
@@ -59,9 +61,11 @@ interface DashboardStudent {
           <button (click)="generateAccessCode(student)">Generate Access Code</button>
           <button (click)="openStudentView(student)">Open Student View</button>
           <button (click)="sharingStudent.set(student)">🔗 Share with analyst</button>
+          <button (click)="fixingStudent.set(student)">✏️ Fix typos</button>
         </div>
         <div class="actions">
           <a class="link" routerLink="/student/dashboard" [queryParams]="{ studentId: student.id, view: 'parent' }">📋 Learning plan</a>
+          <a class="link" routerLink="/insights" [queryParams]="{ studentId: student.id }">📈 Insights</a>
           <a class="link" routerLink="/daily/chart" [queryParams]="{ studentId: student.id }">📊 Daily Challenge chart</a>
           <a class="link" routerLink="/daily/progress" [queryParams]="{ studentId: student.id }">🗺️ Progress map</a>
           <a class="link" routerLink="/math-games/abacus/parent" [queryParams]="{ studentId: student.id }">🧮 Abacus levels</a>
@@ -96,6 +100,13 @@ interface DashboardStudent {
         (closed)="sharingStudent.set(null)"
       />
 
+      <app-fix-typos-modal
+        *ngIf="fixingStudent()"
+        [studentId]="fixingStudent()!.id"
+        [studentName]="fixingStudent()!.name"
+        (closed)="fixingStudent.set(null)"
+      />
+
       <section class="card error" *ngIf="errorMessage()">{{ errorMessage() }}</section>
     </main>
   `,
@@ -128,6 +139,8 @@ export class ParentDashboardPageComponent implements OnInit {
   readonly activeAccessCode = signal('');
   /** The child whose analyst code is being shown. */
   readonly sharingStudent = signal<DashboardStudent | null>(null);
+  /** The child whose recent work is listed for typo fixes. */
+  readonly fixingStudent = signal<DashboardStudent | null>(null);
   readonly studentCount = computed(() => this.students().length);
 
   ngOnInit(): void {
