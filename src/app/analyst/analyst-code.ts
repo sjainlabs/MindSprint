@@ -19,7 +19,14 @@ export function expiryDate(iso: string): string {
   return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-/** The link an analyst opens: `<origin>/analyst?code=XXXXXXXX` (main.ts turns it into the hash route). */
+/**
+ * The link an analyst opens: `<app base>#/analyst?code=XXXXXXXX`. It is on the hash because GitHub Pages
+ * only serves real files, so a plain `/analyst` path would be its 404 page (public/404.html forwards
+ * links already sent that way).
+ */
 export function analystShareLink(code: string, base = document.baseURI): string {
-  return new URL(`analyst?code=${encodeURIComponent(normalizeAnalystCode(code))}`, base).href;
+  const app = new URL(base);
+  app.hash = '';
+  app.search = '';
+  return `${app.href}#/analyst?code=${encodeURIComponent(normalizeAnalystCode(code))}`;
 }

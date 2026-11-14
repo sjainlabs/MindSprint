@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MindSprint</title>
+  <script>
+    // GitHub Pages serves this for any path that isn't a file. The app routes on the hash, so
+    // forward `<base>/analyst?code=…` (older analyst share links) and other app paths onto it.
+    (function () {
+      var path = location.pathname;
+      var m = path.match(/^(.*?\/)analyst\/?$/);
+      if (m) {
+        location.replace(m[1] + '#/analyst' + location.search);
+        return;
+      }
+      // Anything else under the project site: send to its home page.
+      var site = path.match(/^\/[^/]+\//);
+      location.replace((site ? site[0] : '/') + location.search + location.hash);
+    })();
+  </script>
+</head>
+<body>
+  <p style="font-family: system-ui, sans-serif; padding: 16px">Opening MindSprint… <a href="/MindSprint/">Go to the home page</a></p>
+</body>
+</html>
