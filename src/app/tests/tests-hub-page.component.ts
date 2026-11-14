@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { LearningApiService } from '../services/learning-api.service';
 import { AdhocSelection, AdhocTestService } from '../services/adhoc-test.service';
+import { LearningPlanError, LearningPlanService, ReviewSchedule } from '../services/learning-plan.service';
+import { ReviewTestCardComponent } from '../student/review-test-card.component';
+import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
 
 type HistoryKind = 'adhoc-test' | 'topic-test';
 type HistoryFilter = 'all' | HistoryKind;
@@ -25,11 +28,11 @@ interface TestHistoryEntry {
   }>;
 }
 
-/** Landing page for the dashboard's "Tests" button: custom tests, scheduled tests and test history. */
+/** Landing page for the dashboard's "Tests" button: the scheduled review test, custom tests and test history. */
 @Component({
   selector: 'app-tests-hub-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, ReviewTestCardComponent, GradePickerComponent],
   templateUrl: './tests-hub-page.component.html',
   styleUrls: ['./test-pages.css', './tests-hub-page.component.css'],
 })
@@ -38,6 +41,17 @@ export class TestsHubPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly api = inject(LearningApiService);
   private readonly adhoc = inject(AdhocTestService);
+  private readonly plans = inject(LearningPlanService);
+
+  @ViewChild(ReviewTestCardComponent) reviewCard?: ReviewTestCardComponent;
+
+  studentId = '';
+  /** The scheduled review test, from the learning plan, so both pages show the same dates and button. */
+  readonly review = signal<ReviewSchedule | null>(null);
+  readonly reviewPhase = signal<'loading' | 'ready' | 'grade' | 'error'>('loading');
+  readonly reviewError = signal('');
+  readonly gradeBusy = signal(false);
+  private reviewGradePending = false;
 
   readonly loadingHistory = signal(true);
   readonly historyError = signal('');
@@ -65,6 +79,8 @@ export class TestsHubPageComponent implements OnInit {
       await this.router.navigate(['/auth/access-code']);
       return;
     }
+    this.studentId = studentId;
+    void this.loadReview();
 
     const active = this.adhoc.loadActive(studentId);
     if (active) {
@@ -77,6 +93,44 @@ export class TestsHubPageComponent implements OnInit {
     this.lastSelection.set(this.adhoc.loadLastSelection(studentId));
 
     await this.loadHistory(studentId);
+  }
+
+  async loadReview(quiet = false): Promise<void> {
+    if (!quiet) this.reviewPhase.set('loading');
+    this.reviewError.set('');
+    try {
+      this.review.set((await this.plans.plan(this.studentId)).reviewTest);
+      this.reviewPhase.set('ready');
+    } catch (err) {
+      const e = err as LearningPlanError;
+      if (e.code === 'GRADE_REQUIRED') {
+        this.reviewPhase.set('grade');
+      } else if (!this.review()) {
+        this.reviewError.set(e.message);
+        this.reviewPhase.set('error');
+      }
+    }
+  }
+
+  /** Starting the review test can also say GRADE_REQUIRED: ask, then start it. */
+  askGradeForReview(): void {
+    this.reviewGradePending = true;
+    this.reviewPhase.set('grade');
+  }
+
+  /** Same as the learning plan: remember the grade for this visit, then retry. */
+  async pickGrade(grade: string): Promise<void> {
+    this.plans.setGrade(this.studentId, grade);
+    if (this.reviewGradePending && this.review()) {
+      this.reviewGradePending = false;
+      this.reviewPhase.set('ready');
+      // The card is back on screen after this change detection pass.
+      setTimeout(() => this.reviewCard?.start());
+      return;
+    }
+    this.gradeBusy.set(true);
+    await this.loadReview();
+    this.gradeBusy.set(false);
   }
 
   async loadHistory(studentId = this.auth.getStoredStudentId() ?? ''): Promise<void> {

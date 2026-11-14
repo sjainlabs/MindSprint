@@ -2,7 +2,7 @@
 
   <section class="card">
     <h1>📋 Tests</h1>
-    <p class="muted">Make your own test, check scheduled tests, and see every test you've taken.</p>
+    <p class="muted">Take your scheduled review test, make your own test, and see every test you've taken.</p>
   </section>
 
   <!-- Unfinished custom test -->
@@ -13,6 +13,36 @@
     </div>
     <button class="btn primary" (click)="resume()">Resume</button>
   </section>
+
+  <!-- Scheduled: the same review test card as the learning plan -->
+  <ng-container [ngSwitch]="reviewPhase()">
+    <section class="card center" *ngSwitchCase="'loading'" aria-busy="true">
+      <div class="spinner"></div>
+      <p class="muted">Loading your review test…</p>
+    </section>
+
+    <section class="card" *ngSwitchCase="'grade'">
+      <h2>📅 Review test</h2>
+      <p class="muted">Which grade are you in? We need it once to pick the review topics.</p>
+      <app-grade-picker [busy]="gradeBusy()" (picked)="pickGrade($event)" />
+    </section>
+
+    <section class="card" *ngSwitchCase="'error'">
+      <h2>📅 Review test</h2>
+      <p class="notice error" role="alert">{{ reviewError() }}</p>
+      <button class="btn primary" (click)="loadReview()">Try again</button>
+    </section>
+
+    <ng-container *ngSwitchCase="'ready'">
+      <app-review-test-card
+        *ngIf="review() as schedule"
+        [schedule]="schedule"
+        [studentId]="studentId"
+        (gradeRequired)="askGradeForReview()"
+        (changed)="loadReview(true)"
+      />
+    </ng-container>
+  </ng-container>
 
   <!-- Options -->
   <div class="option-grid">
@@ -26,12 +56,6 @@
       <button class="btn primary" (click)="buildTest()">Build a Custom Test</button>
     </section>
 
-    <section class="card option-card">
-      <div class="option-icon">🗓️</div>
-      <h2>Scheduled Tests</h2>
-      <p class="muted">See your bi-weekly, monthly and quarterly tests.</p>
-      <a class="btn" routerLink="/tests/scheduled">View scheduled tests</a>
-    </section>
   </div>
 
   <!-- History -->
