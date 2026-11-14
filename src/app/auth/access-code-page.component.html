@@ -1,7 +1,7 @@
 <main class="page">
 
   <div class="header">
-    <button class="back-btn" (click)="goBack()">← Back</button>
+    <button class="back-btn" type="button" title="Go back to the home page" (click)="goBack()">← Back</button>
     <h2>Enter Access Code</h2>
   </div>
 
@@ -15,22 +15,27 @@
       autocomplete="off"
       autocapitalize="characters"
       spellcheck="false"
-      [(ngModel)]="code"
-      (input)="onCodeChange()"
+      [value]="code"
+      (input)="onCodeChange($event)"
+      (keydown.enter)="submitCode()"
       placeholder="K7P2QX"
+      title="Type the 6 letters and numbers your parent gave you"
+      aria-label="Student access code"
     />
 
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
     <button
       class="submit-btn"
+      type="button"
       [disabled]="!isValid"
+      [title]="isValid ? 'Log in and open your dashboard' : 'Type all 6 characters of your code first'"
       (click)="submitCode()"
     >
       Continue
     </button>
 
-    <a class="analyst-link" routerLink="/auth/analyst">Analyst? Enter access code</a>
+    <a class="analyst-link" routerLink="/auth/analyst" title="For someone a parent shared a read-only report with: enter the 8-character analyst code">Analyst? Enter access code</a>
   </section>
 
 </main>
