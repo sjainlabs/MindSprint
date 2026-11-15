@@ -17,5 +17,11 @@ export class AppPracticeCardComponent {
   @Input() guideLink: string | null = null;
   @Output() toggle = new EventEmitter<void>();
   @Output() start = new EventEmitter<void>();
+
+  /** No icon, or a file path / URL, rather than an emoji. */
+  get iconIsImage(): boolean {
+    const icon: unknown = this.topic?.icon;
+    return typeof icon !== 'string' || !icon.trim() || /[./]/.test(icon);
+  }
 }
 

@@ -56,7 +56,8 @@ export const routes: Routes = [
   { path: 'practice/hub', canActivate: [studentAuthGuard], component: PracticeHubComponent },
   { path: 'practice/topic/:topicId', canActivate: [studentAuthGuard], component: TopicDetailPageComponent },
   { path: 'practice/worksheet', canActivate: [studentAuthGuard], component: WorksheetPageComponent },
-  { path: 'insights', canActivate: [studentAuthGuard], component: InsightsPageComponent },
+  // Reports: Overview and Worksheet & test history tabs (?tab=history). Parents open it with ?studentId=….
+  { path: 'reports', canActivate: [studentAuthGuard], component: InsightsPageComponent },
   { path: 'tests', canActivate: [studentAuthGuard], component: TestsHubPageComponent },
   { path: 'tests/custom', canActivate: [studentAuthGuard], component: CustomTestBuilderPageComponent },
   { path: 'tests/custom/take', canActivate: [studentAuthGuard], component: CustomTestTakePageComponent },
@@ -135,6 +136,8 @@ export const routes: Routes = [
   { path: 'onboarding/topics', redirectTo: '/onboarding/topic-selection', pathMatch: 'full' },
   { path: 'diagnostic', redirectTo: '/diagnostic/start', pathMatch: 'full' },
   { path: 'practice-hub', redirectTo: '/practice/hub', pathMatch: 'full' },
+  // Insights is now Reports; the query string (studentId, tab) carries over.
+  { path: 'insights', redirectTo: '/reports', pathMatch: 'full' },
   { path: 'topic/:topicId', redirectTo: '/practice/topic/:topicId', pathMatch: 'full' },
   { path: 'worksheet', redirectTo: '/practice/worksheet', pathMatch: 'full' },
   { path: 'login/parent', redirectTo: '/auth/parent-login', pathMatch: 'full' },

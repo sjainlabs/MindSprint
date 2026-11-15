@@ -47,6 +47,15 @@ export class StudentDashboardPageComponent implements OnInit {
   readonly opening = signal<string | null>(null);
   /** A gentle nudge toward today's 30 minutes; never a block. */
   readonly dailyBadge = signal<{ text: string; done: boolean } | null>(null);
+  /** Something waiting on the Tests page: the review test first, then topic tests ready to take. */
+  readonly testsBadge = computed(() => {
+    const p = this.plan();
+    if (!p) return '';
+    const review = p.reviewTest.current.status;
+    if (review === 'open' || review === 'overdue') return 'Review test due';
+    const ready = new Set([...p.strengths, ...p.focusAreas].filter((t) => t.testState === 'eligible').map((t) => t.topicId));
+    return ready.size ? `${ready.size} ready` : '';
+  });
 
   readonly studentId = signal('');
   readonly parentMode = signal(false);

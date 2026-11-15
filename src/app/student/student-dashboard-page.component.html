@@ -72,22 +72,87 @@
   </section>
 
   @if (canAct() && !parentMode()) {
-    <section class="card">
-      <div class="actions">
-        <a routerLink="/daily" class="button daily">
-          🎯 Daily Challenge
-          @if (dailyBadge(); as b) {
-            <span class="badge" [class.done]="b.done">{{ b.text }}</span>
-          }
-        </a>
-        <a routerLink="/math-brain" class="button">🧠 Math Brain</a>
-        <a routerLink="/math-games" class="button">🎮 Math Games</a>
-        <a routerLink="/rewards" class="button">⭐ Rewards</a>
-        <a routerLink="/practice/hub" class="button">Practice Hub</a>
-        <a routerLink="/tests" class="button">Tests</a>
-        <a routerLink="/insights" class="button">Insights</a>
-        <a routerLink="/study-guides" class="button">📘 Study guides</a>
-      </div>
-    </section>
+    <nav class="hub" aria-label="Where to go next">
+      <a routerLink="/daily" class="tile today">
+        <span class="tile-icon" aria-hidden="true">🔥</span>
+        <span class="tile-text">
+          <span class="tile-name">Daily challenge</span>
+          <span class="tile-hint">A few quick questions every day</span>
+        </span>
+        @if (dailyBadge(); as b) {
+          <span class="badge" [class.done]="b.done">{{ b.text }}</span>
+        }
+      </a>
+
+      <section class="group" aria-labelledby="group-learn">
+        <h2 id="group-learn" class="group-title">📚 Learn</h2>
+        <div class="tiles">
+          <a routerLink="/practice/hub" class="tile learn">
+            <span class="tile-icon" aria-hidden="true">📝</span>
+            <span class="tile-text">
+              <span class="tile-name">Practice worksheets</span>
+              <span class="tile-hint">Pick a topic and practise</span>
+            </span>
+          </a>
+          <a routerLink="/tests" class="tile learn">
+            <span class="tile-icon" aria-hidden="true">🎯</span>
+            <span class="tile-text">
+              <span class="tile-name">Tests</span>
+              <span class="tile-hint">Topic and review tests</span>
+            </span>
+            @if (testsBadge(); as t) {
+              <span class="badge">{{ t }}</span>
+            }
+          </a>
+          <a routerLink="/study-guides" class="tile learn">
+            <span class="tile-icon" aria-hidden="true">📘</span>
+            <span class="tile-text">
+              <span class="tile-name">Study guides</span>
+              <span class="tile-hint">Learn how before you practise</span>
+            </span>
+          </a>
+        </div>
+      </section>
+
+      <section class="group" aria-labelledby="group-play">
+        <h2 id="group-play" class="group-title">🎮 Play</h2>
+        <div class="tiles">
+          <a routerLink="/math-brain" class="tile play">
+            <span class="tile-icon" aria-hidden="true">🧠</span>
+            <span class="tile-text">
+              <span class="tile-name">Math Brain</span>
+              <span class="tile-hint">Tables, facts and flash cards</span>
+            </span>
+          </a>
+          <a routerLink="/math-games" class="tile play">
+            <span class="tile-icon" aria-hidden="true">🧮</span>
+            <span class="tile-text">
+              <span class="tile-name">Math Games</span>
+              <span class="tile-hint">Abacus and more</span>
+            </span>
+          </a>
+          <a routerLink="/rewards" class="tile play">
+            <span class="tile-icon" aria-hidden="true">⭐</span>
+            <span class="tile-text">
+              <span class="tile-name">Rewards</span>
+              <span class="tile-hint">Your stars and the reward shop</span>
+            </span>
+          </a>
+        </div>
+      </section>
+
+      <section class="group" aria-labelledby="group-progress">
+        <h2 id="group-progress" class="group-title">📈 My progress</h2>
+        <div class="tiles">
+          <a routerLink="/reports" class="tile progress">
+            <span class="tile-icon" aria-hidden="true">📊</span>
+            <span class="tile-text">
+              <span class="tile-name">Reports</span>
+              <span class="tile-hint">How you're doing, and every worksheet and test</span>
+            </span>
+          </a>
+        </div>
+      </section>
+    </nav>
   }
 </main>

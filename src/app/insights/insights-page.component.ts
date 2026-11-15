@@ -3,11 +3,15 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import {FullInsightsResponse, LearningApiService, PracticeWorksheetV2Response} from '../services/learning-api.service';
-import {firstValueFrom} from 'rxjs';
+import {firstValueFrom, map} from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TopicTestService, readyThenLocked } from '../services/topic-test.service';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 import { withoutHiddenTopics } from '../constants/hidden-topics';
+import { PracticeTopicCatalogService } from '../services/practice-topic-catalog.service';
 import { AnalystApiService, INVALID_ANALYST_CODE, analystErrorMessage } from '../analyst/analyst-api.service';
+
+type ReportTab = 'overview' | 'history';
 
 @Component({
   selector: 'app-simple-insights-page',
@@ -22,6 +26,14 @@ export class InsightsPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly topicTests = inject(TopicTestService);
   private readonly analystApi = inject(AnalystApiService);
+  private readonly catalog = inject(PracticeTopicCatalogService);
+  /** topicId → name, so history shows "3-Digit Addition" rather than its id. Ids stay until the catalog loads. */
+  private readonly topicNames = signal<Map<string, string>>(new Map());
+  private readonly allTopicNames = computed(() => {
+    const names = new Map((this.insights()?.topicTests ?? []).map((t) => [t.topicId, t.topicName] as [string, string]));
+    for (const [id, name] of this.topicNames()) names.set(id, name);
+    return names;
+  });
 
   /** Guest analyst (route data { analyst: true }): reads /api/analyst/*, and nothing can be resubmitted. */
   private readonly route = inject(ActivatedRoute);
@@ -33,6 +45,17 @@ export class InsightsPageComponent implements OnInit {
   readonly canCorrect = !this.readOnly && !this.parentView;
   /** Wording about the child rather than "you". */
   readonly aboutChild = this.readOnly || this.parentView;
+
+  /** Overview (summary and topic tests) or the full worksheet and test history; kept in ?tab= so links can open either. */
+  // Follows the URL, so a link to ?tab=history switches tabs even while the page is already open.
+  readonly tab = toSignal(
+    this.route.queryParamMap.pipe(map((params): ReportTab => (params.get('tab') === 'history' ? 'history' : 'overview'))),
+    { initialValue: (this.route.snapshot.queryParamMap.get('tab') === 'history' ? 'history' : 'overview') as ReportTab },
+  );
+
+  setTab(tab: ReportTab): void {
+    this.router.navigate([], { relativeTo: this.route, queryParams: { tab: tab === 'overview' ? null : tab }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
@@ -68,7 +91,22 @@ export class InsightsPageComponent implements OnInit {
     }));
   }
 
+  /** The worksheet's topics by name, falling back to the id for topics the catalog doesn't know. */
+  topicLabel(w: { topics?: string[]; topicName?: string }): string {
+    if (!w.topics?.length) return w.topicName ?? '';
+    const names = this.allTopicNames();
+    return w.topics.map((id) => names.get(id) ?? id).join(', ');
+  }
+
+  private loadTopicNames(): void {
+    // Not awaited: the report shows straight away and the names fill in when the catalog arrives
+    void this.catalog.loadMergedCatalogAsync().then(() =>
+      this.topicNames.set(new Map(this.catalog.getAllTopics().map((t) => [t.id, t.name]))),
+    );
+  }
+
   async ngOnInit(): Promise<void> {
+    this.loadTopicNames();
     const studentId = this.readOnly ? null : this.parentView ? this.childId : this.authService.getStoredStudentId();
 
     if (!this.readOnly && !studentId) {

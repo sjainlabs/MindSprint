@@ -14,7 +14,7 @@ import { expiryDate } from './analyst-code';
         <div class="an-title">
           <h1>Viewing {{ name() }}'s progress</h1>
           <p>
-            <span class="pill">👁 read-only</span>
+            <span class="pill">👁️ read-only</span>
             @if (until()) { <span>· access until {{ until() }}</span> }
           </p>
         </div>
@@ -22,7 +22,7 @@ import { expiryDate } from './analyst-code';
       </header>
       <nav class="an-tabs" aria-label="Report sections">
         <a routerLink="plan" routerLinkActive="active" ariaCurrentWhenActive="page">📋 Learning plan</a>
-        <a routerLink="insights" routerLinkActive="active" ariaCurrentWhenActive="page">📈 Insights</a>
+        <a routerLink="insights" routerLinkActive="active" ariaCurrentWhenActive="page">📊 Reports</a>
       </nav>
       <router-outlet />
     </div>

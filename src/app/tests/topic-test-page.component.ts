@@ -243,7 +243,7 @@ export class TopicTestPageComponent implements OnInit {
         this.topicTests.clearActive(this.studentId, this.topicId);
         this.active.set(null);
         this.notice.set(
-          `${this.messageOf(err)} You can see the result in your Insights history.`,
+          `${this.messageOf(err)} You can see the result in Reports, under Worksheet & test history.`,
         );
         await this.refreshStatusQuietly();
         this.stage.set(this.status() ? 'blocked' : 'error');

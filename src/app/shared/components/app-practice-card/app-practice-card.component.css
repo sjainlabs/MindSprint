@@ -12,7 +12,8 @@
 .practice-card:hover{ transform: translateY(-6px); box-shadow:0 18px 40px rgba(15,23,42,0.08);}
 .practice-card.selected{ border: 2px solid var(--success, #4CAF50); }
 .card-top{ display:flex; align-items:center; gap:12px; }
-.topic-icon{ width:56px; height:56px; border-radius:12px; object-fit:cover; }
+.topic-icon{ width:56px; height:56px; border-radius:12px; object-fit:cover; flex:none; }
+.topic-icon.emoji{ display:grid; place-items:center; font-size:1.9rem; line-height:1; }
 .title-group h4{ margin:0; font-size:1rem; }
 .title-group .level{ display:inline-block; margin-top:4px; font-size:0.8rem; color:var(--primary,#6C63FF);}
 .progress-wrap{ display:flex; align-items:center; gap:8px; }

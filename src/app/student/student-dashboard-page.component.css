@@ -17,8 +17,26 @@
 .plan-body { display: grid; gap: 16px; }
 .plan-body[hidden] { display: none; }
 
-/* Links to the rest of the app */
-.button { text-align: center; text-decoration: none; border-radius: 12px; padding: 14px; font-weight: 700; background: #dbeafe; color: #1e3a8a; }
-.button.daily { background: #6c63ff; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
-.badge { background: #fef3c7; color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: 0.8rem; }
+/* Links to the rest of the app, grouped by what they're for */
+.hub { display: grid; gap: 18px; }
+.group { display: grid; gap: 8px; }
+.group-title { margin: 0; font-size: 0.95rem; font-weight: 800; color: #475569; letter-spacing: 0.01em; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.tile { display: flex; align-items: center; gap: 12px; text-decoration: none; border-radius: 16px; padding: 14px 16px; min-height: 64px; border: 2px solid transparent; transition: transform 0.12s ease, border-color 0.12s ease; }
+.tile:hover { transform: translateY(-1px); }
+.tile:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+.tile-icon { font-size: 1.7rem; line-height: 1; flex: none; }
+.tile-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.tile-name { font-weight: 800; font-size: 1rem; }
+.tile-hint { font-size: 0.8rem; font-weight: 600; opacity: 0.8; overflow-wrap: anywhere; }
+.tile.today { background: linear-gradient(120deg, #6c63ff, #8b5cf6); color: #fff; padding: 18px; min-height: 76px; }
+.tile.today .tile-name { font-size: 1.15rem; }
+.tile.learn { background: #dbeafe; color: #1e3a8a; }
+.tile.learn:hover { border-color: #93c5fd; }
+.tile.play { background: #fef3c7; color: #78350f; }
+.tile.play:hover { border-color: #fcd34d; }
+.tile.progress { background: #dcfce7; color: #14532d; }
+.tile.progress:hover { border-color: #86efac; }
+.badge { flex: none; background: #fef3c7; color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: 0.8rem; font-weight: 800; }
+.tile.learn .badge { background: #fff; color: #1d4ed8; }
 .badge.done { background: #dcfce7; color: #166534; }

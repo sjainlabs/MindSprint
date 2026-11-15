@@ -63,7 +63,7 @@ type Confirm = 'regenerate' | 'revoke' | null;
           <p>An analyst can use a code to see {{ studentName() }}'s:</p>
           <ul class="sees">
             <li>📋 Learning plan: level, next steps, review test and progress</li>
-            <li>📈 Insights: scores, topic tests and worksheet history</li>
+            <li>📊 Reports: scores, topic tests and worksheet &amp; test history</li>
           </ul>
           <p class="muted">Read-only: they can't practise, take tests or change anything, and see nothing else. The code works for 30 days, and you can revoke it any time.</p>
           <button type="button" class="primary" [disabled]="busy()" (click)="create()">{{ busy() ? 'Creating…' : 'Create code' }}</button>

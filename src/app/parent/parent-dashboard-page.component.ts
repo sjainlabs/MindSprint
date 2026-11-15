@@ -11,7 +11,6 @@ import { AddStudentModalComponent, AddStudentPayload } from './add-student-modal
 import { EditChildModalComponent, EditChildPayload } from './edit-child-modal.component';
 import { AccessCodeModalComponent } from './access-code-modal.component';
 import { AnalystCodeModalComponent } from './analyst-code-modal.component';
-import { FixTyposModalComponent } from './fix-typos-modal.component';
 
 interface DashboardStudent {
   id: string;
@@ -31,7 +30,6 @@ interface DashboardStudent {
     EditChildModalComponent,
     AccessCodeModalComponent,
     AnalystCodeModalComponent,
-    FixTyposModalComponent,
     RouterLink,
   ],
   template: `
@@ -51,25 +49,50 @@ interface DashboardStudent {
       <section class="card" *ngIf="loading()">Loading students...</section>
       <section class="card" *ngIf="!loading() && students().length === 0">No students yet.</section>
 
-      <section class="card" *ngFor="let student of students()">
-        <h2>{{ student.name }}</h2>
-        <p>Grade: {{ student.grade || 'Not set' }}</p>
-        <p>Mastery summary: {{ student.masterySummary }}</p>
-        <p>Upcoming tests: {{ student.upcomingTests.join(', ') || 'No tests scheduled' }}</p>
-        <div class="actions">
-          <button (click)="openEdit(student)">Edit Student</button>
-          <button (click)="generateAccessCode(student)">Generate Access Code</button>
-          <button (click)="openStudentView(student)">Open Student View</button>
-          <button (click)="sharingStudent.set(student)">🔗 Share with analyst</button>
-          <button (click)="fixingStudent.set(student)">✏️ Fix typos</button>
+      <section class="card child" *ngFor="let student of students()" [attr.aria-label]="student.name">
+        <div class="child-head">
+          <div class="who">
+            <h2>{{ student.name }}</h2>
+            <p class="meta">Grade {{ student.grade || 'not set' }} · {{ student.masterySummary }}</p>
+            <p class="meta" *ngIf="student.upcomingTests.length">📅 Upcoming tests: {{ student.upcomingTests.join(', ') }}</p>
+          </div>
+          <div class="head-actions">
+            <button class="open" (click)="openStudentView(student)">Open as {{ student.name }} ▶️</button>
+            <details class="menu" #menu>
+              <summary [attr.aria-label]="'More for ' + student.name">⋯</summary>
+              <div class="menu-list" role="menu">
+                <button role="menuitem" (click)="menu.open = false; openEdit(student)">✏️ Edit child</button>
+                <button role="menuitem" (click)="menu.open = false; generateAccessCode(student)">🔑 New login code</button>
+                <button role="menuitem" (click)="menu.open = false; sharingStudent.set(student)">🔗 Share with analyst</button>
+              </div>
+            </details>
+          </div>
         </div>
-        <div class="actions">
-          <a class="link" routerLink="/student/dashboard" [queryParams]="{ studentId: student.id, view: 'parent' }">📋 Learning plan</a>
-          <a class="link" routerLink="/insights" [queryParams]="{ studentId: student.id }">📈 Insights</a>
-          <a class="link" routerLink="/daily/chart" [queryParams]="{ studentId: student.id }">📊 Daily Challenge chart</a>
-          <a class="link" routerLink="/daily/progress" [queryParams]="{ studentId: student.id }">🗺️ Progress map</a>
-          <a class="link" routerLink="/math-games/abacus/parent" [queryParams]="{ studentId: student.id }">🧮 Abacus levels</a>
-          <a class="link" routerLink="/rewards/parent" [queryParams]="{ studentId: student.id }">🎁 Reward shop</a>
+
+        <div class="group">
+          <h3 class="group-title">📊 Reports</h3>
+          <div class="links">
+            <a class="link" routerLink="/student/dashboard" [queryParams]="{ studentId: student.id, view: 'parent' }">📋 Learning plan</a>
+            <a class="link" routerLink="/reports" [queryParams]="{ studentId: student.id }">📈 Overview</a>
+            <a class="link" routerLink="/reports" [queryParams]="{ studentId: student.id, tab: 'history' }">🗂️ Worksheet &amp; test history</a>
+          </div>
+          <p class="hint">Spotted a typo in an answer? Open the history and use ✏️ Fix typos on that worksheet.</p>
+        </div>
+
+        <div class="group">
+          <h3 class="group-title">🎮 Daily practice &amp; games</h3>
+          <div class="links">
+            <a class="link" routerLink="/daily/chart" [queryParams]="{ studentId: student.id }">📊 Daily challenge chart</a>
+            <a class="link" routerLink="/daily/progress" [queryParams]="{ studentId: student.id }">🗺️ Progress map</a>
+            <a class="link" routerLink="/math-games/abacus/parent" [queryParams]="{ studentId: student.id }">🧮 Abacus levels</a>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3 class="group-title">⭐ Rewards</h3>
+          <div class="links">
+            <a class="link" routerLink="/rewards/parent" [queryParams]="{ studentId: student.id }">🎁 Reward shop</a>
+          </div>
         </div>
       </section>
 
@@ -100,12 +123,6 @@ interface DashboardStudent {
         (closed)="sharingStudent.set(null)"
       />
 
-      <app-fix-typos-modal
-        *ngIf="fixingStudent()"
-        [studentId]="fixingStudent()!.id"
-        [studentName]="fixingStudent()!.name"
-        (closed)="fixingStudent.set(null)"
-      />
 
       <section class="card error" *ngIf="errorMessage()">{{ errorMessage() }}</section>
     </main>
@@ -115,12 +132,31 @@ interface DashboardStudent {
       .page { max-width: 880px; margin: 0 auto; padding: 16px; display: grid; gap: 12px; }
       .card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
       .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-      .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-      button { border: 0; border-radius: 12px; padding: 10px 12px; font-weight: 700; background: #e2e8f0; }
+      button { border: 0; border-radius: 12px; padding: 10px 12px; font: inherit; font-weight: 700; background: #e2e8f0; cursor: pointer; min-height: 44px; }
+      button:focus-visible, .link:focus-visible, summary:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
       .primary { background: #2563eb; color: #fff; width: 100%; }
       .ghost { background: #f1f5f9; }
-      .link { border-radius: 12px; padding: 10px 12px; font-weight: 700; background: #eef2ff; color: #3730a3; text-decoration: none; }
-      h1, h2, p { margin: 0; }
+
+      /* One child: who they are, then reports, practice and rewards */
+      .child { display: grid; gap: 14px; }
+      .child-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+      .who { min-width: 0; }
+      .meta { font-size: 0.9rem; color: #475569; overflow-wrap: anywhere; }
+      .head-actions { display: flex; align-items: center; gap: 8px; }
+      .open { background: #2563eb; color: #fff; }
+      .menu { position: relative; }
+      .menu summary { list-style: none; cursor: pointer; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #f1f5f9; font-size: 1.3rem; font-weight: 800; color: #334155; }
+      .menu summary::-webkit-details-marker { display: none; }
+      .menu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; display: grid; gap: 2px; min-width: 210px; background: #fff; border-radius: 14px; padding: 6px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18); }
+      .menu-list button { background: none; text-align: left; }
+      .menu-list button:hover { background: #f1f5f9; }
+      .group { display: grid; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+      .group-title { margin: 0; font-size: 0.9rem; font-weight: 800; color: #475569; }
+      .links { display: flex; flex-wrap: wrap; gap: 8px; }
+      .link { display: inline-flex; align-items: center; min-height: 44px; border-radius: 12px; padding: 0 14px; font-weight: 700; background: #eef2ff; color: #3730a3; text-decoration: none; }
+      .link:hover { background: #e0e7ff; }
+      .hint { font-size: 0.85rem; color: #64748b; }
+      h1, h2, h3, p { margin: 0; }
       section p { margin-top: 6px; color: #334155; }
       .error { color: #b91c1c; }
     `,
@@ -139,8 +175,6 @@ export class ParentDashboardPageComponent implements OnInit {
   readonly activeAccessCode = signal('');
   /** The child whose analyst code is being shown. */
   readonly sharingStudent = signal<DashboardStudent | null>(null);
-  /** The child whose recent work is listed for typo fixes. */
-  readonly fixingStudent = signal<DashboardStudent | null>(null);
   readonly studentCount = computed(() => this.students().length);
 
   ngOnInit(): void {

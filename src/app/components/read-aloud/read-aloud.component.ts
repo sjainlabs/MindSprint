@@ -58,7 +58,7 @@ let nextId = 0;
         [attr.aria-pressed]="speaking()"
         (click)="toggle($event)"
       >
-        <span aria-hidden="true">{{ speaking() ? '⏹' : '🔊' }}</span>
+        <span aria-hidden="true">{{ speaking() ? '⏹️' : '🔊' }}</span>
       </button>
     }
   `,

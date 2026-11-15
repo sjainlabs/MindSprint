@@ -40,7 +40,7 @@
             <span class="mini-bar"><span [style.width.%]="goalPercent()"></span></span>
             {{ minutesToday() }} / {{ goal }} min
           </div>
-          <button type="button" class="btn small pause-btn" (click)="openPause()">⏸ Pause</button>
+          <button type="button" class="btn small pause-btn" (click)="openPause()">⏸️ Pause</button>
         </div>
 
         @if (notice()) {
@@ -187,7 +187,7 @@
   @if (pauseOpen()) {
     <div class="sheet-backdrop" (click)="resume()"></div>
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-      <h2 id="pause-title">⏸ Paused</h2>
+      <h2 id="pause-title">⏸️ Paused</h2>
       <p class="muted">Everything is saved. You can come back any time.</p>
       @if (pauseError()) {
         <p class="notice error">{{ pauseError() }}</p>

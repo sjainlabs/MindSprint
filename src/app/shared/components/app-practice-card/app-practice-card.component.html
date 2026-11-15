@@ -1,6 +1,10 @@
 <div class="practice-card" [class.selected]="selected" (click)="toggle.emit()" role="button" tabindex="0">
   <div class="card-top">
-    <img class="topic-icon" [src]="topic?.icon || '/assets/mascots/penguin.svg'" alt="{{ topic?.name }}" />
+    <!-- Topic icons are usually an emoji; only a path or URL goes in an <img> -->
+    <img *ngIf="iconIsImage; else emojiIcon" class="topic-icon" [src]="topic?.icon || 'assets/mascots/penguin.svg'" alt="" />
+    <ng-template #emojiIcon>
+      <span class="topic-icon emoji" aria-hidden="true" [style.background]="(topic?.color || '#4F46E5') + '1a'">{{ topic?.icon }}</span>
+    </ng-template>
     <div class="title-group">
       <h4>{{ topic?.name }}</h4>
       <!-- Grade Badge -->

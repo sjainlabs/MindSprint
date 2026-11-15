@@ -49,8 +49,8 @@ const EN: Record<string, string> = {
   'onboarding.completeOnboarding': 'Complete Onboarding',
 
   // ── Kid Guide ────────────────────────────────────────────────────────────────
-  'kidGuide.back': '⬅ Back',
-  'kidGuide.next': 'Next ➡',
+  'kidGuide.back': '⬅️ Back',
+  'kidGuide.next': 'Next ➡️',
   'kidGuide.letsStart': "Let's Start! 🚀",
   'kidGuide.stepOf': 'Step {current} of {total}',
 
@@ -465,8 +465,8 @@ const HI: Record<string, string> = {
   'onboarding.completeOnboarding': 'ऑनबोर्डिंग पूर्ण करें',
 
   // ── Kid Guide ────────────────────────────────────────────────────────────────
-  'kidGuide.back': '⬅ वापस',
-  'kidGuide.next': 'आगे ➡',
+  'kidGuide.back': '⬅️ वापस',
+  'kidGuide.next': 'आगे ➡️',
   'kidGuide.letsStart': 'चलो शुरू करते हैं! 🚀',
   'kidGuide.stepOf': 'चरण {current} / {total}',
 
