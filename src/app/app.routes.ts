@@ -69,7 +69,9 @@ export const routes: Routes = [
   { path: 'daily/play', canActivate: [studentAuthGuard], loadComponent: () => import('./daily/daily-play-page.component').then((m) => m.DailyPlayPageComponent) },
   // Parents open these from their dashboard with ?studentId=…, which the guard allows.
   { path: 'daily/progress', canActivate: [studentAuthGuard], loadComponent: () => import('./daily/daily-progress-page.component').then((m) => m.DailyProgressPageComponent) },
-  { path: 'daily/chart', canActivate: [studentAuthGuard], loadComponent: () => import('./daily/daily-chart-page.component').then((m) => m.DailyChartPageComponent) },
+  // The old Daily Challenge chart grew into Active time (every activity, by day, week, month or year).
+  { path: 'daily/chart', redirectTo: '/reports/activity', pathMatch: 'full' },
+  { path: 'reports/activity', canActivate: [studentAuthGuard], loadComponent: () => import('./reports/activity-report-page.component').then((m) => m.ActivityReportPageComponent) },
   // New sections load on first visit to keep the initial download small.
   // Tables, facts and flash cards work without a login (flash cards then aren't saved); games need one.
   {

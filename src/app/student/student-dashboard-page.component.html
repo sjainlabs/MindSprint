@@ -13,6 +13,26 @@
     <app-rewards-bar />
   }
 
+  <!-- Outside the folded plan, so it is seen without opening it -->
+  @if (phase() === 'ready' && gradeCheckDue(); as g) {
+    <section class="grade-check" aria-labelledby="grade-check-title">
+      @if (!changingGrade()) {
+        <p id="grade-check-title" class="grade-check-q">
+          🎒 {{ parentMode() ? 'Is your child' : 'Are you' }} still in <strong>Grade {{ gradeLabel(g.grade) }}</strong>?
+        </p>
+        <div class="grade-check-actions">
+          <button type="button" class="btn primary" [disabled]="gradeBusy()" (click)="confirmGrade()">Yes, Grade {{ gradeLabel(g.grade) }}</button>
+          <button type="button" class="btn" [disabled]="gradeBusy()" (click)="changingGrade.set(true)">Change grade</button>
+        </div>
+        <p class="muted small">We check once every 3 months. {{ parentMode() ? 'You can also change it any time with Edit student.' : '' }}</p>
+      } @else {
+        <p id="grade-check-title" class="grade-check-q">Which grade {{ parentMode() ? 'is your child' : 'are you' }} in now?</p>
+        <app-grade-picker [busy]="gradeBusy()" (picked)="changeGrade($event)" />
+        <button type="button" class="btn" [disabled]="gradeBusy()" (click)="changingGrade.set(false)">Cancel</button>
+      }
+    </section>
+  }
+
   <section class="plan-panel" [class.open]="expanded()">
     <button type="button" class="plan-toggle" aria-controls="plan-body" [attr.aria-expanded]="expanded()" (click)="togglePlan()">
       <span class="plan-icon" aria-hidden="true">📋</span>
@@ -149,6 +169,13 @@
             <span class="tile-text">
               <span class="tile-name">Reports</span>
               <span class="tile-hint">How you're doing, and every worksheet and test</span>
+            </span>
+          </a>
+          <a routerLink="/reports/activity" class="tile progress">
+            <span class="tile-icon" aria-hidden="true">⏱️</span>
+            <span class="tile-text">
+              <span class="tile-name">Active time</span>
+              <span class="tile-hint">How long you've practised, day by day</span>
             </span>
           </a>
         </div>

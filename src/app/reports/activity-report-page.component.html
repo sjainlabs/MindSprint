@@ -1,0 +1,135 @@
+<main class="page activity">
+  <section class="card">
+    <h1>⏱️ Active time</h1>
+    <p class="muted">Time spent on worksheets, tests and the Daily Challenge.</p>
+    <nav class="related" aria-label="Related reports">
+      <a class="chip link" routerLink="/reports" [queryParams]="linkParams">📊 Reports</a>
+      <a class="chip link" routerLink="/daily/progress" [queryParams]="linkParams">🗺️ Daily challenge report</a>
+    </nav>
+  </section>
+
+  <!-- Filters: one row above the chart -->
+  <section class="card filters" aria-label="Filters">
+    <div class="seg" role="radiogroup" aria-label="Group by">
+      @for (p of periods; track p.id) {
+        <button type="button" role="radio" [attr.aria-checked]="period() === p.id" [class.active]="period() === p.id" (click)="setPeriod(p.id)">{{ p.label }}</button>
+      }
+    </div>
+    <div class="kinds" role="group" aria-label="Activities to include">
+      @for (k of kinds; track k.kind) {
+        <button type="button" class="kind" [attr.aria-pressed]="shown().has(k.kind)" [class.off]="!shown().has(k.kind)" (click)="toggleKind(k.kind)">
+          <span class="swatch" [style.background]="k.color" aria-hidden="true"></span>{{ k.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (loading()) {
+    <section class="card center" aria-busy="true"><div class="spinner"></div><p>Loading…</p></section>
+  } @else if (error()) {
+    <section class="card center" role="alert">
+      <p class="notice error">{{ error() }}</p>
+      <button type="button" class="btn primary" (click)="load()">Try again</button>
+    </section>
+  } @else {
+    <section class="tiles" aria-label="Summary">
+      <div class="tile"><span class="tile-value">{{ totalSeconds() | hhmm }}</span><span class="tile-label">total, {{ periodSpan() }} (hh:mm)</span></div>
+      <div class="tile"><span class="tile-value">{{ activeBuckets().length }}</span><span class="tile-label">active {{ periodNoun() }}s</span></div>
+      <div class="tile"><span class="tile-value">{{ averageSeconds() | hhmm }}</span><span class="tile-label">average per active {{ periodNoun() }}</span></div>
+      <div class="tile"><span class="tile-value small-value">{{ busiest()?.label ?? '—' }}</span><span class="tile-label">busiest {{ periodNoun() }}</span></div>
+    </section>
+
+    <section class="card">
+      <h2>Active time per {{ periodNoun() }} <span class="unit">({{ scale().unit === 'h' ? 'hours' : 'minutes' }})</span></h2>
+      <ul class="legend" aria-label="Colour key">
+        @for (k of visibleKinds(); track k.kind) {
+          <li><span class="swatch" [style.background]="k.color" aria-hidden="true"></span>{{ k.label }} <span class="muted">{{ totalsByKind()[k.kind] | hhmm }}</span></li>
+        }
+      </ul>
+
+      @if (totalSeconds() === 0) {
+        <p class="hint">No activity in the {{ periodSpan() }} for the activities picked.</p>
+      }
+      <div class="chart-wrap" #wrap>
+        <svg #svg class="chart" [attr.viewBox]="'0 0 ' + W + ' ' + H" role="img" tabindex="0"
+             [attr.aria-label]="'Stacked bars of active minutes per ' + periodNoun() + ' by activity. Use the arrow keys to read each ' + periodNoun() + ', or see the table below.'"
+             (pointermove)="onPointer($event, svg)" (pointerleave)="hover.set(null)" (keydown)="onKey($event)" (blur)="hover.set(null)">
+          @for (t of scale().ticks; track t) {
+            <line class="gridline" [attr.x1]="PAD_L" [attr.x2]="W - 8" [attr.y1]="y(t)" [attr.y2]="y(t)" />
+            <text class="axis" [attr.x]="PAD_L - 6" [attr.y]="y(t) + 4" text-anchor="end">{{ tickLabel(t) }}</text>
+          }
+          @if (hover() !== null) {
+            <rect class="hover-band" [attr.x]="x(hover()!) - barWidth() / 2 - 4" y="8" [attr.width]="barWidth() + 8" [attr.height]="BOTTOM - 8" rx="6" />
+          }
+          @for (b of buckets(); track b.key) {
+            @for (s of segments(b); track s.kind) {
+              <path [attr.d]="s.d" [attr.fill]="s.color" />
+            }
+          }
+          @for (t of xTicks(); track t.b.key) {
+            <text class="axis" [attr.x]="x(t.i)" [attr.y]="H - 8" [attr.text-anchor]="t.i === buckets().length - 1 && buckets().length > 4 ? 'end' : 'middle'">{{ t.b.tick }}</text>
+          }
+        </svg>
+
+        @if (hover() !== null) {
+          @if (buckets()[hover()!]; as b) {
+            <div class="tooltip" [style.left.%]="tooltipPos(hover()!).left" [style.right.%]="tooltipPos(hover()!).right" aria-live="polite">
+              <strong>{{ b.label }}</strong>
+              @if (b.total > 0) {
+                @for (k of visibleKinds(); track k.kind) {
+                  @if (b.seconds[k.kind] > 0) {
+                    <span><span class="swatch" [style.background]="k.color" aria-hidden="true"></span>{{ k.label }}: {{ b.seconds[k.kind] | hhmm }}</span>
+                  }
+                }
+                <span class="tip-total">Total {{ b.total | hhmm }}</span>
+              } @else {
+                <span>No activity</span>
+              }
+            </div>
+          }
+        }
+      </div>
+      <p class="hint">Times are hh:mm. A worksheet or test counts from opening to submitting (at most {{ maxSheetMinutes() / 60 }} hours, in case it was left open). The Daily Challenge counts time spent answering.</p>
+    </section>
+
+    <section class="card">
+      <h2>Table</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">{{ period() === 'daily' ? 'Day' : period() === 'weekly' ? 'Week' : period() === 'monthly' ? 'Month' : 'Year' }}</th>
+              @for (k of visibleKinds(); track k.kind) {
+                <th scope="col"><span class="swatch" [style.background]="k.color" aria-hidden="true"></span>{{ k.label }}</th>
+              }
+              <th scope="col">Total</th>
+              <th scope="col">Sheets, tests &amp; days</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of newestFirst(); track b.key) {
+              <tr [class.empty]="b.total === 0">
+                <th scope="row">{{ b.label }}</th>
+                @for (k of visibleKinds(); track k.kind) {
+                  <td [title]="describeDuration(b.seconds[k.kind])">{{ b.seconds[k.kind] ? (b.seconds[k.kind] | hhmm) : '–' }}</td>
+                }
+                <td class="strong" [title]="describeDuration(b.total)">{{ b.total ? (b.total | hhmm) : '–' }}</td>
+                <td>{{ b.sessions || '–' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              @for (k of visibleKinds(); track k.kind) {
+                <td>{{ totalsByKind()[k.kind] | hhmm }}</td>
+              }
+              <td class="strong">{{ totalSeconds() | hhmm }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  }
+</main>

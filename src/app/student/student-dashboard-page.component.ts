@@ -132,9 +132,11 @@ export class StudentDashboardPageComponent implements OnInit {
   }
   private reviewGradePending = false;
 
-  /** GRADE_REQUIRED: remember the grade for this visit and retry with ?grade=. */
+  /** GRADE_REQUIRED: save the grade so it isn't asked again, and retry with it. */
   async pickGrade(grade: string): Promise<void> {
     this.api.setGrade(this.studentId(), grade);
+    // Still sent with each request if saving fails, so the plan works for this visit either way
+    await this.api.saveGrade(this.studentId(), grade).catch(() => undefined);
     if (this.reviewGradePending && this.plan()) {
       this.reviewGradePending = false;
       this.phase.set('ready');
@@ -145,6 +147,41 @@ export class StudentDashboardPageComponent implements OnInit {
     this.gradeBusy.set(true);
     await this.load();
     this.gradeBusy.set(false);
+  }
+
+  /** Every 3 months: "still in Grade N?". The plan already uses that grade, so this never blocks it. */
+  readonly gradeCheckDue = computed(() => {
+    const check = this.plan()?.gradeCheck;
+    return check?.due ? check : null;
+  });
+  readonly changingGrade = signal(false);
+  readonly gradeLabel = gradeLabel;
+
+  async confirmGrade(): Promise<void> {
+    const check = this.gradeCheckDue();
+    if (!check) return;
+    this.gradeBusy.set(true);
+    try {
+      const saved = await this.api.saveGrade(this.studentId(), check.grade);
+      this.plan.update((p) => (p ? { ...p, gradeCheck: saved } : p));
+    } catch (err) {
+      this.error.set((err as LearningPlanError).message);
+    } finally {
+      this.gradeBusy.set(false);
+    }
+  }
+
+  async changeGrade(grade: string): Promise<void> {
+    this.gradeBusy.set(true);
+    try {
+      await this.api.saveGrade(this.studentId(), grade);
+      this.changingGrade.set(false);
+      await this.load(true);
+    } catch (err) {
+      this.error.set((err as LearningPlanError).message);
+    } finally {
+      this.gradeBusy.set(false);
+    }
   }
 
   togglePlan(): void {

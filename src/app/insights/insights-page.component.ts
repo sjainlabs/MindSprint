@@ -8,6 +8,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TopicTestService, readyThenLocked } from '../services/topic-test.service';
 import { TopicTestCardComponent } from '../components/topic-test-card/topic-test-card.component';
 import { withoutHiddenTopics } from '../constants/hidden-topics';
+import { HoursMinutesPipe, describeDuration } from '../shared/utils/duration';
 import { PracticeTopicCatalogService } from '../services/practice-topic-catalog.service';
 import { AnalystApiService, INVALID_ANALYST_CODE, analystErrorMessage } from '../analyst/analyst-api.service';
 
@@ -16,7 +17,7 @@ type ReportTab = 'overview' | 'history';
 @Component({
   selector: 'app-simple-insights-page',
   standalone: true,
-  imports: [CommonModule, TopicTestCardComponent, RouterLink],
+  imports: [CommonModule, TopicTestCardComponent, RouterLink, HoursMinutesPipe],
   templateUrl: './insights-page.component.html',
   styleUrls: ['./insights-page.component.css'],
 })
@@ -27,6 +28,7 @@ export class InsightsPageComponent implements OnInit {
   private readonly topicTests = inject(TopicTestService);
   private readonly analystApi = inject(AnalystApiService);
   private readonly catalog = inject(PracticeTopicCatalogService);
+  readonly describeDuration = describeDuration;
   /** topicId → name, so history shows "3-Digit Addition" rather than its id. Ids stay until the catalog loads. */
   private readonly topicNames = signal<Map<string, string>>(new Map());
   private readonly allTopicNames = computed(() => {

@@ -349,6 +349,24 @@ export interface EnhancedSubmissionResponseV2 {
 
 /* ==================== END V2.0 INTERFACES ==================== */
 
+export type ActivityKind = 'worksheet' | 'daily' | 'topic-test' | 'review-test' | 'custom-test';
+
+export interface ActivityItem {
+  kind: ActivityKind;
+  /** Worksheets and tests: when submitted */
+  at?: string;
+  /** Daily Challenge: the kid's calendar day */
+  date?: string;
+  seconds: number;
+  questions: number;
+  correct: number;
+}
+
+export interface ActivityResponse {
+  items: ActivityItem[];
+  maxSheetSeconds: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LearningApiService {
   private readonly http = inject(HttpClient);
@@ -626,5 +644,11 @@ export class LearningApiService {
       )
     );
   }
-}
 
+  /** Every timed worksheet, test and Daily Challenge day, for the Active time report. */
+  async getActivity(studentId: string): Promise<ActivityResponse> {
+    return await firstValueFrom(
+      this.http.get<ActivityResponse>(`${this.apiBase}/insights/activity/${encodeURIComponent(studentId)}`),
+    );
+  }
+}

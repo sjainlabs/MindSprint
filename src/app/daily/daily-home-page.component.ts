@@ -78,8 +78,8 @@ const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
       }
 
       <section class="card links">
-        <a routerLink="/daily/progress" class="btn outline">🗺️ My progress map</a>
-        <a routerLink="/daily/chart" class="btn outline">📊 Daily chart for parents</a>
+        <a routerLink="/daily/progress" class="btn outline">🗺️ Daily challenge report</a>
+        <a routerLink="/reports/activity" class="btn outline">⏱️ Active time</a>
       </section>
     </main>
   `,

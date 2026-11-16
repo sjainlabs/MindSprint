@@ -3,6 +3,7 @@
   <!-- Header -->
   <div class="header">
     <h1 class="page-title">📊 Reports</h1>
+    <a *ngIf="!readOnly" class="time-link" routerLink="/reports/activity" [queryParams]="childId ? { studentId: childId } : {}">⏱️ Active time</a>
   </div>
 
   <div class="tabs" role="tablist" aria-label="Report">
@@ -106,7 +107,7 @@
       <th>Score</th>
       <th>Accuracy</th>
       <th>Mastery</th>
-      <th>Speed</th>
+      <th>Time (hh:mm)</th>
       <th>Expand</th>
     </tr>
     </thead>
@@ -126,7 +127,7 @@
         <td>{{ w.score }}/{{ w.total }}</td>
         <td>{{ w.accuracy }}%</td>
         <td>{{ w.mastery != null ? w.mastery + '%' : '—' }}</td>
-        <td>{{ w.speedSeconds != null ? w.speedSeconds + 's' : '—' }}</td>
+        <td [title]="describeDuration(w.speedSeconds)">{{ w.speedSeconds | hhmm }}</td>
 
         <td>
           <button (click)="toggleRow(w.worksheetId)">

@@ -149,6 +149,14 @@ export interface LearningPlan {
   activity: { last7Days: ActivityWindow; previous7Days: ActivityWindow; accuracyChange: number | null };
   tips: string[];
   reviewTest: ReviewSchedule;
+  /** The grade the plan was built for; `due` every 3 months to ask "still in this grade?". */
+  gradeCheck?: GradeCheck;
+}
+
+export interface GradeCheck {
+  grade: number;
+  confirmedAt: string | null;
+  due: boolean;
 }
 
 export interface ReviewTest extends AdhocTest {
@@ -207,7 +215,7 @@ export function shortDate(day: string, withYear = false): string {
 export class LearningPlanService {
   private readonly http = inject(HttpClient);
   private readonly apiBase = `${environment.apiUrl}/learning-plan`;
-  /** The grade picked after a GRADE_REQUIRED, reused for the rest of the visit. */
+  /** The grade picked after a GRADE_REQUIRED, also sent along until the backend has it saved. */
   private readonly grades = new Map<string, string>();
 
   plan(studentId: string): Promise<LearningPlan> {
@@ -239,6 +247,11 @@ export class LearningPlanService {
 
   setGrade(studentId: string, grade: string): void {
     this.grades.set(studentId, grade);
+  }
+
+  /** Saves the grade on the student, so the plan stops asking; also how "yes, still this grade" is recorded. */
+  saveGrade(studentId: string, grade: string | number): Promise<GradeCheck> {
+    return this.call(this.http.put<GradeCheck>(`${this.apiBase}/${encodeURIComponent(studentId)}/grade`, { grade: String(grade) }));
   }
 
   private gradeParam(studentId: string): Record<string, string> {

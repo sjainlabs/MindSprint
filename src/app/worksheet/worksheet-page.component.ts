@@ -13,6 +13,7 @@ import {
 import { AuthService } from '../services/auth.service';
 import { OnboardingFlowService } from '../services/onboarding-flow.service';
 import { type EnhancedTopic } from '../services/practice-config.service';
+import { HoursMinutesPipe, describeDuration } from '../shared/utils/duration';
 import { AppMascotComponent } from '../shared/components/app-mascot/app-mascot.component';
 import { AppRewardStarsComponent } from '../shared/components/app-reward-stars/app-reward-stars.component';
 import { triggerConfetti } from '../shared/utils/confetti';
@@ -34,7 +35,7 @@ interface WorksheetNavState {
 @Component({
   selector: 'app-clean-worksheet-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, TopicTestCardComponent, RouterLink, ResultsRewardsComponent],
+  imports: [CommonModule, FormsModule, AppMascotComponent, AppRewardStarsComponent, QuestionRendererComponent, TopicTestCardComponent, RouterLink, ResultsRewardsComponent, HoursMinutesPipe],
   templateUrl: './worksheet-page.component.html',
   styleUrls: ['./worksheet-page.component.css'],
 })
@@ -52,6 +53,9 @@ export class WorksheetPageComponent implements OnInit {
   readonly errorMessage = signal('');
   readonly answers = signal<Record<string, string | number | string[]>>({});
   readonly results = signal<any | null>(null);
+
+  /** Exact time for the results tooltip. */
+  readonly describeDuration = describeDuration;
 
   // Mascot UI state
   readonly currentMascot = signal('penguin');

@@ -75,15 +75,15 @@ interface DashboardStudent {
             <a class="link" routerLink="/student/dashboard" [queryParams]="{ studentId: student.id, view: 'parent' }">📋 Learning plan</a>
             <a class="link" routerLink="/reports" [queryParams]="{ studentId: student.id }">📈 Overview</a>
             <a class="link" routerLink="/reports" [queryParams]="{ studentId: student.id, tab: 'history' }">🗂️ Worksheet &amp; test history</a>
+            <a class="link" routerLink="/reports/activity" [queryParams]="{ studentId: student.id }">⏱️ Active time</a>
+            <a class="link" routerLink="/daily/progress" [queryParams]="{ studentId: student.id }">🗺️ Daily challenge report</a>
           </div>
           <p class="hint">Spotted a typo in an answer? Open the history and use ✏️ Fix typos on that worksheet.</p>
         </div>
 
         <div class="group">
-          <h3 class="group-title">🎮 Daily practice &amp; games</h3>
+          <h3 class="group-title">🎮 Games</h3>
           <div class="links">
-            <a class="link" routerLink="/daily/chart" [queryParams]="{ studentId: student.id }">📊 Daily challenge chart</a>
-            <a class="link" routerLink="/daily/progress" [queryParams]="{ studentId: student.id }">🗺️ Progress map</a>
             <a class="link" routerLink="/math-games/abacus/parent" [queryParams]="{ studentId: student.id }">🧮 Abacus levels</a>
           </div>
         </div>

@@ -44,8 +44,8 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-value">{{ results()?.speedSeconds }}s</div>
-          <div class="metric-label">Time</div>
+          <div class="metric-value" [title]="describeDuration(results()?.speedSeconds)">{{ results()?.speedSeconds | hhmm }}</div>
+          <div class="metric-label">Time (hh:mm)</div>
         </div>
 
         <div class="metric-card">
