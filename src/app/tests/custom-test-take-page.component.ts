@@ -38,8 +38,11 @@ export class CustomTestTakePageComponent implements OnInit {
   private readonly learningPlan = inject(LearningPlanService);
 
   /** The 3-weekly review test reuses this page (route data `review: true`), graded through the learning plan. */
-  readonly isReview = inject(ActivatedRoute).snapshot.data['review'] === true;
-  private readonly slot: ActiveTestSlot = this.isReview ? 'review' : 'adhoc';
+  private readonly routeData = inject(ActivatedRoute).snapshot.data;
+  readonly isReview = this.routeData['review'] === true;
+  /** A test a parent wrote (route data `parentTest: true`): their title, no topics and no retake. */
+  readonly isParentTest = this.routeData['parentTest'] === true;
+  private readonly slot: ActiveTestSlot = this.isReview ? 'review' : this.isParentTest ? 'parent' : 'adhoc';
   /** From the review test result: when the next one is due. */
   readonly nextReviewDate = signal<string | null>(null);
   readonly shortDate = shortDate;
@@ -107,7 +110,7 @@ export class CustomTestTakePageComponent implements OnInit {
     const saved = this.adhoc.loadActive(studentId, this.slot);
     if (!saved) {
       // Nothing to take: go build one (or back to the plan, which starts review tests).
-      await this.router.navigate([this.isReview ? '/student/dashboard' : '/tests/custom']);
+      await this.router.navigate([this.isReview ? '/student/dashboard' : this.isParentTest ? '/tests' : '/tests/custom']);
       return;
     }
     this.active.set(saved);

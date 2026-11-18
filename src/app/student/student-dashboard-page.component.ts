@@ -11,6 +11,7 @@ import {
 } from '../services/learning-plan.service';
 import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
 import { PlanActions } from './plan-actions';
+import { ParentTestService } from '../services/parent-test.service';
 import { PlanViewComponent } from './plan-view.component';
 import { RewardsBarComponent } from '../rewards/rewards-bar.component';
 
@@ -33,6 +34,7 @@ export class StudentDashboardPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly api = inject(LearningPlanService);
   private readonly daily = inject(DailyChallengeService);
+  private readonly parentTests = inject(ParentTestService);
   private readonly actions = inject(PlanActions);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -47,12 +49,17 @@ export class StudentDashboardPageComponent implements OnInit {
   readonly opening = signal<string | null>(null);
   /** A gentle nudge toward today's 30 minutes; never a block. */
   readonly dailyBadge = signal<{ text: string; done: boolean } | null>(null);
-  /** Something waiting on the Tests page: the review test first, then topic tests ready to take. */
+  /** Tests a parent wrote that are waiting; checked once per visit. */
+  readonly fromParentCount = signal(0);
+
+  /** Something waiting on the Tests page: the review test, then a parent's tests, then topic tests ready to take. */
   readonly testsBadge = computed(() => {
     const p = this.plan();
-    if (!p) return '';
-    const review = p.reviewTest.current.status;
+    const review = p?.reviewTest.current.status;
     if (review === 'open' || review === 'overdue') return 'Review test due';
+    const fromParent = this.fromParentCount();
+    if (fromParent) return `${fromParent} from parent`;
+    if (!p) return '';
     const ready = new Set([...p.strengths, ...p.focusAreas].filter((t) => t.testState === 'eligible').map((t) => t.topicId));
     return ready.size ? `${ready.size} ready` : '';
   });
@@ -97,7 +104,10 @@ export class StudentDashboardPageComponent implements OnInit {
       this.router.navigate(['/auth/access-code']);
       return;
     }
-    if (this.canAct()) this.loadDailyBadge(this.studentId());
+    if (this.canAct()) {
+      this.loadDailyBadge(this.studentId());
+      this.loadFromParent(this.studentId());
+    }
     this.load();
     // Sheets, tests and the daily challenge all come back here, which reloads the plan; this also
     // catches work finished in another tab.
@@ -217,6 +227,14 @@ export class StudentDashboardPageComponent implements OnInit {
       await this.actions.open(r.action, r.grade);
     } finally {
       this.opening.set(null);
+    }
+  }
+
+  private async loadFromParent(studentId: string): Promise<void> {
+    try {
+      this.fromParentCount.set((await this.parentTests.assigned(studentId)).length);
+    } catch {
+      // No badge; the Tests page still lists them.
     }
   }
 

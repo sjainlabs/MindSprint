@@ -120,7 +120,8 @@
         <td>{{ w.submittedAt | date:'short' }}</td>
         <td>
           <span class="test-badge" *ngIf="isTopicTest(w)">Test</span>
-          <span class="test-badge custom" *ngIf="isAdhocTest(w)">Custom Test</span>
+          <span class="test-badge custom" *ngIf="isAdhocTest(w) && !w.fromParent">Custom Test</span>
+          <span class="test-badge custom" *ngIf="w.fromParent">✍️ From parent</span>
           {{ topicLabel(w) }}
         </td>
         <td>{{ w.level ?? '—' }}</td>

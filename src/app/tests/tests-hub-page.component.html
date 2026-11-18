@@ -2,7 +2,24 @@
 
   <section class="card">
     <h1>📋 Tests</h1>
-    <p class="muted">Take your scheduled review test, make your own test, and see every test you've taken.</p>
+    <p class="muted">Take your scheduled review test, build a custom test or write a manual one, and see every test you've taken.</p>
+  </section>
+
+  <!-- Tests a parent wrote, waiting to be taken -->
+  <section class="card from-parent" *ngIf="fromParent().length > 0 || fromParentError()">
+    <h2>✍️ From your parent</h2>
+    <p class="notice error" *ngIf="fromParentError()">{{ fromParentError() }}</p>
+    <ul class="parent-tests">
+      <li *ngFor="let t of fromParent()">
+        <div>
+          <strong>{{ t.title }}</strong>
+          <p class="muted">{{ t.questionCount }} question{{ t.questionCount === 1 ? '' : 's' }}<ng-container *ngIf="t.answered !== null"> · {{ t.answered }} answered</ng-container></p>
+        </div>
+        <button class="btn primary" [disabled]="opening() === t.testId" (click)="startFromParent(t.testId)">
+          {{ t.answered !== null ? 'Continue' : 'Start' }}
+        </button>
+      </li>
+    </ul>
   </section>
 
   <!-- Unfinished custom test -->
@@ -56,6 +73,14 @@
       <button class="btn primary" (click)="buildTest()">Build a Custom Test</button>
     </section>
 
+    <section class="card option-card">
+      <div class="option-icon">✍️</div>
+      <h2>Manual Test</h2>
+      <p class="muted">Type in your own questions and answers, or paste a list. It shows up here under "From your parent".</p>
+      <p class="hint">A parent signs in to write one, so the answers stay hidden.</p>
+      <button class="btn primary" (click)="writeManualTest()">Write a Manual Test</button>
+    </section>
+
   </div>
 
   <!-- History -->
@@ -90,11 +115,12 @@
           <button class="history-row" (click)="toggle(h.id)" [attr.aria-expanded]="!!expanded()[h.id]">
             <div class="history-main">
               <div class="history-tags">
-                <span class="tag custom" *ngIf="h.kind === 'adhoc-test'">Custom Test</span>
+                <span class="tag custom" *ngIf="h.kind === 'adhoc-test' && !h.fromParent">Custom Test</span>
+                <span class="tag from-parent" *ngIf="h.fromParent">✍️ From parent</span>
                 <span class="tag topic-test" *ngIf="h.kind === 'topic-test'">Topic Test</span>
                 <span class="muted history-date">{{ h.submittedAt | date: 'medium' }}</span>
               </div>
-              <p class="history-topics">{{ h.topics.join(', ') || '—' }}</p>
+              <p class="history-topics">{{ h.title || h.topics.join(', ') || '—' }}</p>
             </div>
             <div class="history-score">
               <strong *ngIf="h.accuracy !== null">{{ h.accuracy }}%</strong>

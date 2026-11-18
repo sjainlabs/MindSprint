@@ -102,3 +102,10 @@
   gap: 8px;
   padding: 0 14px 14px;
 }
+
+/* Tests a parent wrote */
+.from-parent { border: 2px solid #c7d2fe; }
+.parent-tests { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.parent-tests li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: #f8fafc; border-radius: 14px; padding: 12px 14px; }
+.parent-tests p { margin: 2px 0 0; }
+.tag.from-parent { background: #e0e7ff; color: #3730a3; }

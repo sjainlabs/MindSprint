@@ -45,6 +45,8 @@ export const routes: Routes = [
   },
   { path: 'parent/dashboard', canActivate: [parentAuthGuard], component: ParentDashboardPageComponent },
   // ?studentId=…&worksheetId=… from the dashboard's Fix typos list or the parent view of insights.
+  // Old link to the manual test writer, now part of the Tests module; the query string carries over.
+  { path: 'parent/custom-test', redirectTo: '/tests/manual', pathMatch: 'full' },
   { path: 'parent/fix-answers', canActivate: [parentAuthGuard], loadComponent: () => import('./parent/fix-answers-page.component').then((m) => m.FixAnswersPageComponent) },
   // The learning plan. Parents open it from their dashboard with ?studentId=…, which the guard allows.
   { path: 'student/dashboard', canActivate: [studentAuthGuard], loadComponent: () => import('./student/student-dashboard-page.component').then((m) => m.StudentDashboardPageComponent) },
@@ -60,8 +62,12 @@ export const routes: Routes = [
   { path: 'reports', canActivate: [studentAuthGuard], component: InsightsPageComponent },
   { path: 'tests', canActivate: [studentAuthGuard], component: TestsHubPageComponent },
   { path: 'tests/custom', canActivate: [studentAuthGuard], component: CustomTestBuilderPageComponent },
+  // Manual test: a parent types in questions and answers for one child (?studentId=…&name=…).
+  { path: 'tests/manual', canActivate: [parentAuthGuard], loadComponent: () => import('./parent/parent-test-page.component').then((m) => m.ParentTestPageComponent) },
   { path: 'tests/custom/take', canActivate: [studentAuthGuard], component: CustomTestTakePageComponent },
   { path: 'tests/review/take', canActivate: [studentAuthGuard], component: CustomTestTakePageComponent, data: { review: true } },
+  // A test a parent typed in, opened from the Tests page.
+  { path: 'tests/parent/take', canActivate: [studentAuthGuard], component: CustomTestTakePageComponent, data: { parentTest: true } },
   { path: 'tests/scheduled', canActivate: [studentAuthGuard], component: ScheduledTestsPageComponent },
   { path: 'tests/surprise', canActivate: [studentAuthGuard], component: SurpriseTestPageComponent },
   { path: 'tests/topic/:topicId', canActivate: [studentAuthGuard], component: TopicTestPageComponent },

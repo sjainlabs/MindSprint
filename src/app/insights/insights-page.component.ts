@@ -94,7 +94,8 @@ export class InsightsPageComponent implements OnInit {
   }
 
   /** The worksheet's topics by name, falling back to the id for topics the catalog doesn't know. */
-  topicLabel(w: { topics?: string[]; topicName?: string }): string {
+  topicLabel(w: { topics?: string[]; topicName?: string; title?: string | null }): string {
+    if (w.title) return w.title;
     if (!w.topics?.length) return w.topicName ?? '';
     const names = this.allTopicNames();
     return w.topics.map((id) => names.get(id) ?? id).join(', ');

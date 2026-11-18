@@ -26,6 +26,9 @@ export interface AdhocTestQuestion {
 
 export interface AdhocTest {
   testId: string;
+  /** Set on tests a parent wrote: their title, and no topics. */
+  title?: string;
+  fromParent?: boolean;
   topics: AdhocTestTopic[];
   questionCount: number;
   questions: AdhocTestQuestion[];
@@ -78,8 +81,8 @@ export interface ActiveAdhocTest {
   review?: { cycle: number; dueDate: string };
 }
 
-/** Custom tests and review tests are saved separately, so starting one never loses the other. */
-export type ActiveTestSlot = 'adhoc' | 'review';
+/** Custom, review and parent-written tests are saved separately, so starting one never loses another. */
+export type ActiveTestSlot = 'adhoc' | 'review' | 'parent';
 
 export const ADHOC_MAX_TOPICS = 10;
 export const ADHOC_MAX_QUESTIONS = 50;
@@ -143,7 +146,7 @@ export class AdhocTestService {
   }
 
   private activeKey(studentId: string, slot: ActiveTestSlot): string {
-    return slot === 'review' ? `${ACTIVE_KEY}.review.${studentId}` : `${ACTIVE_KEY}.${studentId}`;
+    return slot === 'adhoc' ? `${ACTIVE_KEY}.${studentId}` : `${ACTIVE_KEY}.${slot}.${studentId}`;
   }
 
   /* ---------------- Last selection ---------------- */

@@ -24,10 +24,11 @@
   <ng-container *ngIf="stage() === 'taking' && currentQuestion() as q">
     <section class="card">
       <div class="test-head">
-        <h1>{{ isReview ? '📅 Review Test' : '🧩 Custom Test' }}</h1>
+        <h1>{{ isReview ? '📅 Review Test' : isParentTest ? '✍️ ' + (active()?.test?.title || 'Test from your parent') : '🧩 Custom Test' }}</h1>
         <button class="link-btn" (click)="saveAndExit()">Save &amp; exit</button>
       </div>
-      <p class="muted topics-line">
+      <p class="muted topics-line" *ngIf="isParentTest">From your parent · {{ questions().length }} question{{ questions().length === 1 ? '' : 's' }}</p>
+      <p class="muted topics-line" *ngIf="!isParentTest">
         {{ active()?.test?.topics?.length }} topic{{ active()?.test?.topics?.length === 1 ? '' : 's' }}:
         <ng-container *ngFor="let t of active()?.test?.topics; let last = last">{{ t.topicName }}{{ last ? '' : ', ' }}</ng-container>
       </p>
@@ -130,7 +131,7 @@
       <app-results-rewards />
     </section>
 
-    <section class="card">
+    <section class="card" *ngIf="byTopicWeakestFirst().length > 0">
       <h2>By topic</h2>
       <p class="hint">Weakest topics first.</p>
       <div class="topic-score" *ngFor="let t of byTopicWeakestFirst()">
@@ -154,7 +155,13 @@
       </div>
     </section>
 
-    <section class="card" *ngIf="!isReview">
+    <section class="card" *ngIf="isParentTest">
+      <div class="actions">
+        <button class="btn primary" (click)="goToTests()">Back to tests</button>
+      </div>
+    </section>
+
+    <section class="card" *ngIf="!isReview && !isParentTest">
       <div class="actions">
         <button class="btn primary" [disabled]="!canRetake()" (click)="retake()">🔁 Retake with the same topics</button>
         <button class="btn" (click)="buildAnother()">🧩 Build another test</button>
