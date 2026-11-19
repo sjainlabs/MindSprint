@@ -4,6 +4,7 @@ import { PracticeWorksheetQuestion } from '../services/learning-api.service';
 import { VerticalMultiplicationComponent } from '../vertical-multiplication-component/vertical-multiplication.component';
 import { FormsModule } from '@angular/forms';
 import { MathTextComponent } from '../components/math-text/math-text.component';
+import { MicButtonComponent } from '../shared/components/mic-button.component';
 import {
   HelperKey,
   inputSpecFor,
@@ -15,7 +16,7 @@ let nextId = 0;
 
 @Component({
   selector: 'app-question-renderer',
-  imports: [CommonModule, FormsModule, VerticalMultiplicationComponent, MathTextComponent],
+  imports: [CommonModule, FormsModule, VerticalMultiplicationComponent, MathTextComponent, MicButtonComponent],
   templateUrl: './question-renderer.component.html',
   styleUrl: './question-renderer.component.css',
 })
@@ -66,6 +67,20 @@ export class QuestionRendererComponent {
     const values = this.parts();
     values[index] = el.value;
     this.answerChange.emit(joinMultiAnswer(values));
+  }
+
+  /* ---------------- Spoken answers ---------------- */
+
+  /** A spoken answer, already in digits ("3/4", "3, -2"), fills the box the same way typing would. */
+  onSpoken(answer: string) {
+    const spec = this.spec();
+    if (spec.kind === 'dots') {
+      this.answerChange.emit(answer.replace(/\D/g, '').slice(0, 3));
+    } else if (spec.kind === 'multi') {
+      this.answerChange.emit(joinMultiAnswer(splitMultiAnswer(answer, spec.variables.length)));
+    } else {
+      this.answerChange.emit(answer);
+    }
   }
 
   /* ---------------- Helper keys ---------------- */

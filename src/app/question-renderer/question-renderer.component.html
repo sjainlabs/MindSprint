@@ -108,6 +108,8 @@
     }
   }
 
+  <app-mic-button (heardAnswer)="onSpoken($event)" />
+
   @if (spec().kind !== 'dots' && spec().helperKeys.length) {
     <div class="qr-keys" role="group" aria-label="Maths symbols">
       @for (k of spec().helperKeys; track k.label) {

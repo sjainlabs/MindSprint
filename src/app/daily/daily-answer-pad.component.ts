@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { HelperKey, inputSpecFor } from '../shared/utils/question-input';
+import { MicButtonComponent } from '../shared/components/mic-button.component';
 
 const BASE_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', ',', '0', '.'];
 /** Keys the pad always has, so the prompt's own helper keys don't repeat them. */
@@ -23,6 +24,7 @@ const PAD_SYMBOLS = new Set(['-', '/', '.', ',']);
 @Component({
   selector: 'app-daily-answer-pad',
   standalone: true,
+  imports: [MicButtonComponent],
   template: `
     <div class="pad-wrap">
       <input
@@ -62,9 +64,12 @@ const PAD_SYMBOLS = new Set(['-', '/', '.', ',']);
         </div>
       }
 
-      <button type="button" class="mode-btn" (click)="toggleMode()">
-        {{ mode() === 'pad' ? '⌨ Use keyboard' : '🔢 Use number pad' }}
-      </button>
+      <div class="pad-tools">
+        <app-mic-button [disabled]="disabled" (heardAnswer)="emit($event)" />
+        <button type="button" class="mode-btn" (click)="toggleMode()">
+          {{ mode() === 'pad' ? '⌨ Use keyboard' : '🔢 Use number pad' }}
+        </button>
+      </div>
     </div>
   `,
   styles: [
@@ -102,6 +107,7 @@ const PAD_SYMBOLS = new Set(['-', '/', '.', ',']);
       .key:active { transform: scale(0.96); background: #e0e7ff; }
       .key.sym { background: #f1f5f9; }
       .key:disabled { opacity: 0.5; }
+      .pad-tools { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
       .mode-btn { justify-self: center; background: none; border: 0; color: #6c63ff; font-weight: 700; cursor: pointer; padding: 6px; }
       @media (min-width: 640px) { .pad { max-width: 360px; margin: 0 auto; width: 100%; } }
     `,
