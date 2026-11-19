@@ -28,6 +28,9 @@ import { analystGuard, toAnalystEntry } from './analyst/analyst.guard';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
+  { path: 'about', loadComponent: () => import('./landing/about-page.component').then((m) => m.AboutPageComponent) },
+  { path: 'how-it-works', loadComponent: () => import('./landing/guide-page.component').then((m) => m.GuidePageComponent) },
+  { path: 'guide', redirectTo: 'how-it-works', pathMatch: 'full' },
   { path: 'auth/parent-login', component: ParentLoginPageComponent },
   { path: 'auth/access-code', component: AccessCodePageComponent },
   // Guest analyst: one child's plan and insights, read-only, opened with a code a parent shared.

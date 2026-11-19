@@ -37,6 +37,50 @@
   cursor: pointer;
 }
 
+/* About · How it works · Home, on the right (alone on the home page, where there's no Back) */
+.nav-menu {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-home.active {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.nav-button:focus-visible,
+.nav-home:focus-visible {
+  outline: 3px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.nav-button,
+.nav-home {
+  white-space: nowrap;
+}
+
+/* Small phones: one row, so drop the icons and keep Back to its arrow */
+@media (max-width: 420px) {
+  .nav-button,
+  .nav-home {
+	padding: 8px 11px;
+	font-size: 0.9rem;
+  }
+
+  .nav-icon,
+  .nav-label {
+	display: none;
+  }
+
+  .nav-menu {
+	gap: 6px;
+  }
+}
+
 @media (min-width: 768px) {
   .app-shell {
 	padding: 24px;

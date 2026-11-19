@@ -1,7 +1,15 @@
 <div class="app-shell">
-  <header class="top-nav" *ngIf="showSubpageNav()">
-    <button class="nav-button" type="button" (click)="goBack()">← Back</button>
-    <a class="nav-home" routerLink="/">Home</a>
+  <header class="top-nav" *ngIf="showNav()">
+    @if (!onHome()) {
+      <button class="nav-button" type="button" aria-label="Back" (click)="goBack()">←<span class="nav-label"> Back</span></button>
+    }
+    <nav class="nav-menu" aria-label="Main">
+      <a class="nav-home" routerLink="/about" routerLinkActive="active" ariaCurrentWhenActive="page"><span class="nav-icon" aria-hidden="true">ℹ️ </span>About</a>
+      <a class="nav-home" routerLink="/how-it-works" routerLinkActive="active" ariaCurrentWhenActive="page"><span class="nav-icon" aria-hidden="true">📖 </span>How it works</a>
+      @if (!onHome()) {
+        <a class="nav-home" routerLink="/">Home</a>
+      }
+    </nav>
   </header>
   <router-outlet />
 </div>

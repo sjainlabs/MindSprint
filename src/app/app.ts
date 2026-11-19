@@ -1,12 +1,12 @@
 import { CommonModule, Location } from '@angular/common';
 import { Component, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { RewardsCelebrationsComponent } from './rewards/rewards-celebrations.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, RouterLink, RewardsCelebrationsComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, RewardsCelebrationsComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -47,9 +47,14 @@ export class App {
     });
   }
 
-  protected showSubpageNav(): boolean {
+  protected showNav(): boolean {
     // The analyst shell has its own header and Exit; Back/Home would lead out of the read-only view.
-    return this.currentUrl() !== '/' && !/^\/analyst(\/|$|\?)/.test(this.currentUrl());
+    return !/^\/analyst(\/|$|\?)/.test(this.currentUrl());
+  }
+
+  /** The home page has no Back or Home, just the About and How it works tabs */
+  protected onHome(): boolean {
+    return this.currentUrl() === '/' || this.currentUrl().startsWith('/?');
   }
 
   protected goBack(): void {
