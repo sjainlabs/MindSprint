@@ -3,7 +3,8 @@ import { spokenToAnswer } from '../utils/spoken-answer';
 
 /* The Web Speech API isn't in the TypeScript DOM types yet */
 interface SpeechAlternative { transcript: string }
-interface SpeechResultEvent { results: ArrayLike<ArrayLike<SpeechAlternative>> }
+interface SpeechResult extends ArrayLike<SpeechAlternative> { isFinal?: boolean }
+interface SpeechResultEvent { results: ArrayLike<SpeechResult> }
 interface SpeechErrorEvent { error: string }
 interface SpeechRecognitionLike {
   lang: string;
@@ -32,6 +33,14 @@ const speechLang = (): string => {
 };
 
 let nextTipId = 0;
+
+/**
+ * Mobile engines (iPhone Safari especially) often send only interim results and never a final one,
+ * or keep listening after the student stops. So the answer is taken once speech pauses this long…
+ */
+const PAUSE_MS = 1200;
+/** …and listening always stops after this long */
+const MAX_LISTEN_MS = 10000;
 
 const ERRORS: Record<string, string> = {
   'not-allowed': 'Allow the microphone for this site to speak answers.',
@@ -68,7 +77,7 @@ const ERRORS: Record<string, string> = {
           }
         </span>
         <span class="mic-status" aria-live="polite">
-          @if (listening()) { Listening… }
+          @if (listening()) { {{ heard() ? 'Hearing “' + heard() + '”…' : 'Listening…' }} }
           @else if (error()) { {{ error() }} }
           @else if (heard()) { Heard “{{ heard() }}” }
         </span>
@@ -127,6 +136,11 @@ export class MicButtonComponent implements OnDestroy {
   readonly heard = signal('');
 
   private recognition: SpeechRecognitionLike | null = null;
+  /** Guesses for what was said so far, best first; used when listening ends */
+  private pending: string[] = [];
+  private committed = false;
+  private pauseTimer: ReturnType<typeof setTimeout> | undefined;
+  private maxTimer: ReturnType<typeof setTimeout> | undefined;
 
   toggle(): void {
     if (this.listening()) {
@@ -137,7 +151,8 @@ export class MicButtonComponent implements OnDestroy {
     if (!Ctor) return;
     const recognition = new Ctor();
     recognition.lang = speechLang();
-    recognition.interimResults = false;
+    // Interim results too: some mobile browsers never send a final one
+    recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 3;
     // Speech callbacks fire outside Angular's zone
@@ -145,31 +160,70 @@ export class MicButtonComponent implements OnDestroy {
     recognition.onerror = (event) => this.zone.run(() => {
       if (event.error !== 'aborted') this.error.set(ERRORS[event.error] ?? "Couldn't hear that. Try again.");
     });
-    recognition.onend = () => this.zone.run(() => this.listening.set(false));
+    recognition.onend = () => this.zone.run(() => {
+      this.clearTimers();
+      this.commit();
+      this.listening.set(false);
+    });
     this.recognition = recognition;
+    this.pending = [];
+    this.committed = false;
     this.error.set('');
     this.heard.set('');
     try {
       recognition.start();
       this.listening.set(true);
+      this.maxTimer = setTimeout(() => this.zone.run(() => this.finish()), MAX_LISTEN_MS);
     } catch {
       this.error.set("Couldn't start the microphone. Try again.");
     }
   }
 
   private onResult(event: SpeechResultEvent): void {
-    const result = event.results[0];
-    if (!result) return;
-    const alternatives = Array.from({ length: result.length }, (_, i) => result[i]?.transcript ?? '').filter(Boolean);
+    const results = Array.from({ length: event.results.length }, (_, i) => event.results[i]);
+    if (!results.length) return;
+    // One phrase: keep the engine's alternatives. Several: join the best guess of each.
+    this.pending = results.length === 1
+      ? Array.from({ length: results[0].length }, (_, i) => results[0][i]?.transcript ?? '').filter((t) => t.trim())
+      : [results.map((r) => r[0]?.transcript ?? '').join(' ')];
+    this.heard.set(this.pending[0] ?? '');
+    if (results.every((r) => r.isFinal)) {
+      this.finish();
+      return;
+    }
+    clearTimeout(this.pauseTimer);
+    this.pauseTimer = setTimeout(() => this.zone.run(() => this.finish()), PAUSE_MS);
+  }
+
+  /** Puts the answer in the box and stops listening */
+  private finish(): void {
+    this.commit();
+    this.clearTimers();
+    try {
+      this.recognition?.stop();
+    } catch {
+      // Already stopped
+    }
+    this.listening.set(false);
+  }
+
+  private commit(): void {
+    if (this.committed || !this.pending.length) return;
+    this.committed = true;
     // Prefer the first guess that reads as a number ("for" vs "4")
-    const answers = alternatives.map((said) => ({ said, answer: spokenToAnswer(said) }));
+    const answers = this.pending.map((said) => ({ said, answer: spokenToAnswer(said) }));
     const best = answers.find((a) => /\d/.test(a.answer)) ?? answers[0];
-    if (!best) return;
     this.heard.set(best.said);
     if (best.answer) this.heardAnswer.emit(best.answer);
   }
 
+  private clearTimers(): void {
+    clearTimeout(this.pauseTimer);
+    clearTimeout(this.maxTimer);
+  }
+
   ngOnDestroy(): void {
+    this.clearTimers();
     this.recognition?.abort();
   }
 }
