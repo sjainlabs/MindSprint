@@ -83,6 +83,7 @@ export const STRAND_EMOJI: Record<string, string> = {
   'Add & subtract': '➕',
   Multiply: '✖️',
   Divide: '➗',
+  'Negative numbers': '➖',
   Fractions: '🍕',
   'Decimals, percent & ratio': '💯',
   Operations: '➕',
