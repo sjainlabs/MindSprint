@@ -7,12 +7,17 @@ import { PracticeTopicCatalogService } from '../services/practice-topic-catalog.
 import { EnhancedTopic } from '../services/practice-config.service';
 import {
   ADHOC_DEFAULT_QUESTIONS,
+  ADHOC_MAX_QUESTIONS,
   ADHOC_MAX_TOPICS,
+  ADHOC_MIN_GRADE_QUESTIONS,
   AdhocTestService,
   AdhocSelection,
 } from '../services/adhoc-test.service';
 
 const QUESTION_PRESETS = [10, 20, 30, 50];
+
+/** Pick topics one by one, or pick whole grades and let the server spread topics across them */
+export type BuilderMode = 'topics' | 'grades';
 // Known syllabus levels, easiest first; anything else is sorted after these alphabetically.
 const LEVEL_ORDER = ['PreBeginner', 'Beginner', 'Elementary', 'Intermediate', 'Advanced'];
 
@@ -42,6 +47,9 @@ export class CustomTestBuilderPageComponent implements OnInit {
   readonly search = signal('');
   readonly gradeFilter = signal<number | null>(null);
   readonly levelFilter = signal<string | null>(null);
+
+  readonly mode = signal<BuilderMode>('topics');
+  readonly pickedGrades = signal<number[]>([]);
 
   readonly selectedIds = signal<string[]>([]);
   readonly requestedCount = signal(ADHOC_DEFAULT_QUESTIONS);
@@ -91,7 +99,18 @@ export class CustomTestBuilderPageComponent implements OnInit {
 
   readonly atTopicLimit = computed(() => this.selectedIds().length >= ADHOC_MAX_TOPICS);
 
-  readonly range = computed(() => this.adhoc.questionRange(this.selectedIds().length));
+  readonly range = computed(() =>
+    this.mode() === 'grades'
+      ? { min: ADHOC_MIN_GRADE_QUESTIONS, max: ADHOC_MAX_QUESTIONS }
+      : this.adhoc.questionRange(this.selectedIds().length),
+  );
+
+  /** "Grade 4" or "Grades 3, 4 and 5", for the summary */
+  readonly gradesText = computed(() => {
+    const labels = this.pickedGrades().map((g) => this.gradeLabel(g));
+    if (labels.length <= 1) return `Grade ${labels[0] ?? ''}`.trim();
+    return `Grades ${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+  });
 
   /** Requested count clamped to what the server accepts for the current selection. */
   readonly questionCount = computed(() => {
@@ -99,7 +118,9 @@ export class CustomTestBuilderPageComponent implements OnInit {
     return Math.min(max, Math.max(min, this.requestedCount()));
   });
 
-  readonly canGenerate = computed(() => this.selectedIds().length > 0 && !this.generating());
+  readonly canGenerate = computed(() =>
+    (this.mode() === 'grades' ? this.pickedGrades().length > 0 : this.selectedIds().length > 0) && !this.generating(),
+  );
 
   async ngOnInit(): Promise<void> {
     const studentId = this.auth.getStoredStudentId();
@@ -127,7 +148,11 @@ export class CustomTestBuilderPageComponent implements OnInit {
 
     // Pre-fill from the last test so a quick rebuild is one tap.
     const last = this.adhoc.loadLastSelection(this.studentId);
-    if (last) {
+    if (last?.grades?.length) {
+      this.mode.set('grades');
+      this.pickedGrades.set(last.grades);
+      this.requestedCount.set(last.questionCount || ADHOC_DEFAULT_QUESTIONS);
+    } else if (last) {
       const known = last.topicIds.filter((id) => this.topicsById().has(id)).slice(0, ADHOC_MAX_TOPICS);
       this.selectedIds.set(known);
       this.requestedCount.set(last.questionCount || ADHOC_DEFAULT_QUESTIONS);
@@ -135,6 +160,21 @@ export class CustomTestBuilderPageComponent implements OnInit {
   }
 
   /* ---------------- Picking ---------------- */
+
+  setMode(mode: BuilderMode): void {
+    this.mode.set(mode);
+    this.generateError.set('');
+  }
+
+  isGradePicked(grade: number): boolean {
+    return this.pickedGrades().includes(grade);
+  }
+
+  toggleGrade(grade: number): void {
+    this.pickedGrades.update((grades) =>
+      grades.includes(grade) ? grades.filter((g) => g !== grade) : [...grades, grade].sort((a, b) => a - b),
+    );
+  }
 
   isSelected(id: string): boolean {
     return this.selectedIds().includes(id);
@@ -192,10 +232,10 @@ export class CustomTestBuilderPageComponent implements OnInit {
     this.generating.set(true);
     this.generateError.set('');
 
-    const selection: AdhocSelection = {
-      topicIds: [...this.selectedIds()],
-      questionCount: this.questionCount(),
-    };
+    const selection: AdhocSelection =
+      this.mode() === 'grades'
+        ? { topicIds: [], grades: [...this.pickedGrades()], questionCount: this.questionCount() }
+        : { topicIds: [...this.selectedIds()], questionCount: this.questionCount() };
     this.adhoc.saveLastSelection(this.studentId, selection);
 
     try {

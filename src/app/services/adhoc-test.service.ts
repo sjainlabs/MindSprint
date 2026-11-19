@@ -29,6 +29,8 @@ export interface AdhocTest {
   /** Set on tests a parent wrote: their title, and no topics. */
   title?: string;
   fromParent?: boolean;
+  /** Set on a whole-grade test, where the topics were picked across those grades */
+  grades?: number[];
   topics: AdhocTestTopic[];
   questionCount: number;
   questions: AdhocTestQuestion[];
@@ -66,6 +68,8 @@ export type AdhocTestError = TestApiError<AdhocTestErrorCode>;
 /** What the student picked in the builder; reused for "Retake" and to pre-fill the next build. */
 export interface AdhocSelection {
   topicIds: string[];
+  /** A whole-grade test instead of picked topics: the server picks topics across these grades */
+  grades?: number[];
   questionCount: number;
 }
 
@@ -88,6 +92,8 @@ export const ADHOC_MAX_TOPICS = 10;
 export const ADHOC_MAX_QUESTIONS = 50;
 export const ADHOC_MAX_PER_TOPIC = 25;
 export const ADHOC_DEFAULT_QUESTIONS = 20;
+/** A whole-grade test needs enough questions to reach a few areas of maths */
+export const ADHOC_MIN_GRADE_QUESTIONS = 5;
 
 const ACTIVE_KEY = 'mindsprint.adhocTest.active';
 const SELECTION_KEY = 'mindsprint.adhocTest.lastSelection';
@@ -108,7 +114,7 @@ export class AdhocTestService {
       return await firstValueFrom(
         this.http.post<AdhocTest>(`${this.apiBase}/generate`, {
           studentId,
-          topicIds: selection.topicIds,
+          ...(selection.grades?.length ? { grades: selection.grades } : { topicIds: selection.topicIds }),
           questionCount: selection.questionCount,
         }),
       );
@@ -153,7 +159,9 @@ export class AdhocTestService {
 
   loadLastSelection(studentId: string): AdhocSelection | null {
     const parsed = this.read<AdhocSelection>(`${SELECTION_KEY}.${studentId}`);
-    return Array.isArray(parsed?.topicIds) && parsed.topicIds.length ? parsed : null;
+    const hasTopics = Array.isArray(parsed?.topicIds) && parsed.topicIds.length > 0;
+    const hasGrades = Array.isArray(parsed?.grades) && parsed.grades.length > 0;
+    return parsed && (hasTopics || hasGrades) ? { ...parsed, topicIds: parsed.topicIds ?? [] } : null;
   }
 
   saveLastSelection(studentId: string, selection: AdhocSelection): void {

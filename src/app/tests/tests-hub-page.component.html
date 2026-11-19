@@ -66,9 +66,12 @@
     <section class="card option-card">
       <div class="option-icon">🧩</div>
       <h2>Custom Test</h2>
-      <p class="muted">Mix any topics from any grade or level, and pick how many questions.</p>
+      <p class="muted">Mix any topics from any grade or level, or test a whole grade, and pick how many questions.</p>
       <p class="hint" *ngIf="lastSelection() as last">
-        Last time: {{ last.topicIds.length }} topic{{ last.topicIds.length === 1 ? '' : 's' }} · {{ last.questionCount }} questions
+        Last time:
+        <ng-container *ngIf="last.grades?.length; else lastTopics">Grade{{ last.grades!.length === 1 ? '' : 's' }} {{ gradeList(last.grades!) }}</ng-container>
+        <ng-template #lastTopics>{{ last.topicIds.length }} topic{{ last.topicIds.length === 1 ? '' : 's' }}</ng-template>
+        · {{ last.questionCount }} questions
       </p>
       <button class="btn primary" (click)="buildTest()">Build a Custom Test</button>
     </section>

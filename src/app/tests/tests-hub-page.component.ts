@@ -223,6 +223,12 @@ export class TestsHubPageComponent implements OnInit {
     this.router.navigate(['/tests/manual'], { queryParams: { studentId: this.studentId, from: 'tests' } });
   }
 
+  /** "4" or "3, 4 and 5", K for kindergarten */
+  gradeList(grades: number[]): string {
+    const labels = grades.map((g) => (g === 0 ? 'K' : String(g)));
+    return labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+  }
+
   buildTest(): void {
     this.router.navigate(['/tests/custom']);
   }

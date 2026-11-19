@@ -202,3 +202,12 @@
     padding-left: 28px;
   }
 }
+
+.tabs { display: flex; gap: 6px; background: #f1f5f9; border-radius: 14px; padding: 4px; margin-top: 12px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 10px 8px; white-space: nowrap; border-radius: 11px; font: inherit; font-weight: 800; color: #475569; cursor: pointer; min-height: 44px; }
+.tabs button.active { background: #fff; color: #1e1b4b; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15); }
+.tabs button:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+
+.grade-chips { gap: 8px; }
+.grade-chip { min-height: 44px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.school-tag { font-size: 0.65rem; font-weight: 700; opacity: 0.75; }

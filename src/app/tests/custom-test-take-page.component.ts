@@ -60,6 +60,14 @@ export class CustomTestTakePageComponent implements OnInit {
   /** Selection behind the test just finished, kept for "Retake" after `active` is cleared. */
   private lastSelection: AdhocSelection | null = null;
 
+  /** "Grade 4" or "Grades 3 and 5" for a whole-grade test, else null */
+  gradesLabel(): string | null {
+    const grades = this.active()?.test?.grades ?? this.lastSelection?.grades;
+    if (!grades?.length) return null;
+    const labels = grades.map((g) => (g === 0 ? 'K' : String(g)));
+    return labels.length === 1 ? `Grade ${labels[0]}` : `Grades ${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+  }
+
   readonly reviewOpen = signal(false);
   readonly reviewTopicFilter = signal<string | null>(null);
   readonly showExpected = signal<Record<string, boolean>>({});

@@ -2,7 +2,11 @@
 
   <section class="card">
     <h1>🧩 Build a Custom Test</h1>
-    <p class="muted">Pick up to {{ maxTopics }} topics from any grade or level. We'll mix them into one test.</p>
+    <p class="muted">Pick up to {{ maxTopics }} topics from any grade or level, or test a whole grade. We'll mix them into one test.</p>
+    <div class="tabs" role="tablist" aria-label="How to build the test">
+      <button type="button" role="tab" [class.active]="mode() === 'topics'" [attr.aria-selected]="mode() === 'topics'" (click)="setMode('topics')">📋 Pick topics</button>
+      <button type="button" role="tab" [class.active]="mode() === 'grades'" [attr.aria-selected]="mode() === 'grades'" (click)="setMode('grades')">🎓 Whole grade</button>
+    </div>
   </section>
 
   <section class="notice info" *ngIf="hasUnfinishedTest()">
@@ -27,14 +31,23 @@
     <section class="card">
       <div class="summary-head">
         <h2>Your test</h2>
-        <span class="counter" [class.full]="atTopicLimit()">
+        <span class="counter" *ngIf="mode() === 'topics'" [class.full]="atTopicLimit()">
           {{ selectedIds().length }} / {{ maxTopics }} topics
         </span>
+        <span class="counter" *ngIf="mode() === 'grades' && pickedGrades().length > 0">{{ gradesText() }}</span>
       </div>
 
-      <p class="hint" *ngIf="selectedTopics().length === 0">No topics yet. Pick some from the list below.</p>
+      <ng-container *ngIf="mode() === 'grades'">
+        <p class="hint" *ngIf="pickedGrades().length === 0">No grade yet. Pick one or more below.</p>
+        <p class="hint" *ngIf="pickedGrades().length > 0">
+          A mix of up to {{ maxTopics }} {{ gradesText() }} topics, spread across numbers, operations, fractions,
+          measurement, geometry, data and algebra. Each new test picks a fresh mix.
+        </p>
+      </ng-container>
 
-      <div class="chip-list" *ngIf="selectedTopics().length > 0">
+      <p class="hint" *ngIf="mode() === 'topics' && selectedTopics().length === 0">No topics yet. Pick some from the list below.</p>
+
+      <div class="chip-list" *ngIf="mode() === 'topics' && selectedTopics().length > 0">
         <span class="selected-chip" *ngFor="let t of selectedTopics()">
           {{ t.name }}
           <span class="chip-meta">G{{ gradeLabel(t.cbseGrade) }}</span>
@@ -60,7 +73,7 @@
                     (click)="setCount(n)">{{ n }}</button>
           </div>
         </div>
-        <p class="hint" *ngIf="selectedIds().length > 0">
+        <p class="hint" *ngIf="mode() === 'topics' && selectedIds().length > 0">
           Between {{ range().min }} and {{ range().max }} questions for {{ selectedIds().length }}
           topic{{ selectedIds().length === 1 ? '' : 's' }}, split evenly.
         </p>
@@ -74,8 +87,21 @@
       </button>
     </section>
 
+    <!-- Grade picker -->
+    <section class="card" *ngIf="mode() === 'grades'">
+      <h2>Choose grades</h2>
+      <p class="hint">Pick one grade for a grade test, or a few to mix them. Any grade is fine, above or below school.</p>
+      <div class="chip-list grade-chips" role="group" aria-label="Grades">
+        <button type="button" class="chip grade-chip" *ngFor="let g of grades()"
+                [class.active]="isGradePicked(g)" [attr.aria-pressed]="isGradePicked(g)" (click)="toggleGrade(g)">
+          {{ g === 0 ? 'K' : 'Grade ' + g }}
+          <span class="school-tag" *ngIf="g === studentGrade()">your grade</span>
+        </button>
+      </div>
+    </section>
+
     <!-- Topic picker -->
-    <section class="card">
+    <section class="card" *ngIf="mode() === 'topics'">
       <h2>Choose topics</h2>
 
       <input
@@ -134,7 +160,7 @@
     </section>
 
     <!-- Sticky bar so Generate is always reachable while browsing -->
-    <div class="sticky-bar" *ngIf="selectedIds().length > 0">
+    <div class="sticky-bar" *ngIf="mode() === 'topics' && selectedIds().length > 0">
       <span>{{ selectedIds().length }} / {{ maxTopics }} topics · {{ questionCount() }} questions</span>
       <button class="btn primary small" [disabled]="!canGenerate()" (click)="generate()">
         {{ generating() ? 'Creating…' : 'Generate' }}
