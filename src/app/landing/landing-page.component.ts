@@ -15,6 +15,7 @@ import { RouterLink } from '@angular/router';
           <a routerLink="/auth/parent-login" class="button primary">Parent Login</a>
           <a routerLink="/auth/access-code" class="button">Enter Access Code</a>
         </div>
+        <a routerLink="/auth/parent-login" [queryParams]="{ role: 'teacher' }" class="analyst-link">Teacher? Sign in</a>
         <a routerLink="/auth/analyst" class="analyst-link">Analyst? Enter access code</a>
       </section>
     </main>

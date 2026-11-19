@@ -5,15 +5,15 @@
     <p class="muted">Take your scheduled review test, build a custom test or write a manual one, and see every test you've taken.</p>
   </section>
 
-  <!-- Tests a parent wrote, waiting to be taken -->
+  <!-- Tests a parent or teacher wrote, waiting to be taken -->
   <section class="card from-parent" *ngIf="fromParent().length > 0 || fromParentError()">
-    <h2>✍️ From your parent</h2>
+    <h2>✍️ {{ fromHeading() }}</h2>
     <p class="notice error" *ngIf="fromParentError()">{{ fromParentError() }}</p>
     <ul class="parent-tests">
       <li *ngFor="let t of fromParent()">
         <div>
           <strong>{{ t.title }}</strong>
-          <p class="muted">{{ t.questionCount }} question{{ t.questionCount === 1 ? '' : 's' }}<ng-container *ngIf="t.answered !== null"> · {{ t.answered }} answered</ng-container></p>
+          <p class="muted">{{ t.questionCount }} question{{ t.questionCount === 1 ? '' : 's' }}<ng-container *ngIf="t.author?.role === 'teacher'"> · from {{ authorLabel(t.author) }}</ng-container><ng-container *ngIf="t.answered !== null"> · {{ t.answered }} answered</ng-container></p>
         </div>
         <button class="btn primary" [disabled]="opening() === t.testId" (click)="startFromParent(t.testId)">
           {{ t.answered !== null ? 'Continue' : 'Start' }}
@@ -118,8 +118,9 @@
           <button class="history-row" (click)="toggle(h.id)" [attr.aria-expanded]="!!expanded()[h.id]">
             <div class="history-main">
               <div class="history-tags">
-                <span class="tag custom" *ngIf="h.kind === 'adhoc-test' && !h.fromParent">Custom Test</span>
+                <span class="tag custom" *ngIf="h.kind === 'adhoc-test' && !h.fromParent && !h.fromTeacher">Custom Test</span>
                 <span class="tag from-parent" *ngIf="h.fromParent">✍️ From parent</span>
+                <span class="tag from-parent" *ngIf="h.fromTeacher">👩‍🏫 From {{ h.fromTeacher }}</span>
                 <span class="tag topic-test" *ngIf="h.kind === 'topic-test'">Topic Test</span>
                 <span class="muted history-date">{{ h.submittedAt | date: 'medium' }}</span>
               </div>

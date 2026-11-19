@@ -7,7 +7,7 @@ import { AdhocSelection, AdhocTestService } from '../services/adhoc-test.service
 import { LearningPlanError, LearningPlanService, ReviewSchedule } from '../services/learning-plan.service';
 import { ReviewTestCardComponent } from '../student/review-test-card.component';
 import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
-import { ParentTestService, ParentTestSummary } from '../services/parent-test.service';
+import { ParentTestService, ParentTestSummary, authorLabel } from '../services/parent-test.service';
 
 type HistoryKind = 'adhoc-test' | 'topic-test';
 type HistoryFilter = 'all' | HistoryKind;
@@ -17,9 +17,11 @@ interface TestHistoryEntry {
   kind: HistoryKind;
   submittedAt: string;
   topics: string[];
-  /** Tests a parent wrote have a title instead of topics. */
+  /** Tests a parent or teacher wrote have a title instead of topics. */
   title: string | null;
   fromParent: boolean;
+  /** The teacher's name, for a test a teacher wrote */
+  fromTeacher: string | null;
   score: number | null;
   total: number | null;
   accuracy: number | null;
@@ -70,6 +72,16 @@ export class TestsHubPageComponent implements OnInit {
   /** Tests a parent wrote, still waiting to be taken; `answered` when one is part done on this device. */
   readonly fromParent = signal<Array<ParentTestSummary & { answered: number | null }>>([]);
   readonly fromParentError = signal('');
+  /** "From your parent", "From Ms Rao", or "From your parent and teacher" when both have set one */
+  readonly fromHeading = computed(() => {
+    const tests = this.fromParent();
+    const teachers = [...new Set(tests.filter((t) => t.author?.role === 'teacher').map((t) => authorLabel(t.author)))];
+    const parent = tests.some((t) => t.author?.role !== 'teacher');
+    if (!teachers.length) return 'From your parent';
+    if (!parent && teachers.length === 1) return `From ${teachers[0]}`;
+    return parent ? 'From your parent and teacher' : 'From your teachers';
+  });
+  readonly authorLabel = authorLabel;
   readonly opening = signal<string | null>(null);
 
   readonly filteredHistory = computed(() => {
@@ -158,6 +170,7 @@ export class TestsHubPageComponent implements OnInit {
           topics: Array.isArray(w.topics) ? w.topics : w.topicName ? [w.topicName] : [],
           title: w.title ?? null,
           fromParent: w.fromParent === true,
+          fromTeacher: typeof w.fromTeacher === 'string' ? w.fromTeacher : null,
           score: w.score ?? null,
           total: w.total ?? null,
           accuracy: w.accuracy ?? null,

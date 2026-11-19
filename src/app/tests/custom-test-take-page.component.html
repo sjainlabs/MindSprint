@@ -24,10 +24,10 @@
   <ng-container *ngIf="stage() === 'taking' && currentQuestion() as q">
     <section class="card">
       <div class="test-head">
-        <h1>{{ isReview ? '📅 Review Test' : isParentTest ? '✍️ ' + (active()?.test?.title || 'Test from your parent') : gradesLabel() ? '🎓 ' + gradesLabel() + ' Test' : '🧩 Custom Test' }}</h1>
+        <h1>{{ isReview ? '📅 Review Test' : isParentTest ? '✍️ ' + (active()?.test?.title || 'Test from ' + setBy()) : gradesLabel() ? '🎓 ' + gradesLabel() + ' Test' : '🧩 Custom Test' }}</h1>
         <button class="link-btn" (click)="saveAndExit()">Save &amp; exit</button>
       </div>
-      <p class="muted topics-line" *ngIf="isParentTest">From your parent · {{ questions().length }} question{{ questions().length === 1 ? '' : 's' }}</p>
+      <p class="muted topics-line" *ngIf="isParentTest">From {{ setBy() }} · {{ questions().length }} question{{ questions().length === 1 ? '' : 's' }}</p>
       <p class="muted topics-line" *ngIf="!isParentTest">
         {{ active()?.test?.topics?.length }} topic{{ active()?.test?.topics?.length === 1 ? '' : 's' }}:
         <ng-container *ngFor="let t of active()?.test?.topics; let last = last">{{ t.topicName }}{{ last ? '' : ', ' }}</ng-container>

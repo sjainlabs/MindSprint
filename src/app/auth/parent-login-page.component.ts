@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -10,8 +10,10 @@ import { AuthService } from '../services/auth.service';
   template: `
     <main class="page">
       <section class="card">
-        <h1>Parent Login</h1>
-        <p>Sign in with Google to create and manage student accounts.</p>
+        <h1>{{ teacher ? 'Teacher Login' : 'Parent Login' }}</h1>
+        <p>{{ teacher
+          ? 'Sign in with Google to see the students parents have shared with you.'
+          : 'Sign in with Google to create and manage student accounts.' }}</p>
         <button class="button" (click)="login()" [disabled]="loading()">
           {{ loading() ? 'Signing in...' : 'Continue with Google' }}
         </button>
@@ -36,6 +38,8 @@ import { AuthService } from '../services/auth.service';
 export class ParentLoginPageComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  /** ?role=teacher: the same Google sign-in, landing on the teacher page */
+  readonly teacher = inject(ActivatedRoute).snapshot.queryParamMap.get('role') === 'teacher';
 
   readonly loading = signal(false);
   readonly errorMessage = signal('');
@@ -47,7 +51,7 @@ export class ParentLoginPageComponent {
     try {
       const user = await this.authService.loginParentWithGoogle();
       if (user) {
-        await this.router.navigate(['/parent/dashboard']);
+        await this.router.navigate([this.teacher ? '/teacher' : '/parent/dashboard']);
       }
     } catch {
       this.errorMessage.set('Unable to sign in with Google. Please try again.');

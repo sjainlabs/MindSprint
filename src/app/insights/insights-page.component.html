@@ -95,7 +95,7 @@
 <section class="card" *ngIf="!loading() && worksheetHistory().length > 0">
 
   <h2>Worksheet &amp; test history</h2>
-  <p>Newest first. Tap View to see every question.<ng-container *ngIf="parentView"> Spotted a typo? Use ✏️ Fix typos on that row.</ng-container></p>
+  <p>Newest first. Tap View to see every question.<ng-container *ngIf="canFixTypos"> Spotted a typo? Use ✏️ Fix typos on that row.</ng-container></p>
 
   <div class="table-scroll">
   <table class="history-table">
@@ -120,8 +120,9 @@
         <td>{{ w.submittedAt | date:'short' }}</td>
         <td>
           <span class="test-badge" *ngIf="isTopicTest(w)">Test</span>
-          <span class="test-badge custom" *ngIf="isAdhocTest(w) && !w.fromParent">Custom Test</span>
+          <span class="test-badge custom" *ngIf="isAdhocTest(w) && !w.fromParent && !w.fromTeacher">Custom Test</span>
           <span class="test-badge custom" *ngIf="w.fromParent">✍️ From parent</span>
+          <span class="test-badge custom" *ngIf="w.fromTeacher">👩‍🏫 From {{ w.fromTeacher }}</span>
           {{ topicLabel(w) }}
         </td>
         <td>{{ w.level ?? '—' }}</td>
@@ -135,7 +136,7 @@
             {{ expandedRows()[w.worksheetId] ? 'Hide' : 'View' }}
           </button>
           <a
-            *ngIf="parentView"
+            *ngIf="canFixTypos"
             class="fix-link"
             routerLink="/parent/fix-answers"
             [queryParams]="{ studentId: childId, worksheetId: w.worksheetId }"

@@ -43,6 +43,9 @@ export class InsightsPageComponent implements OnInit {
   /** A logged-in parent opened ?studentId=… from their dashboard: they can fix typos, not resubmit for the kid. */
   readonly childId = this.readOnly ? null : this.route.snapshot.queryParamMap.get('studentId');
   readonly parentView = !!this.childId && this.authService.isParentLoggedIn();
+  /** A linked teacher (?view=teacher): reads like a parent, but typo fixes stay with the parent */
+  readonly teacherView = this.route.snapshot.queryParamMap.get('view') === 'teacher';
+  readonly canFixTypos = this.parentView && !this.teacherView;
   /** The kid's own correction attempts: only for the kid. */
   readonly canCorrect = !this.readOnly && !this.parentView;
   /** Wording about the child rather than "you". */

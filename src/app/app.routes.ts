@@ -20,6 +20,7 @@ import { CustomTestTakePageComponent } from './tests/custom-test-take-page.compo
 import { StudyGuidePageComponent } from './study-guides/study-guide-page.component';
 import { StudyGuideIndexPageComponent } from './study-guides/study-guide-index-page.component';
 import { parentAuthGuard } from './guards/parent-auth.guard';
+import { teacherAuthGuard } from './guards/teacher-auth.guard';
 import { studentAuthGuard } from './guards/student-auth.guard';
 import {PracticeHubComponent} from './pages/practice-hub/practice-hub.component';
 import {TopicProgressPageComponent} from './pages/topic-progress-page/topic-progress-page.component';
@@ -44,6 +45,7 @@ export const routes: Routes = [
     ],
   },
   { path: 'parent/dashboard', canActivate: [parentAuthGuard], component: ParentDashboardPageComponent },
+  { path: 'teacher', canActivate: [teacherAuthGuard], loadComponent: () => import('./teacher/teacher-dashboard-page.component').then((m) => m.TeacherDashboardPageComponent) },
   // ?studentId=…&worksheetId=… from the dashboard's Fix typos list or the parent view of insights.
   // Old link to the manual test writer, now part of the Tests module; the query string carries over.
   { path: 'parent/custom-test', redirectTo: '/tests/manual', pathMatch: 'full' },

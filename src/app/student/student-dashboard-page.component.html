@@ -1,7 +1,7 @@
 <main class="page dash">
   <div class="row-between">
-    <h1>{{ parentMode() ? '👪 Learning plan' : '🏠 My dashboard' }}</h1>
-    @if (parentLoggedIn) {
+    <h1>{{ teacherView ? '👩‍🏫 Learning plan' : parentMode() ? '👪 Learning plan' : '🏠 My dashboard' }}</h1>
+    @if (parentLoggedIn && !teacherView) {
       <div class="toggle" role="group" aria-label="Who is looking">
         <button type="button" [class.active]="!parentMode()" [attr.aria-pressed]="!parentMode()" (click)="setParentMode(false)">Kid</button>
         <button type="button" [class.active]="parentMode()" [attr.aria-pressed]="parentMode()" (click)="setParentMode(true)">Parent</button>
@@ -38,7 +38,7 @@
           <p class="muted small">
             @for (s of pl.strands; track s.strand; let last = $last) {{{ s.strand }} {{ gradeLabel(s.grade) }}{{ last ? '' : ' · ' }}}
           </p>
-          @if (pl.headlineGrade >= pl.schoolGrade + 2) {
+          @if (pl.headlineGrade >= pl.schoolGrade + 2 && !teacherView) {
             <div class="pace" role="radiogroup" aria-label="Pace">
               <button type="button" role="radio" [attr.aria-checked]="pl.pace !== 'deepen'" [class.active]="pl.pace !== 'deepen'" [disabled]="paceBusy()" (click)="setPace('accelerate')">🚀 Move ahead</button>
               <button type="button" role="radio" [attr.aria-checked]="pl.pace === 'deepen'" [class.active]="pl.pace === 'deepen'" [disabled]="paceBusy()" (click)="setPace('deepen')">🌳 Go deeper</button>
@@ -54,7 +54,7 @@
   }
 
   <!-- Outside the folded plan, so it is seen without opening it -->
-  @if (phase() === 'ready' && gradeCheckDue(); as g) {
+  @if (phase() === 'ready' && !teacherView && gradeCheckDue(); as g) {
     <section class="grade-check" aria-labelledby="grade-check-title">
       @if (!changingGrade()) {
         <p id="grade-check-title" class="grade-check-q">

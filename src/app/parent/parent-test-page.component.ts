@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { auth } from '../firebase/firebase.config';
 import {
   PARENT_TEST_MAX_QUESTIONS,
   ParentTestError,
@@ -42,13 +43,15 @@ export function parseQuestionLines(text: string): { questions: ParentTestQuestio
     <main class="page">
       @if (fromTests) {
         <a class="back" routerLink="/tests">← Tests</a>
+      } @else if (fromTeacher) {
+        <a class="back" routerLink="/teacher">← Teacher dashboard</a>
       } @else {
         <a class="back" routerLink="/parent/dashboard">← Parent dashboard</a>
       }
 
       <section class="card">
         <h1>✍️ Manual test{{ childName ? ' for ' + childName : '' }}</h1>
-        <p class="muted">Type your own questions and answers. {{ childName || 'Your child' }} will find the test on their Tests page under "From your parent".</p>
+        <p class="muted">Type your own questions and answers. {{ childName || (fromTeacher ? 'Your student' : 'Your child') }} will find the test on their Tests page{{ fromTeacher ? ', with your name on it' : ' under "From your parent"' }}.</p>
       </section>
 
       @if (sent(); as s) {
@@ -128,14 +131,18 @@ export function parseQuestionLines(text: string): { questions: ParentTestQuestio
               <li>
                 <div class="written-main">
                   <strong>{{ t.title }}</strong>
-                  <span class="muted">{{ t.questionCount }} question{{ t.questionCount === 1 ? '' : 's' }} · written {{ t.createdAt | date: 'd MMM' }}</span>
+                  <span class="muted">{{ t.questionCount }} question{{ t.questionCount === 1 ? '' : 's' }} · written {{ t.createdAt | date: 'd MMM' }}{{ t.author?.role === 'teacher' ? ' by ' + (t.author.uid === myUid ? 'you' : t.author.name || 'a teacher') : fromTeacher ? ' by the parent' : '' }}</span>
                 </div>
                 @if (t.status === 'submitted') {
                   <span class="score">{{ t.accuracy }}% <span class="muted">{{ t.score }}/{{ t.total }}</span></span>
-                  <a class="btn small" routerLink="/parent/fix-answers" [queryParams]="{ studentId: studentId, worksheetId: t.testId }">Answers &amp; typos</a>
+                  @if (!fromTeacher) {
+                    <a class="btn small" routerLink="/parent/fix-answers" [queryParams]="{ studentId: studentId, worksheetId: t.testId }">Answers &amp; typos</a>
+                  }
                 } @else {
                   <span class="tag waiting">Waiting</span>
-                  <button type="button" class="btn small" [disabled]="deleting() === t.testId" (click)="removeTest(t)">Delete</button>
+                  @if (!fromTeacher || t.author?.uid === myUid) {
+                    <button type="button" class="btn small" [disabled]="deleting() === t.testId" (click)="removeTest(t)">Delete</button>
+                  }
                 }
               </li>
             }
@@ -179,6 +186,10 @@ export class ParentTestPageComponent implements OnInit {
   readonly childName = this.route.snapshot.queryParamMap.get('name') ?? '';
   /** Opened from the Tests page (?from=tests) rather than the parent dashboard. */
   readonly fromTests = this.route.snapshot.queryParamMap.get('from') === 'tests';
+  /** Opened from the teacher page: back goes there, and typo fixes stay with the parent */
+  readonly fromTeacher = this.route.snapshot.queryParamMap.get('from') === 'teacher';
+  /** Teachers can delete only the tests they wrote */
+  readonly myUid = auth.currentUser?.uid ?? '';
   readonly max = PARENT_TEST_MAX_QUESTIONS;
 
   private nextKey = 1;

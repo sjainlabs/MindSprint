@@ -13,6 +13,7 @@ import {
   AdhocTopicScore,
   ActiveTestSlot,
 } from '../services/adhoc-test.service';
+import { AssignedTest, authorLabel } from '../services/parent-test.service';
 import { LearningPlanService, shortDate } from '../services/learning-plan.service';
 import { TestApiError } from '../services/test-api-error';
 import { QuestionRendererComponent } from '../question-renderer/question-renderer.component';
@@ -42,6 +43,11 @@ export class CustomTestTakePageComponent implements OnInit {
   readonly isReview = this.routeData['review'] === true;
   /** A test a parent wrote (route data `parentTest: true`): their title, no topics and no retake. */
   readonly isParentTest = this.routeData['parentTest'] === true;
+
+  /** "your parent" or the teacher's name, for a hand-written test */
+  setBy(): string {
+    return authorLabel((this.active()?.test as AssignedTest | undefined)?.author);
+  }
   private readonly slot: ActiveTestSlot = this.isReview ? 'review' : this.isParentTest ? 'parent' : 'adhoc';
   /** From the review test result: when the next one is due. */
   readonly nextReviewDate = signal<string | null>(null);

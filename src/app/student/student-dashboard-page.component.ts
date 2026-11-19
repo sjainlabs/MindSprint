@@ -61,7 +61,7 @@ export class StudentDashboardPageComponent implements OnInit {
     const review = p?.reviewTest.current.status;
     if (review === 'open' || review === 'overdue') return 'Review test due';
     const fromParent = this.fromParentCount();
-    if (fromParent) return `${fromParent} from parent`;
+    if (fromParent) return `${fromParent} set for you`;
     if (!p) return '';
     const ready = new Set([...p.strengths, ...p.focusAreas].filter((t) => t.testState === 'eligible').map((t) => t.topicId));
     return ready.size ? `${ready.size} ready` : '';
@@ -72,6 +72,8 @@ export class StudentDashboardPageComponent implements OnInit {
   /** A parent who is logged in can switch views; the kid never sees the switch. */
   readonly parentLoggedIn = this.auth.isParentLoggedIn();
   /** Starting sheets and tests only makes sense for the child signed in on this device. */
+  /** A teacher opened the plan from their page: the grown-up view, without the parent's pace and grade controls */
+  readonly teacherView = this.route.snapshot.queryParamMap.get('view') === 'teacher';
   readonly canAct = computed(() => this.studentId() === (this.auth.getStoredStudentId() ?? ''));
 
   /** The plan folds into one row; kids open it when they want it, parents see it open. */
@@ -102,7 +104,7 @@ export class StudentDashboardPageComponent implements OnInit {
     const query = this.route.snapshot.queryParamMap;
     const fromQuery = query.get('studentId');
     this.studentId.set(fromQuery ?? this.auth.getStoredStudentId() ?? '');
-    this.parentMode.set(query.get('view') === 'parent' || (!!fromQuery && this.parentLoggedIn && !this.canAct()));
+    this.parentMode.set(this.teacherView || query.get('view') === 'parent' || (!!fromQuery && this.parentLoggedIn && !this.canAct()));
     if (!this.studentId()) {
       this.router.navigate(['/auth/access-code']);
       return;

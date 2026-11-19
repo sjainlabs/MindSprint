@@ -11,6 +11,7 @@ import { AddStudentModalComponent, AddStudentPayload } from './add-student-modal
 import { EditChildModalComponent, EditChildPayload } from './edit-child-modal.component';
 import { AccessCodeModalComponent } from './access-code-modal.component';
 import { AnalystCodeModalComponent } from './analyst-code-modal.component';
+import { TeachersModalComponent } from './teachers-modal.component';
 
 interface DashboardStudent {
   id: string;
@@ -30,6 +31,7 @@ interface DashboardStudent {
     EditChildModalComponent,
     AccessCodeModalComponent,
     AnalystCodeModalComponent,
+    TeachersModalComponent,
     RouterLink,
   ],
   template: `
@@ -63,6 +65,7 @@ interface DashboardStudent {
               <div class="menu-list" role="menu">
                 <button role="menuitem" (click)="menu.open = false; openEdit(student)">✏️ Edit child</button>
                 <button role="menuitem" (click)="menu.open = false; generateAccessCode(student)">🔑 New login code</button>
+                <button role="menuitem" (click)="menu.open = false; teachersFor.set(student)">👩‍🏫 Teachers</button>
                 <button role="menuitem" (click)="menu.open = false; sharingStudent.set(student)">🔗 Share with analyst</button>
               </div>
             </details>
@@ -114,6 +117,13 @@ interface DashboardStudent {
         *ngIf="activeAccessCode()"
         [code]="activeAccessCode()!"
         (closed)="activeAccessCode.set('')"
+      />
+
+      <app-teachers-modal
+        *ngIf="teachersFor()"
+        [studentId]="teachersFor()!.id"
+        [studentName]="teachersFor()!.name"
+        (closed)="teachersFor.set(null)"
       />
 
       <app-analyst-code-modal
@@ -175,6 +185,8 @@ export class ParentDashboardPageComponent implements OnInit {
   readonly activeAccessCode = signal('');
   /** The child whose analyst code is being shown. */
   readonly sharingStudent = signal<DashboardStudent | null>(null);
+  /** The child whose teachers are being shown. */
+  readonly teachersFor = signal<DashboardStudent | null>(null);
   readonly studentCount = computed(() => this.students().length);
 
   ngOnInit(): void {

@@ -8,9 +8,17 @@ import { TestApiError, toTestApiError } from './test-api-error';
 
 /* ---------------- Types (mirror /api/tests/parent-tests and /api/tests/assigned) ---------------- */
 
+/** Who wrote a hand-written test: the child's parent or a linked teacher (with their name) */
+export interface TestAuthor {
+  role: 'parent' | 'teacher';
+  uid: string;
+  name: string;
+}
+
 export interface ParentTestSummary {
   testId: string;
   title: string;
+  author: TestAuthor;
   questionCount: number;
   createdAt: string;
   status: 'open' | 'submitted';
@@ -29,16 +37,22 @@ export interface ParentTestDetail extends ParentTestSummary {
   questions: Array<{ id: string; prompt: string; answer: string }>;
 }
 
-/** A test from a parent, ready to take: the custom test shape plus its title. */
-export type AssignedTest = AdhocTest & { title: string; fromParent: true };
+/** A test from a parent or teacher, ready to take: the custom test shape plus its title and author. */
+export type AssignedTest = AdhocTest & { title: string; fromParent: true; author?: TestAuthor };
 
-export type ParentTestErrorCode = 'INVALID_REQUEST' | 'NOT_FOUND' | 'ALREADY_SUBMITTED';
+/** "your parent", or the teacher's name ("Ms Rao"), for showing the child who set a test */
+export function authorLabel(author: TestAuthor | undefined): string {
+  if (author?.role === 'teacher') return author.name || 'your teacher';
+  return 'your parent';
+}
+
+export type ParentTestErrorCode = 'INVALID_REQUEST' | 'NOT_FOUND' | 'ALREADY_SUBMITTED' | 'FORBIDDEN';
 export type ParentTestError = TestApiError<ParentTestErrorCode>;
 
 export const PARENT_TEST_MAX_QUESTIONS = 50;
 
 /**
- * Tests a parent types in for one child. Writing, listing and deleting need the parent's Firebase
+ * Tests a parent or linked teacher types in for one child. Writing, listing and deleting need their Firebase
  * ID token; the child lists and opens waiting tests by student id, and submits them as custom tests.
  */
 @Injectable({ providedIn: 'root' })
