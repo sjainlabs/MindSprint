@@ -3,6 +3,7 @@
   <h2>Enter Access Code</h2>
 
   <section class="card">
+    <p class="notice" *ngIf="sessionExpired" role="status">🔒 Please enter your access code again to keep going. Your work is all saved.</p>
     <p class="subtitle">Enter your 6-character student access code to begin. Got an 8-character analyst code? It works here too.</p>
 
     <input

@@ -70,3 +70,12 @@
   font-size: 0.9rem;
   font-weight: 600;
 }
+
+.notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 600;
+}

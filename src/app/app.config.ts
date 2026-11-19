@@ -5,11 +5,12 @@ import { provideRouter, withHashLocation } from '@angular/router';
 import { routes } from './app.routes';
 import { rewardsRefreshInterceptor } from './services/rewards-refresh.interceptor';
 import { analystInterceptor } from './analyst/analyst.interceptor';
+import { studentAccessInterceptor } from './services/student-access.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withHashLocation()),
-    provideHttpClient(withInterceptors([analystInterceptor, rewardsRefreshInterceptor])),
+    provideHttpClient(withInterceptors([studentAccessInterceptor, analystInterceptor, rewardsRefreshInterceptor])),
   ]
 };

@@ -64,7 +64,9 @@
       }
     </div>
     @if (!readOnly()) {
-      <a class="link small" [href]="calendarUrl()" target="_blank" rel="noopener">📆 Add to calendar</a>
+      @if (calendarUrl()) {
+        <a class="link small" [href]="calendarUrl()" target="_blank" rel="noopener">📆 Add to calendar</a>
+      }
     }
   </div>
 

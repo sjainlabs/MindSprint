@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { SESSION_EXPIRED_QUERY } from '../services/student-access.interceptor';
 import { AuthService } from '../services/auth.service';
 import { PlacementService } from '../services/placement.service';
 import { ANALYST_CODE_LENGTH } from '../analyst/analyst-code';
@@ -22,6 +23,8 @@ export class AccessCodePageComponent {
 
   code = '';
   errorMessage = '';
+  /** Sent back here because the login needs renewing (?expired=1) */
+  readonly sessionExpired = inject(ActivatedRoute).snapshot.queryParamMap.has(SESSION_EXPIRED_QUERY);
   isValid = false;
 
   /**

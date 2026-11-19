@@ -59,11 +59,14 @@ interface StudentCodeLookup {
   avatar?: string | null;
   loginCode?: string;
   createdAt?: string | null;
+  /** Proves to the backend that requests about this child come from the child (sent as X-Student-Session) */
+  sessionToken?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly studentStorageKey = 'studentId';
+  private readonly studentSessionStorageKey = 'studentSession';
   private readonly parentProfilesStorageKey = 'parentProfiles';
   private readonly studentProfilesStorageKey = 'studentProfiles';
   // private readonly parentRedirectPendingStorageKey = 'parent-google-redirect-pending';
@@ -279,11 +282,18 @@ export class AuthService {
       createdAt: response.createdAt,
     });
     this.setStudentId(student.id);
+    if (response.sessionToken && this.hasStorage()) window.localStorage.setItem(this.studentSessionStorageKey, response.sessionToken);
     return student;
   }
 
   logoutStudent(): void {
     this.clearStudentId();
+    if (this.hasStorage()) window.localStorage.removeItem(this.studentSessionStorageKey);
+  }
+
+  /** The child's session from their access-code login, or null (a parent viewing, or logged out) */
+  getStudentSession(): string | null {
+    return this.hasStorage() ? window.localStorage.getItem(this.studentSessionStorageKey) : null;
   }
 
   // -------------------------------------------------------

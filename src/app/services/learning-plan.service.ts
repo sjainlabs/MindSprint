@@ -244,8 +244,13 @@ export class LearningPlanService {
     return this.call(this.http.post<ReviewTestResult>(`${this.apiBase}/review-test/submit`, payload));
   }
 
-  calendarUrl(studentId: string): string {
-    return `${this.apiBase}/${encodeURIComponent(studentId)}/review-tests.ics`;
+  /**
+   * The review-test calendar link. The browser opens it without the app's headers, so it carries its
+   * own token, which opens only the calendar.
+   */
+  async calendarUrl(studentId: string): Promise<string> {
+    const { path } = await this.call(this.http.get<{ path: string }>(`${this.apiBase}/${encodeURIComponent(studentId)}/calendar-link`));
+    return `${environment.apiUrl.replace(/\/api\/?$/, '')}${path}`;
   }
 
   setGrade(studentId: string, grade: string): void {

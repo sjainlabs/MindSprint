@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, computed, inject, input, signal } from '@angular/core';
+import { Component, EventEmitter, Output, computed, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AdhocTestService } from '../services/adhoc-test.service';
 import {
@@ -44,7 +44,16 @@ export class ReviewTestCardComponent {
   readonly weekdays = WEEKDAYS;
   readonly statusLabels = STATUS_LABELS;
   readonly shortDate = shortDate;
-  readonly calendarUrl = computed(() => this.api.calendarUrl(this.studentId()));
+  /** Fetched ahead, so the link opens straight away (a link opened after waiting can be blocked as a pop-up) */
+  readonly calendarUrl = signal('');
+
+  constructor() {
+    effect(() => {
+      const studentId = this.studentId();
+      this.calendarUrl.set('');
+      this.api.calendarUrl(studentId).then((url) => this.calendarUrl.set(url), () => this.calendarUrl.set(''));
+    });
+  }
 
   readonly countdown = computed(() => {
     const d = this.current().daysUntil;
