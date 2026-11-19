@@ -13,6 +13,46 @@
     <app-rewards-bar />
   }
 
+  <!-- Placement: offered until done; afterwards, where it placed the kid -->
+  @if (phase() === 'ready' && plan(); as p) {
+    @if (!p.placement && canAct() && !parentMode()) {
+      <div class="placement-card">
+        <a routerLink="/placement" class="placement-link">
+          <span class="tile-icon" aria-hidden="true">🧭</span>
+          <span class="tile-text">
+            <span class="tile-name">Find my skill band</span>
+            <span class="tile-hint">About 20 questions, no timer. Your plan starts from what you show.</span>
+          </span>
+          <span class="go" aria-hidden="true">→</span>
+        </a>
+        <app-skill-band-info />
+      </div>
+    } @else if (p.placement; as pl) {
+      <section class="placed" aria-label="Placement">
+        <p class="placed-line">
+          🧭 School Grade {{ gradeLabel(pl.schoolGrade) }} · skill band <strong>Grade {{ gradeLabel(pl.headlineGrade) }}</strong>
+          <app-skill-band-info label="the skill band" />
+          @if (pl.pace === 'deepen' && pl.headlineGrade > pl.schoolGrade + 1) { <span class="muted">(going deeper near Grade {{ gradeLabel(pl.schoolGrade + 1) }})</span> }
+        </p>
+        @if (parentMode()) {
+          <p class="muted small">
+            @for (s of pl.strands; track s.strand; let last = $last) {{{ s.strand }} {{ gradeLabel(s.grade) }}{{ last ? '' : ' · ' }}}
+          </p>
+          @if (pl.headlineGrade >= pl.schoolGrade + 2) {
+            <div class="pace" role="radiogroup" aria-label="Pace">
+              <button type="button" role="radio" [attr.aria-checked]="pl.pace !== 'deepen'" [class.active]="pl.pace !== 'deepen'" [disabled]="paceBusy()" (click)="setPace('accelerate')">🚀 Move ahead</button>
+              <button type="button" role="radio" [attr.aria-checked]="pl.pace === 'deepen'" [class.active]="pl.pace === 'deepen'" [disabled]="paceBusy()" (click)="setPace('deepen')">🌳 Go deeper</button>
+            </div>
+            <p class="muted small">{{ pl.pace === 'deepen' ? 'Stays within a grade of school, with harder bands and word problems.' : 'Works at the placed grade, ahead of school.' }}</p>
+          }
+        }
+        @if (canAct()) {
+          <a routerLink="/placement" [queryParams]="{ restart: 1 }" class="link small">Find my skill band again</a>
+        }
+      </section>
+    }
+  }
+
   <!-- Outside the folded plan, so it is seen without opening it -->
   @if (phase() === 'ready' && gradeCheckDue(); as g) {
     <section class="grade-check" aria-labelledby="grade-check-title">

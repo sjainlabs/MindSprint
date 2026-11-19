@@ -12,6 +12,8 @@ import {
 import { GradePickerComponent } from '../components/grade-picker/grade-picker.component';
 import { PlanActions } from './plan-actions';
 import { ParentTestService } from '../services/parent-test.service';
+import { PlacementPace, PlacementService } from '../services/placement.service';
+import { SkillBandInfoComponent } from '../placement/skill-band-info.component';
 import { PlanViewComponent } from './plan-view.component';
 import { RewardsBarComponent } from '../rewards/rewards-bar.component';
 
@@ -26,7 +28,7 @@ const PLAN_OPEN_KEY = 'mindsprint.plan.open';
 @Component({
   selector: 'app-student-dashboard-page',
   standalone: true,
-  imports: [RouterLink, GradePickerComponent, PlanViewComponent, RewardsBarComponent],
+  imports: [RouterLink, GradePickerComponent, PlanViewComponent, RewardsBarComponent, SkillBandInfoComponent],
   templateUrl: './student-dashboard-page.component.html',
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './student-dashboard-page.component.css'],
 })
@@ -35,6 +37,7 @@ export class StudentDashboardPageComponent implements OnInit {
   private readonly api = inject(LearningPlanService);
   private readonly daily = inject(DailyChallengeService);
   private readonly parentTests = inject(ParentTestService);
+  private readonly placement = inject(PlacementService);
   private readonly actions = inject(PlanActions);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -166,6 +169,21 @@ export class StudentDashboardPageComponent implements OnInit {
   });
   readonly changingGrade = signal(false);
   readonly gradeLabel = gradeLabel;
+
+  readonly paceBusy = signal(false);
+
+  /** Parents: move ahead to the placed grade, or stay near school and go deeper. */
+  async setPace(pace: PlacementPace): Promise<void> {
+    this.paceBusy.set(true);
+    try {
+      await this.placement.setPace(this.studentId(), pace);
+      await this.load(true);
+    } catch (err) {
+      this.error.set((err as LearningPlanError).message);
+    } finally {
+      this.paceBusy.set(false);
+    }
+  }
 
   async confirmGrade(): Promise<void> {
     const check = this.gradeCheckDue();

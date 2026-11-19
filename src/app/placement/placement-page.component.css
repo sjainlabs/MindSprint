@@ -1,0 +1,43 @@
+.placement { max-width: 720px; }
+/* The global reset makes headings normal weight. */
+.placement h1, .placement h2 { font-weight: 800; margin: 0; }
+.placement h2 { font-size: 1.05rem; }
+.small { font-size: 0.85rem; }
+.center-text { text-align: center; }
+.big-emoji { font-size: 3rem; line-height: 1; }
+.intro { justify-items: start; }
+.facts { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; color: #334155; }
+.actions.row { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.btn.big { flex: 1; }
+.link-btn { background: none; border: 0; color: #4338ca; font-weight: 700; cursor: pointer; padding: 8px 0; justify-self: center; }
+
+/* Strand tiles */
+.tiles { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.tile { gap: 10px; border: 2px solid transparent; }
+.tile.set { border-color: #c7d2fe; }
+.tile-head { display: flex; align-items: center; gap: 12px; }
+.tile-head p { margin: 2px 0 0; }
+.tile-emoji { font-size: 1.6rem; line-height: 1; flex: none; }
+.choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.choice { border: 1px solid #cbd5e1; background: #fff; border-radius: 12px; padding: 8px 6px; min-height: 48px; font: inherit; font-size: 0.85rem; font-weight: 700; color: #334155; cursor: pointer; }
+.choice.active { background: #4338ca; border-color: #4338ca; color: #fff; }
+.choice:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+@media (max-width: 520px) { .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ahead { border: 2px solid #fde68a; background: #fffbeb; }
+.ahead-toggle { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.ahead-toggle input { width: 20px; height: 20px; margin-top: 2px; }
+.start-bar { justify-items: stretch; }
+
+/* Questions */
+.q-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.progress-bar { height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: #6366f1; transition: width 0.3s ease; }
+.feedback { margin: 0; font-weight: 800; color: #b45309; text-align: center; }
+.feedback.right { color: #15803d; }
+
+/* Result */
+.result p { margin: 0; }
+.strands { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.strands li { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e2e8f0; padding: 6px 0; }
+.strand-name { flex: 1; font-weight: 700; color: #1e293b; }
+.strand-grade { font-weight: 800; color: #4338ca; white-space: nowrap; }

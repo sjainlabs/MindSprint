@@ -98,9 +98,6 @@
         <button type="button" class="link-btn" (click)="clearSearch()">Back to Grade {{ gradeLabel(selectedGrade()) }}</button>
       </p>
 
-      <div *ngIf="selectedTopics().length > 0" class="grade-lock-banner">
-        You are practicing Grade {{ selectedTopics()[0].cbseGrade }} topics.
-      </div>
 
       <p class="hint" *ngIf="selectedGrade() === null">
         Select a grade first.
@@ -111,18 +108,14 @@
       </p>
 
       <div class="topic-grid friendly-grid" *ngIf="filteredTopics().length > 0">
-        <div
-          class="topic-wrapper"
-          *ngFor="let topic of filteredTopics()"
-          [class.cross-grade]="selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade"
-        >
+        <div class="topic-wrapper" *ngFor="let topic of filteredTopics()">
           <app-practice-card
             [topic]="topic"
             [selected]="isTopicSelected(topic.id)"
             [progress]="topic.progress || 0"
             [guideLink]="'/study-guides/topic/' + topic.id"
-            (toggle)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && selectTopic(topic)"
-            (start)="! (selectedTopics().length > 0 && topic.cbseGrade !== selectedTopics()[0].cbseGrade) && startPractice(topic)"
+            (toggle)="selectTopic(topic)"
+            (start)="startPractice(topic)"
           >
             <app-topic-test-card
               [topicStatus]="topicTests.statusFor(topic.id) ?? topicTests.notStartedStatus(topic.id, topic.name)"
@@ -134,14 +127,25 @@
       </div>
 
 
-      <p class="selected-count" *ngIf="selectedTopics().length > 0">
-        {{ selectedTopics().length }}
-        topic{{ selectedTopics().length === 1 ? '' : 's' }} selected
-      </p>
     </section>
 
-    <!-- Question Count + Generate -->
-    <section class="card" *ngIf="selectedTopics().length > 0">
+    <!-- Picked topics (from any grade or band) + Question Count + Generate -->
+    <section class="card picked" *ngIf="selectedTopics().length > 0">
+      <div class="picked-head">
+        <h3>Your worksheet: {{ selectedTopics().length }} topic{{ selectedTopics().length === 1 ? '' : 's' }}</h3>
+        <button type="button" class="link-btn" (click)="clearSelected()">Clear all</button>
+      </div>
+      <ul class="picked-list">
+        <li *ngFor="let t of selectedTopics()">
+          <span class="picked-name">{{ t.name }}</span>
+          <span class="picked-meta">Grade {{ gradeLabel(t.cbseGrade) }}{{ t.band ? ' · Band ' + t.band : '' }} · {{ t.practiceLevel }}</span>
+          <button type="button" class="picked-remove" (click)="removeSelected(t.id)" [attr.aria-label]="'Remove ' + t.name">✕</button>
+        </li>
+      </ul>
+      <p class="hint">
+        {{ isMixed() ? 'A mixed worksheet: questions from every topic above, whatever their grade or band.' : 'Pick more topics from any grade (switch grades or search); they all go on one worksheet.' }}
+      </p>
+
       <h3>Number of Questions</h3>
 
       <input

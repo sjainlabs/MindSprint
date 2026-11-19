@@ -14,6 +14,7 @@ import { AuthService } from '../services/auth.service';
 import { OnboardingFlowService } from '../services/onboarding-flow.service';
 import { type EnhancedTopic } from '../services/practice-config.service';
 import { HoursMinutesPipe, describeDuration } from '../shared/utils/duration';
+import { worksheetLevel } from '../shared/utils/practice-level';
 import { AppMascotComponent } from '../shared/components/app-mascot/app-mascot.component';
 import { AppRewardStarsComponent } from '../shared/components/app-reward-stars/app-reward-stars.component';
 import { triggerConfetti } from '../shared/utils/confetti';
@@ -123,9 +124,9 @@ export class WorksheetPageComponent implements OnInit {
 
   readonly selectedLevel = computed(() => {
     const topicsArray = this.selectedTopicsArray();
-    // If using new format, get level from first topic
+    // Topics from different grades or levels make a mixed sheet
     if (topicsArray.length > 0) {
-      return topicsArray[0].practiceLevel;
+      return worksheetLevel(topicsArray);
     }
 
     // Fallback to old format

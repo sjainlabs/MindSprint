@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { PlacementService } from '../services/placement.service';
 import { ANALYST_CODE_LENGTH } from '../analyst/analyst-code';
 
 /** Students log in with 6 characters; an 8-character code is one a parent shared with an analyst. */
@@ -17,6 +18,7 @@ import { CommonModule } from '@angular/common';
 export class AccessCodePageComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly placement = inject(PlacementService);
 
   code = '';
   errorMessage = '';
@@ -49,7 +51,9 @@ export class AccessCodePageComponent {
 
     try {
       const student = await this.auth.loginStudentWithCode(this.code);
-      this.router.navigate(['/student/dashboard']);
+      // First time in: find their level before the home page (they can skip it there)
+      const placement = await this.placement.get(student.id).catch(() => null);
+      this.router.navigate([placement?.status === 'not-started' ? '/placement' : '/student/dashboard']);
     } catch (err: any) {
       this.errorMessage = err?.message ?? 'Invalid access code.';
     }

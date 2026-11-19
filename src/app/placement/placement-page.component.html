@@ -1,0 +1,153 @@
+<main class="page placement">
+  @switch (stage()) {
+    @case ('loading') {
+      <section class="card center" aria-busy="true"><div class="spinner"></div><p class="muted">Loading…</p></section>
+    }
+
+    @case ('error') {
+      <section class="card">
+        <h1>Something went wrong</h1>
+        <p class="notice error" role="alert">{{ error() }}</p>
+        <div class="actions row">
+          <button type="button" class="btn primary" (click)="load()">Try again</button>
+          <a class="btn" routerLink="/student/dashboard">Go to my home</a>
+        </div>
+      </section>
+    }
+
+    @case ('grade') {
+      <section class="card">
+        <h1>🧭 Find my skill band <app-skill-band-info /></h1>
+        <p class="muted">First, which grade are you in at school?</p>
+        <app-grade-picker [busy]="busy()" (picked)="pickGrade($event)" />
+      </section>
+    }
+
+    @case ('intro') {
+      <section class="card intro">
+        <div class="big-emoji" aria-hidden="true">🧭</div>
+        <h1>Find my skill band <app-skill-band-info /></h1>
+        <p>Tell us which parts of maths feel easy and which are new, then try about 20 questions. We'll find the grade you're really working at in each part.</p>
+        <ul class="facts">
+          <li>⏱️ About 10 minutes, and there's no timer</li>
+          <li>🎯 Questions get harder when you get them right, and easier when you don't. Getting some wrong is normal!</li>
+          <li>🗺️ Your learning plan and Daily Challenge start from what you show here</li>
+        </ul>
+        <div class="actions row">
+          <button type="button" class="btn primary big" (click)="stage.set('tiles')">Let's go</button>
+        </div>
+        <button type="button" class="link-btn" [disabled]="busy()" (click)="skip()">Skip for now</button>
+      </section>
+    }
+
+    @case ('tiles') {
+      <section class="card">
+        <h1>How do these feel?</h1>
+        <p class="muted">Tap one for each. It's fine to guess, the questions will check.</p>
+      </section>
+
+      <ul class="tiles">
+        @for (t of tiles(); track t.strand) {
+          <li class="card tile" [class.set]="!!reports()[t.strand]">
+            <div class="tile-head">
+              <span class="tile-emoji" aria-hidden="true">{{ emoji(t.strand) }}</span>
+              <div>
+                <h2>{{ t.strand }}</h2>
+                <p class="muted small">e.g. {{ t.examples.join(', ') }}</p>
+              </div>
+            </div>
+            <div class="choices" role="radiogroup" [attr.aria-label]="t.strand">
+              @for (o of options; track o.value) {
+                <button type="button" role="radio" class="choice" [class.active]="reports()[t.strand] === o.value"
+                        [attr.aria-checked]="reports()[t.strand] === o.value" (click)="setReport(t.strand, o.value)">
+                  <span aria-hidden="true">{{ o.emoji }}</span> {{ o.label }}
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+
+      @if (allKnown()) {
+        <section class="card ahead">
+          <label class="ahead-toggle">
+            <input type="checkbox" [checked]="ahead()" (change)="ahead.set($any($event.target).checked)" />
+            <span><strong>These are all easy for me.</strong> Start with harder topics.</span>
+          </label>
+          @if (ahead()) {
+            <p class="muted small">Like: {{ tiles()[0]?.harderExamples?.join(', ') }}…</p>
+          }
+        </section>
+      }
+
+      <section class="card start-bar">
+        <p class="muted small">{{ answeredTiles() }} of {{ tiles().length }} picked{{ answeredTiles() < tiles().length ? '. The rest count as "learning it now".' : '' }}</p>
+        <button type="button" class="btn primary big" [disabled]="busy()" (click)="begin()">{{ busy() ? 'Getting ready…' : 'Start the questions' }}</button>
+        <button type="button" class="link-btn" [disabled]="busy()" (click)="skip()">Skip for now</button>
+      </section>
+    }
+
+    @case ('question') {
+      @if (question(); as q) {
+        <section class="card">
+          <div class="q-top">
+            <span class="tag">{{ emoji(q.strand) }} {{ q.strand }}</span>
+            <span class="muted small">Question {{ (view()?.asked ?? 0) + 1 }}</span>
+          </div>
+          <div class="progress-bar" role="progressbar" [attr.aria-valuenow]="progress()" aria-valuemin="0" aria-valuemax="100" aria-label="Progress">
+            <div class="progress-fill" [style.width.%]="progress()"></div>
+          </div>
+
+          <app-question-renderer [question]="asRendererQuestion(q)" [answer]="answer()" (answerChange)="setAnswer($event)" (keydown.enter)="submit()" />
+
+          @if (feedback() !== null) {
+            <p class="feedback" [class.right]="feedback()" role="status">{{ feedback() ? '✓ Nice!' : 'Not quite, keep going!' }}</p>
+          }
+          <div class="actions row">
+            <button type="button" class="btn primary big" [disabled]="busy() || !answer().trim()" (click)="submit()">Next</button>
+          </div>
+          <p class="muted small center-text">Don't know? Type your best guess, it's fine.</p>
+        </section>
+      }
+    }
+
+    @case ('result') {
+      @if (result(); as r) {
+        <section class="card center result">
+          <div class="big-emoji" aria-hidden="true">{{ comparison() === 'ahead' ? '🚀' : comparison() === 'behind' ? '🌱' : '🌟' }}</div>
+          <h1>Your skill band: Grade {{ gradeLabel(r.headlineGrade) }}</h1>
+          <p>
+            @switch (comparison()) {
+              @case ('ahead') { That's ahead of your school grade ({{ gradeLabel(r.schoolGrade) }}). Your plan starts there. }
+              @case ('behind') { We'll build up the basics first, then catch up to Grade {{ gradeLabel(r.schoolGrade) }}. }
+              @default { Right where your school grade is. }
+            }
+          </p>
+          <p class="muted small">{{ r.correct }} of {{ r.questions }} right</p>
+        </section>
+
+        <section class="card">
+          <h2>Skill band by part of maths</h2>
+          <ul class="strands">
+            @for (s of r.strands; track s.strand) {
+              <li>
+                <span class="tile-emoji" aria-hidden="true">{{ emoji(s.strand) }}</span>
+                <span class="strand-name">{{ s.strand }}</span>
+                <span class="strand-grade">Grade {{ gradeLabel(s.grade) }}</span>
+              </li>
+            }
+          </ul>
+          @if (r.goals.length) {
+            <p class="muted small">✨ Goals: {{ r.goals.join(', ') }}. Your plan brings these in first.</p>
+          }
+        </section>
+
+        <section class="card">
+          <div class="actions row">
+            <a class="btn primary big" routerLink="/student/dashboard">Go to my plan</a>
+          </div>
+        </section>
+      }
+    }
+  }
+</main>

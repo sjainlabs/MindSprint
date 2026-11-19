@@ -46,3 +46,14 @@
 .grade-check-q { margin: 0; font-weight: 700; color: #78350f; }
 .grade-check-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .grade-check .muted { margin: 0; }
+
+/* Placement: the offer, then where it placed the kid */
+.placement-card { display: flex; align-items: center; gap: 10px; border-radius: 16px; padding: 12px 14px 12px 16px; background: linear-gradient(120deg, #ecfeff, #eef2ff); border: 2px solid #a5f3fc; }
+.placement-link { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; text-decoration: none; color: #0f172a; padding: 4px 0; }
+.placement-card .go { font-size: 1.4rem; font-weight: 800; color: #0e7490; }
+.placed { display: grid; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; }
+.placed p { margin: 0; }
+.placed-line { color: #1e293b; }
+.pace { display: inline-flex; background: #f1f5f9; border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; }
+.pace button { border: 0; background: none; padding: 6px 12px; border-radius: 10px; font-weight: 800; color: #475569; cursor: pointer; min-height: 36px; }
+.pace button.active { background: #fff; color: #1e1b4b; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15); }

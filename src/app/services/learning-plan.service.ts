@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import type { PlacementSummary } from './placement.service';
 import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -151,6 +152,8 @@ export interface LearningPlan {
   reviewTest: ReviewSchedule;
   /** The grade the plan was built for; `due` every 3 months to ask "still in this grade?". */
   gradeCheck?: GradeCheck;
+  /** The last placement check, or null before one is done. */
+  placement?: PlacementSummary | null;
 }
 
 export interface GradeCheck {

@@ -50,6 +50,8 @@ export const routes: Routes = [
   { path: 'parent/fix-answers', canActivate: [parentAuthGuard], loadComponent: () => import('./parent/fix-answers-page.component').then((m) => m.FixAnswersPageComponent) },
   // The learning plan. Parents open it from their dashboard with ?studentId=…, which the guard allows.
   { path: 'student/dashboard', canActivate: [studentAuthGuard], loadComponent: () => import('./student/student-dashboard-page.component').then((m) => m.StudentDashboardPageComponent) },
+  // First-time placement check (?restart=1 runs it again).
+  { path: 'placement', canActivate: [studentAuthGuard], loadComponent: () => import('./placement/placement-page.component').then((m) => m.PlacementPageComponent) },
   { path: 'student/topics', canActivate: [studentAuthGuard], loadComponent: () => import('./student/plan-topics-page.component').then((m) => m.PlanTopicsPageComponent) },
   { path: 'onboarding/grade-selection', canActivate: [studentAuthGuard], component: GradeSelectionPageComponent },
   { path: 'onboarding/topic-selection', canActivate: [studentAuthGuard], component: TopicSelectionPageComponent },

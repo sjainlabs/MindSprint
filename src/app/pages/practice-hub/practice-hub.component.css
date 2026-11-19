@@ -401,20 +401,14 @@
     flex: 1 1 100%;
   }
 }
-.topic-wrapper.cross-grade {
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-.grade-lock-banner {
-  background: #eef;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
 
 
 
 
+/* Picked topics: any mix of grades and bands on one sheet */
+.picked-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.picked-list { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.picked-list li { display: inline-flex; align-items: center; gap: 8px; background: #eef2ff; border-radius: 999px; padding: 4px 4px 4px 12px; max-width: 100%; }
+.picked-name { font-weight: 700; color: #1e1b4b; overflow-wrap: anywhere; }
+.picked-meta { font-size: 0.75rem; color: #4338ca; white-space: nowrap; }
+.picked-remove { border: 0; background: #fff; border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-weight: 800; color: #475569; flex: none; }
