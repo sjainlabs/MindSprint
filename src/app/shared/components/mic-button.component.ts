@@ -31,6 +31,8 @@ const speechLang = (): string => {
   return lang?.toLowerCase().startsWith('en') ? lang : 'en-IN';
 };
 
+let nextTipId = 0;
+
 const ERRORS: Record<string, string> = {
   'not-allowed': 'Allow the microphone for this site to speak answers.',
   'service-not-allowed': 'Allow the microphone for this site to speak answers.',
@@ -50,16 +52,21 @@ const ERRORS: Record<string, string> = {
   template: `
     @if (supported) {
       <div class="mic">
-        <button
-          type="button"
-          class="mic-btn"
-          [class.listening]="listening()"
-          [disabled]="disabled"
-          [attr.aria-pressed]="listening()"
-          [attr.aria-label]="listening() ? 'Stop listening' : 'Speak your answer'"
-          [title]="listening() ? 'Stop listening' : 'Speak your answer'"
-          (click)="toggle()"
-        >🎤</button>
+        <span class="mic-anchor">
+          <button
+            type="button"
+            class="mic-btn"
+            [class.listening]="listening()"
+            [disabled]="disabled"
+            [attr.aria-pressed]="listening()"
+            [attr.aria-label]="listening() ? 'Stop listening' : 'Speak your answer'"
+            [attr.aria-describedby]="tipId"
+            (click)="toggle()"
+          >🎤</button>
+          @if (!listening()) {
+            <span class="mic-tooltip" role="tooltip" [id]="tipId">{{ tip }}</span>
+          }
+        </span>
         <span class="mic-status" aria-live="polite">
           @if (listening()) { Listening… }
           @else if (error()) { {{ error() }} }
@@ -82,6 +89,23 @@ const ERRORS: Record<string, string> = {
       @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(248, 113, 113, 0.2); } }
       @media (prefers-reduced-motion: reduce) { .mic-btn.listening { animation: none; } }
       .mic-status { font-size: 0.85rem; color: #475569; overflow-wrap: anywhere; }
+      /* Hover-only tooltip: shown to mouse users and on keyboard focus, never stuck open on touch */
+      .mic-anchor { position: relative; display: inline-flex; }
+      .mic-tooltip {
+        position: absolute; left: calc(100% + 10px); top: 50%; z-index: 5;
+        width: max-content; max-width: 220px; padding: 6px 10px; border-radius: 8px;
+        background: #1e1b4b; color: #fff; font-size: 0.8rem; font-weight: 600; line-height: 1.3;
+        pointer-events: none; opacity: 0; transform: translate(-4px, -50%); transition: opacity 0.15s, transform 0.15s;
+      }
+      .mic-tooltip::after {
+        content: ''; position: absolute; right: 100%; top: 50%; margin-top: -6px;
+        border: 6px solid transparent; border-right-color: #1e1b4b;
+      }
+      @media (hover: hover) {
+        .mic-anchor:hover .mic-tooltip { opacity: 1; transform: translate(0, -50%); }
+      }
+      .mic-btn:focus-visible + .mic-tooltip { opacity: 1; transform: translate(0, -50%); }
+      @media (prefers-reduced-motion: reduce) { .mic-tooltip { transition: none; } }
     `,
   ],
 })
@@ -91,6 +115,10 @@ export class MicButtonComponent implements OnDestroy {
   @Input() disabled = false;
   /** The answer, already turned into digits and symbols */
   @Output() heardAnswer = new EventEmitter<string>();
+
+  /** Hover tooltip for the button */
+  readonly tip = 'Say your answer out loud instead of typing it';
+  readonly tipId = `mic-tip-${nextTipId++}`;
 
   readonly supported = recognitionCtor() !== null;
   readonly listening = signal(false);
