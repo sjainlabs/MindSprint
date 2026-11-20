@@ -15,8 +15,8 @@
 
       <span class="level">{{ topic?.practiceLevel || 'Beginner' }}</span>
       <span class="band" *ngIf="topic?.band">Band {{ topic.band }}</span>
-      <span class="challenge" *ngIf="topic?.challenge" [title]="topic.challenge === 'sat-act' ? 'SAT/ACT-style practice. Optional: not part of the learning plan.' : 'Olympiad-style puzzles. Optional: not part of the learning plan.'">
-        {{ topic.challenge === 'sat-act' ? '🎯 SAT/ACT' : '🏅 Olympiad' }} · optional
+      <span class="challenge" *ngIf="topic?.challenge" [title]="challengeHint[topic.challenge]">
+        {{ challengeLabel[topic.challenge] }} · optional
       </span>
     </div>
   </div>

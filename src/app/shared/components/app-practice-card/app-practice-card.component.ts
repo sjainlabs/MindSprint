@@ -10,6 +10,14 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./app-practice-card.component.css'],
 })
 export class AppPracticeCardComponent {
+  /** Badge for optional stretch topics, and what it means */
+  readonly challengeLabel: Record<string, string> = { olympiad: '🏅 Olympiad', 'sat-act': '🎯 SAT/ACT', advanced: '🎓 AP/Advanced' };
+  readonly challengeHint: Record<string, string> = {
+    olympiad: 'Olympiad-style puzzles. Optional: not part of the learning plan.',
+    'sat-act': 'SAT/ACT-style practice. Optional: not part of the learning plan.',
+    advanced: 'AP/Advanced practice beyond the CBSE syllabus. Optional: not part of the learning plan.',
+  };
+
   @Input() topic: any;
   @Input() selected = false;
   @Input() progress = 0; // 0-100
