@@ -30,6 +30,16 @@
         <li [class.done]="t.status === 'strong' || t.status === 'mastered'">
           <span class="focus-name">{{ t.topicName }}</span>
           <span class="tag status-{{ t.status }}">{{ t.score !== null ? t.score + '% · ' : '' }}{{ statusLabels[t.status] }}</span>
+          @if (!readOnly()) {
+            <span class="topic-links">
+              <a class="mini-link" [routerLink]="['/study-guides/topic', t.topicId]">📖 Study guide</a>
+              @if (canStart()) {
+                <button type="button" class="mini-link" [disabled]="openingFocus() === t.topicId" (click)="practiseFocus(t.topicId, t.grade)">
+                  {{ openingFocus() === t.topicId ? 'Opening…' : '✏️ Practise' }}
+                </button>
+              }
+            </span>
+          }
         </li>
       }
     </ol>
@@ -72,6 +82,9 @@
         } @else {
           <div class="rec static">
             <ng-container *ngTemplateOutlet="recBody; context: { $implicit: r }" />
+            @if (!readOnly()) {
+              <a class="mini-link" [routerLink]="['/study-guides/topic', r.topicId]">📖 Study guide</a>
+            }
           </div>
         }
       }

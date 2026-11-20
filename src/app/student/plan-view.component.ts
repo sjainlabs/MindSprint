@@ -1,8 +1,10 @@
-import { Component, ViewChild, computed, input, output, signal } from '@angular/core';
+import { Component, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { KIND_LABELS, LearningPlan, Recommendation, STATUS_LABELS, gradeBand } from '../services/learning-plan.service';
 import { FocusEditorComponent } from './focus-editor.component';
+import { PlanActions } from './plan-actions';
+import { PracticeTopicCatalogService } from '../services/practice-topic-catalog.service';
 import { ProposalCardComponent } from './proposal-card.component';
 import { LevelCardComponent } from './level-card.component';
 import { ReviewTestCardComponent } from './review-test-card.component';
@@ -20,6 +22,9 @@ import { ReviewTestCardComponent } from './review-test-card.component';
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './plan-view.component.css'],
 })
 export class PlanViewComponent {
+  private readonly actions = inject(PlanActions);
+  private readonly catalog = inject(PracticeTopicCatalogService);
+
   readonly plan = input.required<LearningPlan>();
   readonly studentId = input.required<string>();
   readonly parentMode = input(false);
@@ -44,6 +49,8 @@ export class PlanViewComponent {
   readonly statusLabels = STATUS_LABELS;
   /** A parent or teacher is changing the focus */
   readonly editingFocus = signal(false);
+  /** The focus topic whose practice sheet is opening */
+  readonly openingFocus = signal<string | null>(null);
   /** Grown-ups (parent or teacher view) can set the focus; the analyst view is read-only */
   readonly canEditFocus = computed(() => this.parentMode() && !this.readOnly());
   readonly gradeBand = gradeBand;
@@ -78,5 +85,19 @@ export class PlanViewComponent {
 
   topicsLink(): Record<string, string> {
     return this.canAct() ? {} : { studentId: this.studentId() };
+  }
+
+  /** A practice sheet for a focus topic, at the level the plan uses for it (or the topic's own level) */
+  async practiseFocus(topicId: string, grade: number): Promise<void> {
+    if (this.openingFocus()) return;
+    this.openingFocus.set(topicId);
+    try {
+      const fromPlan = this.plan().recommendations.find((r) => r.topicId === topicId)?.practiceLevel;
+      await this.catalog.loadMergedCatalogAsync();
+      const fromCatalog = this.catalog.getCatalog().find((t) => t.id.toLowerCase() === topicId)?.practiceLevel;
+      await this.actions.practise(topicId, fromPlan ?? fromCatalog ?? 'Beginner', grade);
+    } finally {
+      this.openingFocus.set(null);
+    }
   }
 }
