@@ -47,7 +47,7 @@ import { Component } from '@angular/core';
       <section class="card facts">
         <h2>Inside MindSprint</h2>
         <ul>
-          <li>📚 Over 340 topics following the CBSE syllabus from kindergarten to Grade 12, in Kumon-style small steps</li>
+          <li>📚 Over 340 topics following the CBSE syllabus from kindergarten to Grade 12, in small, mastery-based steps</li>
           <li>🧭 A 10-minute skill band check that places your child in each area of maths, even years ahead or behind school</li>
           <li>📅 A Daily Challenge, worksheets, topic tests and a review test every three weeks, so skills stick</li>
           <li>📖 Study guides for every topic: tricks, worked examples and practice to do together</li>

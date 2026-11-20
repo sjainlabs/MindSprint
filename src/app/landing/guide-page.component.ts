@@ -90,7 +90,7 @@ const SECTIONS: GuideSection[] = [
     title: 'Common questions',
     intro: '',
     steps: [
-      { title: 'Which syllabus does MindSprint follow?', text: 'The CBSE maths syllabus from kindergarten to Grade 12, taught in small Kumon-style steps. Practice follows your child\'s skill band, which can be above or below their school grade.' },
+      { title: 'Which syllabus does MindSprint follow?', text: 'The CBSE maths syllabus from kindergarten to Grade 12, taught in small, mastery-based steps. Practice follows your child\'s skill band, which can be above or below their school grade.' },
       { title: 'Who can see my child\'s work?', text: 'Only you, your child, the teachers you add to that child, and anyone you give an analyst code. Each needs their own sign-in or code.' },
       { title: 'My child was asked to enter their code again', text: 'That happens after some updates, or on a new device. Their work is all saved. If you\'ve lost the code, make a new one with ⋯ → 🔑 New login code.' },
       { title: 'Where does the 🎤 mic work?', text: 'In Chrome and Edge, and in Safari on iPhone and iPad. The browser turns the speech into text using its own speech service. If the mic is blocked, allow it in the browser\'s site settings.' },
