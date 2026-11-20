@@ -110,6 +110,7 @@ interface Reason {
         <nav aria-label="More about MindSprint">
           <a routerLink="/about">About MindSprint</a>
           <a routerLink="/how-it-works">How it works</a>
+          <a routerLink="/contact">Contact us</a>
         </nav>
         <p>© {{ year }} MindSprint</p>
       </footer>
