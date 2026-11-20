@@ -29,6 +29,8 @@ export interface EnhancedTopic {
   studyMaterial?: { type: string; title: string; url?: string }[];
   /** Proficiency band letter, e.g. "C". */
   band?: string;
+  /** Optional stretch practice: olympiad or SAT/ACT style, outside the learning plan */
+  challenge?: 'olympiad' | 'sat-act';
 }
 
 export interface EnhancedSyllabusResponse {

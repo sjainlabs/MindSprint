@@ -106,7 +106,8 @@ export class PracticeHubComponent implements OnInit {
       result = result.filter(t => t.cbseGrade === grade);
     }
 
-    return result;
+    // Optional challenge topics after the grade's core topics
+    return [...result.filter(t => !t.challenge), ...result.filter(t => t.challenge)];
   });
 
 

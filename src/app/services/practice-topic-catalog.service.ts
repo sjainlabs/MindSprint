@@ -38,6 +38,7 @@ export class PracticeTopicCatalogService {
             studyMaterial: meta.studyMaterial ?? [],
             // ⭐ REQUIRED FIELD
             band: meta.band,
+            challenge: meta.challenge,
             // ⭐ REQUIRED FIELDS from PracticeTopicDefinition
             track: 'math',
             groupKey: meta.groupKey ?? 'default',
@@ -89,6 +90,7 @@ export class PracticeTopicCatalogService {
 
           // ⭐ REQUIRED FIELD
           band: meta.band,
+          challenge: meta.challenge,
 
           // ⭐ REQUIRED FIELDS from PracticeTopicDefinition
           track: 'math',

@@ -48,3 +48,6 @@
 .guide-btn:hover{ background:#f5f3ff; }
 .guide-btn:focus-visible{ outline:3px solid #f59e0b; outline-offset:2px; }
 .title-group .band{ display:inline-block; margin:4px 0 0 6px; font-size:0.75rem; font-weight:700; color:#3730a3; background:#eef2ff; border-radius:999px; padding:1px 8px; }
+
+/* Optional stretch topics (olympiad, SAT/ACT) */
+.title-group .challenge{ display:inline-block; margin:4px 0 0 6px; font-size:0.75rem; font-weight:700; color:#92400e; background:#fef3c7; border-radius:999px; padding:1px 8px; }
