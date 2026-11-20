@@ -53,7 +53,39 @@ export interface LevelEstimate {
   summary: string;
 }
 
-export type RecommendationKind = 'test-ready' | 'fix' | 'continue' | 'new' | 'speed' | 'review';
+export type RecommendationKind = 'focus' | 'test-ready' | 'fix' | 'continue' | 'new' | 'speed' | 'review';
+
+/** Topics a parent or teacher asked the plan to put first, with how the child is doing in each */
+export interface PlanFocus {
+  note: string;
+  /** "your parent", or the teacher's name */
+  setBy: string;
+  setByRole: 'parent' | 'teacher';
+  setAt: string;
+  topics: Array<{ topicId: string; topicName: string; grade: number; status: PlanStatus; score: number | null }>;
+}
+
+/** A parent or teacher picks at most this many focus topics */
+export const MAX_FOCUS_TOPICS = 8;
+
+export type ProposalStatus = 'open' | 'changes-requested' | 'accepted' | 'declined';
+export type ProposalAction = 'accept' | 'comment' | 'decline';
+
+/** A suggested plan update from the bi-weekly analysis, for the parent and teachers to review */
+export interface PlanProposal {
+  id: string;
+  studentId: string;
+  createdAt: string;
+  from: string | null;
+  to: string | null;
+  report: string;
+  findings: string[];
+  proposedFocus: { topicIds: string[]; note: string };
+  materialChanges: string[];
+  status: ProposalStatus;
+  feedback: Array<{ role: 'parent' | 'teacher'; name: string; action: ProposalAction; comment: string; at: string }>;
+  updatedAt: string;
+}
 export type PlanActionType = 'topic-test' | 'practice-sheet' | 'study-guide-then-practice';
 
 export interface PlanAction {
@@ -154,6 +186,8 @@ export interface LearningPlan {
   gradeCheck?: GradeCheck;
   /** The last placement check, or null before one is done. */
   placement?: PlacementSummary | null;
+  /** Topics a parent or teacher put first, or null */
+  focus?: PlanFocus | null;
 }
 
 export interface GradeCheck {
@@ -176,6 +210,7 @@ export type LearningPlanErrorCode = 'GRADE_REQUIRED' | 'NOT_OPEN' | 'NO_TOPICS' 
 export { TestApiError as LearningPlanError };
 
 export const KIND_LABELS: Record<RecommendationKind, string> = {
+  focus: '🎯 Focus',
   fix: 'Fix',
   continue: 'Keep going',
   new: 'New',
@@ -242,6 +277,22 @@ export class LearningPlanService {
 
   submitReview(payload: { studentId: string; testId: string; answers: Record<string, string>; startedAt?: string }): Promise<ReviewTestResult> {
     return this.call(this.http.post<ReviewTestResult>(`${this.apiBase}/review-test/submit`, payload));
+  }
+
+  /** Parent or teacher: suggested plan updates from the bi-weekly analysis, newest first */
+  async proposals(studentId: string): Promise<PlanProposal[]> {
+    return (await this.call(this.http.get<{ proposals: PlanProposal[] }>(`${this.apiBase}/${encodeURIComponent(studentId)}/proposals`))).proposals;
+  }
+
+  /** Parent or teacher: accept (applies the focus), comment (asks for changes) or decline */
+  async respondToProposal(studentId: string, proposalId: string, action: ProposalAction, comment = ''): Promise<PlanProposal> {
+    const url = `${this.apiBase}/${encodeURIComponent(studentId)}/proposals/${encodeURIComponent(proposalId)}`;
+    return (await this.call(this.http.post<{ proposal: PlanProposal }>(url, { action, comment }))).proposal;
+  }
+
+  /** A parent or linked teacher sets the topics the plan puts first (their sign-in is sent with the call); [] clears it */
+  async setFocus(studentId: string, topicIds: string[], note: string): Promise<void> {
+    await this.call(this.http.put(`${this.apiBase}/${encodeURIComponent(studentId)}/focus`, { topicIds, note }));
   }
 
   /**

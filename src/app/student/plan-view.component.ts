@@ -1,7 +1,9 @@
-import { Component, ViewChild, computed, input, output } from '@angular/core';
+import { Component, ViewChild, computed, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { KIND_LABELS, LearningPlan, Recommendation, gradeBand } from '../services/learning-plan.service';
+import { KIND_LABELS, LearningPlan, Recommendation, STATUS_LABELS, gradeBand } from '../services/learning-plan.service';
+import { FocusEditorComponent } from './focus-editor.component';
+import { ProposalCardComponent } from './proposal-card.component';
 import { LevelCardComponent } from './level-card.component';
 import { ReviewTestCardComponent } from './review-test-card.component';
 
@@ -13,7 +15,7 @@ import { ReviewTestCardComponent } from './review-test-card.component';
 @Component({
   selector: 'app-plan-view',
   standalone: true,
-  imports: [RouterLink, NgTemplateOutlet, LevelCardComponent, ReviewTestCardComponent],
+  imports: [RouterLink, NgTemplateOutlet, LevelCardComponent, ReviewTestCardComponent, FocusEditorComponent, ProposalCardComponent],
   templateUrl: './plan-view.component.html',
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './plan-view.component.css'],
 })
@@ -39,6 +41,11 @@ export class PlanViewComponent {
   @ViewChild(ReviewTestCardComponent) reviewCard?: ReviewTestCardComponent;
 
   readonly kindLabels = KIND_LABELS;
+  readonly statusLabels = STATUS_LABELS;
+  /** A parent or teacher is changing the focus */
+  readonly editingFocus = signal(false);
+  /** Grown-ups (parent or teacher view) can set the focus; the analyst view is read-only */
+  readonly canEditFocus = computed(() => this.parentMode() && !this.readOnly());
   readonly gradeBand = gradeBand;
   readonly canStart = computed(() => this.canAct() && !this.readOnly());
 

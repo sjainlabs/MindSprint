@@ -9,6 +9,41 @@
   (gradeSelected)="gradeSelected.emit($event)"
 />
 
+<!-- A suggested update from the bi-weekly analysis, for the parent or teacher to review -->
+@if (canEditFocus()) {
+  <app-proposal-card [studentId]="studentId()" (applied)="changed.emit()" />
+}
+
+<!-- Focus a parent or teacher set: what the plan puts first -->
+@if (p.focus; as f) {
+  <section class="card focus" aria-labelledby="focus-title">
+    <div class="row-between">
+      <h2 id="focus-title">🎯 Focus</h2>
+      @if (canEditFocus()) {
+        <button type="button" class="btn small" (click)="editingFocus.set(true)">Edit</button>
+      }
+    </div>
+    @if (f.note) { <p class="focus-note">{{ f.note }}</p> }
+    <p class="muted small">Set by {{ f.setBy }}. These come first in the plan until each is strong.</p>
+    <ol class="focus-topics">
+      @for (t of f.topics; track t.topicId) {
+        <li [class.done]="t.status === 'strong' || t.status === 'mastered'">
+          <span class="focus-name">{{ t.topicName }}</span>
+          <span class="tag status-{{ t.status }}">{{ t.score !== null ? t.score + '% · ' : '' }}{{ statusLabels[t.status] }}</span>
+        </li>
+      }
+    </ol>
+  </section>
+} @else if (canEditFocus()) {
+  <section class="card focus empty">
+    <p class="muted">🎯 Want the plan to concentrate on something? Pick focus topics and they come first.</p>
+    <button type="button" class="btn small" (click)="editingFocus.set(true)">Set a focus</button>
+  </section>
+}
+@if (editingFocus()) {
+  <app-focus-editor [studentId]="studentId()" [current]="p.focus ?? null" (closed)="editingFocus.set(false)" (saved)="editingFocus.set(false); changed.emit()" />
+}
+
 <!-- 2. Up next -->
 <section class="card" aria-labelledby="next-title">
   <h2 id="next-title">Up next</h2>
