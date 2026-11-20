@@ -408,9 +408,15 @@ export class LearningApiService {
 
   async createStudent(payload: StudentCreateRequest): Promise<StudentCreateResponse> {
     const headers = await this.getAuthHeaders();
-    return await firstValueFrom(
-      this.http.post<StudentCreateResponse>(`${this.apiBase}/students/create`, payload, { headers }),
-    );
+    try {
+      return await firstValueFrom(
+        this.http.post<StudentCreateResponse>(`${this.apiBase}/students/create`, payload, { headers }),
+      );
+    } catch (err) {
+      // The server's own reason, e.g. the free trial's limit of children per family
+      const message = (err as { error?: { message?: string } })?.error?.message;
+      throw message ? new Error(message) : err;
+    }
   }
 
 

@@ -38,6 +38,11 @@ export const studentAccessInterceptor: HttpInterceptorFn = (req, next) => {
       return next(Object.keys(headers).length ? req.clone({ setHeaders: headers }) : req);
     }),
     catchError((err: unknown) => {
+      // The free trial stopped this request: explain it on its own page
+      const code = err instanceof HttpErrorResponse ? err.error?.error?.code : null;
+      if (code === 'TRIAL_ENDED' || code === 'REPORTS_CLOSED') {
+        void router.navigate(['/trial-ended'], { queryParams: { reason: code, message: err instanceof HttpErrorResponse ? err.error?.error?.message : '' } });
+      }
       // A child with no (or an old) session: log in again. A parent or teacher sees the error instead.
       if (err instanceof HttpErrorResponse && err.status === 401 && err.error?.error?.code === SESSION_REQUIRED && !auth.currentUser) {
         authService.logoutStudent();

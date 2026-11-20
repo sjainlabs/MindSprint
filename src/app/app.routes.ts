@@ -29,6 +29,7 @@ import { analystGuard, toAnalystEntry } from './analyst/analyst.guard';
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
   { path: 'about', loadComponent: () => import('./landing/about-page.component').then((m) => m.AboutPageComponent) },
+  { path: 'trial-ended', loadComponent: () => import('./trial/trial-ended-page.component').then((m) => m.TrialEndedPageComponent) },
   { path: 'how-it-works', loadComponent: () => import('./landing/guide-page.component').then((m) => m.GuidePageComponent) },
   { path: 'guide', redirectTo: 'how-it-works', pathMatch: 'full' },
   { path: 'auth/parent-login', component: ParentLoginPageComponent },

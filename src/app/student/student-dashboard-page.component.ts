@@ -16,6 +16,7 @@ import { PlacementPace, PlacementService } from '../services/placement.service';
 import { SkillBandInfoComponent } from '../placement/skill-band-info.component';
 import { PlanViewComponent } from './plan-view.component';
 import { RewardsBarComponent } from '../rewards/rewards-bar.component';
+import { TrialBannerComponent } from '../trial/trial-banner.component';
 
 type Phase = 'loading' | 'ready' | 'grade' | 'error';
 
@@ -28,7 +29,7 @@ const PLAN_OPEN_KEY = 'mindsprint.plan.open';
 @Component({
   selector: 'app-student-dashboard-page',
   standalone: true,
-  imports: [RouterLink, GradePickerComponent, PlanViewComponent, RewardsBarComponent, SkillBandInfoComponent],
+  imports: [TrialBannerComponent, RouterLink, GradePickerComponent, PlanViewComponent, RewardsBarComponent, SkillBandInfoComponent],
   templateUrl: './student-dashboard-page.component.html',
   styleUrls: ['../tests/test-pages.css', './plan-shared.css', './student-dashboard-page.component.css'],
 })

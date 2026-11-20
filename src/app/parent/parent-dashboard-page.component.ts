@@ -12,6 +12,7 @@ import { EditChildModalComponent, EditChildPayload } from './edit-child-modal.co
 import { AccessCodeModalComponent } from './access-code-modal.component';
 import { AnalystCodeModalComponent } from './analyst-code-modal.component';
 import { TeachersModalComponent } from './teachers-modal.component';
+import { TrialBannerComponent } from '../trial/trial-banner.component';
 
 interface DashboardStudent {
   id: string;
@@ -32,6 +33,7 @@ interface DashboardStudent {
     AccessCodeModalComponent,
     AnalystCodeModalComponent,
     TeachersModalComponent,
+    TrialBannerComponent,
     RouterLink,
   ],
   template: `
@@ -57,6 +59,7 @@ interface DashboardStudent {
             <h2>{{ student.name }}</h2>
             <p class="meta">Grade {{ student.grade || 'not set' }} · {{ student.masterySummary }}</p>
             <p class="meta" *ngIf="student.upcomingTests.length">📅 Upcoming tests: {{ student.upcomingTests.join(', ') }}</p>
+            <app-trial-banner [studentId]="student.id" [compact]="true" />
           </div>
           <div class="head-actions">
             <button class="open" (click)="openStudentView(student)">Open as {{ student.name }} ▶️</button>
