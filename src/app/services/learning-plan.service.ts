@@ -83,7 +83,10 @@ export interface PlanProposal {
   proposedFocus: { topicIds: string[]; note: string };
   materialChanges: string[];
   status: ProposalStatus;
-  feedback: Array<{ role: 'parent' | 'teacher'; name: string; action: ProposalAction; comment: string; at: string }>;
+  feedback: Array<{ role: 'parent' | 'teacher'; name: string; action: ProposalAction; comment: string; at: string; replyBy?: string }>;
+  /** A revision answers the comments on the proposal it replaced */
+  revises: string | null;
+  reply: string;
   updatedAt: string;
 }
 export type PlanActionType = 'topic-test' | 'practice-sheet' | 'study-guide-then-practice';

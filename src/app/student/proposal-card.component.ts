@@ -16,8 +16,24 @@ import { LearningPlanService, PlanProposal, ProposalAction } from '../services/l
       <section class="card proposal" aria-labelledby="proposal-title">
         <div class="row-between">
           <h2 id="proposal-title">📝 Suggested plan update</h2>
-          <span class="tag" [class.waiting]="p.status === 'open'">{{ p.status === 'open' ? 'Waiting for review' : 'Changes requested' }}</span>
+          <span class="tag" [class.waiting]="p.status === 'open'">{{ p.status === 'open' ? 'Waiting for review' : 'Under review' }}</span>
         </div>
+        @if (p.status === 'changes-requested') {
+          <p class="under-review" role="status">
+            ⏳ Thanks{{ lastComment()?.name ? ', ' + firstName(lastComment()!.name) : '' }}. Your suggestion and this proposal are under review.
+            @if (replyIn(); as r) {
+              We'll reply here with an updated proposal. Check back {{ r.hours <= 1 ? 'in about an hour' : 'in about ' + r.hours + ' hours' }} ({{ r.by | date: 'EEE d MMM, h:mm a' }}).
+            } @else {
+              We'll reply here with an updated proposal soon.
+            }
+          </p>
+        }
+        @if (p.reply) {
+          <div class="reply">
+            <h3>💬 Our reply to your suggestion</h3>
+            <p>{{ p.reply }}</p>
+          </div>
+        }
         <p class="muted small">From the progress analysis on {{ p.createdAt | date: 'd MMM' }}{{ p.from ? ', covering ' + (p.from | date: 'd MMM') + ' – ' + (p.to | date: 'd MMM') : '' }}.</p>
 
         @for (para of paragraphs(); track $index) { <p class="report">{{ para }}</p> }
@@ -35,7 +51,7 @@ import { LearningPlanService, PlanProposal, ProposalAction } from '../services/l
           <h3>Comments</h3>
           <ul class="feedback">
             @for (f of p.feedback; track f.at) {
-              <li><strong>{{ f.role === 'teacher' ? (f.name || 'Teacher') : 'Parent' }}</strong>: {{ f.comment || actionText(f.action) }} <span class="muted small">{{ f.at | date: 'd MMM' }}</span></li>
+              <li><strong>{{ f.name || (f.role === 'teacher' ? 'Teacher' : 'Parent') }}</strong>: {{ f.comment || actionText(f.action) }} <span class="muted small">{{ f.at | date: 'd MMM' }}</span></li>
             }
           </ul>
         }
@@ -76,6 +92,10 @@ import { LearningPlanService, PlanProposal, ProposalAction } from '../services/l
       textarea:focus { outline: none; border-color: #2563eb; }
       .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
       .error { color: #b91c1c; margin-top: 8px; }
+      .under-review { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; line-height: 1.5; }
+      .reply { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; }
+      .reply h3 { margin-top: 0; color: #14532d; }
+      .reply p { margin-top: 4px; color: #14532d; line-height: 1.5; }
     `,
   ],
 })
@@ -95,6 +115,15 @@ export class ProposalCardComponent implements OnInit {
   readonly error = signal('');
 
   readonly paragraphs = computed(() => (this.proposal()?.report ?? '').split(/\n\s*\n/).map((p) => p.replace(/[*_#`]/g, '').trim()).filter(Boolean));
+  /** The latest comment, which the next reply run answers */
+  readonly lastComment = computed(() => [...(this.proposal()?.feedback ?? [])].reverse().find((f) => f.action === 'comment') ?? null);
+  /** When to check back: hours from now until the reply run is done */
+  readonly replyIn = computed(() => {
+    const by = this.lastComment()?.replyBy;
+    if (!by) return null;
+    const hours = Math.max(1, Math.ceil((Date.parse(by) - Date.now()) / 3_600_000));
+    return Date.parse(by) > Date.now() ? { hours, by } : null;
+  });
   readonly focusNames = computed(() => (this.proposal()?.proposedFocus.topicIds ?? []).map((id) => this.names().get(id.toLowerCase()) ?? id));
 
   async ngOnInit(): Promise<void> {
@@ -108,6 +137,11 @@ export class ProposalCardComponent implements OnInit {
     } catch {
       // No proposals to show (or not signed in as an adult): the card stays hidden
     }
+  }
+
+  firstName(name: string): string {
+    const first = name.trim().split(/\s+/)[0] ?? '';
+    return first.charAt(0).toUpperCase() + first.slice(1);
   }
 
   actionText(action: ProposalAction): string {
