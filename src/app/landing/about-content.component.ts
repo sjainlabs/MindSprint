@@ -1,38 +1,47 @@
 import { Component } from '@angular/core';
 
-/** What MindSprint is and what it solves, for the About page. */
+/** The detail behind the home page: how the AI analysis works and what's inside MindSprint, for the About page. */
 @Component({
   selector: 'app-about-content',
   standalone: true,
   template: `
-      <section class="card">
-        <h2>What MindSprint solves</h2>
-        <ul class="solves">
-          @for (item of solves; track item.question) {
-            <li>
-              <span class="icon" aria-hidden="true">{{ item.icon }}</span>
-              <div>
-                <h3>{{ item.question }}</h3>
-                <p>{{ item.answer }}</p>
-              </div>
-            </li>
-          }
-        </ul>
-      </section>
-
-      <section class="card">
-        <h2>Getting started in 3 steps</h2>
+      <section class="card ai">
+        <h2>🧠 How the AI analysis works</h2>
+        <p class="lead">
+          Scores tell you <em>where</em> a child loses marks. MindSprint's analysis looks for <em>why</em>, so the plan fixes
+          the cause instead of repeating the same worksheet.
+        </p>
         <ol class="steps">
-          @for (step of steps; track step.title; let i = $index) {
-            <li>
-              <span class="num" aria-hidden="true">{{ i + 1 }}</span>
-              <div>
-                <h3>{{ step.title }}</h3>
-                <p>{{ step.text }}</p>
-              </div>
-            </li>
-          }
+          <li>
+            <span class="num" aria-hidden="true">1</span>
+            <div>
+              <h3>Every two weeks, after 4 hours of practice</h3>
+              <p>Every wrong answer since the last analysis is sorted by what went wrong: a lost zero, a slip in the multiplying step, a wrong common denominator, an answer left blank, and so on.</p>
+            </div>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">2</span>
+            <div>
+              <h3>AI finds the skill underneath</h3>
+              <p>It reads the pattern the way a good tutor would. Long division that keeps going wrong is often multiplication; fraction sums that keep going wrong are often finding the common denominator. It also flags work that is simply too hard for the grade.</p>
+            </div>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">3</span>
+            <div>
+              <h3>You and the teacher decide</h3>
+              <p>You get a short report and a suggested focus on your child's learning plan. Accept it, suggest changes, or decline. Nothing changes until a parent or teacher says yes.</p>
+            </div>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">4</span>
+            <div>
+              <h3>The plan and tests follow</h3>
+              <p>Focus topics move to the top of the plan, start with their study guide, and come first in review tests, until your child is strong in each.</p>
+            </div>
+          </li>
         </ol>
+        <p class="small">The analysis runs on Claude, Anthropic's AI. It only reads your child's MindSprint answers and practice time, and its suggestions are reviewed by a person before they apply.</p>
       </section>
 
       <section class="card facts">
@@ -44,6 +53,7 @@ import { Component } from '@angular/core';
           <li>📖 Study guides for every topic: tricks, worked examples and practice to do together</li>
           <li>⭐ Stars and rewards you choose, plus maths games and an abacus</li>
           <li>🎤 Answers can be typed or spoken</li>
+          <li>🧠 An AI analysis every two weeks that finds why your child loses marks and suggests a new focus for you to approve</li>
           <li>🔒 Only you, your child, and the teachers you add can see your child's work</li>
         </ul>
       </section>
@@ -55,42 +65,16 @@ import { Component } from '@angular/core';
       h2, h3, p { margin: 0; }
       h2 { font-size: 1.3rem; color: #1e1b4b; margin-bottom: 12px; }
       h3 { font-size: 1rem; color: #0f172a; margin-bottom: 2px; }
-      .solves, .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-      .solves li, .steps li { display: flex; gap: 12px; align-items: flex-start; }
-      .solves p, .steps p { color: #475569; line-height: 1.5; }
-      .icon { flex: none; font-size: 1.6rem; line-height: 1.2; }
+      .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .steps li { display: flex; gap: 12px; align-items: flex-start; }
+      .steps p { color: #475569; line-height: 1.5; }
       .num { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #eef2ff; color: #3730a3; font-weight: 800; }
+      .ai { border: 2px solid #c7d2fe; }
+      .ai em { font-style: normal; color: #4f46e5; font-weight: 700; }
+      .lead { margin: 0 0 14px; color: #334155; line-height: 1.55; }
+      .small { margin-top: 14px; font-size: 0.85rem; color: #64748b; line-height: 1.5; }
       .facts ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; color: #334155; line-height: 1.5; }
     `,
   ],
 })
-export class AboutContentComponent {
-  readonly solves = [
-    {
-      icon: '🧭',
-      question: 'Where is my child really?',
-      answer: 'School grade and maths level often differ. A short check finds the level in each area (adding, dividing, fractions, geometry…), so practice is never too easy or too hard.',
-    },
-    {
-      icon: '🗺️',
-      question: 'What should we practise today?',
-      answer: 'A learning plan picks the next topic, and a few minutes of Daily Challenge each day builds on what they know. No hunting for worksheets.',
-    },
-    {
-      icon: '📈',
-      question: 'Is it working?',
-      answer: 'Reports show scores by topic, every worksheet and test, time spent, and how far through each grade your child has come.',
-    },
-    {
-      icon: '🤝',
-      question: 'Can their teacher or tutor help?',
-      answer: 'Add a teacher to your child and they see the same reports and can set tests. You decide who sees what, child by child.',
-    },
-  ];
-
-  readonly steps = [
-    { title: 'Sign in and add your child', text: 'Parents sign in with Google and add each child with their school grade. Each child gets a 6-character login code.' },
-    { title: 'Your child finds their skill band', text: 'On their first login, about 20 questions place them in each area of maths. It takes around 10 minutes and has no timer.' },
-    { title: 'A little practice every day', text: 'The Daily Challenge, worksheets and tests follow their plan. You watch progress from your Parent Dashboard.' },
-  ];
-}
+export class AboutContentComponent {}
