@@ -1,12 +1,20 @@
 @switch (question.layout) {
 
   @case ('vertical') {
-    <app-vertical-multiplication-component
-      [top]="question.metadata?.top"
-      [bottom]="question.metadata?.bottom"
-      [answer]="answer"
-      (answerChange)="answerChange.emit($event)"
-    ></app-vertical-multiplication-component>
+    @if (columnNumbers(); as n) {
+      <app-vertical-multiplication-component
+        [top]="n.top"
+        [bottom]="n.bottom"
+        [answer]="answer"
+        (answerChange)="answerChange.emit($event)"
+      ></app-vertical-multiplication-component>
+    } @else {
+      <!-- No numbers to stack: show it as a normal question rather than NaN -->
+      <div class="qr">
+        <p class="qr-prompt" [id]="uid + '-prompt'"><app-math-text [text]="question.prompt"></app-math-text></p>
+        <ng-container *ngTemplateOutlet="answerArea"></ng-container>
+      </div>
+    }
   }
 
   @case ('horizontal_with_hint') {
@@ -16,10 +24,10 @@
         {{ showHint ? 'Hide Steps' : 'Show Steps' }}
       </button>
 
-      @if (showHint) {
+      @if (showHint && columnNumbers(); as n) {
         <app-vertical-multiplication-component
-          [top]="question.metadata?.top"
-          [bottom]="question.metadata?.bottom"
+          [top]="n.top"
+          [bottom]="n.bottom"
           [answer]="answer"
           (answerChange)="answerChange.emit($event)"
         ></app-vertical-multiplication-component>

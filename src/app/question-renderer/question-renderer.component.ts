@@ -11,6 +11,7 @@ import {
   joinMultiAnswer,
   splitMultiAnswer,
 } from '../shared/utils/question-input';
+import { columnLayout } from '../shared/utils/column-layout';
 
 let nextId = 0;
 
@@ -36,6 +37,22 @@ export class QuestionRendererComponent {
 
   showHint = false;
   readonly uid = `qr-${nextId++}`;
+
+  /**
+   * The two numbers for a column multiplication: from the metadata, or read from the prompt
+   * ("What is 91 × 8?"). Null when neither gives two numbers, so the question shows normally.
+   */
+  readonly columnNumbers = computed((): { top: number; bottom: number } | null => {
+    const q = this.questionSignal();
+    if (!q) return null;
+    const meta = (q.metadata ?? {}) as Record<string, unknown>;
+    const [top, bottom] = [Number(meta['top']), Number(meta['bottom'])];
+    if (Number.isFinite(top) && Number.isFinite(bottom) && meta['top'] !== undefined && meta['bottom'] !== undefined) return { top, bottom };
+    const rows = columnLayout(q.prompt ?? '')?.rows ?? [];
+    if (rows.length !== 2 || rows[1].op !== '×') return null;
+    const [a, b] = rows.map((r) => Number(r.value.replace(/,/g, '')));
+    return Number.isFinite(a) && Number.isFinite(b) ? { top: a, bottom: b } : null;
+  });
 
   /** Keyboard, helper keys and hint for this question, chosen from its prompt. */
   readonly spec = computed(() => inputSpecFor(this.questionSignal()?.prompt ?? ''));
