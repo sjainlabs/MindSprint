@@ -1,9 +1,11 @@
 /**
- * Bands are the level letters on each topic, from the pre-school bands (ZI, 7A … 2A) through A–O.
- * They don't line up exactly with school grades (Band D spans Grades 3–5), so they are a second way
- * to browse practice and review completed sheets.
+ * A topic's band is the Kumon level that teaches its skill (Kumon's Table of Learning Materials),
+ * from the pre-school bands (ZI, 7A … 2A) through A–O and the electives; topics Kumon doesn't teach
+ * take the typical band of their grade. Bands don't line up with school grades, so they are a second
+ * way to browse practice and review completed sheets.
  */
-export const BAND_ORDER = ['ZI', 'ZII', '7A', '6A', '5A', '4A', '3A', '2A', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
+// Kumon's level order, then its elective levels (vectors, matrices, probability, statistics)
+export const BAND_ORDER = ['ZI', 'ZII', '7A', '6A', '5A', '4A', '3A', '2A', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'XV', 'XM', 'XP', 'XS'];
 
 /** Position of a band in the order above; unknown bands go last */
 export const bandRank = (band: string | null | undefined): number => {
