@@ -37,7 +37,8 @@ export class PracticeTopicCatalogService {
             subtopics: meta.subtopics,
             studyMaterial: meta.studyMaterial ?? [],
             // ⭐ REQUIRED FIELD
-            band: meta.band,
+            // The API sends Band; older payloads used band
+            band: meta.band ?? (meta as unknown as { Band?: string }).Band,
             challenge: meta.challenge,
             // ⭐ REQUIRED FIELDS from PracticeTopicDefinition
             track: 'math',
@@ -89,7 +90,8 @@ export class PracticeTopicCatalogService {
           studyMaterial: meta.studyMaterial ?? [],
 
           // ⭐ REQUIRED FIELD
-          band: meta.band,
+          // The API sends Band; older payloads used band
+          band: meta.band ?? (meta as unknown as { Band?: string }).Band,
           challenge: meta.challenge,
 
           // ⭐ REQUIRED FIELDS from PracticeTopicDefinition

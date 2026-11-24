@@ -95,6 +95,34 @@
 <section class="card" *ngIf="!loading() && worksheetHistory().length > 0">
 
   <h2>Worksheet &amp; test history</h2>
+  <div class="group-toggle" role="group" aria-label="Group sheets by">
+    <span>Group by</span>
+    <button type="button" [class.active]="historyGroup() === 'date'" [attr.aria-pressed]="historyGroup() === 'date'" (click)="historyGroup.set('date')">Date</button>
+    <button type="button" [class.active]="historyGroup() === 'band'" [attr.aria-pressed]="historyGroup() === 'band'" (click)="historyGroup.set('band')">Band</button>
+  </div>
+
+  <ng-container *ngIf="historyGroup() === 'band'">
+    <p>Each sheet sits in the band most of its topics belong to.</p>
+    <section class="band-group" *ngFor="let g of historyByBand()">
+      <h3>{{ g.band === 'Other' ? 'Other' : 'Band ' + g.band }} <span class="band-meta">{{ g.sheets.length }} sheet{{ g.sheets.length === 1 ? '' : 's' }} · average {{ g.accuracy }}%</span></h3>
+      <div class="table-scroll">
+        <table class="history-table">
+          <thead><tr><th>Date</th><th>Topics</th><th>Score</th><th>Accuracy</th><th>Time (hh:mm)</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let w of g.sheets" [class.topic-test-row]="isTest(w)">
+              <td>{{ w.submittedAt | date:'short' }}</td>
+              <td>{{ topicLabel(w) }}</td>
+              <td>{{ w.score }}/{{ w.total }}</td>
+              <td>{{ w.accuracy }}%</td>
+              <td [title]="describeDuration(w.speedSeconds)">{{ w.speedSeconds | hhmm }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+
+  <ng-container *ngIf="historyGroup() === 'date'">
   <p>Newest first. Tap View to see every question.<ng-container *ngIf="canFixTypos"> Spotted a typo? Use ✏️ Fix typos on that row.</ng-container></p>
 
   <div class="table-scroll">
@@ -254,6 +282,7 @@
   </table>
   </div>
 
+  </ng-container>
 </section>
   </div>
 

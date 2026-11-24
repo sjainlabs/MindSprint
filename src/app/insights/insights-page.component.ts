@@ -11,6 +11,7 @@ import { withoutHiddenTopics } from '../constants/hidden-topics';
 import { HoursMinutesPipe, describeDuration } from '../shared/utils/duration';
 import { PracticeTopicCatalogService } from '../services/practice-topic-catalog.service';
 import { AnalystApiService, INVALID_ANALYST_CODE, analystErrorMessage } from '../analyst/analyst-api.service';
+import { sheetBand, sortBands } from '../shared/utils/bands';
 
 type ReportTab = 'overview' | 'history';
 
@@ -31,6 +32,23 @@ export class InsightsPageComponent implements OnInit {
   readonly describeDuration = describeDuration;
   /** topicId → name, so history shows "3-Digit Addition" rather than its id. Ids stay until the catalog loads. */
   private readonly topicNames = signal<Map<string, string>>(new Map());
+  /** topic id (lowercase) → band, for grouping the history by band */
+  private readonly topicBands = signal<Map<string, string>>(new Map());
+  /** History listed by date, or grouped by band */
+  readonly historyGroup = signal<'date' | 'band'>('date');
+  /** Completed sheets grouped by band, easiest band first; each group newest first */
+  readonly historyByBand = computed(() => {
+    const groups = new Map<string, any[]>();
+    for (const w of this.worksheetHistory()) {
+      const band = sheetBand(w.topics, this.topicBands()) ?? 'Other';
+      groups.set(band, [...(groups.get(band) ?? []), w]);
+    }
+    return sortBands([...groups.keys()]).concat(groups.has('Other') ? ['Other'] : []).filter((b, i, all) => all.indexOf(b) === i).map((band) => {
+      const sheets = groups.get(band) ?? [];
+      const accuracy = sheets.length ? Math.round(sheets.reduce((sum, w) => sum + Number(w.accuracy ?? 0), 0) / sheets.length) : 0;
+      return { band, sheets, accuracy };
+    });
+  });
   private readonly allTopicNames = computed(() => {
     const names = new Map((this.insights()?.topicTests ?? []).map((t) => [t.topicId, t.topicName] as [string, string]));
     for (const [id, name] of this.topicNames()) names.set(id, name);
@@ -107,7 +125,11 @@ export class InsightsPageComponent implements OnInit {
   private loadTopicNames(): void {
     // Not awaited: the report shows straight away and the names fill in when the catalog arrives
     void this.catalog.loadMergedCatalogAsync().then(() =>
-      this.topicNames.set(new Map(this.catalog.getAllTopics().map((t) => [t.id, t.name]))),
+      {
+        const topics = this.catalog.getAllTopics();
+        this.topicNames.set(new Map(topics.map((t) => [t.id, t.name])));
+        this.topicBands.set(new Map(topics.filter((t) => t.band).map((t) => [t.id.toLowerCase(), t.band!])));
+      },
     );
   }
 

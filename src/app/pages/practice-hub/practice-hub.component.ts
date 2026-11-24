@@ -16,6 +16,7 @@ import { AppPracticeCardComponent } from '../../shared/components/app-practice-c
 import { AppDailyGoalComponent } from '../../shared/components/app-daily-goal/app-daily-goal.component';
 import { AppRewardStarsComponent } from '../../shared/components/app-reward-stars/app-reward-stars.component';
 import {EnhancedTopic} from '../../services/practice-config.service';
+import { sortBands } from '../../shared/utils/bands';
 
 @Component({
   selector: 'app-practice-hub',
@@ -70,7 +71,13 @@ export class PracticeHubComponent implements OnInit {
     { title: 'Complete 1 worksheet', emoji: '🐧' },
   ]);
 
+  /** Browse topics by school grade or by band */
+  browseBy = signal<'grade' | 'band'>('grade');
+  selectedBand = signal<string | null>(null);
+
   // ── Derived values ───────────────────────────────────────────────────────────
+  allowedBands = computed(() => sortBands(this.topics().map(t => t.band)));
+
   allowedGrades = computed(() => {
     const all = this.topics();
     if (!all.length) return [];
@@ -101,8 +108,11 @@ export class PracticeHubComponent implements OnInit {
       return result; // search overrides grade filter
     }
 
-    // 🏫 Grade filter (default)
-    if (grade != null) {
+    // 🏫 Grade filter (default), or band
+    if (this.browseBy() === 'band') {
+      const band = this.selectedBand();
+      result = result.filter(t => t.band === band).sort((a, b) => a.cbseGrade - b.cbseGrade);
+    } else if (grade != null) {
       result = result.filter(t => t.cbseGrade === grade);
     }
 
@@ -158,6 +168,28 @@ export class PracticeHubComponent implements OnInit {
       this.syllabusError.set('Unable to load topics.');
       this.syllabusLoading.set(false);
     }
+  }
+
+  // ── Band selection ───────────────────────────────────────────────────────────
+  setBrowseBy(mode: 'grade' | 'band'): void {
+    this.topicSearch.set('');
+    this.browseBy.set(mode);
+    if (mode === 'band' && !this.selectedBand()) {
+      // Start at the band of the selected grade's first topic, so the view stays in familiar territory
+      const first = this.topics().find(t => t.cbseGrade === this.selectedGrade() && t.band);
+      this.selectedBand.set(first?.band ?? this.allowedBands()[0] ?? null);
+    }
+  }
+
+  onBandChange(band: string): void {
+    this.topicSearch.set('');
+    this.selectedBand.set(band);
+  }
+
+  /** "Grade 3 topics" or "Band D topics" */
+  listTitle(): string {
+    if (this.isSearching()) return 'Search results';
+    return this.browseBy() === 'band' ? `Band ${this.selectedBand() ?? ''} topics` : `Grade ${this.gradeLabel(this.selectedGrade())} topics`;
   }
 
   // ── Grade selection ──────────────────────────────────────────────────────────

@@ -412,3 +412,10 @@
 .picked-name { font-weight: 700; color: #1e1b4b; overflow-wrap: anywhere; }
 .picked-meta { font-size: 0.75rem; color: #4338ca; white-space: nowrap; }
 .picked-remove { border: 0; background: #fff; border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-weight: 800; color: #475569; flex: none; }
+
+/* Grade / Band switch above the chips */
+.browse-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.browse-toggle { display: inline-flex; border: 1px solid #c7d2fe; border-radius: 999px; overflow: hidden; }
+.browse-toggle button { border: 0; background: #fff; color: #3730a3; font-weight: 700; font-size: 0.85rem; padding: 4px 14px; min-height: 32px; cursor: pointer; }
+.browse-toggle button.active { background: #4f46e5; color: #fff; }
+.browse-toggle button:focus-visible { outline: 3px solid #6366f1; outline-offset: -3px; }
