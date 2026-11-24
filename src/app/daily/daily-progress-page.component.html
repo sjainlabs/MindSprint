@@ -51,6 +51,20 @@
 
             @if (g.state === 'locked') {
               <p class="hint">{{ g.totalTopics }} topics. Unlocks when the grades below are strong enough.</p>
+              <!-- Weak spots stay visible even in a locked grade -->
+              @if (g.topics.length) {
+                <ul class="tiles">
+                  @for (t of g.topics; track t.topicId) {
+                    <li class="tile" [attr.data-status]="t.status">
+                      <span class="tile-name">{{ t.topicName }}</span>
+                      <span class="tile-status">{{ tileStatus(t) }}</span>
+                      @if (topicDetail(t)) {
+                        <span class="tile-detail">{{ topicDetail(t) }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
             } @else {
               <div class="bar" role="img" [attr.aria-label]="doneCount(g) + ' of ' + g.totalTopics + ' topics mastered'">
                 <span [style.width.%]="donePercent(g)"></span>
